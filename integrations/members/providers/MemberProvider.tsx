@@ -13,7 +13,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
   // Initialize state from localStorage or defaults
   const [state, setState] = useState<MemberState>(() => {
     let storedMemberData: Member | null = null;
-    
+
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(MEMBER_STORAGE_KEY);
@@ -26,7 +26,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
         console.error('Error loading member state from localStorage:', error);
       }
     }
-    
+
     // Always start with loading true and not authenticated
     // We'll verify authentication with the server on mount
     return {
@@ -61,9 +61,9 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
     loadCurrentMember: useCallback(async () => {
       try {
         updateState({ isLoading: true, error: null });
-        
+
         const member = await getCurrentMember();
-        
+
         if (member) {
           updateState({
             member,
@@ -129,7 +129,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
     /**
      * Logout action
      */
-    logout: useCallback(() => {      
+    logout: useCallback(() => {
       // Clear localStorage immediately
       if (typeof window !== 'undefined') {
         try {
@@ -138,22 +138,22 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
           console.error('Error clearing member state from localStorage:', error);
         }
       }
-      
+
       // Create a form programmatically and submit it
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = '/api/auth/logout';
       form.setAttribute('data-astro-reload', '');
-      
+
       // Hide the form
       form.style.display = 'none';
-      
+
       // Add the form to the document
       document.body.appendChild(form);
-      
+
       // Submit the form
       form.submit();
-      
+
       // Clean up - remove the form after submission
       setTimeout(() => {
         document.body.removeChild(form);
@@ -189,7 +189,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
       {children}
     </MemberContext.Provider>
   );
-}; 
+};
 
 function reloadOnceLoggedIn(loginWindow: Window) {
   const cookies = document.cookie.split('; ');
@@ -198,7 +198,7 @@ function reloadOnceLoggedIn(loginWindow: Window) {
   if (cookie) {
     const jsonString = decodeURIComponent(cookie.split('=')[1] ?? '');
     const parsed = JSON.parse(jsonString);
-    
+
     if (parsed?.tokens?.refreshToken?.role === "member") {
       loginWindow.close();
       window.location.reload();
