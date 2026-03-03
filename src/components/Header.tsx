@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Moon, Sun } from 'lucide-react';
+import { Menu, X, Moon, Sun, Settings } from 'lucide-react';
+import AdminPanel from './AdminPanel';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(true); // Dark mode default
   const [scrolled, setScrolled] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   useEffect(() => {
     // Set dark mode as default on mount
@@ -66,6 +68,18 @@ export default function Header() {
             Work
           </Link>
           <Link
+            to="/booking"
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+          >
+            Booking
+          </Link>
+          <Link
+            to="/galleries"
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+          >
+            Galleries
+          </Link>
+          <Link
             to="/#clients"
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
@@ -81,6 +95,15 @@ export default function Header() {
 
         {/* Dark Mode Toggle & Mobile Menu */}
         <div className="flex items-center gap-6">
+          <button
+            onClick={() => setIsAdminOpen(true)}
+            className="p-2 hover:bg-white/5 transition-colors duration-300"
+            aria-label="Admin panel"
+            title="Admin Panel"
+          >
+            <Settings className="w-4 h-4 text-white/40 hover:text-white/60" />
+          </button>
+
           <button
             onClick={() => setIsDark(!isDark)}
             className="p-2 hover:bg-white/5 transition-colors duration-300"
@@ -107,6 +130,9 @@ export default function Header() {
         </div>
       </nav>
 
+      {/* Admin Panel */}
+      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+
       {/* Mobile Navigation */}
       {isOpen && (
         <div className="md:hidden bg-slate-950/95 border-t border-white/5 backdrop-blur-md">
@@ -131,6 +157,20 @@ export default function Header() {
               onClick={() => setIsOpen(false)}
             >
               Work
+            </Link>
+            <Link
+              to="/booking"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onClick={() => setIsOpen(false)}
+            >
+              Booking
+            </Link>
+            <Link
+              to="/galleries"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onClick={() => setIsOpen(false)}
+            >
+              Galleries
             </Link>
             <Link
               to="/#clients"

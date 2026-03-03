@@ -22,8 +22,8 @@ export default {
                 '9xl': ['6rem', { lineHeight: '1', letterSpacing: '-0.01em', fontWeight: 'bold' }],
             },
             fontFamily: {
-                heading: ['Playfair Display', 'Georgia', 'serif'],
-                paragraph: ['Crimson Text', 'Georgia', 'serif'],
+                heading: ['Montserrat', 'Inter', 'sans-serif'],
+                paragraph: ['Inter', 'system-ui', 'sans-serif'],
                 mono: ['Space Mono', 'monospace'],
             },
             colors: {

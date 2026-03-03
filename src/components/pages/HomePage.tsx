@@ -10,13 +10,16 @@ import HeroSection from '@/components/sections/HeroSection';
 import GallerySection from '@/components/sections/GallerySection';
 import AboutSection from '@/components/sections/AboutSection';
 import PortfolioGrid from '@/components/sections/PortfolioGrid';
+import BlogSection from '@/components/sections/BlogSection';
 import ClientsSection from '@/components/sections/ClientsSection';
 import ContactSection from '@/components/sections/ContactSection';
+import SplashScreen from '@/components/SplashScreen';
 
 export default function HomePage() {
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
@@ -38,28 +41,34 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <Header />
+    <>
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      <div className="min-h-screen bg-slate-950 text-white">
+        <Header />
 
-      {/* Hero Section */}
-      <HeroSection />
+        {/* Hero Section */}
+        <HeroSection />
 
-      {/* Gallery / Signature Reel */}
-      <GallerySection />
+        {/* Gallery / Signature Reel */}
+        <GallerySection />
 
-      {/* About / Vision */}
-      <AboutSection />
+        {/* About / Vision */}
+        <AboutSection />
 
-      {/* Portfolio Grid */}
-      <PortfolioGrid items={portfolioItems} isLoading={isLoading} />
+        {/* Portfolio Grid */}
+        <PortfolioGrid items={portfolioItems} isLoading={isLoading} />
 
-      {/* Clients & Press */}
-      <ClientsSection clients={clients} isLoading={isLoading} />
+        {/* Blog / Stories */}
+        <BlogSection />
 
-      {/* Contact / Booking */}
-      <ContactSection />
+        {/* Clients & Press */}
+        <ClientsSection clients={clients} isLoading={isLoading} />
 
-      <Footer />
-    </div>
+        {/* Contact / Booking */}
+        <ContactSection />
+
+        <Footer />
+      </div>
+    </>
   );
 }

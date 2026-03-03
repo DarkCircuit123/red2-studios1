@@ -29,6 +29,50 @@ export interface BlogPosts {
 
 
 /**
+ * Collection ID: bookingavailability
+ * Interface for BookingAvailability
+ */
+export interface BookingAvailability {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType date */
+  bookingDate?: Date | string;
+  /** @wixFieldType time */
+  startTime?: any;
+  /** @wixFieldType time */
+  endTime?: any;
+  /** @wixFieldType boolean */
+  isAvailable?: boolean;
+  /** @wixFieldType text */
+  sessionType?: string;
+}
+
+
+/**
+ * Collection ID: clientgalleries
+ * Interface for ClientProofingGalleries
+ */
+export interface ClientProofingGalleries {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  clientName?: string;
+  /** @wixFieldType text */
+  clientEmail?: string;
+  /** @wixFieldType text */
+  galleryAccessCode?: string;
+  /** @wixFieldType text */
+  approvalStatus?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  galleryCoverImage?: string;
+  /** @wixFieldType date */
+  galleryExpirationDate?: Date | string;
+}
+
+
+/**
  * Collection ID: clientspress
  * Interface for ClientsPress
  */
@@ -61,6 +105,12 @@ export interface Portfolio {
   _updatedDate?: Date;
   /** @wixFieldType text */
   projectName?: string;
+  /** @wixFieldType text */
+  imageAltText?: string;
+  /** @wixFieldType text */
+  seoDescription?: string;
+  /** @wixFieldType text */
+  seoTitle?: string;
   /** @wixFieldType text */
   shortDescription?: string;
   /** @wixFieldType text */
@@ -150,4 +200,27 @@ export interface TeamMembers {
   specialization?: string;
   /** @wixFieldType url */
   socialLink?: string;
+}
+
+
+/**
+ * Collection ID: watermarksettings
+ * Interface for WatermarkSettings
+ */
+export interface WatermarkSettings {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  watermarkName?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  watermarkImage?: string;
+  /** @wixFieldType number */
+  opacityLevel?: number;
+  /** @wixFieldType text */
+  position?: string;
+  /** @wixFieldType number */
+  scale?: number;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
 }
