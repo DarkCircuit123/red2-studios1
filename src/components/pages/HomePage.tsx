@@ -1,14 +1,65 @@
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { ChevronRight, ChevronLeft, ArrowRight } from 'lucide-react';
+import { BaseCrudService } from '@/integrations';
+import { Portfolio, ClientsPress } from '@/entities/index';
+import { Image } from '@/components/ui/image';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import HeroSection from '@/components/sections/HeroSection';
+import GallerySection from '@/components/sections/GallerySection';
+import AboutSection from '@/components/sections/AboutSection';
+import PortfolioGrid from '@/components/sections/PortfolioGrid';
+import ClientsSection from '@/components/sections/ClientsSection';
+import ContactSection from '@/components/sections/ContactSection';
+
 export default function HomePage() {
+  const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [portfolioData, clientsData] = await Promise.all([
+          BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 }),
+          BaseCrudService.getAll<any>('clientspress', {}, { limit: 50 }),
+        ]);
+        setPortfolioItems(portfolioData.items || []);
+        setClients(clientsData.items || []);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-6xl font-heading font-bold text-foreground mb-4">
-          Welcome to Wix Vibe
-        </h1>
-        <p className="text-xl font-paragraph text-foreground/80">
-          Your creative portfolio and services platform
-        </p>
-      </div>
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-foreground dark:text-white">
+      <Header />
+
+      {/* Hero Section */}
+      <HeroSection />
+
+      {/* Gallery / Signature Reel */}
+      <GallerySection />
+
+      {/* About / Vision */}
+      <AboutSection />
+
+      {/* Portfolio Grid */}
+      <PortfolioGrid items={portfolioItems} isLoading={isLoading} />
+
+      {/* Clients & Press */}
+      <ClientsSection clients={clients} isLoading={isLoading} />
+
+      {/* Contact / Booking */}
+      <ContactSection />
+
+      <Footer />
     </div>
   );
 }

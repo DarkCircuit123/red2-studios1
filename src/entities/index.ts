@@ -29,6 +29,29 @@ export interface BlogPosts {
 
 
 /**
+ * Collection ID: clientspress
+ * Interface for ClientsPress
+ */
+export interface ClientsPress {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  clientName?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  clientLogo?: string;
+  /** @wixFieldType url */
+  externalLink?: string;
+  /** @wixFieldType text */
+  highlightDescription?: string;
+  /** @wixFieldType date */
+  dateOfFeature?: Date | string;
+  /** @wixFieldType text */
+  category?: string;
+}
+
+
+/**
  * Collection ID: portfolio
  * Interface for Portfolio
  */
