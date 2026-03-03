@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Image } from '@/components/ui/image';
@@ -54,26 +54,26 @@ export default function GallerySection() {
   };
 
   return (
-    <section id="gallery" className="relative w-full min-h-screen py-20 bg-white dark:bg-slate-950">
-      <div className="max-w-[100rem] mx-auto px-6">
-        {/* Section Header */}
+    <section id="gallery" className="relative w-full min-h-screen py-24 md:py-32 bg-slate-950">
+      <div className="max-w-[120rem] mx-auto px-8">
+        {/* Section Header - Ultra-minimal */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="mb-12"
+          className="mb-20"
         >
-          <h2 className="text-5xl md:text-6xl font-heading font-bold text-foreground dark:text-white mb-4">
+          <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
             Signature Reel
           </h2>
-          <p className="text-lg font-paragraph text-foreground/60 dark:text-gray-400 max-w-2xl">
-            A curated selection of our most compelling fashion photography work
+          <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
+            A curated selection of our most compelling fashion photography work. Each frame meticulously crafted to capture essence and narrative.
           </p>
         </motion.div>
 
-        {/* Carousel */}
-        <div className="relative h-[500px] md:h-[600px] rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800">
+        {/* Full-bleed carousel */}
+        <div className="relative w-screen left-1/2 right-1/2 -mx-[50vw] h-[70vh] md:h-[80vh] overflow-hidden bg-slate-900">
           <div ref={containerRef} className="relative w-full h-full">
             {galleryItems.map((item, index) => (
               <motion.div
@@ -93,49 +93,55 @@ export default function GallerySection() {
                   alt={item.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
-                  <motion.h3
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-3xl md:text-4xl font-heading font-bold text-white"
-                  >
+                {/* Intelligent highlight protection */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+                
+                {/* Minimal title overlay */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="absolute bottom-12 left-8 md:left-12"
+                >
+                  <h3 className="text-4xl md:text-5xl font-heading font-bold text-white tracking-tight">
                     {item.title}
-                  </motion.h3>
-                </div>
+                  </h3>
+                </motion.div>
               </motion.div>
             ))}
           </div>
 
-          {/* Navigation Buttons */}
-          <button
+          {/* Minimal navigation - appears on hover */}
+          <motion.button
             onClick={() => paginate(-1)}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 p-3 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full transition-colors"
+            className="absolute left-8 top-1/2 transform -translate-y-1/2 z-20 p-3 text-white/40 hover:text-white transition-colors duration-300"
             aria-label="Previous slide"
+            whileHover={{ scale: 1.1 }}
           >
-            <ChevronLeft className="w-6 h-6 text-white" />
-          </button>
-          <button
+            <ChevronLeft className="w-6 h-6" />
+          </motion.button>
+          <motion.button
             onClick={() => paginate(1)}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 p-3 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full transition-colors"
+            className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20 p-3 text-white/40 hover:text-white transition-colors duration-300"
             aria-label="Next slide"
+            whileHover={{ scale: 1.1 }}
           >
-            <ChevronRight className="w-6 h-6 text-white" />
-          </button>
+            <ChevronRight className="w-6 h-6" />
+          </motion.button>
 
-          {/* Indicators */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+          {/* Minimal indicators */}
+          <div className="absolute bottom-8 left-8 z-20 flex gap-3">
             {galleryItems.map((_, index) => (
-              <button
+              <motion.button
                 key={index}
                 onClick={() => {
                   setDirection(index > currentIndex ? 1 : -1);
                   setCurrentIndex(index);
                 }}
-                className={`h-2 rounded-full transition-all ${
+                className={`transition-all duration-300 ${
                   index === currentIndex
-                    ? 'w-8 bg-white'
-                    : 'w-2 bg-white/50 hover:bg-white/70'
+                    ? 'w-8 h-1 bg-white'
+                    : 'w-2 h-1 bg-white/30 hover:bg-white/60'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
@@ -143,25 +149,11 @@ export default function GallerySection() {
           </div>
         </div>
 
-        {/* Counter */}
-        <div className="mt-8 flex items-center justify-between">
-          <p className="text-sm font-paragraph text-foreground/60 dark:text-gray-400">
+        {/* Counter - minimal typography */}
+        <div className="mt-12 flex items-center justify-between max-w-[120rem]">
+          <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
             {String(currentIndex + 1).padStart(2, '0')} / {String(galleryItems.length).padStart(2, '0')}
           </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => paginate(-1)}
-              className="px-4 py-2 border border-foreground/20 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => paginate(1)}
-              className="px-4 py-2 border border-foreground/20 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              Next
-            </button>
-          </div>
         </div>
       </div>
     </section>

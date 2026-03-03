@@ -41,7 +41,7 @@ export default function PortfolioDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <Header />
         <LoadingSpinner />
       </div>
@@ -50,16 +50,17 @@ export default function PortfolioDetailPage() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-white dark:bg-slate-950">
+      <div className="min-h-screen bg-slate-950">
         <Header />
-        <div className="max-w-[100rem] mx-auto px-6 py-32 text-center">
-          <h1 className="text-4xl font-heading font-bold text-foreground dark:text-white mb-4">
+        <div className="max-w-[120rem] mx-auto px-8 py-32 text-center">
+          <h1 className="text-4xl font-heading font-bold text-white mb-8">
             Project Not Found
           </h1>
           <Link
             to="/#portfolio"
-            className="inline-block px-6 py-3 bg-primary dark:bg-primary-foreground text-white dark:text-foreground font-heading font-semibold rounded-lg hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-slate-950 font-heading font-semibold text-sm tracking-wide hover:bg-white/90 transition-all"
           >
+            <ArrowLeft className="w-4 h-4" />
             Back to Portfolio
           </Link>
         </div>
@@ -80,7 +81,7 @@ export default function PortfolioDetailPage() {
   ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
+    <div className="min-h-screen bg-slate-950">
       <Header />
 
       {/* Lightbox */}
@@ -89,14 +90,14 @@ export default function PortfolioDetailPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
           <button
             onClick={() => setSelectedImage(null)}
-            className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="absolute top-8 right-8 p-2 text-white/60 hover:text-white transition-colors"
           >
-            <X className="w-6 h-6 text-white" />
+            <X className="w-6 h-6" />
           </button>
           <Image
             src={selectedImage}
@@ -107,38 +108,38 @@ export default function PortfolioDetailPage() {
       )}
 
       {/* Main Content */}
-      <main className="max-w-[100rem] mx-auto px-6 py-20">
+      <main className="max-w-[120rem] mx-auto px-8 py-24 md:py-32">
         {/* Back Button */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="mb-12"
+          className="mb-16"
         >
           <Link
             to="/#portfolio"
-            className="inline-flex items-center gap-2 text-foreground/60 dark:text-gray-400 hover:text-foreground dark:hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Portfolio
+            <span className="text-sm font-paragraph">Back to Portfolio</span>
           </Link>
         </motion.div>
 
         {/* Project Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-12"
+          transition={{ duration: 0.8 }}
+          className="mb-16"
         >
-          <h1 className="text-5xl md:text-7xl font-heading font-bold text-foreground dark:text-white mb-4">
+          <h1 className="text-6xl md:text-7xl font-heading font-bold text-white mb-8 tracking-tighter">
             {project.projectName}
           </h1>
-          <div className="flex flex-wrap gap-4 items-center">
-            <span className="px-4 py-2 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground rounded-full text-sm font-heading font-semibold">
+          <div className="flex flex-wrap gap-6 items-center">
+            <span className="px-4 py-2 border border-white/20 text-white text-sm font-mono uppercase tracking-widest">
               {project.category}
             </span>
             {project.projectDate && (
-              <span className="text-foreground/60 dark:text-gray-400 font-paragraph">
+              <span className="text-white/60 font-paragraph text-sm">
                 {new Date(project.projectDate).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
@@ -148,12 +149,12 @@ export default function PortfolioDetailPage() {
           </div>
         </motion.div>
 
-        {/* Main Image */}
+        {/* Main Image - Full-bleed */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="mb-12 rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 aspect-video cursor-pointer hover:opacity-90 transition-opacity"
+          transition={{ duration: 0.8, delay: 0.1 }}
+          className="mb-20 w-screen left-1/2 right-1/2 -mx-[50vw] aspect-video overflow-hidden bg-slate-900 cursor-pointer hover:opacity-90 transition-opacity"
           onClick={() => project.mainImage && setSelectedImage(project.mainImage)}
         >
           <Image
@@ -164,44 +165,44 @@ export default function PortfolioDetailPage() {
         </motion.div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 md:gap-24 mb-20">
           {/* Description */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
             className="lg:col-span-2"
           >
-            <h2 className="text-2xl font-heading font-bold text-foreground dark:text-white mb-4">
+            <h2 className="text-3xl font-heading font-bold text-white mb-8 tracking-tight">
               Project Overview
             </h2>
-            <p className="text-lg font-paragraph text-foreground/70 dark:text-gray-300 leading-relaxed mb-6">
+            <p className="text-base font-paragraph text-white/70 leading-relaxed mb-8">
               {project.fullDescription || project.shortDescription}
             </p>
           </motion.div>
 
-          {/* Project Details */}
+          {/* Project Details - Minimal */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
             className="lg:col-span-1"
           >
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6 space-y-6">
+            <div className="space-y-8 border-t border-white/10 pt-8">
               <div>
-                <p className="text-xs font-heading font-semibold text-foreground/60 dark:text-gray-400 uppercase tracking-wide mb-2">
+                <p className="text-xs font-mono text-white/40 uppercase tracking-widest mb-3">
                   Category
                 </p>
-                <p className="text-lg font-paragraph text-foreground dark:text-white">
+                <p className="text-base font-paragraph text-white">
                   {project.category}
                 </p>
               </div>
               {project.projectDate && (
                 <div>
-                  <p className="text-xs font-heading font-semibold text-foreground/60 dark:text-gray-400 uppercase tracking-wide mb-2">
+                  <p className="text-xs font-mono text-white/40 uppercase tracking-widest mb-3">
                     Date
                   </p>
-                  <p className="text-lg font-paragraph text-foreground dark:text-white">
+                  <p className="text-base font-paragraph text-white">
                     {new Date(project.projectDate).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -211,10 +212,10 @@ export default function PortfolioDetailPage() {
                 </div>
               )}
               <div>
-                <p className="text-xs font-heading font-semibold text-foreground/60 dark:text-gray-400 uppercase tracking-wide mb-2">
+                <p className="text-xs font-mono text-white/40 uppercase tracking-widest mb-3">
                   Status
                 </p>
-                <p className="text-lg font-paragraph text-foreground dark:text-white">
+                <p className="text-base font-paragraph text-white">
                   Completed
                 </p>
               </div>
@@ -225,19 +226,19 @@ export default function PortfolioDetailPage() {
         {/* Gallery */}
         {galleryImages.length > 1 && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mb-16"
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="mb-20"
           >
-            <h2 className="text-2xl font-heading font-bold text-foreground dark:text-white mb-6">
+            <h2 className="text-3xl font-heading font-bold text-white mb-12 tracking-tight">
               Gallery
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {galleryImages.map((image, index) => (
                 <div
                   key={index}
-                  className="rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 aspect-square cursor-pointer hover:opacity-90 transition-opacity"
+                  className="overflow-hidden bg-slate-900 aspect-square cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => setSelectedImage(image)}
                 >
                   <Image
@@ -253,22 +254,22 @@ export default function PortfolioDetailPage() {
 
         {/* Navigation */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-12 border-t border-foreground/10 dark:border-gray-700"
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-16 border-t border-white/10"
         >
           {prevProject ? (
             <Link
               to={`/portfolio/${prevProject._id}`}
-              className="group flex items-center gap-4 p-6 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className="group flex items-center gap-4 p-8 hover:bg-white/5 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-foreground/60 dark:text-gray-400 group-hover:text-foreground dark:group-hover:text-white transition-colors" />
+              <ArrowLeft className="w-5 h-5 text-white/60 group-hover:text-white transition-colors flex-shrink-0" />
               <div>
-                <p className="text-xs font-heading font-semibold text-foreground/60 dark:text-gray-400 uppercase tracking-wide mb-1">
+                <p className="text-xs font-mono text-white/40 uppercase tracking-widest mb-2">
                   Previous Project
                 </p>
-                <p className="text-lg font-heading font-semibold text-foreground dark:text-white group-hover:text-primary dark:group-hover:text-primary-foreground transition-colors">
+                <p className="text-lg font-heading font-semibold text-white group-hover:text-white/80 transition-colors">
                   {prevProject.projectName}
                 </p>
               </div>
@@ -280,17 +281,17 @@ export default function PortfolioDetailPage() {
           {nextProject ? (
             <Link
               to={`/portfolio/${nextProject._id}`}
-              className="group flex items-center justify-end gap-4 p-6 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-right"
+              className="group flex items-center justify-end gap-4 p-8 hover:bg-white/5 transition-colors text-right"
             >
               <div>
-                <p className="text-xs font-heading font-semibold text-foreground/60 dark:text-gray-400 uppercase tracking-wide mb-1">
+                <p className="text-xs font-mono text-white/40 uppercase tracking-widest mb-2">
                   Next Project
                 </p>
-                <p className="text-lg font-heading font-semibold text-foreground dark:text-white group-hover:text-primary dark:group-hover:text-primary-foreground transition-colors">
+                <p className="text-lg font-heading font-semibold text-white group-hover:text-white/80 transition-colors">
                   {nextProject.projectName}
                 </p>
               </div>
-              <ArrowRight className="w-5 h-5 text-foreground/60 dark:text-gray-400 group-hover:text-foreground dark:group-hover:text-white transition-colors" />
+              <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors flex-shrink-0" />
             </Link>
           ) : (
             <div />

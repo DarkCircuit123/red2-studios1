@@ -36,9 +36,9 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative w-full py-20 md:py-32 bg-white dark:bg-slate-950">
-      <div className="max-w-[100rem] mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16">
+    <section id="contact" className="relative w-full py-24 md:py-32 bg-slate-950">
+      <div className="max-w-[120rem] mx-auto px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24">
           {/* Contact Info */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
@@ -46,65 +46,59 @@ export default function ContactSection() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-5xl md:text-6xl font-heading font-bold text-foreground dark:text-white mb-8">
+            <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-12 tracking-tighter">
               Get in Touch
             </h2>
 
-            <p className="text-lg font-paragraph text-foreground/60 dark:text-gray-400 mb-12">
+            <p className="text-base font-paragraph text-white/70 mb-16 leading-relaxed">
               Ready to collaborate on your next project? I'd love to hear about your vision and discuss how we can bring it to life.
             </p>
 
-            {/* Contact Methods */}
-            <div className="space-y-8">
-              <div className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 dark:bg-primary/20">
-                    <Mail className="h-6 w-6 text-primary dark:text-primary-foreground" />
-                  </div>
+            {/* Contact Methods - Ultra-minimal */}
+            <div className="space-y-12">
+              <div className="flex gap-6">
+                <div className="flex-shrink-0 pt-1">
+                  <Mail className="w-5 h-5 text-white/60" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-heading font-semibold text-foreground dark:text-white mb-1">
+                  <h3 className="text-sm font-mono uppercase tracking-widest text-white/40 mb-2">
                     Email
                   </h3>
                   <a
                     href="mailto:hello@studio.com"
-                    className="text-foreground/60 dark:text-gray-400 hover:text-primary dark:hover:text-primary-foreground transition-colors"
+                    className="text-base font-paragraph text-white hover:text-white/70 transition-colors"
                   >
                     hello@studio.com
                   </a>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 dark:bg-primary/20">
-                    <Phone className="h-6 w-6 text-primary dark:text-primary-foreground" />
-                  </div>
+              <div className="flex gap-6">
+                <div className="flex-shrink-0 pt-1">
+                  <Phone className="w-5 h-5 text-white/60" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-heading font-semibold text-foreground dark:text-white mb-1">
+                  <h3 className="text-sm font-mono uppercase tracking-widest text-white/40 mb-2">
                     Phone
                   </h3>
                   <a
                     href="tel:+1234567890"
-                    className="text-foreground/60 dark:text-gray-400 hover:text-primary dark:hover:text-primary-foreground transition-colors"
+                    className="text-base font-paragraph text-white hover:text-white/70 transition-colors"
                   >
                     +1 (234) 567-890
                   </a>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 dark:bg-primary/20">
-                    <MapPin className="h-6 w-6 text-primary dark:text-primary-foreground" />
-                  </div>
+              <div className="flex gap-6">
+                <div className="flex-shrink-0 pt-1">
+                  <MapPin className="w-5 h-5 text-white/60" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-heading font-semibold text-foreground dark:text-white mb-1">
+                  <h3 className="text-sm font-mono uppercase tracking-widest text-white/40 mb-2">
                     Location
                   </h3>
-                  <p className="text-foreground/60 dark:text-gray-400">
+                  <p className="text-base font-paragraph text-white">
                     New York, NY
                     <br />
                     Available for travel
@@ -114,16 +108,16 @@ export default function ContactSection() {
             </div>
 
             {/* Social Links */}
-            <div className="mt-12 pt-8 border-t border-foreground/10 dark:border-gray-700">
-              <p className="text-sm font-paragraph text-foreground/60 dark:text-gray-400 mb-4">
+            <div className="mt-16 pt-12 border-t border-white/10">
+              <p className="text-xs font-mono uppercase tracking-widest text-white/40 mb-6">
                 Follow for daily inspiration
               </p>
-              <div className="flex gap-4">
+              <div className="flex gap-6">
                 <a
                   href="https://instagram.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-foreground/60 dark:text-gray-400 hover:text-primary dark:hover:text-primary-foreground transition-colors font-paragraph text-sm"
+                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Instagram
                 </a>
@@ -131,7 +125,7 @@ export default function ContactSection() {
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-foreground/60 dark:text-gray-400 hover:text-primary dark:hover:text-primary-foreground transition-colors font-paragraph text-sm"
+                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   LinkedIn
                 </a>
@@ -139,7 +133,7 @@ export default function ContactSection() {
                   href="https://twitter.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-foreground/60 dark:text-gray-400 hover:text-primary dark:hover:text-primary-foreground transition-colors font-paragraph text-sm"
+                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Twitter
                 </a>
@@ -154,9 +148,9 @@ export default function ContactSection() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
               <div>
-                <label htmlFor="name" className="block text-sm font-heading font-semibold text-foreground dark:text-white mb-2">
+                <label htmlFor="name" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
                   Full Name *
                 </label>
                 <input
@@ -166,13 +160,13 @@ export default function ContactSection() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-foreground/20 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-900 text-foreground dark:text-white placeholder-foreground/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-foreground transition-all"
+                  className="w-full px-0 py-3 border-b border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-white transition-colors"
                   placeholder="Your name"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-heading font-semibold text-foreground dark:text-white mb-2">
+                <label htmlFor="email" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
                   Email Address *
                 </label>
                 <input
@@ -182,13 +176,13 @@ export default function ContactSection() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-foreground/20 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-900 text-foreground dark:text-white placeholder-foreground/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-foreground transition-all"
+                  className="w-full px-0 py-3 border-b border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-white transition-colors"
                   placeholder="your@email.com"
                 />
               </div>
 
               <div>
-                <label htmlFor="subject" className="block text-sm font-heading font-semibold text-foreground dark:text-white mb-2">
+                <label htmlFor="subject" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
                   Subject *
                 </label>
                 <input
@@ -198,13 +192,13 @@ export default function ContactSection() {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-foreground/20 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-900 text-foreground dark:text-white placeholder-foreground/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-foreground transition-all"
+                  className="w-full px-0 py-3 border-b border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-white transition-colors"
                   placeholder="Project inquiry"
                 />
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-heading font-semibold text-foreground dark:text-white mb-2">
+                <label htmlFor="message" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
                   Message *
                 </label>
                 <textarea
@@ -214,7 +208,7 @@ export default function ContactSection() {
                   onChange={handleChange}
                   required
                   rows={5}
-                  className="w-full px-4 py-3 border border-foreground/20 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-900 text-foreground dark:text-white placeholder-foreground/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-foreground transition-all resize-none"
+                  className="w-full px-0 py-3 border-b border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-white transition-colors resize-none"
                   placeholder="Tell me about your project..."
                 />
               </div>
@@ -224,9 +218,9 @@ export default function ContactSection() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                  className="p-4 bg-white/5 border border-white/20"
                 >
-                  <p className="text-sm font-paragraph text-green-800 dark:text-green-200">
+                  <p className="text-sm font-paragraph text-white/80">
                     Thank you! I'll get back to you soon.
                   </p>
                 </motion.div>
@@ -236,9 +230,9 @@ export default function ContactSection() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+                  className="p-4 bg-red-500/10 border border-red-500/30"
                 >
-                  <p className="text-sm font-paragraph text-red-800 dark:text-red-200">
+                  <p className="text-sm font-paragraph text-red-300">
                     Something went wrong. Please try again.
                   </p>
                 </motion.div>
@@ -247,11 +241,11 @@ export default function ContactSection() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-6 py-3 bg-primary dark:bg-primary-foreground text-white dark:text-foreground font-heading font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
+                className="w-full px-8 py-4 bg-white text-slate-950 font-heading font-semibold text-sm tracking-wide hover:bg-white/90 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
                     Sending...
                   </>
                 ) : (
@@ -262,7 +256,7 @@ export default function ContactSection() {
                 )}
               </button>
 
-              <p className="text-xs font-paragraph text-foreground/50 dark:text-gray-500 text-center">
+              <p className="text-xs font-mono text-white/30 text-center uppercase tracking-widest">
                 I typically respond within 24 hours
               </p>
             </form>

@@ -48,14 +48,14 @@ export default function PortfolioPage() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
+        staggerChildren: 0.08,
+        delayChildren: 0.1,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,
       y: 0,
@@ -64,38 +64,38 @@ export default function PortfolioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
+    <div className="min-h-screen bg-slate-950">
       <Header />
 
-      <main className="max-w-[100rem] mx-auto px-6 py-20">
+      <main className="max-w-[120rem] mx-auto px-8 py-24 md:py-32">
         {/* Page Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-16"
+          transition={{ duration: 0.8 }}
+          className="mb-20"
         >
-          <h1 className="text-5xl md:text-7xl font-heading font-bold text-foreground dark:text-white mb-4">
+          <h1 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
             Portfolio
           </h1>
-          <p className="text-lg font-paragraph text-foreground/60 dark:text-gray-400 max-w-2xl">
-            A comprehensive collection of our fashion photography work across various categories and styles
+          <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
+            A comprehensive collection of fashion photography work across various categories and styles. Each project represents precision and creative excellence.
           </p>
         </motion.div>
 
-        {/* Filters */}
+        {/* Filters - Ultra-minimal */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="mb-12 flex flex-wrap gap-3"
+          transition={{ duration: 0.8, delay: 0.1 }}
+          className="mb-16 flex flex-wrap gap-3"
         >
           <button
             onClick={() => handleCategoryFilter(null)}
-            className={`px-4 py-2 rounded-full font-heading font-semibold transition-all ${
+            className={`px-6 py-2 font-heading font-semibold text-sm tracking-wide transition-all duration-300 ${
               selectedCategory === null
-                ? 'bg-primary dark:bg-primary-foreground text-white dark:text-foreground'
-                : 'bg-gray-100 dark:bg-slate-800 text-foreground dark:text-white hover:bg-gray-200 dark:hover:bg-slate-700'
+                ? 'bg-white text-slate-950'
+                : 'border border-white/20 text-white hover:border-white/60 hover:bg-white/5'
             }`}
           >
             All
@@ -104,10 +104,10 @@ export default function PortfolioPage() {
             <button
               key={category}
               onClick={() => handleCategoryFilter(category)}
-              className={`px-4 py-2 rounded-full font-heading font-semibold transition-all ${
+              className={`px-6 py-2 font-heading font-semibold text-sm tracking-wide transition-all duration-300 ${
                 selectedCategory === category
-                  ? 'bg-primary dark:bg-primary-foreground text-white dark:text-foreground'
-                  : 'bg-gray-100 dark:bg-slate-800 text-foreground dark:text-white hover:bg-gray-200 dark:hover:bg-slate-700'
+                  ? 'bg-white text-slate-950'
+                  : 'border border-white/20 text-white hover:border-white/60 hover:bg-white/5'
               }`}
             >
               {category}
@@ -117,13 +117,13 @@ export default function PortfolioPage() {
 
         {/* Projects Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max">
             {Array(6)
               .fill(null)
               .map((_, i) => (
                 <div
                   key={i}
-                  className="aspect-square rounded-xl bg-gray-200 dark:bg-slate-800 animate-pulse"
+                  className="aspect-square bg-slate-800 animate-pulse"
                 />
               ))}
           </div>
@@ -132,53 +132,61 @@ export default function PortfolioPage() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max"
           >
-            {filteredProjects.map((project) => (
+            {filteredProjects.map((project, index) => (
               <motion.div
                 key={project._id}
                 variants={itemVariants}
                 onMouseEnter={() => setHoveredId(project._id)}
                 onMouseLeave={() => setHoveredId(null)}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 cursor-pointer"
+                className={`group relative overflow-hidden bg-slate-900 cursor-pointer ${
+                  index === 0 ? 'md:col-span-2 md:row-span-2' : ''
+                } ${index === 1 ? 'md:row-span-2' : ''}`}
               >
-                {/* Image */}
-                <Image
-                  src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
-                  alt={project.projectName}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
+                {/* Aspect ratio container */}
+                <div className="relative w-full aspect-square">
+                  {/* Image */}
+                  <Image
+                    src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
+                    alt={project.projectName}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
 
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300" />
+                  {/* Subtle grain overlay */}
+                  <div className="absolute inset-0 bg-grain opacity-5" />
 
-                {/* Content */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={hoveredId === project._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute inset-0 flex flex-col items-end justify-end p-6"
-                >
-                  <div className="text-right">
-                    <p className="text-xs font-paragraph text-white/70 mb-2 uppercase tracking-wide">
-                      {project.category}
-                    </p>
-                    <h3 className="text-xl md:text-2xl font-heading font-bold text-white mb-3">
-                      {project.projectName}
-                    </h3>
-                    <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
-                      <span className="text-sm font-paragraph">View Project</span>
-                      <ArrowRight className="w-4 h-4" />
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
+
+                  {/* Content - appears on hover */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={hoveredId === project._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0 flex flex-col items-end justify-end p-8"
+                  >
+                    <div className="text-right">
+                      <p className="text-xs font-mono text-white/60 mb-3 uppercase tracking-widest">
+                        {project.category}
+                      </p>
+                      <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
+                        {project.projectName}
+                      </h3>
+                      <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
+                        <span className="text-sm font-paragraph">View</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
 
-                {/* Link */}
-                <Link
-                  to={`/portfolio/${project._id}`}
-                  className="absolute inset-0"
-                  aria-label={`View ${project.projectName}`}
-                />
+                  {/* Link */}
+                  <Link
+                    to={`/portfolio/${project._id}`}
+                    className="absolute inset-0"
+                    aria-label={`View ${project.projectName}`}
+                  />
+                </div>
               </motion.div>
             ))}
           </motion.div>
@@ -187,18 +195,19 @@ export default function PortfolioPage() {
         {/* Empty State */}
         {!isLoading && filteredProjects.length === 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-20"
+            className="text-center py-24"
           >
-            <p className="text-lg font-paragraph text-foreground/60 dark:text-gray-400 mb-4">
+            <p className="text-base font-paragraph text-white/50 mb-8">
               No projects found in this category
             </p>
             <button
               onClick={() => handleCategoryFilter(null)}
-              className="px-6 py-3 bg-primary dark:bg-primary-foreground text-white dark:text-foreground font-heading font-semibold rounded-lg hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-white text-slate-950 font-heading font-semibold text-sm tracking-wide hover:bg-white/90 transition-all duration-300"
             >
               View All Projects
+              <ArrowRight className="w-4 h-4" />
             </button>
           </motion.div>
         )}

@@ -21,14 +21,14 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
+        staggerChildren: 0.08,
+        delayChildren: 0.1,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,
       y: 0,
@@ -37,31 +37,31 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
   };
 
   return (
-    <section id="portfolio" className="relative w-full py-20 md:py-32 bg-white dark:bg-slate-950">
-      <div className="max-w-[100rem] mx-auto px-6">
+    <section id="portfolio" className="relative w-full py-24 md:py-32 bg-slate-950">
+      <div className="max-w-[120rem] mx-auto px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="mb-16"
+          className="mb-20"
         >
-          <h2 className="text-5xl md:text-6xl font-heading font-bold text-foreground dark:text-white mb-4">
-            Portfolio
+          <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
+            Selected Works
           </h2>
-          <p className="text-lg font-paragraph text-foreground/60 dark:text-gray-400 max-w-2xl">
-            A selection of recent projects showcasing diverse aesthetics and creative directions
+          <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
+            A selection of recent projects showcasing diverse aesthetics and creative directions. Each work represents precision and luxury restraint.
           </p>
         </motion.div>
 
-        {/* Grid */}
+        {/* Grid - Asymmetrical layout */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max"
         >
           {displayItems.map((item, index) => (
             <motion.div
@@ -69,62 +69,70 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
               variants={itemVariants}
               onMouseEnter={() => item && setHoveredId(item._id)}
               onMouseLeave={() => setHoveredId(null)}
-              className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 cursor-pointer"
+              className={`group relative overflow-hidden bg-slate-900 cursor-pointer ${
+                index === 0 ? 'md:col-span-2 md:row-span-2' : ''
+              } ${index === 1 ? 'md:row-span-2' : ''}`}
             >
-              {/* Image */}
-              <Image
-                src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
-                alt={item?.projectName || 'Portfolio project'}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300" />
-
-              {/* Content */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={hoveredId === item?._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0 flex flex-col items-end justify-end p-6"
-              >
-                <div className="text-right">
-                  <p className="text-xs font-paragraph text-white/70 mb-2 uppercase tracking-wide">
-                    {item?.category || 'Fashion'}
-                  </p>
-                  <h3 className="text-xl md:text-2xl font-heading font-bold text-white mb-3">
-                    {item?.projectName || 'Untitled Project'}
-                  </h3>
-                  <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
-                    <span className="text-sm font-paragraph">View Project</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Link */}
-              {item && (
-                <Link
-                  to={`/portfolio/${item._id}`}
-                  className="absolute inset-0"
-                  aria-label={`View ${item.projectName}`}
+              {/* Aspect ratio container */}
+              <div className={`relative w-full ${index === 0 ? 'aspect-square' : 'aspect-square'}`}>
+                {/* Image */}
+                <Image
+                  src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
+                  alt={item?.projectName || 'Portfolio project'}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-              )}
+
+                {/* Subtle grain overlay */}
+                <div className="absolute inset-0 bg-grain opacity-5" />
+
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
+
+                {/* Content - appears on hover */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={hoveredId === item?._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 flex flex-col items-end justify-end p-8"
+                >
+                  <div className="text-right">
+                    <p className="text-xs font-mono text-white/60 mb-3 uppercase tracking-widest">
+                      {item?.category || 'Fashion'}
+                    </p>
+                    <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
+                      {item?.projectName || 'Untitled Project'}
+                    </h3>
+                    <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
+                      <span className="text-sm font-paragraph">View</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Link */}
+                {item && (
+                  <Link
+                    to={`/portfolio/${item._id}`}
+                    className="absolute inset-0"
+                    aria-label={`View ${item.projectName}`}
+                  />
+                )}
+              </div>
             </motion.div>
           ))}
         </motion.div>
 
         {/* View All Button */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
           viewport={{ once: true }}
-          className="mt-16 text-center"
+          className="mt-20 text-center"
         >
           <Link
             to="/portfolio"
-            className="inline-flex items-center gap-2 px-8 py-3 border-2 border-foreground dark:border-white text-foreground dark:text-white font-heading font-semibold rounded-lg hover:bg-foreground hover:text-white dark:hover:bg-white dark:hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 text-white font-heading font-semibold text-sm tracking-wide hover:border-white/60 hover:bg-white/5 transition-all duration-300"
           >
             View All Projects
             <ArrowRight className="w-4 h-4" />

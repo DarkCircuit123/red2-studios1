@@ -38,7 +38,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-foreground dark:text-white">
+    <div className="min-h-screen bg-slate-950 text-white">
       <Header />
 
       {/* Hero Section */}

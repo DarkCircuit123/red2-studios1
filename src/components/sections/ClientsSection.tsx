@@ -22,7 +22,7 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
+    hidden: { opacity: 0, scale: 0.95 },
     visible: {
       opacity: 1,
       scale: 1,
@@ -31,25 +31,25 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
   };
 
   return (
-    <section id="clients" className="relative w-full py-20 md:py-32 bg-slate-50 dark:bg-slate-900">
-      <div className="max-w-[100rem] mx-auto px-6">
+    <section id="clients" className="relative w-full py-24 md:py-32 bg-slate-900">
+      <div className="max-w-[120rem] mx-auto px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="mb-16 text-center"
+          className="mb-20"
         >
-          <h2 className="text-5xl md:text-6xl font-heading font-bold text-foreground dark:text-white mb-4">
+          <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
             Featured In
           </h2>
-          <p className="text-lg font-paragraph text-foreground/60 dark:text-gray-400 max-w-2xl mx-auto">
-            Trusted by leading brands and publications worldwide
+          <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
+            Trusted by leading brands and publications worldwide. A testament to precision and creative excellence.
           </p>
         </motion.div>
 
-        {/* Clients Grid */}
+        {/* Clients Grid - Minimal aesthetic */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -61,7 +61,7 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
             <motion.div
               key={client?._id || index}
               variants={itemVariants}
-              className="group relative aspect-square rounded-xl overflow-hidden bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center justify-center p-6 hover:shadow-lg dark:hover:shadow-lg/20 transition-all duration-300"
+              className="group relative aspect-square overflow-hidden bg-slate-800 border border-white/10 flex items-center justify-center p-6 hover:border-white/30 transition-all duration-300"
             >
               {client?.clientLogo ? (
                 <Image
@@ -72,20 +72,23 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center">
-                    <div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-lg mx-auto mb-2" />
-                    <p className="text-xs font-paragraph text-foreground/40 dark:text-gray-500">
-                      {client?.clientName || 'Brand Logo'}
+                    <div className="w-12 h-12 bg-white/10 rounded mx-auto mb-3" />
+                    <p className="text-xs font-mono text-white/30">
+                      {client?.clientName || 'Brand'}
                     </p>
                   </div>
                 </div>
               )}
+
+              {/* Subtle grain overlay */}
+              <div className="absolute inset-0 bg-grain opacity-5" />
 
               {/* Hover Info */}
               {client?.highlightDescription && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   whileHover={{ opacity: 1 }}
-                  className="absolute inset-0 bg-black/80 flex items-center justify-center p-4"
+                  className="absolute inset-0 bg-slate-950/80 flex items-center justify-center p-4"
                 >
                   <p className="text-sm font-paragraph text-white text-center">
                     {client.highlightDescription}
@@ -107,35 +110,35 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
           ))}
         </motion.div>
 
-        {/* Stats */}
+        {/* Stats - Ultra-minimal */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
           viewport={{ once: true }}
-          className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 pt-12 border-t border-foreground/10 dark:border-gray-700"
+          className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-12 pt-12 border-t border-white/10"
         >
-          <div className="text-center">
-            <p className="text-4xl font-heading font-bold text-primary dark:text-primary-foreground mb-2">
+          <div>
+            <p className="text-4xl font-heading font-bold text-white mb-3">
               50+
             </p>
-            <p className="text-sm font-paragraph text-foreground/60 dark:text-gray-400">
+            <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
               Global Brands
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-4xl font-heading font-bold text-primary dark:text-primary-foreground mb-2">
+          <div>
+            <p className="text-4xl font-heading font-bold text-white mb-3">
               100+
             </p>
-            <p className="text-sm font-paragraph text-foreground/60 dark:text-gray-400">
+            <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
               Publications Featured
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-4xl font-heading font-bold text-primary dark:text-primary-foreground mb-2">
+          <div>
+            <p className="text-4xl font-heading font-bold text-white mb-3">
               15+
             </p>
-            <p className="text-sm font-paragraph text-foreground/60 dark:text-gray-400">
+            <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
               Countries
             </p>
           </div>

@@ -4,8 +4,13 @@ import { Menu, X, Moon, Sun } from 'lucide-react';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true); // Dark mode default
   const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    // Set dark mode as default on mount
+    document.documentElement.classList.add('dark');
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,76 +32,76 @@ export default function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-white/95 dark:bg-slate-950/95 backdrop-blur-md shadow-sm'
+          ? 'bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-md border-b border-white/5'
           : 'bg-transparent'
       }`}
     >
-      <nav className="max-w-[100rem] mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
+      <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between">
+        {/* Logo - Ultra-minimal */}
         <Link
           to="/"
-          className="text-2xl font-heading font-bold text-foreground dark:text-white tracking-tight"
+          className="text-lg font-heading font-bold text-white tracking-widest uppercase letter-spacing-2"
         >
-          STUDIO
+          —
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-12">
           <Link
             to="/#gallery"
-            className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Gallery
           </Link>
           <Link
             to="/#about"
-            className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             About
           </Link>
           <Link
-            to="/#portfolio"
-            className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+            to="/portfolio"
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
-            Portfolio
+            Work
           </Link>
           <Link
             to="/#clients"
-            className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Press
           </Link>
           <Link
             to="/#contact"
-            className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Contact
           </Link>
         </div>
 
         {/* Dark Mode Toggle & Mobile Menu */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <button
             onClick={() => setIsDark(!isDark)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/5 transition-colors duration-300"
             aria-label="Toggle dark mode"
           >
             {isDark ? (
-              <Sun className="w-5 h-5 text-yellow-500" />
+              <Sun className="w-4 h-4 text-white/40 hover:text-white/60" />
             ) : (
-              <Moon className="w-5 h-5 text-gray-600" />
+              <Moon className="w-4 h-4 text-white/40 hover:text-white/60" />
             )}
           </button>
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="md:hidden p-2 hover:bg-white/5 transition-colors duration-300"
             aria-label="Toggle menu"
           >
             {isOpen ? (
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 text-white/60" />
             ) : (
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5 text-white/60" />
             )}
           </button>
         </div>
@@ -104,39 +109,39 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="md:hidden bg-white dark:bg-slate-950 border-t border-gray-200 dark:border-slate-800">
-          <div className="max-w-[100rem] mx-auto px-6 py-4 flex flex-col gap-4">
+        <div className="md:hidden bg-slate-950/95 border-t border-white/5 backdrop-blur-md">
+          <div className="max-w-[120rem] mx-auto px-8 py-6 flex flex-col gap-6">
             <Link
               to="/#gallery"
-              className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               Gallery
             </Link>
             <Link
               to="/#about"
-              className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               About
             </Link>
             <Link
-              to="/#portfolio"
-              className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+              to="/portfolio"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
-              Portfolio
+              Work
             </Link>
             <Link
               to="/#clients"
-              className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               Press
             </Link>
             <Link
               to="/#contact"
-              className="text-sm font-paragraph text-foreground/70 dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               Contact
