@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Check, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
+import { notifyAdminOfBooking } from '@/api/sendBookingNotification';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -74,48 +75,28 @@ export default function BookingPage() {
 
     setIsSubmitting(true);
     try {
-      // Send email notification
-      const emailBody = `
-New Booking Request:
-
-Name: ${formData.name}
-Email: ${formData.email}
-Phone: ${formData.phone}
-
-Requested Date: ${new Date(selectedSlot.bookingDate).toLocaleDateString('en-US', {
+      // Format the date and time for the email
+      const formattedDate = new Date(selectedSlot.bookingDate).toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric'
-      })}
-Requested Time: ${selectedSlot.startTime} - ${selectedSlot.endTime}
-Session Type: ${selectedSlot.sessionType}
+      });
+      const dateTime = `${formattedDate} from ${selectedSlot.startTime} to ${selectedSlot.endTime}`;
 
-Message:
-${formData.message || '(No additional notes)'}
-
-Please respond to this booking request at your earliest convenience.
-      `;
-
-      // Call email service
-      const response = await fetch('/api/send-booking-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: 'your-email@example.com', // Replace with your email in production
-          subject: `New Booking Request - ${formData.name}`,
-          body: emailBody,
-          clientEmail: formData.email
-        })
+      // Send notification to admin via Wix triggered emails
+      await notifyAdminOfBooking({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        sessionType: selectedSlot.sessionType,
+        dateTime: dateTime,
+        notes: formData.message
       });
 
-      if (response.ok) {
-        setSubmitSuccess(true);
-        setSelectedSlot(null);
-        setFormData({ name: '', email: '', phone: '', message: '' });
-        setTimeout(() => setSubmitSuccess(false), 5000);
-      } else {
-        console.error('Failed to send booking request');
-      }
+      setSubmitSuccess(true);
+      setSelectedSlot(null);
+      setFormData({ name: '', email: '', phone: '', message: '' });
+      setTimeout(() => setSubmitSuccess(false), 5000);
     } catch (error) {
       console.error('Error submitting booking:', error);
     } finally {
