@@ -34,7 +34,7 @@ export default function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-md border-b border-white/5'
+          ? 'bg-white/95 dark:bg-white/95 backdrop-blur-md border-b border-black/10'
           : 'bg-transparent'
       }`}
     >
@@ -42,52 +42,52 @@ export default function Header() {
         {/* Logo - Ultra-minimal */}
         <Link
           to="/"
-          className="text-lg font-heading font-bold text-white tracking-widest uppercase letter-spacing-2"
+          className="text-lg font-heading font-bold text-black dark:text-white tracking-widest uppercase letter-spacing-2"
         >
-          —
+          RED2
         </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-12">
           <Link
             to="/#gallery"
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Gallery
           </Link>
           <Link
             to="/#about"
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             About
           </Link>
           <Link
             to="/portfolio"
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Work
           </Link>
           <Link
             to="/booking"
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Booking
           </Link>
           <Link
             to="/galleries"
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Galleries
           </Link>
           <Link
             to="/#clients"
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Press
           </Link>
           <Link
             to="/#contact"
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Contact
           </Link>
@@ -97,34 +97,34 @@ export default function Header() {
         <div className="flex items-center gap-6">
           <button
             onClick={() => setIsAdminOpen(true)}
-            className="p-2 hover:bg-white/5 transition-colors duration-300"
+            className="p-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-300"
             aria-label="Admin panel"
             title="Admin Panel"
           >
-            <Settings className="w-4 h-4 text-white/40 hover:text-white/60" />
+            <Settings className="w-4 h-4 text-black/40 dark:text-white/40 hover:text-black/60 dark:hover:text-white/60" />
           </button>
 
           <button
             onClick={() => setIsDark(!isDark)}
-            className="p-2 hover:bg-white/5 transition-colors duration-300"
+            className="p-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-300"
             aria-label="Toggle dark mode"
           >
             {isDark ? (
-              <Sun className="w-4 h-4 text-white/40 hover:text-white/60" />
+              <Sun className="w-4 h-4 text-black/40 dark:text-white/40 hover:text-black/60 dark:hover:text-white/60" />
             ) : (
-              <Moon className="w-4 h-4 text-white/40 hover:text-white/60" />
+              <Moon className="w-4 h-4 text-black/40 dark:text-white/40 hover:text-black/60 dark:hover:text-white/60" />
             )}
           </button>
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 hover:bg-white/5 transition-colors duration-300"
+            className="md:hidden p-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-300"
             aria-label="Toggle menu"
           >
             {isOpen ? (
-              <X className="w-5 h-5 text-white/60" />
+              <X className="w-5 h-5 text-black/60 dark:text-white/60" />
             ) : (
-              <Menu className="w-5 h-5 text-white/60" />
+              <Menu className="w-5 h-5 text-black/60 dark:text-white/60" />
             )}
           </button>
         </div>
@@ -135,53 +135,53 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="md:hidden bg-slate-950/95 border-t border-white/5 backdrop-blur-md">
+        <div className="md:hidden bg-white/95 dark:bg-slate-950/95 border-t border-black/10 dark:border-white/5 backdrop-blur-md">
           <div className="max-w-[120rem] mx-auto px-8 py-6 flex flex-col gap-6">
             <Link
               to="/#gallery"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               Gallery
             </Link>
             <Link
               to="/#about"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               About
             </Link>
             <Link
               to="/portfolio"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               Work
             </Link>
             <Link
               to="/booking"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               Booking
             </Link>
             <Link
               to="/galleries"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               Galleries
             </Link>
             <Link
               to="/#clients"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               Press
             </Link>
             <Link
               to="/#contact"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => setIsOpen(false)}
             >
               Contact

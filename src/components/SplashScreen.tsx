@@ -54,7 +54,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         <Image
           src="https://static.wixstatic.com/media/e9d727_3270fd9b8a104831bb70e110e6e8f618~mv2.jpeg"
           alt="RED2 Logo"
-          className="w-48 h-auto md:w-64 drop-shadow-2xl"
+          className="w-48 h-auto md:w-64"
           width={256}
         />
       </motion.div>
