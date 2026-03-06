@@ -10,6 +10,7 @@ import BookingPage from './pages/BookingPage';
 import ClientGalleriesPage from './pages/ClientGalleriesPage';
 import BlogPage from './pages/BlogPage';
 import ProfilePage from './pages/ProfilePage';
+import PrivatePage from './pages/PrivatePage';
 
 // Layout component that includes ScrollToTop
 function Layout() {
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
             <ProfilePage />
           </MemberProtectedRoute>
         ),
+      },
+      {
+        path: "private",
+        element: <PrivatePage />,
       },
       {
         path: "*",

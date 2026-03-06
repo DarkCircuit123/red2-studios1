@@ -87,6 +87,13 @@ export default function Header() {
           >
             Contact
           </Link>
+          <Link
+            to="/private"
+            onClick={handleLinkClick}
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+          >
+            Private
+          </Link>
         </div>
 
         {/* Admin & Mobile Menu */}
@@ -223,6 +230,16 @@ export default function Header() {
               }}
             >
               Contact
+            </Link>
+            <Link
+              to="/private"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
+            >
+              Private
             </Link>
             {/* Mobile Auth */}
             {!isLoading && (
