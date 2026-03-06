@@ -21,6 +21,10 @@ export default function PrivatePage() {
     if (unlockedSession === 'true') {
       setIsUnlocked(true);
     }
+
+    // Reset attempts counter on page load (fresh start each time)
+    sessionStorage.removeItem('privatePageAttempts');
+    sessionStorage.removeItem('privatePageLocked');
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
