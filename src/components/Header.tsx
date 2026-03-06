@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { useMember } from '@/integrations';
-import { Image } from '@/components/ui/image';
 import AdminPanel from './AdminPanel';
 import { playClickSound } from '@/lib/click-sound';
 
@@ -33,18 +32,15 @@ export default function Header() {
       }`}
     >
       <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between">
-        {/* Logo - Company Logo Image */}
+        {/* Logo - Text-based RED² */}
         <Link
           to="/"
           onClick={handleLinkClick}
           className="relative flex items-center gap-0"
         >
-          <Image
-            src="https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png"
-            alt="RED² Studios Logo"
-            className="h-12 w-auto"
-            width={80}
-          />
+          <span className="text-2xl font-heading font-bold text-white tracking-tight">
+            RED<span className="text-primary">²</span>
+          </span>
         </Link>
 
         {/* Desktop Navigation */}

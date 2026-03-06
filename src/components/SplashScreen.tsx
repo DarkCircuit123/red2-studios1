@@ -10,19 +10,11 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [logoImage, setLogoImage] = useState('https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png');
+  const logoImage = 'https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png';
 
   useEffect(() => {
     const loadSplashContent = async () => {
       try {
-        const watermarkSettings = await BaseCrudService.getAll('watermarksettings', {}, { limit: 1 });
-        if (watermarkSettings.items && watermarkSettings.items.length > 0) {
-          const settings = watermarkSettings.items[0] as any;
-          if (settings.watermarkImage) {
-            setLogoImage(settings.watermarkImage);
-          }
-        }
-
         // Try to load video from services
         const services = await BaseCrudService.getAll('services', {}, { limit: 1 });
         if (services.items && services.items.length > 0) {
