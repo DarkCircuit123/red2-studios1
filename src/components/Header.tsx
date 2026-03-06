@@ -32,16 +32,15 @@ export default function Header() {
       }`}
     >
       <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between">
-        {/* Logo - RED² with 2 above D */}
+        {/* Logo - RED² with 2 above and ahead of D */}
         <Link
           to="/"
           onClick={handleLinkClick}
           className="relative flex items-center gap-0"
         >
-          <span className="text-lg font-heading font-bold text-red-900 tracking-widest uppercase">RE</span>
-          <div className="relative inline-block">
-            <span className="text-xs font-heading font-bold text-white tracking-widest leading-none absolute -top-2 left-1/2 transform -translate-x-1/2">²</span>
-            <span className="text-lg font-heading font-bold text-red-900 tracking-widest uppercase">D</span>
+          <span className="text-lg font-heading font-bold text-red-900 tracking-tighter uppercase">RED</span>
+          <div className="relative inline-block -ml-1">
+            <span className="text-xs font-heading font-bold text-red-900 tracking-tighter leading-none absolute -top-1 -left-0.5">²</span>
           </div>
         </Link>
 

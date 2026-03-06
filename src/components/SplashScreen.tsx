@@ -10,7 +10,7 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [logoImage, setLogoImage] = useState('https://static.wixstatic.com/media/e9d727_3270fd9b8a104831bb70e110e6e8f618~mv2.jpeg');
+  const [logoImage, setLogoImage] = useState('https://static.wixstatic.com/media/e9d727_4678ac45afdb4565a8e55020be5e8be4~mv2.png');
 
   useEffect(() => {
     const loadSplashContent = async () => {
@@ -56,7 +56,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] bg-white flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
       initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -75,7 +75,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         </video>
       )}
 
-      <div className="absolute inset-0 bg-white" />
+      <div className="absolute inset-0 bg-black" />
 
       {/* Animated logo container */}
       <motion.div
@@ -106,7 +106,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
       {/* Fade out animation */}
       <motion.div
-        className="absolute inset-0 bg-white"
+        className="absolute inset-0 bg-black"
         initial={{ opacity: 0 }}
         animate={{ opacity: 0 }}
         transition={{ duration: 0.8, delay: 2.5 }}
