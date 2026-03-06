@@ -10,7 +10,7 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [logoImage, setLogoImage] = useState('https://static.wixstatic.com/media/e9d727_4678ac45afdb4565a8e55020be5e8be4~mv2.png');
+  const [logoImage, setLogoImage] = useState('https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png');
 
   useEffect(() => {
     const loadSplashContent = async () => {
