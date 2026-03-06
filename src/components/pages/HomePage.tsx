@@ -4,7 +4,6 @@ import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
 import AboutSection from '@/components/sections/AboutSection';
 import Interactive3DGallerySection from '@/components/sections/Interactive3DGallerySection';
-import BlogSection from '@/components/sections/BlogSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
@@ -44,9 +43,6 @@ export default function HomePage() {
 
         {/* RSS Ticker */}
         <RSSTickerSection />
-
-        {/* Blog / Stories */}
-        <BlogSection />
 
         {/* Sponsored By */}
         <SponsorsSection />
