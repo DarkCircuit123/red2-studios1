@@ -8,6 +8,7 @@ import { Image } from '@/components/ui/image';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { playClickSound } from '@/lib/click-sound';
 
 export default function PortfolioDetailPage() {
   const { id } = useParams<{ id: string }>();

@@ -1,7 +1,28 @@
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
+import { BaseCrudService } from '@/integrations';
+import { useState, useEffect } from 'react';
 
 export default function AboutSection() {
+  const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_3d1e8562aca844209e2b06c4382a0d69~mv2.png?originWidth=576&originHeight=576');
+
+  useEffect(() => {
+    const loadAboutImage = async () => {
+      try {
+        const watermarkSettings = await BaseCrudService.getAll('watermarksettings', {}, { limit: 1 });
+        if (watermarkSettings.items && watermarkSettings.items.length > 0) {
+          const settings = watermarkSettings.items[0] as any;
+          if (settings.watermarkImage) {
+            setAboutImage(settings.watermarkImage);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading about image:', error);
+      }
+    };
+    loadAboutImage();
+  }, []);
+
   return (
     <section id="about" className="relative w-full py-24 md:py-32 bg-black">
       <div className="max-w-[120rem] mx-auto px-8">
@@ -15,20 +36,20 @@ export default function AboutSection() {
             viewport={{ once: true }}
           >
             <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-12 tracking-tighter leading-tight">
-              About the Vision
+              About Jordan Michael Zuniga
             </h2>
 
             <div className="space-y-8 mb-12">
               <p className="text-base font-paragraph text-white/70 leading-relaxed">
-                With over a decade of experience in high-end fashion photography, I've developed a distinctive visual language that merges minimalist aesthetics with bold storytelling. Each frame is meticulously crafted to capture not just the garment, but the emotion and narrative behind it.
+                Jordan Michael Zuniga is a visionary photographer specializing in capturing the essence of visual storytelling through bold imagery and refined aesthetics. With a passion for precision and luxury restraint, Jordan has developed a distinctive visual language that merges minimalist composition with powerful narrative.
               </p>
 
               <p className="text-base font-paragraph text-white/70 leading-relaxed">
-                My work has been featured in leading fashion publications and collaborated with emerging and established designers. I believe in the power of photography to elevate brands and create lasting impressions through thoughtful composition and refined execution.
+                His work spans editorial, commercial, and campaign photography, collaborating with emerging and established designers. Each frame is meticulously crafted to elevate brands and create lasting impressions through thoughtful composition and technical excellence.
               </p>
 
               <p className="text-base font-paragraph text-white/70 leading-relaxed">
-                Specializing in editorial, commercial, and campaign work, I bring a unique perspective that combines technical excellence with creative vision. Every project is an opportunity to push boundaries and create something truly exceptional.
+                Specializing in fashion and lifestyle photography, Jordan brings a unique perspective that combines technical mastery with creative vision. Every project is an opportunity to push creative boundaries and deliver something truly exceptional.
               </p>
             </div>
 
@@ -71,8 +92,8 @@ export default function AboutSection() {
           >
             <div className="aspect-square overflow-hidden bg-white/5">
               <Image
-                src="https://static.wixstatic.com/media/e9d727_3d1e8562aca844209e2b06c4382a0d69~mv2.png?originWidth=576&originHeight=576"
-                alt="Photographer portrait"
+                src={aboutImage}
+                alt="Jordan Michael Zuniga"
                 className="w-full h-full object-cover"
               />
               {/* Subtle grain overlay */}

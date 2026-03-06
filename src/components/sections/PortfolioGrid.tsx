@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Portfolio } from '@/entities/index';
 import { Image } from '@/components/ui/image';
+import { playClickSound } from '@/lib/click-sound';
 
 interface PortfolioGridProps {
   items: Portfolio[];
@@ -48,7 +49,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
           className="mb-20"
         >
           <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
-            Selected Works
+            Selected Photos
           </h2>
           <p className="text-base font-paragraph text-white/60 max-w-xl leading-relaxed">
             A selection of recent projects showcasing diverse aesthetics and creative directions. Each work represents precision and luxury restraint.
@@ -113,6 +114,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
                 {item && (
                   <Link
                     to={`/portfolio/${item._id}`}
+                    onClick={playClickSound}
                     className="absolute inset-0"
                     aria-label={`View ${item.projectName}`}
                   />
@@ -132,9 +134,10 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
         >
           <Link
             to="/portfolio"
+            onClick={playClickSound}
             className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 text-white font-heading font-semibold text-sm tracking-wide hover:border-white/60 hover:bg-white/10 transition-all duration-300"
           >
-            View All Projects
+            View All Photos
             <ArrowRight className="w-4 h-4" />
           </Link>
         </motion.div>

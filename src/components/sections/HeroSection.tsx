@@ -1,9 +1,32 @@
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { Image } from '@/components/ui/image';
+import { useState, useEffect } from 'react';
+import { BaseCrudService } from '@/integrations';
+import { playClickSound } from '@/lib/click-sound';
 
 export default function HeroSection() {
+  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_b65d99d94acf4284abde71454dcf8408~mv2.png?originWidth=1920&originHeight=1024');
+
+  useEffect(() => {
+    const loadHeroImage = async () => {
+      try {
+        const services = await BaseCrudService.getAll('services', {}, { limit: 1 });
+        if (services.items && services.items.length > 0) {
+          const service = services.items[0] as any;
+          if (service.infographic) {
+            setHeroImage(service.infographic);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading hero image:', error);
+      }
+    };
+    loadHeroImage();
+  }, []);
+
   const scrollToGallery = () => {
+    playClickSound();
     const element = document.getElementById('portfolio');
     element?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -13,7 +36,7 @@ export default function HeroSection() {
       {/* Full-bleed hero image with minimal overlay */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="https://static.wixstatic.com/media/e9d727_b65d99d94acf4284abde71454dcf8408~mv2.png?originWidth=1920&originHeight=1024"
+          src={heroImage}
           alt="Hero background"
           className="w-full h-full object-cover"
         />
@@ -33,7 +56,7 @@ export default function HeroSection() {
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-heading font-black text-white leading-none tracking-tight uppercase">
             Visual
             <br />
-            <span className="text-red-600 font-black">Storytelling</span>
+            <span className="text-red-900 font-black">Storytelling</span>
           </h1>
         </motion.div>
 
@@ -56,12 +79,15 @@ export default function HeroSection() {
         >
           <button
             onClick={scrollToGallery}
-            className="px-8 py-3 bg-red-600 text-white font-heading font-bold text-xs tracking-widest uppercase hover:bg-red-700 transition-all duration-300 hover:scale-105"
+            className="px-8 py-3 bg-red-900 text-white font-heading font-bold text-xs tracking-widest uppercase hover:bg-red-800 transition-all duration-300 hover:scale-105"
           >
             Explore Work
           </button>
           <button
-            onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => {
+              playClickSound();
+              document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+            }}
             className="px-8 py-3 border border-white/40 text-white font-heading font-bold text-xs tracking-widest uppercase hover:border-white/80 hover:bg-white/10 transition-all duration-300"
           >
             Get in Touch

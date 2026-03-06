@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Settings } from 'lucide-react';
 import AdminPanel from './AdminPanel';
+import { playClickSound } from '@/lib/click-sound';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,6 +17,10 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleLinkClick = () => {
+    playClickSound();
+  };
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -25,54 +30,56 @@ export default function Header() {
       }`}
     >
       <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between">
-        {/* Logo - Ultra-minimal */}
+        {/* Logo - RED with squared 2 above it */}
         <Link
           to="/"
-          className="text-lg font-heading font-bold text-white tracking-widest uppercase letter-spacing-2"
+          onClick={handleLinkClick}
+          className="relative flex flex-col items-center"
         >
-          RED2
+          <span className="text-xs font-heading font-bold text-white tracking-widest leading-none mb-1">2</span>
+          <span className="text-lg font-heading font-bold text-red-900 tracking-widest uppercase">RED</span>
         </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-12">
           <Link
             to="/#portfolio"
+            onClick={handleLinkClick}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Gallery
           </Link>
           <Link
             to="/#about"
+            onClick={handleLinkClick}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             About
           </Link>
           <Link
             to="/portfolio"
+            onClick={handleLinkClick}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Work
           </Link>
           <Link
             to="/booking"
+            onClick={handleLinkClick}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Booking
           </Link>
           <Link
             to="/galleries"
+            onClick={handleLinkClick}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Galleries
           </Link>
           <Link
-            to="/#clients"
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
-          >
-            Press
-          </Link>
-          <Link
             to="/#contact"
+            onClick={handleLinkClick}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Contact
@@ -82,7 +89,10 @@ export default function Header() {
         {/* Admin & Mobile Menu */}
         <div className="flex items-center gap-6">
           <button
-            onClick={() => setIsAdminOpen(true)}
+            onClick={() => {
+              playClickSound();
+              setIsAdminOpen(true);
+            }}
             className="p-2 hover:bg-white/10 transition-colors duration-300"
             aria-label="Admin panel"
             title="Admin Panel"
@@ -91,7 +101,10 @@ export default function Header() {
           </button>
 
           <button
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => {
+              playClickSound();
+              setIsOpen(!isOpen);
+            }}
             className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300"
             aria-label="Toggle menu"
           >
@@ -114,49 +127,60 @@ export default function Header() {
             <Link
               to="/#portfolio"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
             >
               Gallery
             </Link>
             <Link
               to="/#about"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
             >
               About
             </Link>
             <Link
               to="/portfolio"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
             >
               Work
             </Link>
             <Link
               to="/booking"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
             >
               Booking
             </Link>
             <Link
               to="/galleries"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
             >
               Galleries
             </Link>
             <Link
-              to="/#clients"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => setIsOpen(false)}
-            >
-              Press
-            </Link>
-            <Link
               to="/#contact"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
             >
               Contact
             </Link>

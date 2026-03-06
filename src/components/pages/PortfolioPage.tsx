@@ -7,6 +7,7 @@ import { Portfolio } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { playClickSound } from '@/lib/click-sound';
 
 export default function PortfolioPage() {
   const [projects, setProjects] = useState<Portfolio[]>([]);
@@ -76,10 +77,10 @@ export default function PortfolioPage() {
           className="mb-20"
         >
           <h1 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
-            Portfolio
+            All Photos
           </h1>
           <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
-            A comprehensive collection of fashion photography work across various categories and styles. Each project represents precision and creative excellence.
+            A comprehensive collection of photography work across various categories and styles. Each project represents precision and creative excellence.
           </p>
         </motion.div>
 
@@ -91,7 +92,10 @@ export default function PortfolioPage() {
           className="mb-16 flex flex-wrap gap-3"
         >
           <button
-            onClick={() => handleCategoryFilter(null)}
+            onClick={() => {
+              playClickSound();
+              handleCategoryFilter(null);
+            }}
             className={`px-6 py-2 font-heading font-semibold text-sm tracking-wide transition-all duration-300 ${
               selectedCategory === null
                 ? 'bg-white text-black'
@@ -103,7 +107,10 @@ export default function PortfolioPage() {
           {categories.map((category) => (
             <button
               key={category}
-              onClick={() => handleCategoryFilter(category)}
+              onClick={() => {
+                playClickSound();
+                handleCategoryFilter(category);
+              }}
               className={`px-6 py-2 font-heading font-semibold text-sm tracking-wide transition-all duration-300 ${
                 selectedCategory === category
                   ? 'bg-white text-black'
@@ -183,6 +190,7 @@ export default function PortfolioPage() {
                   {/* Link */}
                   <Link
                     to={`/portfolio/${project._id}`}
+                    onClick={playClickSound}
                     className="absolute inset-0"
                     aria-label={`View ${project.projectName}`}
                   />
@@ -206,7 +214,7 @@ export default function PortfolioPage() {
               onClick={() => handleCategoryFilter(null)}
               className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-heading font-semibold text-sm tracking-wide hover:bg-white/90 transition-all duration-300"
             >
-              View All Projects
+              View All Photos
               <ArrowRight className="w-4 h-4" />
             </button>
           </motion.div>

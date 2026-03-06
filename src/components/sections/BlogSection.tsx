@@ -5,6 +5,7 @@ import { BaseCrudService } from '@/integrations';
 import { BlogPosts } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
+import { playClickSound } from '@/lib/click-sound';
 
 export default function BlogSection() {
   const [posts, setPosts] = useState<BlogPosts[]>([]);
@@ -123,6 +124,7 @@ export default function BlogSection() {
         >
           <Link
             to="/blog"
+            onClick={playClickSound}
             className="inline-flex items-center gap-2 px-8 py-3 border border-white/20 text-white font-heading font-bold text-sm tracking-widest uppercase hover:border-white/40 hover:bg-white/5 transition-all duration-300"
           >
             View All Stories

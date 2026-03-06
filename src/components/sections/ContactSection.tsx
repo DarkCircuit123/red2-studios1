@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { playClickSound } from '@/lib/click-sound';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -19,6 +20,7 @@ export default function ContactSection() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    playClickSound();
     setIsSubmitting(true);
 
     try {
@@ -66,6 +68,7 @@ export default function ContactSection() {
                   </h3>
                   <a
                     href="mailto:hello@studio.com"
+                    onClick={playClickSound}
                     className="text-base font-paragraph text-white hover:text-white/70 transition-colors"
                   >
                     hello@studio.com
@@ -83,6 +86,7 @@ export default function ContactSection() {
                   </h3>
                   <a
                     href="tel:+1234567890"
+                    onClick={playClickSound}
                     className="text-base font-paragraph text-white hover:text-white/70 transition-colors"
                   >
                     +1 (234) 567-890
@@ -117,6 +121,7 @@ export default function ContactSection() {
                   href="https://instagram.com"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={playClickSound}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Instagram
@@ -125,6 +130,7 @@ export default function ContactSection() {
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={playClickSound}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   LinkedIn
@@ -133,6 +139,7 @@ export default function ContactSection() {
                   href="https://twitter.com"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={playClickSound}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Twitter
@@ -241,7 +248,7 @@ export default function ContactSection() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-8 py-4 bg-red-600 text-white font-heading font-semibold text-sm tracking-wide hover:bg-red-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3"
+                className="w-full px-8 py-4 bg-red-900 text-white font-heading font-semibold text-sm tracking-wide hover:bg-red-800 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3"
               >
                 {isSubmitting ? (
                   <>
