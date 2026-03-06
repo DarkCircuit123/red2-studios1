@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
 import { LogOut, Mail, Calendar, MapPin } from 'lucide-react';
 import { Image } from '@/components/ui/image';
+import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
 
 export default function ProfilePage() {
@@ -105,10 +106,10 @@ export default function ProfilePage() {
 
             {/* Quick Links */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-              <motion.a
-                href="/galleries"
-                whileHover={{ scale: 1.02 }}
-                className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors"
+              <Link
+                to="/galleries"
+                onClick={playClickSound}
+                className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors block"
               >
                 <h3 className="text-lg font-heading font-bold text-white mb-2">
                   My Galleries
@@ -116,12 +117,12 @@ export default function ProfilePage() {
                 <p className="text-sm font-paragraph text-white/60">
                   Access your proofing galleries and approved images
                 </p>
-              </motion.a>
+              </Link>
 
-              <motion.a
-                href="/booking"
-                whileHover={{ scale: 1.02 }}
-                className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors"
+              <Link
+                to="/booking"
+                onClick={playClickSound}
+                className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors block"
               >
                 <h3 className="text-lg font-heading font-bold text-white mb-2">
                   Book Session
@@ -129,7 +130,7 @@ export default function ProfilePage() {
                 <p className="text-sm font-paragraph text-white/60">
                   Schedule your next photography session
                 </p>
-              </motion.a>
+              </Link>
             </div>
 
             {/* Logout Button */}

@@ -132,9 +132,9 @@ export default function BookingPage() {
             <p className="text-white/60 mb-6">
               Need a custom date or time? Contact us directly.
             </p>
-            <button className="px-8 py-3 bg-white text-slate-950 font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300">
+            <a href="#contact" className="inline-block px-8 py-3 bg-white text-slate-950 font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300">
               Get in Touch
-            </button>
+            </a>
           </motion.div>
         </div>
       </section>

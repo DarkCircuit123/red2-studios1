@@ -22,7 +22,7 @@ export default function SponsorsSection() {
             id: item._id,
             name: item.clientName || 'Sponsor',
             logo: item.clientLogo || 'https://static.wixstatic.com/media/e9d727_d938c5afb26f4253beab928151fb3578~mv2.jpg',
-            link: item.externalLink || '#'
+            link: item.externalLink || 'https://example.com'
           }));
           setSponsors(sponsorsList);
         }
@@ -34,7 +34,7 @@ export default function SponsorsSection() {
   }, []);
 
   return (
-    <section className="relative w-full py-20 md:py-28 bg-black border-t border-white/10\">
+    <section className="relative w-full py-20 md:py-28 bg-black border-t border-white/10">
       <div className="max-w-[120rem] mx-auto px-8">
         {/* Section Header */}
         <motion.div

@@ -97,6 +97,7 @@ export default function PortfolioDetailPage() {
           <button
             onClick={() => setSelectedImage(null)}
             className="absolute top-8 right-8 p-2 text-white/60 hover:text-white transition-colors"
+            aria-label="Close lightbox"
           >
             <X className="w-6 h-6" />
           </button>

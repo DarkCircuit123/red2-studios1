@@ -100,6 +100,7 @@ export default function Interactive3DGallerySection() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="w-16 h-16 flex items-center justify-center bg-white/5 border border-white/20 hover:border-white/60 transition-all duration-300"
+              aria-label="Previous project"
             >
               <ChevronLeft className="w-6 h-6 text-white" />
             </motion.button>
@@ -157,6 +158,7 @@ export default function Interactive3DGallerySection() {
               onClick={() => setIsFullscreen(!isFullscreen)}
               whileHover={{ scale: 1.1 }}
               className="absolute top-4 right-4 p-3 bg-black/50 hover:bg-black/80 transition-colors z-20"
+              aria-label="Toggle fullscreen"
             >
               <Maximize2 className="w-4 h-4 text-white" />
             </motion.button>
@@ -169,6 +171,7 @@ export default function Interactive3DGallerySection() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="w-16 h-16 flex items-center justify-center bg-white/5 border border-white/20 hover:border-white/60 transition-all duration-300"
+              aria-label="Next project"
             >
               <ChevronRight className="w-6 h-6 text-white" />
             </motion.button>
