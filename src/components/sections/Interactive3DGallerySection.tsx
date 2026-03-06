@@ -63,7 +63,7 @@ export default function Interactive3DGallerySection() {
   }
 
   return (
-    <section className="relative w-full py-24 md:py-32 bg-black">
+    <section id="portfolio" className="relative w-full py-24 md:py-32 bg-black">
       <div className="max-w-[120rem] mx-auto px-8">
         {/* Section Header */}
         <motion.div

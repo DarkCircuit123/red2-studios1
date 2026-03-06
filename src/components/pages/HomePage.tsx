@@ -7,6 +7,7 @@ import Interactive3DGallerySection from '@/components/sections/Interactive3DGall
 import BlogSection from '@/components/sections/BlogSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
+import RSSTickerSection from '@/components/sections/RSSTickerSection';
 import SplashScreen from '@/components/SplashScreen';
 
 export default function HomePage() {
@@ -40,6 +41,9 @@ export default function HomePage() {
 
         {/* Interactive 3D Gallery */}
         <Interactive3DGallerySection />
+
+        {/* RSS Ticker */}
+        <RSSTickerSection />
 
         {/* Blog / Stories */}
         <BlogSection />
