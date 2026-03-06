@@ -87,7 +87,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
                 <div className="absolute inset-0 bg-grain opacity-5" />
 
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300" />
 
                 {/* Content - appears on hover */}
                 <motion.div

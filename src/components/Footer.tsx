@@ -66,36 +66,36 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/#about"
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Editorial
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/#about"
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Commercial
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/#about"
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Campaigns
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/#about"
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Consulting
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -142,24 +142,24 @@ export default function Footer() {
               © {currentYear} Studio. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <a
-                href="#"
+              <Link
+                to="/#about"
                 className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
               >
                 Privacy
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                to="/#about"
                 className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
               >
                 Terms
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                to="/#about"
                 className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
               >
                 Cookies
-              </a>
+              </Link>
             </div>
           </div>
         </div>

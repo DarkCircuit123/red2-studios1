@@ -6,7 +6,7 @@ import { BaseCrudService } from '@/integrations';
 import { playClickSound } from '@/lib/click-sound';
 
 export default function HeroSection() {
-  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_d938c5afb26f4253beab928151fb3578~mv2.jpg');
+  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_fef6e24ab9f94ffc87e37c2461c2f84c~mv2.png?originWidth=1600&originHeight=1152');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function HeroSection() {
           />
         )}
         {/* Minimal dark overlay for text readability */}
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       {/* Content with elegant fade-in and delay sequencing */}

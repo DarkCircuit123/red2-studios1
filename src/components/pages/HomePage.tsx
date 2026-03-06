@@ -6,6 +6,8 @@ import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
 import AboutSection from '@/components/sections/AboutSection';
 import PortfolioGrid from '@/components/sections/PortfolioGrid';
+import AIImageSearchSection from '@/components/sections/AIImageSearchSection';
+import Interactive3DGallerySection from '@/components/sections/Interactive3DGallerySection';
 import BlogSection from '@/components/sections/BlogSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
@@ -45,6 +47,12 @@ export default function HomePage() {
 
         {/* Portfolio Grid */}
         <PortfolioGrid items={portfolioItems} isLoading={isLoading} />
+
+        {/* AI Image Search */}
+        <AIImageSearchSection />
+
+        {/* Interactive 3D Gallery */}
+        <Interactive3DGallerySection />
 
         {/* Blog / Stories */}
         <BlogSection />

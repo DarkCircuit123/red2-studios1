@@ -30,7 +30,7 @@ export default function BlogSection() {
 
   return (
     <section id="blog" className="relative w-full py-24 md:py-32 bg-black">
-      <div className="max-w-[100rem] mx-auto px-8">
+      <div className="max-w-[120rem] mx-auto px-8">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

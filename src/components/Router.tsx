@@ -2,12 +2,14 @@ import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
+import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import PortfolioDetailPage from './pages/PortfolioDetailPage';
 import BookingPage from './pages/BookingPage';
 import ClientGalleriesPage from './pages/ClientGalleriesPage';
 import BlogPage from './pages/BlogPage';
+import ProfilePage from './pages/ProfilePage';
 
 // Layout component that includes ScrollToTop
 function Layout() {
@@ -48,6 +50,14 @@ const router = createBrowserRouter([
       {
         path: "blog",
         element: <BlogPage />,
+      },
+      {
+        path: "profile",
+        element: (
+          <MemberProtectedRoute>
+            <ProfilePage />
+          </MemberProtectedRoute>
+        ),
       },
       {
         path: "*",

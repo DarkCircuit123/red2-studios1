@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Settings } from 'lucide-react';
+import { Menu, X, Settings, LogOut } from 'lucide-react';
+import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
 import { playClickSound } from '@/lib/click-sound';
 
@@ -8,6 +9,7 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const { member, isAuthenticated, isLoading, actions } = useMember();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,14 +32,17 @@ export default function Header() {
       }`}
     >
       <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between">
-        {/* Logo - RED² */}
+        {/* Logo - RED² with 2 above D */}
         <Link
           to="/"
           onClick={handleLinkClick}
-          className="relative flex items-baseline gap-0"
+          className="relative flex items-center gap-0"
         >
-          <span className="text-lg font-heading font-bold text-red-900 tracking-widest uppercase">RED</span>
-          <span className="text-xs font-heading font-bold text-red-900 tracking-widest leading-none">²</span>
+          <span className="text-lg font-heading font-bold text-red-900 tracking-widest uppercase">RE</span>
+          <div className="relative inline-block">
+            <span className="text-xs font-heading font-bold text-white tracking-widest leading-none absolute -top-2 left-1/2 transform -translate-x-1/2">²</span>
+            <span className="text-lg font-heading font-bold text-red-900 tracking-widest uppercase">D</span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
@@ -88,6 +93,43 @@ export default function Header() {
 
         {/* Admin & Mobile Menu */}
         <div className="flex items-center gap-6">
+          {/* Auth Links */}
+          {!isLoading && (
+            <>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/profile"
+                    onClick={handleLinkClick}
+                    className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest hidden sm:block"
+                  >
+                    {member?.profile?.nickname || 'Profile'}
+                  </Link>
+                  <button
+                    onClick={() => {
+                      playClickSound();
+                      actions.logout();
+                    }}
+                    className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest hidden sm:flex items-center gap-2"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    playClickSound();
+                    actions.login();
+                  }}
+                  className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest hidden sm:block"
+                >
+                  Client Login
+                </button>
+              )}
+            </>
+          )}
+
           <button
             onClick={() => {
               playClickSound();
@@ -184,6 +226,51 @@ export default function Header() {
             >
               Contact
             </Link>
+            {/* Mobile Auth */}
+            {!isLoading && (
+              <>
+                {isAuthenticated ? (
+                  <>
+                    <div className="border-t border-white/10 pt-6">
+                      <Link
+                        to="/profile"
+                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest block mb-4"
+                        onClick={() => {
+                          handleLinkClick();
+                          setIsOpen(false);
+                        }}
+                      >
+                        {member?.profile?.nickname || 'Profile'}
+                      </Link>
+                      <button
+                        onClick={() => {
+                          playClickSound();
+                          actions.logout();
+                          setIsOpen(false);
+                        }}
+                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2"
+                      >
+                        <LogOut className="w-3 h-3" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="border-t border-white/10 pt-6">
+                    <button
+                      onClick={() => {
+                        playClickSound();
+                        actions.login();
+                        setIsOpen(false);
+                      }}
+                      className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+                    >
+                      Client Login
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
