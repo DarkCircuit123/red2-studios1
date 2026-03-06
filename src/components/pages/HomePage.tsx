@@ -15,7 +15,14 @@ import SplashScreen from '@/components/SplashScreen';
 export default function HomePage() {
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Only show splash screen on first visit in this session
+    if (typeof window !== 'undefined') {
+      const splashShown = sessionStorage.getItem('splashScreenShown');
+      return !splashShown;
+    }
+    return true;
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -32,9 +39,16 @@ export default function HomePage() {
     loadData();
   }, []);
 
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('splashScreenShown', 'true');
+    }
+  };
+
   return (
     <>
-      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       <div className="min-h-screen bg-black text-white">
         <Header />
 
