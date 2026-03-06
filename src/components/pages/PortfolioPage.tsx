@@ -64,7 +64,7 @@ export default function PortfolioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-black">
       <Header />
 
       <main className="max-w-[120rem] mx-auto px-8 py-24 md:py-32">
@@ -94,7 +94,7 @@ export default function PortfolioPage() {
             onClick={() => handleCategoryFilter(null)}
             className={`px-6 py-2 font-heading font-semibold text-sm tracking-wide transition-all duration-300 ${
               selectedCategory === null
-                ? 'bg-white text-slate-950'
+                ? 'bg-white text-black'
                 : 'border border-white/20 text-white hover:border-white/60 hover:bg-white/5'
             }`}
           >
@@ -106,7 +106,7 @@ export default function PortfolioPage() {
               onClick={() => handleCategoryFilter(category)}
               className={`px-6 py-2 font-heading font-semibold text-sm tracking-wide transition-all duration-300 ${
                 selectedCategory === category
-                  ? 'bg-white text-slate-950'
+                  ? 'bg-white text-black'
                   : 'border border-white/20 text-white hover:border-white/60 hover:bg-white/5'
               }`}
             >
@@ -123,7 +123,7 @@ export default function PortfolioPage() {
               .map((_, i) => (
                 <div
                   key={i}
-                  className="aspect-square bg-slate-800 animate-pulse"
+                  className="aspect-square bg-white/5 animate-pulse"
                 />
               ))}
           </div>
@@ -140,7 +140,7 @@ export default function PortfolioPage() {
                 variants={itemVariants}
                 onMouseEnter={() => setHoveredId(project._id)}
                 onMouseLeave={() => setHoveredId(null)}
-                className={`group relative overflow-hidden bg-slate-900 cursor-pointer ${
+                className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
                   index === 0 ? 'md:col-span-2 md:row-span-2' : ''
                 } ${index === 1 ? 'md:row-span-2' : ''}`}
               >
@@ -157,7 +157,7 @@ export default function PortfolioPage() {
                   <div className="absolute inset-0 bg-grain opacity-5" />
 
                   {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
 
                   {/* Content - appears on hover */}
                   <motion.div
@@ -204,7 +204,7 @@ export default function PortfolioPage() {
             </p>
             <button
               onClick={() => handleCategoryFilter(null)}
-              className="inline-flex items-center gap-3 px-8 py-4 bg-white text-slate-950 font-heading font-semibold text-sm tracking-wide hover:bg-white/90 transition-all duration-300"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-heading font-semibold text-sm tracking-wide hover:bg-white/90 transition-all duration-300"
             >
               View All Projects
               <ArrowRight className="w-4 h-4" />

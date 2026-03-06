@@ -28,7 +28,7 @@ export default function BlogPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-black text-white">
       <Header />
 
       <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20">

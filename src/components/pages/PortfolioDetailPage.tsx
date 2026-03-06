@@ -41,7 +41,7 @@ export default function PortfolioDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <Header />
         <LoadingSpinner />
       </div>
@@ -50,7 +50,7 @@ export default function PortfolioDetailPage() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-slate-950">
+      <div className="min-h-screen bg-black">
         <Header />
         <div className="max-w-[120rem] mx-auto px-8 py-32 text-center">
           <h1 className="text-4xl font-heading font-bold text-white mb-8">
@@ -58,7 +58,7 @@ export default function PortfolioDetailPage() {
           </h1>
           <Link
             to="/#portfolio"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-slate-950 font-heading font-semibold text-sm tracking-wide hover:bg-white/90 transition-all"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-heading font-semibold text-sm tracking-wide hover:bg-white/90 transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Portfolio
@@ -81,7 +81,7 @@ export default function PortfolioDetailPage() {
   ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-black">
       <Header />
 
       {/* Lightbox */}
@@ -90,7 +90,7 @@ export default function PortfolioDetailPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
           <button

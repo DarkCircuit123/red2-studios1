@@ -28,7 +28,7 @@ export default function BlogSection() {
   if (isLoading || posts.length === 0) return null;
 
   return (
-    <section id="blog" className="relative w-full py-24 md:py-32 bg-white">
+    <section id="blog" className="relative w-full py-24 md:py-32 bg-black">
       <div className="max-w-[100rem] mx-auto px-8">
         {/* Section Header */}
         <motion.div
@@ -38,10 +38,10 @@ export default function BlogSection() {
           viewport={{ once: true }}
           className="mb-16"
         >
-          <h2 className="text-5xl md:text-6xl font-heading font-black text-black mb-4 uppercase">
+          <h2 className="text-5xl md:text-6xl font-heading font-black text-white mb-4 uppercase">
             Stories & Insights
           </h2>
-          <p className="text-lg text-black/60 max-w-2xl">
+          <p className="text-lg text-white/60 max-w-2xl">
             Behind-the-scenes stories, photography tips, and creative insights from our latest shoots.
           </p>
         </motion.div>
@@ -59,7 +59,7 @@ export default function BlogSection() {
             >
               {/* Featured Image */}
               {post.thumbnailImage && (
-                <div className="relative overflow-hidden rounded-lg mb-6 aspect-video bg-black/5">
+                <div className="relative overflow-hidden rounded-lg mb-6 aspect-video bg-white/5">
                   <Image
                     src={post.thumbnailImage}
                     alt={post.title || 'Blog post'}
@@ -72,7 +72,7 @@ export default function BlogSection() {
               {/* Content */}
               <div className="space-y-3">
                 {/* Meta Info */}
-                <div className="flex items-center gap-4 text-xs text-black/40 uppercase tracking-wide">
+                <div className="flex items-center gap-4 text-xs text-white/40 uppercase tracking-wide">
                   {post.publicationDate && (
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
@@ -92,19 +92,19 @@ export default function BlogSection() {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-heading font-bold text-black group-hover:text-black/80 transition-colors">
+                <h3 className="text-xl font-heading font-bold text-white group-hover:text-white/80 transition-colors">
                   {post.title}
                 </h3>
 
                 {/* Excerpt */}
                 {post.excerpt && (
-                  <p className="text-sm text-black/60 line-clamp-2">
+                  <p className="text-sm text-white/60 line-clamp-2">
                     {post.excerpt}
                   </p>
                 )}
 
                 {/* Read More Link */}
-                <div className="flex items-center gap-2 text-sm text-black/60 group-hover:text-black transition-colors pt-2">
+                <div className="flex items-center gap-2 text-sm text-white/60 group-hover:text-white transition-colors pt-2">
                   <span>Read More</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -123,7 +123,7 @@ export default function BlogSection() {
         >
           <Link
             to="/blog"
-            className="inline-flex items-center gap-2 px-8 py-3 border border-black/20 text-black font-heading font-bold text-sm tracking-widest uppercase hover:border-black/40 hover:bg-black/5 transition-all duration-300"
+            className="inline-flex items-center gap-2 px-8 py-3 border border-white/20 text-white font-heading font-bold text-sm tracking-widest uppercase hover:border-white/40 hover:bg-white/5 transition-all duration-300"
           >
             View All Stories
             <ArrowRight className="w-4 h-4" />

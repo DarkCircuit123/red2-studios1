@@ -31,7 +31,7 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
   };
 
   return (
-    <section id="clients" className="relative w-full py-24 md:py-32 bg-slate-900">
+    <section id="clients" className="relative w-full py-24 md:py-32 bg-black">
       <div className="max-w-[120rem] mx-auto px-8">
         {/* Section Header */}
         <motion.div
@@ -61,7 +61,7 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
             <motion.div
               key={client?._id || index}
               variants={itemVariants}
-              className="group relative aspect-square overflow-hidden bg-slate-800 border border-white/10 flex items-center justify-center p-6 hover:border-white/30 transition-all duration-300"
+              className="group relative aspect-square overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center p-6 hover:border-white/30 transition-all duration-300"
             >
               {client?.clientLogo ? (
                 <Image
@@ -88,7 +88,7 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
                 <motion.div
                   initial={{ opacity: 0 }}
                   whileHover={{ opacity: 1 }}
-                  className="absolute inset-0 bg-slate-950/80 flex items-center justify-center p-4"
+                  className="absolute inset-0 bg-black/80 flex items-center justify-center p-4"
                 >
                   <p className="text-sm font-paragraph text-white text-center">
                     {client.highlightDescription}

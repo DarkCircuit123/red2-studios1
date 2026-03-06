@@ -43,7 +43,7 @@ export default function HomePage() {
   return (
     <>
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-      <div className="min-h-screen bg-white text-black">
+      <div className="min-h-screen bg-black text-white">
         <Header />
 
         {/* Hero Section */}

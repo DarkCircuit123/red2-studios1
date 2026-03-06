@@ -4,52 +4,50 @@ import { Image } from '@/components/ui/image';
 
 export default function HeroSection() {
   const scrollToGallery = () => {
-    const element = document.getElementById('gallery');
+    const element = document.getElementById('portfolio');
     element?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-white">
-      {/* Full-bleed hero image with grain overlay */}
+    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
+      {/* Full-bleed hero image with minimal overlay */}
       <div className="absolute inset-0 z-0">
         <Image
           src="https://static.wixstatic.com/media/e9d727_b65d99d94acf4284abde71454dcf8408~mv2.png?originWidth=1920&originHeight=1024"
           alt="Hero background"
           className="w-full h-full object-cover"
         />
-        {/* Subtle filmic grain overlay */}
-        <div className="absolute inset-0 bg-grain opacity-5" />
-        {/* Intelligent highlight protection - dark vignette */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-white/40" />
+        {/* Minimal dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/40" />
       </div>
 
       {/* Content with elegant fade-in and delay sequencing */}
       <div className="relative z-10 max-w-[120rem] mx-auto px-8 text-left w-full h-full flex flex-col justify-center">
-        {/* Main headline - modern, blocky, sharp */}
+        {/* Main headline - bold and clean */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.1, ease: 'easeOut' }}
           className="mb-8"
         >
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-heading font-black text-black leading-none tracking-tight uppercase">
+          <h1 className="text-6xl md:text-8xl lg:text-9xl font-heading font-black text-white leading-none tracking-tight uppercase">
             Visual
             <br />
-            <span className="text-black/80 font-bold">Storytelling</span>
+            <span className="text-red-600 font-black">Storytelling</span>
           </h1>
         </motion.div>
 
-        {/* Subheading - refined and modern */}
+        {/* Subheading - refined */}
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
-          className="text-sm md:text-base font-paragraph text-black/70 max-w-2xl mb-12 leading-relaxed font-light tracking-wide"
+          className="text-sm md:text-base font-paragraph text-white/80 max-w-2xl mb-12 leading-relaxed font-light tracking-wide"
         >
           Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.
         </motion.p>
 
-        {/* CTA buttons - minimal design */}
+        {/* CTA buttons - bold and minimal */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -64,7 +62,7 @@ export default function HeroSection() {
           </button>
           <button
             onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-8 py-3 border border-black/40 text-black font-heading font-bold text-xs tracking-widest uppercase hover:border-black/80 hover:bg-black/5 transition-all duration-300"
+            className="px-8 py-3 border border-white/40 text-white font-heading font-bold text-xs tracking-widest uppercase hover:border-white/80 hover:bg-white/10 transition-all duration-300"
           >
             Get in Touch
           </button>
@@ -79,7 +77,7 @@ export default function HeroSection() {
       >
         <button
           onClick={scrollToGallery}
-          className="flex flex-col items-center gap-3 text-black/50 hover:text-black/70 transition-colors duration-300"
+          className="flex flex-col items-center gap-3 text-white/50 hover:text-white/70 transition-colors duration-300"
         >
           <span className="text-xs font-mono uppercase tracking-widest">Scroll</span>
           <ChevronDown className="w-4 h-4" />

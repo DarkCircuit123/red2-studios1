@@ -37,7 +37,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
   };
 
   return (
-    <section id="portfolio" className="relative w-full py-24 md:py-32 bg-white">
+    <section id="portfolio" className="relative w-full py-24 md:py-32 bg-black">
       <div className="max-w-[120rem] mx-auto px-8">
         {/* Section Header */}
         <motion.div
@@ -47,10 +47,10 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
           viewport={{ once: true }}
           className="mb-20"
         >
-          <h2 className="text-6xl md:text-7xl font-heading font-bold text-black mb-6 tracking-tighter">
+          <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
             Selected Works
           </h2>
-          <p className="text-base font-paragraph text-black/50 max-w-xl leading-relaxed">
+          <p className="text-base font-paragraph text-white/60 max-w-xl leading-relaxed">
             A selection of recent projects showcasing diverse aesthetics and creative directions. Each work represents precision and luxury restraint.
           </p>
         </motion.div>
@@ -69,7 +69,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
               variants={itemVariants}
               onMouseEnter={() => item && setHoveredId(item._id)}
               onMouseLeave={() => setHoveredId(null)}
-              className={`group relative overflow-hidden bg-black/5 cursor-pointer ${
+              className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
                 index === 0 ? 'md:col-span-2 md:row-span-2' : ''
               } ${index === 1 ? 'md:row-span-2' : ''}`}
             >
@@ -86,7 +86,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
                 <div className="absolute inset-0 bg-grain opacity-5" />
 
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
 
                 {/* Content - appears on hover */}
                 <motion.div
@@ -132,7 +132,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
         >
           <Link
             to="/portfolio"
-            className="inline-flex items-center gap-3 px-8 py-4 border border-black/20 text-black font-heading font-semibold text-sm tracking-wide hover:border-black/60 hover:bg-black/5 transition-all duration-300"
+            className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 text-white font-heading font-semibold text-sm tracking-wide hover:border-white/60 hover:bg-white/10 transition-all duration-300"
           >
             View All Projects
             <ArrowRight className="w-4 h-4" />
