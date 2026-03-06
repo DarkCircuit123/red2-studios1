@@ -15,13 +15,13 @@
     @apply bg-white dark:bg-slate-950 text-foreground dark:text-white transition-colors duration-300;
   }
 
-  /* DSLR-like focus mark cursor - red non-solid box */
+  /* DSLR-like focus mark cursor - red box without crosshairs, slightly smaller */
   * {
-    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" fill="none" stroke="%23dc2626" stroke-width="2"/><line x1="12" y1="16" x2="20" y2="16" stroke="%23dc2626" stroke-width="1"/><line x1="16" y1="12" x2="16" y2="20" stroke="%23dc2626" stroke-width="1"/></svg>') 16 16, auto;
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><rect x="3" y="3" width="22" height="22" fill="none" stroke="%23dc2626" stroke-width="2"/></svg>') 14 14, auto;
   }
 
   a, button {
-    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="24" fill="none" stroke="%23dc2626" stroke-width="2"/><line x1="12" y1="16" x2="20" y2="16" stroke="%23dc2626" stroke-width="1"/><line x1="16" y1="12" x2="16" y2="20" stroke="%23dc2626" stroke-width="1"/></svg>') 16 16, pointer;
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><rect x="3" y="3" width="22" height="22" fill="none" stroke="%23dc2626" stroke-width="2"/></svg>') 14 14, pointer;
   }
 }
 

@@ -30,14 +30,14 @@ export default function Header() {
       }`}
     >
       <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between">
-        {/* Logo - RED with squared 2 above it */}
+        {/* Logo - RED² */}
         <Link
           to="/"
           onClick={handleLinkClick}
-          className="relative flex flex-col items-center"
+          className="relative flex items-baseline gap-0"
         >
-          <span className="text-xs font-heading font-bold text-white tracking-widest leading-none mb-1">2</span>
           <span className="text-lg font-heading font-bold text-red-900 tracking-widest uppercase">RED</span>
+          <span className="text-xs font-heading font-bold text-red-900 tracking-widest leading-none">²</span>
         </Link>
 
         {/* Desktop Navigation */}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
+import { BaseCrudService } from '@/integrations';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -8,6 +9,38 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [logoImage, setLogoImage] = useState('https://static.wixstatic.com/media/e9d727_3270fd9b8a104831bb70e110e6e8f618~mv2.jpeg');
+
+  useEffect(() => {
+    const loadSplashContent = async () => {
+      try {
+        const watermarkSettings = await BaseCrudService.getAll('watermarksettings', {}, { limit: 1 });
+        if (watermarkSettings.items && watermarkSettings.items.length > 0) {
+          const settings = watermarkSettings.items[0] as any;
+          if (settings.watermarkImage) {
+            setLogoImage(settings.watermarkImage);
+          }
+        }
+
+        // Try to load video from services
+        const services = await BaseCrudService.getAll('services', {}, { limit: 1 });
+        if (services.items && services.items.length > 0) {
+          const service = services.items[0] as any;
+          if (service.fullDescription && service.fullDescription.includes('http')) {
+            const urlMatch = service.fullDescription.match(/(https?:\/\/[^\s]+\.mp4)/);
+            if (urlMatch) {
+              setVideoUrl(urlMatch[1]);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading splash content:', error);
+      }
+    };
+
+    loadSplashContent();
+  }, []);
 
   useEffect(() => {
     // Total animation duration: 3.5 seconds
@@ -29,7 +62,19 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5, delay: 3 }}
     >
-      {/* Background video loop - optional, can be added later */}
+      {/* Background video loop - optional */}
+      {videoUrl && (
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src={videoUrl} type="video/mp4" />
+        </video>
+      )}
+
       <div className="absolute inset-0 bg-white" />
 
       {/* Animated logo container */}
@@ -52,8 +97,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         }}
       >
         <Image
-          src="https://static.wixstatic.com/media/e9d727_3270fd9b8a104831bb70e110e6e8f618~mv2.jpeg"
-          alt="RED2 Logo"
+          src={logoImage}
+          alt="RED² Logo"
           className="w-48 h-auto md:w-64"
           width={256}
         />

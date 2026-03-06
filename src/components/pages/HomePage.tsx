@@ -7,6 +7,7 @@ import HeroSection from '@/components/sections/HeroSection';
 import AboutSection from '@/components/sections/AboutSection';
 import PortfolioGrid from '@/components/sections/PortfolioGrid';
 import BlogSection from '@/components/sections/BlogSection';
+import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import SplashScreen from '@/components/SplashScreen';
 
@@ -47,6 +48,9 @@ export default function HomePage() {
 
         {/* Blog / Stories */}
         <BlogSection />
+
+        {/* Sponsored By */}
+        <SponsorsSection />
 
         {/* Contact / Booking */}
         <ContactSection />

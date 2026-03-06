@@ -4,7 +4,7 @@ import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 
 export default function AboutSection() {
-  const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_3d1e8562aca844209e2b06c4382a0d69~mv2.png?originWidth=576&originHeight=576');
+  const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_d938c5afb26f4253beab928151fb3578~mv2.jpg');
 
   useEffect(() => {
     const loadAboutImage = async () => {

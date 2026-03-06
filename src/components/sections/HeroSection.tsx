@@ -6,7 +6,8 @@ import { BaseCrudService } from '@/integrations';
 import { playClickSound } from '@/lib/click-sound';
 
 export default function HeroSection() {
-  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_b65d99d94acf4284abde71454dcf8408~mv2.png?originWidth=1920&originHeight=1024');
+  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_d938c5afb26f4253beab928151fb3578~mv2.jpg');
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const loadHeroImage = async () => {
@@ -16,6 +17,13 @@ export default function HeroSection() {
           const service = services.items[0] as any;
           if (service.infographic) {
             setHeroImage(service.infographic);
+          }
+          // Check for video URL in the service description or custom field
+          if (service.fullDescription && service.fullDescription.includes('http')) {
+            const urlMatch = service.fullDescription.match(/(https?:\/\/[^\s]+)/);
+            if (urlMatch) {
+              setVideoUrl(urlMatch[1]);
+            }
           }
         }
       } catch (error) {
@@ -33,13 +41,30 @@ export default function HeroSection() {
 
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
-      {/* Full-bleed hero image with minimal overlay */}
+      {/* Full-bleed hero background - video or image */}
       <div className="absolute inset-0 z-0">
-        <Image
-          src={heroImage}
-          alt="Hero background"
-          className="w-full h-full object-cover"
-        />
+        {videoUrl ? (
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src={videoUrl} type="video/mp4" />
+            <Image
+              src={heroImage}
+              alt="Hero background"
+              className="w-full h-full object-cover"
+            />
+          </video>
+        ) : (
+          <Image
+            src={heroImage}
+            alt="Hero background"
+            className="w-full h-full object-cover"
+          />
+        )}
         {/* Minimal dark overlay for text readability */}
         <div className="absolute inset-0 bg-black/40" />
       </div>
