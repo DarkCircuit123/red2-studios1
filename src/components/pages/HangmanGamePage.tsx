@@ -84,39 +84,63 @@ export default function HangmanGamePage() {
 
       // Category display
       categoryText = this.add.text(50, 20, `Category: ${selectedCategory}`, {
-        font: '20px monospace',
+        font: '18px monospace',
         fill: '#4a0e0e',
       });
 
       // Wrong count display
       wrongCountText = this.add.text(50, 50, `Wrong: ${wrongGuesses}/${maxWrong}`, {
-        font: '20px monospace',
+        font: '18px monospace',
         fill: '#ff6b6b',
       });
 
-      // Gallow structure
-      this.add.rectangle(150, 250, 20, 250, 0xffffff); // vertical pole
-      this.add.rectangle(150, 100, 150, 20, 0xffffff); // horizontal beam
-      this.add.line(300, 100, 0, 0, 0, 80, 0xffffff); // rope
+      // Gallow structure with improved styling
+      const gallowColor = 0xd4a574; // wood color
+      this.add.rectangle(150, 250, 20, 250, gallowColor); // vertical pole
+      this.add.rectangle(150, 100, 150, 20, gallowColor); // horizontal beam
+      this.add.line(300, 100, 0, 0, 0, 80, gallowColor).setLineWidth(3); // rope
 
       // Word UI
       wordText = this.add.text(400, 150, displayWord.join(' '), {
-        font: '60px monospace',
+        font: '56px monospace',
         fill: '#ffffff',
         align: 'center',
       });
 
-      // Hangman drawing stages
-      hangmanParts.push(this.add.circle(300, 180, 40, 0xffffff).setVisible(false)); // head
-      hangmanParts.push(this.add.rectangle(300, 260, 20, 120, 0xffffff).setVisible(false)); // body
-      hangmanParts.push(this.add.rectangle(240, 290, 60, 20, 0xffffff).setVisible(false)); // left arm
-      hangmanParts.push(this.add.rectangle(360, 290, 60, 20, 0xffffff).setVisible(false)); // right arm
-      hangmanParts.push(this.add.rectangle(280, 380, 20, 80, 0xffffff).setVisible(false)); // left leg
-      hangmanParts.push(this.add.rectangle(320, 380, 20, 80, 0xffffff).setVisible(false)); // right leg
+      // Hangman drawing stages - sprite-based approach with graphics
+      // Head
+      hangmanParts.push(
+        this.add.graphics().setVisible(false).fillStyle(0xfdbcb4, 1).fillCircle(300, 180, 35)
+      );
+      
+      // Body
+      hangmanParts.push(
+        this.add.graphics().setVisible(false).fillStyle(0xff6b6b, 1).fillRect(290, 220, 20, 100)
+      );
+      
+      // Left arm
+      hangmanParts.push(
+        this.add.graphics().setVisible(false).fillStyle(0xfdbcb4, 1).fillRect(240, 245, 50, 15)
+      );
+      
+      // Right arm
+      hangmanParts.push(
+        this.add.graphics().setVisible(false).fillStyle(0xfdbcb4, 1).fillRect(310, 245, 50, 15)
+      );
+      
+      // Left leg
+      hangmanParts.push(
+        this.add.graphics().setVisible(false).fillStyle(0x4a4a4a, 1).fillRect(285, 320, 12, 70)
+      );
+      
+      // Right leg
+      hangmanParts.push(
+        this.add.graphics().setVisible(false).fillStyle(0x4a4a4a, 1).fillRect(303, 320, 12, 70)
+      );
 
-      // Game over text
-      gameOverText = this.add.text(400, 500, '', {
-        font: '40px monospace',
+      // Game over text - smaller size
+      gameOverText = this.add.text(400, 480, '', {
+        font: '28px monospace',
         fill: '#ffffff',
         align: 'center',
       });
@@ -185,7 +209,6 @@ export default function HangmanGamePage() {
       <Header />
       <main className="flex-1 flex items-center justify-center py-8">
         <div className="w-full max-w-4xl px-4">
-          <h1 className="font-heading text-4xl text-center mb-8 text-primary">Hangman Game</h1>
           <div
             ref={gameContainerRef}
             className="w-full bg-black rounded-lg border border-primary overflow-hidden"
