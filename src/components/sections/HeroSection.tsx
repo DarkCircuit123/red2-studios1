@@ -6,7 +6,7 @@ import { BaseCrudService } from '@/integrations';
 import { playClickSound } from '@/lib/click-sound';
 
 export default function HeroSection() {
-  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_e512f95c1c554c68831b248aa4b50f26~mv2.png?originWidth=1600&originHeight=1152');
+  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_c01a98369e0e46449c4db84b41fdb2dc~mv2.jpg');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
