@@ -9,15 +9,15 @@ export default function GalagaPage() {
     script.src = 'https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js';
     script.async = true;
     script.onload = () => {
-      initializeGame();
+      // Ensure DOM is ready before initializing game
+      setTimeout(() => {
+        initializeGame();
+      }, 100);
     };
-    document.body.appendChild(script);
+    document.head.appendChild(script);
 
     return () => {
-      // Cleanup
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
+      // Don't remove the script - let it persist for the game
     };
   }, []);
 
@@ -42,6 +42,7 @@ export default function GalagaPage() {
       parent: 'game',
       width: 1100,
       height: 800,
+      backgroundColor: '#000000',
       physics: {
         default: 'arcade',
         arcade: { debug: false },
@@ -57,13 +58,10 @@ export default function GalagaPage() {
       this.load.image('laser', 'https://labs.phaser.io/assets/sprites/laser.png');
       this.load.image('boom', 'https://labs.phaser.io/assets/particles/red.png');
       this.load.image('star', 'https://labs.phaser.io/assets/demoscene/star2.png');
-      this.load.audio('music', 'https://labs.phaser.io/assets/audio/techno.ogg');
     }
 
     function create(this: any) {
       cursors = this.input.keyboard.createCursorKeys();
-
-      this.sound.add('music', { loop: true, volume: 0.3 }).play();
 
       /* Stars */
       for (let i = 0; i < 260; i++) {
