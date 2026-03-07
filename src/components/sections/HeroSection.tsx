@@ -62,7 +62,7 @@ export default function HeroSection() {
           <Image
             src={heroImage}
             alt="Hero background"
-            className="w-full h-full object-cover opacity-[0]"
+            className="w-full h-full object-cover"
           />
         )}
         {/* Minimal dark overlay for text readability */}
