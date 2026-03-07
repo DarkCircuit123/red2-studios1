@@ -34,13 +34,24 @@ export default function Header() {
       return;
     }
     
-    // On homepage, scroll to element
-    setTimeout(() => {
+    // On homepage, scroll to element with multiple attempts
+    const scrollToElement = () => {
       const element = document.querySelector(hash);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        // Add extra offset for fixed header
+        const headerHeight = 80;
+        const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+        window.scrollTo({
+          top: elementPosition,
+          behavior: 'smooth'
+        });
       }
-    }, 100);
+    };
+    
+    // Try immediately and with delays to handle dynamic content
+    scrollToElement();
+    setTimeout(scrollToElement, 100);
+    setTimeout(scrollToElement, 300);
   };
 
   return (

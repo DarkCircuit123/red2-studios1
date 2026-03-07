@@ -32,15 +32,28 @@ export default function HomePage() {
       const params = new URLSearchParams(window.location.search);
       const scrollTo = params.get('scroll');
       if (scrollTo) {
-        // Wait for DOM to be ready
-        setTimeout(() => {
+        // Wait for DOM to be ready and scroll with multiple attempts
+        const scrollToElement = () => {
           const element = document.querySelector(`#${scrollTo}`);
           if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
+            const headerHeight = 80;
+            const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+            window.scrollTo({
+              top: elementPosition,
+              behavior: 'smooth'
+            });
           }
-          // Clean up URL
+        };
+        
+        // Try multiple times to handle dynamic content loading
+        setTimeout(scrollToElement, 100);
+        setTimeout(scrollToElement, 300);
+        setTimeout(scrollToElement, 600);
+        
+        // Clean up URL
+        setTimeout(() => {
           window.history.replaceState({}, document.title, window.location.pathname);
-        }, 100);
+        }, 1000);
       }
     }
   }, []);
