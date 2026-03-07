@@ -30,10 +30,12 @@ export default function GalagaPage() {
     let bullets: any;
     let cursors: any;
     let score = 0;
-    let highScore = localStorage.getItem('simpleHS') || 0;
+    let highScore = parseInt(localStorage.getItem('simpleHS') || '0');
     let scoreText: any;
     let direction = 1;
     let lastShot = 0;
+    let gameOver = false;
+    let gameOverText: any;
 
     const config = {
       type: Phaser.AUTO,
@@ -74,13 +76,26 @@ export default function GalagaPage() {
       enemies = this.physics.add.group();
 
       /* UI SCORE — FIXED TO SCREEN */
-      scoreText = this.add.text(20, 20, 'SCORE 0 HIGH ' + highScore, {
+      scoreText = this.add.text(20, 20, 'SCORE ' + score + ' HIGH ' + highScore, {
         font: '22px monospace',
         fill: '#ffffff',
       }).setScrollFactor(0);
 
       /* Spawn enemies */
       spawnWave(this);
+
+      /* Collision detection: bullets hit enemies */
+      this.physics.add.overlap(bullets, enemies, (bullet: any, enemy: any) => {
+        bullet.destroy();
+        enemy.destroy();
+        score += 10;
+        scoreText.setText('SCORE ' + score + ' HIGH ' + highScore);
+      });
+
+      /* Collision detection: enemies reach bottom */
+      this.physics.add.overlap(player, enemies, () => {
+        endGame(this);
+      });
 
       /* Start sound on first input */
       this.input.keyboard.once('keydown-SPACE', () => {
@@ -89,7 +104,7 @@ export default function GalagaPage() {
     }
 
     function update(this: any, time: number) {
-      if (!player) return;
+      if (!player || gameOver) return;
 
       /* Movement */
       if (cursors.left.isDown) {
@@ -122,6 +137,10 @@ export default function GalagaPage() {
           direction *= -1;
           e.y += 35;
         }
+        /* Check if enemy reached bottom */
+        if (e.y > 580) {
+          endGame(this);
+        }
       });
 
       /* Wave reset */
@@ -138,6 +157,23 @@ export default function GalagaPage() {
           e.setVelocityX(60);
         }
       }
+    }
+
+    function endGame(scene: any) {
+      gameOver = true;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('simpleHS', highScore.toString());
+      }
+      gameOverText = scene.add.text(400, 300, 'GAME OVER\nSCORE: ' + score + '\nPRESS R TO RESTART', {
+        font: 'bold 32px monospace',
+        fill: '#ff0000',
+        align: 'center',
+      }).setOrigin(0.5).setScrollFactor(0);
+
+      scene.input.keyboard.once('keydown-R', () => {
+        scene.scene.restart();
+      });
     }
 
     new Phaser.Game(config);
