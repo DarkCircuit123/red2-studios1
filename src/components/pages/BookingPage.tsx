@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Check, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
-import { notifyAdminOfBooking } from '@/api/sendBookingNotification';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -83,15 +82,25 @@ export default function BookingPage() {
       });
       const dateTime = `${formattedDate} from ${selectedSlot.startTime} to ${selectedSlot.endTime}`;
 
-      // Send notification to admin via Wix triggered emails
-      await notifyAdminOfBooking({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        sessionType: selectedSlot.sessionType,
-        dateTime: dateTime,
-        notes: formData.message
+      // Send notification to admin via Wix backend function
+      const response = await fetch('/_functions/notifyAdmin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          sessionType: selectedSlot.sessionType,
+          dateTime: dateTime,
+          notes: formData.message || '(No additional notes)'
+        })
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to send booking notification: ${response.statusText}`);
+      }
 
       setSubmitSuccess(true);
       setSelectedSlot(null);
