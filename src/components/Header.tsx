@@ -5,6 +5,7 @@ import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
 import { playClickSound } from '@/lib/click-sound';
 import { throttle } from '@/lib/performance';
+import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,13 +13,10 @@ export default function Header() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
 
-  // Memoized throttled scroll handler
-  const handleScroll = useMemo(
-    () => throttle(() => {
-      setScrolled(window.scrollY > 50);
-    }, 100),
-    []
-  );
+  // Optimized throttled scroll handler with useThrottleCallback
+  const handleScroll = useThrottleCallback(() => {
+    setScrolled(window.scrollY > 50);
+  }, 100);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });

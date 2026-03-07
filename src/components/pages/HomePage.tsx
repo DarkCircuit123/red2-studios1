@@ -8,6 +8,7 @@ import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
 import SplashScreen from '@/components/SplashScreen';
+import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
 
 export default function HomePage() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -26,8 +27,8 @@ export default function HomePage() {
     }
   }, []);
 
-  useEffect(() => {
-    // Handle scroll parameter from URL with optimized timing
+  // Optimized scroll parameter handling with useEffectOnce
+  useEffectOnce(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const scrollTo = params.get('scroll');
@@ -56,7 +57,7 @@ export default function HomePage() {
         return () => timeouts.forEach(t => clearTimeout(t));
       }
     }
-  }, []);
+  });
 
   return (
     <>
