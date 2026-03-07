@@ -9,6 +9,7 @@ import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
 import SplashScreen from '@/components/SplashScreen';
 import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
+import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
 
 export default function HomePage() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -25,6 +26,12 @@ export default function HomePage() {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('splashScreenShown', 'true');
     }
+  }, []);
+
+  // Initialize security systems on component mount
+  useEffect(() => {
+    initializeSecuritySystems();
+    setupSecurityEventListeners();
   }, []);
 
   // Optimized scroll parameter handling with useEffectOnce
