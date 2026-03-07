@@ -62,7 +62,7 @@ export default function HeroSection() {
           <Image
             src={heroImage}
             alt="Hero background"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover opacity-[0]"
           />
         )}
         {/* Minimal dark overlay for text readability */}
@@ -80,7 +80,7 @@ export default function HeroSection() {
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-heading font-black text-white leading-none tracking-tight uppercase">
             Visual
             <br />
-            <span className="text-primary font-black">Storytelling</span>
+            <span className="font-black text-[#a01e1eff]">Storytelling</span>
           </h1>
         </motion.div>
 
