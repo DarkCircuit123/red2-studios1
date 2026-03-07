@@ -23,6 +23,15 @@ export default function Header() {
     playClickSound();
   };
 
+  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
+    e.preventDefault();
+    playClickSound();
+    const element = document.querySelector(hash);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -45,20 +54,20 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-12">
-          <Link
-            to="/#portfolio"
-            onClick={handleLinkClick}
+          <a
+            href="#portfolio"
+            onClick={(e) => handleAnchorClick(e, '#portfolio')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Gallery
-          </Link>
-          <Link
-            to="/#about"
-            onClick={handleLinkClick}
+          </a>
+          <a
+            href="#about"
+            onClick={(e) => handleAnchorClick(e, '#about')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             About
-          </Link>
+          </a>
           <Link
             to="/portfolio"
             onClick={handleLinkClick}
@@ -80,13 +89,13 @@ export default function Header() {
           >
             Galleries
           </Link>
-          <Link
-            to="/#contact"
-            onClick={handleLinkClick}
+          <a
+            href="#contact"
+            onClick={(e) => handleAnchorClick(e, '#contact')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Contact
-          </Link>
+          </a>
           <Link
             to="/private"
             onClick={handleLinkClick}
@@ -171,26 +180,26 @@ export default function Header() {
       {isOpen && (
         <div className="md:hidden bg-black/95 border-t border-white/10 backdrop-blur-md">
           <div className="max-w-[120rem] mx-auto px-8 py-6 flex flex-col gap-6">
-            <Link
-              to="/#portfolio"
+            <a
+              href="#portfolio"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => {
-                handleLinkClick();
+              onClick={(e) => {
+                handleAnchorClick(e, '#portfolio');
                 setIsOpen(false);
               }}
             >
               Gallery
-            </Link>
-            <Link
-              to="/#about"
+            </a>
+            <a
+              href="#about"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => {
-                handleLinkClick();
+              onClick={(e) => {
+                handleAnchorClick(e, '#about');
                 setIsOpen(false);
               }}
             >
               About
-            </Link>
+            </a>
             <Link
               to="/portfolio"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
@@ -221,16 +230,16 @@ export default function Header() {
             >
               Galleries
             </Link>
-            <Link
-              to="/#contact"
+            <a
+              href="#contact"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onClick={() => {
-                handleLinkClick();
+              onClick={(e) => {
+                handleAnchorClick(e, '#contact');
                 setIsOpen(false);
               }}
             >
               Contact
-            </Link>
+            </a>
             <Link
               to="/private"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
