@@ -7,6 +7,90 @@ interface HighScore {
   score: number;
 }
 
+// SPRITE SHEET SPECIFICATIONS
+// File: galaga_sprites.png (512 × 512)
+// Grid: 32 × 32 cells
+// Scale factor: 2.5 (renders at 80px)
+// Rendering: nearest-neighbor, no smoothing, hard pixel edges
+
+const SPRITE_CONFIG = {
+  sheetWidth: 512,
+  sheetHeight: 512,
+  gridSize: 32,
+  scaleFactor: 2.5,
+  sprites: {
+    playerShip: { atlasX: 0, atlasY: 0, width: 32, height: 32 },
+    enemyTypeA: { atlasX: 32, atlasY: 0, width: 32, height: 32 },
+    enemyTypeB: { atlasX: 64, atlasY: 0, width: 32, height: 32 },
+    enemyTypeC: { atlasX: 96, atlasY: 0, width: 32, height: 32 },
+    laser: { atlasX: 128, atlasY: 0, width: 8, height: 16 },
+    explosion: [
+      { atlasX: 0, atlasY: 64, width: 32, height: 32 },
+      { atlasX: 32, atlasY: 64, width: 32, height: 32 },
+      { atlasX: 64, atlasY: 64, width: 32, height: 32 },
+      { atlasX: 96, atlasY: 64, width: 32, height: 32 },
+    ],
+  },
+  explosionFrameDuration: 75,
+};
+
+// GAME FIELD SPECIFICATIONS
+const GAME_FIELD = {
+  width: 720,
+  leftBoundary: 0,
+  rightBoundary: 720,
+  playerMinX: 40,
+  playerMaxX: 680,
+  playerY: 880,
+  enemyTopBoundary: 40,
+  enemyInvasionBoundary: 820,
+};
+
+// FORMATION SPECIFICATIONS
+const FORMATION = {
+  columns: 6,
+  rows: 5,
+  horizontalSpacing: 90,
+  verticalSpacing: 70,
+  startX: 100,
+  startY: 80,
+  driftSpeed: 1.8,
+  shiftDown: 20,
+};
+
+// DIVE ATTACK SPECIFICATIONS
+const DIVE_ATTACK = {
+  selectionInterval: 180,
+  controlPointOffsetX: 120,
+  controlPointOffsetY: 200,
+  endPointOffsetY: 40,
+  speed: 5,
+};
+
+// SHOOTING SPECIFICATIONS
+const SHOOTING = {
+  playerFireRate: 200,
+  maxPlayerBullets: 3,
+  playerBulletSpeed: 14,
+  enemyBulletSpeed: 8,
+};
+
+// COLLISION HITBOXES
+const HITBOXES = {
+  player: { width: 60, height: 50 },
+  enemy: { width: 40, height: 40 },
+  bullet: { width: 8, height: 16 },
+};
+
+// STARFIELD SPECIFICATIONS
+const STARFIELD = {
+  starCount: 150,
+  layer1Speed: 0.3,
+  layer2Speed: 0.8,
+  minBrightness: 0.6,
+  maxBrightness: 1.0,
+};
+
 export default function GalagaPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showInitialsInput, setShowInitialsInput] = useState(false);
@@ -57,12 +141,41 @@ export default function GalagaPage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    // Set canvas size
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight - 80;
+    // Set canvas size to match game field
+    canvas.width = GAME_FIELD.width;
+    canvas.height = 1000;
+
+    // Enable nearest-neighbor rendering
+    (ctx as any).imageSmoothingEnabled = false;
+    (ctx as any).webkitImageSmoothingEnabled = false;
+    (ctx as any).mozImageSmoothingEnabled = false;
+    (ctx as any).msImageSmoothingEnabled = false;
+
+    // Create sprite sheet canvas (placeholder - in production, load actual sprite sheet)
+    const spriteSheet = document.createElement('canvas');
+    spriteSheet.width = SPRITE_CONFIG.sheetWidth;
+    spriteSheet.height = SPRITE_CONFIG.sheetHeight;
+    const spriteCtx = spriteSheet.getContext('2d');
+    if (!spriteCtx) return;
+
+    // Draw placeholder sprites (in production, load actual sprite sheet image)
+    spriteCtx.fillStyle = '#00FFFF';
+    spriteCtx.fillRect(0, 0, 32, 32); // Player ship
+    spriteCtx.fillStyle = '#FF0000';
+    spriteCtx.fillRect(32, 0, 32, 32); // Enemy A
+    spriteCtx.fillStyle = '#FF00FF';
+    spriteCtx.fillRect(64, 0, 32, 32); // Enemy B
+    spriteCtx.fillStyle = '#00FF00';
+    spriteCtx.fillRect(96, 0, 32, 32); // Enemy C
+    spriteCtx.fillStyle = '#FFFF00';
+    spriteCtx.fillRect(128, 0, 8, 16); // Laser
+    for (let i = 0; i < 4; i++) {
+      spriteCtx.fillStyle = `rgba(255, 165, 0, ${1 - i * 0.2})`;
+      spriteCtx.fillRect(i * 32, 64, 32, 32); // Explosion frames
+    }
 
     // Game variables
     let gameRunning = true;
@@ -70,228 +183,300 @@ export default function GalagaPage() {
     let score = 0;
     let level = 1;
     let lives = 3;
-    let mouseX = canvas.width / 2;
-    let mouseY = canvas.height - 50;
-    let canShoot = true;
-    let shootCooldown = 0;
+    let lastShotTime = 0;
+    let diveSelectionCounter = 0;
+    let frameCount = 0;
+    let currentEnemySpeed = 1.8;
 
-    // Player (Galaga-style ship)
+    // Player
     const player = {
-      x: canvas.width / 2,
-      y: canvas.height - 50,
-      width: 20,
-      height: 24,
-      speed: 6,
+      x: GAME_FIELD.width / 2,
+      y: GAME_FIELD.playerY,
+      width: 60,
+      height: 50,
     };
 
     // Bullets
-    const bullets: Array<{ x: number; y: number; width: number; height: number; age: number }> = [];
+    const playerBullets: Array<{ x: number; y: number; age: number }> = [];
+    const enemyBullets: Array<{ x: number; y: number }> = [];
 
-    // Enemies (Galaga-style)
-    const enemies: Array<{ x: number; y: number; width: number; height: number; dx: number; dy: number; wave: number; wobble: number }> = [];
-    let enemyDirection = 1;
-    let waveCounter = 0;
+    // Enemies with formation
+    interface Enemy {
+      x: number;
+      y: number;
+      formationX: number;
+      formationY: number;
+      type: number;
+      isDiving: boolean;
+      diveProgress: number;
+      diveStartX: number;
+      diveStartY: number;
+      diveControlX: number;
+      diveControlY: number;
+      diveEndX: number;
+      diveEndY: number;
+      explosionFrame: number;
+      isExploding: boolean;
+    }
+    const enemies: Enemy[] = [];
+    let formationX = FORMATION.startX;
+    let formationY = FORMATION.startY;
+    let formationDirection = 1;
 
-    // Draw Galaga-style player ship
-    const drawPlayer = (x: number, y: number) => {
+    // Starfield
+    const stars: Array<{ x: number; y: number; layer: number; brightness: number }> = [];
+    for (let i = 0; i < STARFIELD.starCount; i++) {
+      stars.push({
+        x: Math.random() * GAME_FIELD.width,
+        y: Math.random() * canvas.height,
+        layer: Math.random() > 0.5 ? 1 : 2,
+        brightness: STARFIELD.minBrightness + Math.random() * (STARFIELD.maxBrightness - STARFIELD.minBrightness),
+      });
+    }
+
+    // Draw sprite from atlas
+    const drawSprite = (sprite: any, x: number, y: number, scale: number = 1) => {
       ctx.save();
-      ctx.translate(x + player.width / 2, y + player.height / 2);
-
-      // Main body - cyan/blue like original
-      ctx.fillStyle = '#00FFFF';
-      ctx.beginPath();
-      ctx.moveTo(0, -12);
-      ctx.lineTo(-8, 8);
-      ctx.lineTo(-4, 8);
-      ctx.lineTo(-4, 12);
-      ctx.lineTo(4, 12);
-      ctx.lineTo(4, 8);
-      ctx.lineTo(8, 8);
-      ctx.closePath();
-      ctx.fill();
-
-      // Cockpit
-      ctx.fillStyle = '#FFFF00';
-      ctx.fillRect(-2, -6, 4, 4);
-
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        spriteSheet,
+        sprite.atlasX,
+        sprite.atlasY,
+        sprite.width,
+        sprite.height,
+        x,
+        y,
+        sprite.width * scale,
+        sprite.height * scale
+      );
       ctx.restore();
     };
 
-    // Draw Galaga-style enemy
-    const drawEnemy = (x: number, y: number, type: number = 0) => {
-      ctx.save();
-      ctx.translate(x + 12, y + 12);
-
-      if (type === 0) {
-        // Red enemy
-        ctx.fillStyle = '#FF0000';
-      } else if (type === 1) {
-        // Purple enemy
-        ctx.fillStyle = '#FF00FF';
-      } else {
-        // Green enemy
-        ctx.fillStyle = '#00FF00';
-      }
-
-      // Enemy body - classic Galaga bug shape
-      ctx.beginPath();
-      ctx.moveTo(0, -8);
-      ctx.lineTo(6, -4);
-      ctx.lineTo(8, 0);
-      ctx.lineTo(8, 6);
-      ctx.lineTo(6, 8);
-      ctx.lineTo(-6, 8);
-      ctx.lineTo(-8, 6);
-      ctx.lineTo(-8, 0);
-      ctx.lineTo(-6, -4);
-      ctx.closePath();
-      ctx.fill();
-
-      // Eyes
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(-4, -4, 2, 2);
-      ctx.fillRect(2, -4, 2, 2);
-
-      ctx.restore();
-    };
-
-    // Draw bullet
-    const drawBullet = (x: number, y: number) => {
-      ctx.fillStyle = '#FFFF00';
-      ctx.fillRect(x - 1, y, 2, 8);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(x - 1, y, 2, 2);
-    };
-
-    // Initialize enemies
+    // Initialize enemies in formation
     const initializeEnemies = () => {
       enemies.length = 0;
-      const rows = Math.min(3 + Math.floor(level / 2), 5);
-      const cols = 8;
+      const rows = Math.min(FORMATION.rows, 3 + Math.floor(level / 2));
       for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
+        for (let col = 0; col < FORMATION.columns; col++) {
+          const formX = FORMATION.startX + col * FORMATION.horizontalSpacing;
+          const formY = FORMATION.startY + row * FORMATION.verticalSpacing;
           enemies.push({
-            x: col * 60 + 40,
-            y: row * 50 + 40,
-            width: 24,
-            height: 24,
-            dx: 1,
-            dy: 0,
-            wave: 0,
-            wobble: Math.random() * Math.PI * 2,
+            x: formX,
+            y: formY,
+            formationX: formX,
+            formationY: formY,
+            type: (row * FORMATION.columns + col) % 3,
+            isDiving: false,
+            diveProgress: 0,
+            diveStartX: 0,
+            diveStartY: 0,
+            diveControlX: 0,
+            diveControlY: 0,
+            diveEndX: 0,
+            diveEndY: 0,
+            explosionFrame: 0,
+            isExploding: false,
           });
         }
       }
+      currentEnemySpeed = 1.8 + (level - 1) * 0.3;
+      currentEnemySpeed = Math.min(currentEnemySpeed, 5);
     };
 
     initializeEnemies();
 
-    // Mouse controls
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouseX = e.clientX - rect.left;
-      mouseY = e.clientY - rect.top;
-
-      // Clamp to canvas
-      mouseX = Math.max(0, Math.min(mouseX, canvas.width));
-      mouseY = Math.max(0, Math.min(mouseY, canvas.height));
-    };
-
-    const handleMouseClick = () => {
-      if (gameRunning && canShoot && shootCooldown <= 0) {
-        bullets.push({
-          x: player.x + player.width / 2,
-          y: player.y,
-          width: 2,
-          height: 8,
-          age: 0,
-        });
-        createSound(800, 0.1, 'square');
-        shootCooldown = 8;
+    // Keyboard controls
+    const keys: { [key: string]: boolean } = {};
+    const handleKeyDown = (e: KeyboardEvent) => {
+      keys[e.key.toLowerCase()] = true;
+      if (e.key === ' ') {
+        e.preventDefault();
+        if (gameRunning && playerBullets.length < SHOOTING.maxPlayerBullets) {
+          const now = Date.now();
+          if (now - lastShotTime > SHOOTING.playerFireRate) {
+            playerBullets.push({
+              x: player.x + player.width / 2,
+              y: player.y,
+              age: 0,
+            });
+            createSound(800, 0.1, 'square');
+            lastShotTime = now;
+          }
+        }
       }
     };
 
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('click', handleMouseClick);
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keys[e.key.toLowerCase()] = false;
+    };
+
+    canvas.addEventListener('keydown', handleKeyDown);
+    canvas.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    // Bezier curve calculation for dive attacks
+    const bezierPoint = (t: number, p0: number, p1: number, p2: number): number => {
+      const mt = 1 - t;
+      return mt * mt * p0 + 2 * mt * t * p1 + t * t * p2;
+    };
 
     // Game loop
+    let lastTime = Date.now();
     const gameLoop = () => {
-      // Clear canvas with starfield effect
+      const now = Date.now();
+      const deltaTime = (now - lastTime) / 1000;
+      lastTime = now;
+
+      // Clear canvas
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw stars
+      // Draw starfield with parallax
       ctx.fillStyle = '#FFFFFF';
-      ctx.globalAlpha = 0.3;
-      for (let i = 0; i < 100; i++) {
-        const x = (i * 73 + waveCounter * 0.5) % canvas.width;
-        const y = (i * 137) % canvas.height;
-        ctx.fillRect(x, y, 1, 1);
+      for (const star of stars) {
+        const speed = star.layer === 1 ? STARFIELD.layer1Speed : STARFIELD.layer2Speed;
+        const offsetY = (frameCount * speed) % canvas.height;
+        ctx.globalAlpha = star.brightness;
+        ctx.fillRect(star.x, (star.y + offsetY) % canvas.height, 1, 1);
       }
       ctx.globalAlpha = 1;
 
       if (gameRunning && !gameOver) {
-        // Update player position to follow mouse
-        player.x = mouseX - player.width / 2;
-        player.x = Math.max(0, Math.min(player.x, canvas.width - player.width));
-        player.y = mouseY - player.height / 2;
-        player.y = Math.max(0, Math.min(player.y, canvas.height - player.height));
-
-        // Draw player
-        drawPlayer(player.x, player.y);
-
-        // Update and draw bullets
-        for (let i = bullets.length - 1; i >= 0; i--) {
-          bullets[i].y -= 8;
-          bullets[i].age++;
-          if (bullets[i].y < 0 || bullets[i].age > 100) {
-            bullets.splice(i, 1);
-            continue;
-          }
-          drawBullet(bullets[i].x, bullets[i].y);
+        // Update player position
+        if (keys['arrowleft'] || keys['a']) {
+          player.x = Math.max(GAME_FIELD.playerMinX, player.x - 6);
+        }
+        if (keys['arrowright'] || keys['d']) {
+          player.x = Math.min(GAME_FIELD.playerMaxX, player.x + 6);
         }
 
-        // Update and draw enemies
-        waveCounter++;
+        // Draw player
+        drawSprite(SPRITE_CONFIG.sprites.playerShip, player.x - player.width / 2, player.y - player.height / 2, 1);
+
+        // Update and draw player bullets
+        for (let i = playerBullets.length - 1; i >= 0; i--) {
+          playerBullets[i].y -= SHOOTING.playerBulletSpeed;
+          playerBullets[i].age++;
+          if (playerBullets[i].y < GAME_FIELD.enemyTopBoundary) {
+            playerBullets.splice(i, 1);
+            continue;
+          }
+          drawSprite(SPRITE_CONFIG.sprites.laser, playerBullets[i].x - 4, playerBullets[i].y, 1);
+        }
+
+        // Update and draw enemy bullets
+        for (let i = enemyBullets.length - 1; i >= 0; i--) {
+          enemyBullets[i].y += SHOOTING.enemyBulletSpeed;
+          if (enemyBullets[i].y > canvas.height) {
+            enemyBullets.splice(i, 1);
+            continue;
+          }
+        }
+
+        // Update formation
+        frameCount++;
+        diveSelectionCounter++;
+        formationX += formationDirection * currentEnemySpeed;
+
         let hitEdge = false;
+        for (const enemy of enemies) {
+          if (!enemy.isDiving && !enemy.isExploding) {
+            enemy.formationX = formationX + (enemy.formationX - FORMATION.startX);
+            enemy.x = enemy.formationX;
+            enemy.y = formationY + (enemy.formationY - FORMATION.startY);
 
-        for (let enemy of enemies) {
-          enemy.wobble += 0.05;
-          enemy.x += enemy.dx * 1.5;
-          enemy.y += Math.sin(enemy.wobble) * 0.3;
-
-          if (enemy.x < 0 || enemy.x + enemy.width > canvas.width) {
-            hitEdge = true;
+            if (enemy.x < GAME_FIELD.leftBoundary || enemy.x + HITBOXES.enemy.width > GAME_FIELD.rightBoundary) {
+              hitEdge = true;
+            }
           }
         }
 
         if (hitEdge) {
-          enemyDirection *= -1;
-          for (let enemy of enemies) {
-            enemy.dx = enemyDirection;
-            enemy.y += 40;
+          formationDirection *= -1;
+          formationY += FORMATION.shiftDown;
+        }
+
+        // Dive attack logic
+        if (diveSelectionCounter >= DIVE_ATTACK.selectionInterval && enemies.length > 0) {
+          const topRowEnemies = enemies.filter((e) => !e.isDiving && !e.isExploding && e.formationY <= FORMATION.startY + FORMATION.verticalSpacing);
+          if (topRowEnemies.length > 0) {
+            const diveEnemy = topRowEnemies[Math.floor(Math.random() * topRowEnemies.length)];
+            diveEnemy.isDiving = true;
+            diveEnemy.diveProgress = 0;
+            diveEnemy.diveStartX = diveEnemy.x;
+            diveEnemy.diveStartY = diveEnemy.y;
+            diveEnemy.diveControlX = player.x + (Math.random() > 0.5 ? 1 : -1) * DIVE_ATTACK.controlPointOffsetX;
+            diveEnemy.diveControlY = player.y - DIVE_ATTACK.controlPointOffsetY;
+            diveEnemy.diveEndX = player.x;
+            diveEnemy.diveEndY = player.y - DIVE_ATTACK.endPointOffsetY;
+          }
+          diveSelectionCounter = 0;
+        }
+
+        // Update diving enemies
+        for (const enemy of enemies) {
+          if (enemy.isDiving) {
+            enemy.diveProgress += DIVE_ATTACK.speed / 100;
+            if (enemy.diveProgress >= 1) {
+              enemy.isDiving = false;
+              enemy.diveProgress = 0;
+            } else {
+              enemy.x = bezierPoint(enemy.diveProgress, enemy.diveStartX, enemy.diveControlX, enemy.diveEndX);
+              enemy.y = bezierPoint(enemy.diveProgress, enemy.diveStartY, enemy.diveControlY, enemy.diveEndY);
+
+              // Random enemy fire during dive
+              if (Math.random() < 0.02) {
+                enemyBullets.push({ x: enemy.x + HITBOXES.enemy.width / 2, y: enemy.y + HITBOXES.enemy.height });
+              }
+            }
+
+            // Check invasion boundary
+            if (enemy.y > GAME_FIELD.enemyInvasionBoundary) {
+              lives--;
+              createSound(200, 0.3, 'sine');
+              if (lives <= 0) {
+                gameOver = true;
+                gameRunning = false;
+                setFinalScore(score);
+                setShowInitialsInput(true);
+              }
+              enemy.isDiving = false;
+            }
           }
         }
 
         // Draw enemies
-        for (let i = 0; i < enemies.length; i++) {
-          const enemy = enemies[i];
-          drawEnemy(enemy.x, enemy.y, i % 3);
+        for (const enemy of enemies) {
+          if (!enemy.isExploding) {
+            const spriteTypes = [SPRITE_CONFIG.sprites.enemyTypeA, SPRITE_CONFIG.sprites.enemyTypeB, SPRITE_CONFIG.sprites.enemyTypeC];
+            drawSprite(spriteTypes[enemy.type], enemy.x - HITBOXES.enemy.width / 2, enemy.y - HITBOXES.enemy.height / 2, 1);
+          } else {
+            if (enemy.explosionFrame < SPRITE_CONFIG.sprites.explosion.length) {
+              drawSprite(SPRITE_CONFIG.sprites.explosion[enemy.explosionFrame], enemy.x - 16, enemy.y - 16, 1);
+              enemy.explosionFrame++;
+            } else {
+              enemy.isExploding = false;
+            }
+          }
         }
 
-        // Collision detection - bullets and enemies
-        for (let i = bullets.length - 1; i >= 0; i--) {
+        // Collision detection - player bullets and enemies
+        for (let i = playerBullets.length - 1; i >= 0; i--) {
           for (let j = enemies.length - 1; j >= 0; j--) {
-            const bullet = bullets[i];
+            const bullet = playerBullets[i];
             const enemy = enemies[j];
             if (
-              bullet.x < enemy.x + enemy.width &&
-              bullet.x + bullet.width > enemy.x &&
-              bullet.y < enemy.y + enemy.height &&
-              bullet.y + bullet.height > enemy.y
+              !enemy.isExploding &&
+              bullet.x > enemy.x - HITBOXES.enemy.width / 2 &&
+              bullet.x < enemy.x + HITBOXES.enemy.width / 2 &&
+              bullet.y > enemy.y - HITBOXES.enemy.height / 2 &&
+              bullet.y < enemy.y + HITBOXES.enemy.height / 2
             ) {
-              bullets.splice(i, 1);
-              enemies.splice(j, 1);
+              playerBullets.splice(i, 1);
+              enemy.isExploding = true;
+              enemy.explosionFrame = 0;
+              enemy.isDiving = false;
               score += 50 + level * 10;
               createSound(1200, 0.15, 'sine');
               break;
@@ -299,14 +484,16 @@ export default function GalagaPage() {
           }
         }
 
-        // Collision detection - enemies and player
-        for (let enemy of enemies) {
+        // Collision detection - enemy bullets and player
+        for (let i = enemyBullets.length - 1; i >= 0; i--) {
+          const bullet = enemyBullets[i];
           if (
-            player.x < enemy.x + enemy.width &&
-            player.x + player.width > enemy.x &&
-            player.y < enemy.y + enemy.height &&
-            player.y + player.height > enemy.y
+            bullet.x > player.x - player.width / 2 &&
+            bullet.x < player.x + player.width / 2 &&
+            bullet.y > player.y - player.height / 2 &&
+            bullet.y < player.y + player.height / 2
           ) {
+            enemyBullets.splice(i, 1);
             lives--;
             createSound(200, 0.3, 'sine');
             if (lives <= 0) {
@@ -314,39 +501,49 @@ export default function GalagaPage() {
               gameRunning = false;
               setFinalScore(score);
               setShowInitialsInput(true);
-            } else {
-              // Reset player position
-              player.x = canvas.width / 2;
-              player.y = canvas.height - 50;
             }
+            break;
+          }
+        }
+
+        // Remove finished explosions
+        for (let i = enemies.length - 1; i >= 0; i--) {
+          if (enemies[i].isExploding && enemies[i].explosionFrame >= SPRITE_CONFIG.sprites.explosion.length) {
+            enemies.splice(i, 1);
           }
         }
 
         // Check if all enemies defeated
-        if (enemies.length === 0) {
+        if (enemies.filter((e) => !e.isExploding).length === 0 && enemies.length === 0) {
           level++;
           initializeEnemies();
+          formationX = FORMATION.startX;
+          formationY = FORMATION.startY;
+          formationDirection = 1;
           createSound(400, 0.2, 'sine');
           createSound(600, 0.2, 'sine');
         }
-
-        shootCooldown--;
       }
 
-      // Draw UI
+      // Draw HUD
       ctx.fillStyle = '#00FFFF';
-      ctx.font = 'bold 16px "Courier New", monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(`SCORE: ${score.toString().padStart(6, '0')}`, 20, 30);
-      ctx.fillText(`LEVEL: ${level}`, 20, 50);
-      ctx.fillText(`LIVES: ${lives}`, canvas.width - 150, 30);
+      ctx.font = 'bold 32px "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`SCORE: ${score.toString().padStart(6, '0')}`, canvas.width / 2, 30);
 
-      // Draw high scores in corner
+      ctx.textAlign = 'left';
+      ctx.fillText(`LEVEL: ${level}`, 20, 30);
+
+      ctx.textAlign = 'right';
+      ctx.fillText(`LIVES: ${lives}`, canvas.width - 20, 30);
+
+      // Draw high scores
       ctx.font = '12px "Courier New", monospace';
       ctx.fillStyle = '#00FF00';
-      ctx.fillText('HIGH SCORES:', canvas.width - 150, 60);
+      ctx.textAlign = 'right';
+      ctx.fillText('HIGH SCORES:', canvas.width - 20, 50);
       for (let i = 0; i < Math.min(3, highScores.length); i++) {
-        ctx.fillText(`${i + 1}. ${highScores[i].initials} ${highScores[i].score}`, canvas.width - 150, 80 + i * 16);
+        ctx.fillText(`${i + 1}. ${highScores[i].initials} ${highScores[i].score}`, canvas.width - 20, 70 + i * 16);
       }
 
       // Game over screen
@@ -371,20 +568,13 @@ export default function GalagaPage() {
       requestAnimationFrame(gameLoop);
     };
 
-    // Handle window resize
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight - 80;
-    };
-
-    window.addEventListener('resize', handleResize);
-
     gameLoop();
 
     return () => {
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('click', handleMouseClick);
-      window.removeEventListener('resize', handleResize);
+      canvas.removeEventListener('keydown', handleKeyDown);
+      canvas.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
     };
   }, [highScores]);
 
@@ -402,11 +592,14 @@ export default function GalagaPage() {
   return (
     <div className="w-full min-h-screen bg-black">
       <Header />
-      <div className="pt-20 w-full h-[calc(100vh-80px)] flex flex-col items-center justify-center bg-black relative">
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full bg-black cursor-crosshair"
-        />
+      <div className="pt-20 w-full h-[calc(100vh-80px)] flex flex-col items-center justify-center bg-black relative overflow-hidden">
+        <div className="w-full h-full flex items-center justify-center">
+          <canvas
+            ref={canvasRef}
+            className="bg-black"
+            style={{ imageRendering: 'pixelated', imageRendering: 'crisp-edges' } as any}
+          />
+        </div>
 
         {showInitialsInput && (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80">
@@ -435,8 +628,8 @@ export default function GalagaPage() {
         )}
 
         <div className="absolute bottom-4 left-4 text-cyan-400 text-sm font-mono">
-          <p>Move Mouse to Control Ship</p>
-          <p>Click to Shoot</p>
+          <p>Arrow Keys or A/D to Move</p>
+          <p>SPACE to Shoot</p>
         </div>
       </div>
       <Footer />
