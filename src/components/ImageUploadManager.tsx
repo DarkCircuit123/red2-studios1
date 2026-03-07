@@ -2,17 +2,24 @@ import { useState, useRef } from 'react';
 import { Upload, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
+import { BaseCrudService } from '@/integrations';
 
 interface ImageUploadManagerProps {
   onImageUpload: (imageUrl: string) => void;
   currentImage?: string;
   label?: string;
+  collectionId?: string;
+  itemId?: string;
+  fieldName?: string;
 }
 
 export default function ImageUploadManager({
   onImageUpload,
   currentImage,
-  label = 'Upload Image'
+  label = 'Upload Image',
+  collectionId,
+  itemId,
+  fieldName
 }: ImageUploadManagerProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -32,9 +39,9 @@ export default function ImageUploadManager({
     try {
       // Create a canvas for auto-crop and resize
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
@@ -49,11 +56,36 @@ export default function ImageUploadManager({
           ctx?.drawImage(img, x, y, size, size, 0, 0, 1200, 1200);
           
           // Convert to blob and create URL
-          canvas.toBlob((blob) => {
+          canvas.toBlob(async (blob) => {
             if (blob) {
               const url = URL.createObjectURL(blob);
-              onImageUpload(url);
-              setIsProcessing(false);
+              
+              // If collection info provided, save to CMS
+              if (collectionId && itemId && fieldName) {
+                try {
+                  // Convert blob to base64 for storage
+                  const reader = new FileReader();
+                  reader.onload = async (event) => {
+                    const base64 = event.target?.result as string;
+                    // Save to CMS
+                    await BaseCrudService.update(collectionId, {
+                      _id: itemId,
+                      [fieldName]: base64
+                    });
+                    onImageUpload(base64);
+                    setIsProcessing(false);
+                  };
+                  reader.readAsDataURL(blob);
+                } catch (error) {
+                  console.error('Error saving to CMS:', error);
+                  onImageUpload(url);
+                  setIsProcessing(false);
+                }
+              } else {
+                // Fallback to local URL if no CMS info
+                onImageUpload(url);
+                setIsProcessing(false);
+              }
             }
           }, 'image/jpeg', 0.95);
         };

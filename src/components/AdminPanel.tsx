@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, X, Edit2 } from 'lucide-react';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
+import { BaseCrudService } from '@/integrations';
+import { Services } from '@/entities/index';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -13,6 +15,29 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState('text');
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
+  const [heroImage, setHeroImage] = useState<string | undefined>();
+  const [serviceId, setServiceId] = useState<string | undefined>();
+
+  useEffect(() => {
+    const loadHeroImage = async () => {
+      try {
+        const services = await BaseCrudService.getAll<Services>('services', {}, { limit: 1 });
+        if (services.items && services.items.length > 0) {
+          const service = services.items[0];
+          setServiceId(service._id);
+          if (service.infographic) {
+            setHeroImage(service.infographic);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading hero image:', error);
+      }
+    };
+    
+    if (isOpen) {
+      loadHeroImage();
+    }
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
@@ -88,20 +113,18 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
-                      Logo
-                    </label>
-                    <ImageUploadManager
-                      label="Upload Logo"
-                      onImageUpload={(url) => console.log('Logo uploaded:', url)}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
                       Hero Background
                     </label>
                     <ImageUploadManager
                       label="Upload Hero Image"
-                      onImageUpload={(url) => console.log('Hero image uploaded:', url)}
+                      currentImage={heroImage}
+                      collectionId="services"
+                      itemId={serviceId}
+                      fieldName="infographic"
+                      onImageUpload={(url) => {
+                        setHeroImage(url);
+                        console.log('Hero image uploaded:', url);
+                      }}
                     />
                   </div>
                 </div>
