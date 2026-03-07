@@ -42,18 +42,15 @@ export default function HomePage() {
               top: elementPosition,
               behavior: 'smooth'
             });
+            // Clean up URL after successful scroll
+            window.history.replaceState({}, document.title, window.location.pathname);
           }
         };
         
         // Try multiple times to handle dynamic content loading
-        setTimeout(scrollToElement, 100);
-        setTimeout(scrollToElement, 300);
-        setTimeout(scrollToElement, 600);
-        
-        // Clean up URL
-        setTimeout(() => {
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }, 1000);
+        setTimeout(scrollToElement, 50);
+        setTimeout(scrollToElement, 150);
+        setTimeout(scrollToElement, 400);
       }
     }
   }, []);
