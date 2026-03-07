@@ -33,9 +33,12 @@ export default function GalagaPage() {
     let score = 0;
     let highScore = parseInt(localStorage.getItem('wixHS') || '0');
     let scoreText: any;
+    let waveText: any;
     let direction = 1;
     let lastShot = 0;
     let gameInstance: any = null;
+    let wave = 1;
+    let waveInProgress = false;
 
     const config = {
       type: Phaser.AUTO,
@@ -85,6 +88,15 @@ export default function GalagaPage() {
         fill: '#ffffff',
       });
       scoreText.setDepth(100);
+
+      waveText = this.add.text(400, 300, 'WAVE ' + wave, {
+        font: '48px monospace',
+        fill: '#ffffff',
+        align: 'center',
+      });
+      waveText.setOrigin(0.5, 0.5);
+      waveText.setDepth(100);
+      waveText.setVisible(false);
 
       /* Collision */
       this.physics.add.overlap(bullets, enemies, hitEnemy, null, this);
@@ -138,8 +150,17 @@ export default function GalagaPage() {
         direction *= -1;
       }
 
-      if (enemies.countActive(true) === 0) {
-        spawnWave(this);
+      if (enemies.countActive(true) === 0 && !waveInProgress) {
+        waveInProgress = true;
+        wave++;
+        waveText.setText('WAVE ' + wave);
+        waveText.setVisible(true);
+        
+        this.time.delayedCall(2000, () => {
+          waveText.setVisible(false);
+          spawnWave(this);
+          waveInProgress = false;
+        });
       }
     }
 
@@ -183,6 +204,11 @@ export default function GalagaPage() {
             border: 6px solid red;
             box-sizing: border-box;
             display: block;
+            margin: 0 auto;
+          }
+          #game canvas {
+            display: block;
+            margin: 0 auto;
           }
           @media (max-width: 900px) {
             #game {
