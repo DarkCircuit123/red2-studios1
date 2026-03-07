@@ -125,6 +125,13 @@ export default function Header() {
           >
             Private
           </Link>
+          <Link
+            to="/play"
+            onClick={handleLinkClick}
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+          >
+            Play
+          </Link>
         </div>
 
         {/* Admin & Mobile Menu */}
@@ -269,6 +276,16 @@ export default function Header() {
               }}
             >
               Private
+            </Link>
+            <Link
+              to="/play"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
+            >
+              Play
             </Link>
             {/* Mobile Auth */}
             {!isLoading && (
