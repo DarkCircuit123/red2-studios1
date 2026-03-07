@@ -96,6 +96,29 @@ export interface ClientsPress {
 
 
 /**
+ * Collection ID: homepageimages
+ * Interface for HomepageImages
+ */
+export interface HomepageImages {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  imageName?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  heroImage?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  aboutSectionImage?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  contactBackgroundImage?: string;
+  /** @wixFieldType datetime */
+  lastUpdated?: Date | string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+}
+
+
+/**
  * Collection ID: portfolio
  * Interface for Portfolio
  */

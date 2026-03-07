@@ -12,18 +12,12 @@ export default function HeroSection() {
   useEffect(() => {
     const loadHeroImage = async () => {
       try {
-        const services = await BaseCrudService.getAll('services', {}, { limit: 1 });
-        if (services.items && services.items.length > 0) {
-          const service = services.items[0] as any;
-          if (service.infographic) {
-            setHeroImage(service.infographic);
-          }
-          // Check for video URL in the service description or custom field
-          if (service.fullDescription && service.fullDescription.includes('http')) {
-            const urlMatch = service.fullDescription.match(/(https?:\/\/[^\s]+)/);
-            if (urlMatch) {
-              setVideoUrl(urlMatch[1]);
-            }
+        // Load from HomepageImages collection first
+        const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+        if (homepageImages.items && homepageImages.items.length > 0) {
+          const images = homepageImages.items[0] as any;
+          if (images.heroImage) {
+            setHeroImage(images.heroImage);
           }
         }
       } catch (error) {

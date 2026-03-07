@@ -11,11 +11,12 @@ export default function AboutSection() {
     const loadAboutImage = async () => {
       try {
         setIsLoading(true);
-        const watermarkSettings = await BaseCrudService.getAll('watermarksettings', {}, { limit: 1 });
-        if (watermarkSettings.items && watermarkSettings.items.length > 0) {
-          const settings = watermarkSettings.items[0] as any;
-          if (settings.watermarkImage) {
-            setAboutImage(settings.watermarkImage);
+        // Load from HomepageImages collection first
+        const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+        if (homepageImages.items && homepageImages.items.length > 0) {
+          const images = homepageImages.items[0] as any;
+          if (images.aboutSectionImage) {
+            setAboutImage(images.aboutSectionImage);
           }
         }
       } catch (error) {
