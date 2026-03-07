@@ -11,6 +11,7 @@ import ClientGalleriesPage from './pages/ClientGalleriesPage';
 import BlogPage from './pages/BlogPage';
 import ProfilePage from './pages/ProfilePage';
 import PrivatePage from './pages/PrivatePage';
+import HangmanGamePage from './pages/HangmanGamePage';
 
 // Layout component that includes ScrollToTop
 function Layout() {
@@ -63,6 +64,10 @@ const router = createBrowserRouter([
       {
         path: "private",
         element: <PrivatePage />,
+      },
+      {
+        path: "play",
+        element: <HangmanGamePage />,
       },
       {
         path: "*",
