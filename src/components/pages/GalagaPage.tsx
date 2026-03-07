@@ -31,10 +31,11 @@ export default function GalagaPage() {
     let bullets: any;
     let cursors: any;
     let score = 0;
-    let highScore = localStorage.getItem('wixHS') || 0;
+    let highScore = parseInt(localStorage.getItem('wixHS') || '0');
     let scoreText: any;
     let direction = 1;
     let lastShot = 0;
+    let gameInstance: any = null;
 
     const config = {
       type: Phaser.AUTO,
@@ -47,9 +48,10 @@ export default function GalagaPage() {
       },
       physics: {
         default: 'arcade',
-        arcade: { debug: false },
+        arcade: { debug: false, gravity: { y: 0 } },
       },
       scene: { preload, create, update },
+      backgroundColor: '#000000',
     };
 
     function preload(this: any) {
@@ -63,11 +65,15 @@ export default function GalagaPage() {
 
     function create(this: any) {
       cursors = this.input.keyboard.createCursorKeys();
+      this.input.keyboard.on('keydown-SPACE', () => {
+        // Space key handler for better responsiveness
+      });
 
       /* Player */
       player = this.physics.add.sprite(400, 520, 'ship');
       player.setDisplaySize(70, 70);
       player.setCollideWorldBounds(true);
+      player.setBounce(0.2);
 
       /* Groups */
       bullets = this.physics.add.group();
@@ -78,6 +84,7 @@ export default function GalagaPage() {
         font: '24px monospace',
         fill: '#ffffff',
       });
+      scoreText.setDepth(100);
 
       /* Collision */
       this.physics.add.overlap(bullets, enemies, hitEnemy, null, this);
@@ -86,7 +93,7 @@ export default function GalagaPage() {
     }
 
     function update(this: any, time: number) {
-      if (!player) return;
+      if (!player || !player.active) return;
 
       /* Movement */
       if (cursors.left.isDown) {
@@ -99,30 +106,37 @@ export default function GalagaPage() {
 
       /* Shooting */
       if (cursors.space.isDown && time > lastShot) {
-        let b = bullets.create(player.x, player.y - 30, 'laser');
-
-        b.setDisplaySize(6, 20);
-        b.setVelocityY(-900);
-
-        lastShot = time + 250;
+        const b = bullets.create(player.x, player.y - 30, 'laser');
+        if (b) {
+          b.setDisplaySize(6, 20);
+          b.setVelocityY(-900);
+          lastShot = time + 250;
+        }
       }
 
-      /* Cleanup */
-      bullets.children.each((b: any) => {
-        if (b && b.y < -60) b.destroy();
+      /* Cleanup bullets */
+      bullets.children.entries.forEach((b: any) => {
+        if (b && b.y < -60) {
+          b.destroy();
+        }
       });
 
       /* Enemy movement */
-      enemies.children.each((e: any) => {
-        if (!e) return;
+      let hitBound = false;
+      enemies.children.entries.forEach((e: any) => {
+        if (!e || !e.active) return;
 
         e.x += 3 * direction;
 
         if (e.x > 760 || e.x < 40) {
-          direction *= -1;
+          hitBound = true;
           e.y += 35;
         }
       });
+
+      if (hitBound) {
+        direction *= -1;
+      }
 
       if (enemies.countActive(true) === 0) {
         spawnWave(this);
@@ -132,41 +146,51 @@ export default function GalagaPage() {
     function spawnWave(scene: any) {
       for (let r = 0; r < 5; r++) {
         for (let c = 0; c < 7; c++) {
-          let e = scene.enemies.create(100 + c * 95, 80 + r * 70, 'enemy');
-
+          const e = scene.physics.add.sprite(100 + c * 95, 80 + r * 70, 'enemy');
           e.setDisplaySize(55, 55);
-          e.setVelocityX(60);
+          enemies.add(e);
         }
       }
     }
 
     function hitEnemy(this: any, bullet: any, enemy: any) {
-      bullet.destroy();
-      enemy.destroy();
+      if (bullet) bullet.destroy();
+      if (enemy) enemy.destroy();
 
       score += 100;
 
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem('wixHS', highScore);
+        localStorage.setItem('wixHS', String(highScore));
       }
 
-      scoreText.setText('SCORE ' + score + ' HIGH ' + highScore);
+      if (scoreText) {
+        scoreText.setText('SCORE ' + score + ' HIGH ' + highScore);
+      }
     }
 
-    new Phaser.Game(config);
+    gameInstance = new Phaser.Game(config);
   };
 
   return (
     <div className="w-full min-h-screen bg-black">
       <Header />
-      <div className="pt-20 w-full flex flex-col items-center justify-center bg-black min-h-screen">
+      <div className="w-full flex flex-col items-center justify-center bg-black py-10">
         <style>{`
           #game {
-            width: 100%;
-            height: 100%;
+            width: 800px;
+            height: 600px;
             border: 6px solid red;
             box-sizing: border-box;
+            display: block;
+          }
+          @media (max-width: 900px) {
+            #game {
+              width: 90vw;
+              height: 67.5vw;
+              max-width: 800px;
+              max-height: 600px;
+            }
           }
         `}</style>
         <div id="game" />
