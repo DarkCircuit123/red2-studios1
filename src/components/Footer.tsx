@@ -1,8 +1,27 @@
 import { Link } from 'react-router-dom';
 import { Instagram, Linkedin, Mail, Facebook } from 'lucide-react';
+import { playClickSound } from '@/lib/click-sound';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+
+  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
+    e.preventDefault();
+    playClickSound();
+    
+    // If not on homepage, navigate to homepage first
+    const isHomePage = window.location.pathname === '/';
+    if (!isHomePage) {
+      window.location.href = `/${hash}`;
+      return;
+    }
+    
+    // On homepage, scroll to element
+    const element = document.querySelector(hash);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <footer className="bg-black border-t border-white/10">
@@ -25,20 +44,22 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link
-                  to="/#portfolio"
+                <a
+                  href="#portfolio"
+                  onClick={(e) => handleAnchorClick(e, '#portfolio')}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Gallery
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  to="/#about"
+                <a
+                  href="#about"
+                  onClick={(e) => handleAnchorClick(e, '#about')}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   About
-                </Link>
+                </a>
               </li>
               <li>
                 <Link
@@ -49,12 +70,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/#contact"
+                <a
+                  href="#contact"
+                  onClick={(e) => handleAnchorClick(e, '#contact')}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Contact
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -66,36 +88,40 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link
-                  to="/#about"
+                <a
+                  href="#about"
+                  onClick={(e) => handleAnchorClick(e, '#about')}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Editorial
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  to="/#about"
+                <a
+                  href="#about"
+                  onClick={(e) => handleAnchorClick(e, '#about')}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Commercial
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  to="/#about"
+                <a
+                  href="#about"
+                  onClick={(e) => handleAnchorClick(e, '#about')}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Campaigns
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  to="/#about"
+                <a
+                  href="#about"
+                  onClick={(e) => handleAnchorClick(e, '#about')}
                   className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
                 >
                   Consulting
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -151,24 +177,27 @@ export default function Footer() {
               © {currentYear} Studio. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <Link
-                to="/#about"
+              <a
+                href="#about"
+                onClick={(e) => handleAnchorClick(e, '#about')}
                 className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
               >
                 Privacy
-              </Link>
-              <Link
-                to="/#about"
+              </a>
+              <a
+                href="#about"
+                onClick={(e) => handleAnchorClick(e, '#about')}
                 className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
               >
                 Terms
-              </Link>
-              <Link
-                to="/#about"
+              </a>
+              <a
+                href="#about"
+                onClick={(e) => handleAnchorClick(e, '#about')}
                 className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
               >
                 Cookies
-              </Link>
+              </a>
             </div>
           </div>
         </div>

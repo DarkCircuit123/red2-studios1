@@ -26,6 +26,15 @@ export default function Header() {
   const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
     e.preventDefault();
     playClickSound();
+    
+    // If not on homepage, navigate to homepage first
+    const isHomePage = window.location.pathname === '/';
+    if (!isHomePage) {
+      window.location.href = `/${hash}`;
+      return;
+    }
+    
+    // On homepage, scroll to element
     const element = document.querySelector(hash);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
