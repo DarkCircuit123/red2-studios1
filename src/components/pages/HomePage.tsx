@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
@@ -25,6 +25,25 @@ export default function HomePage() {
       sessionStorage.setItem('splashScreenShown', 'true');
     }
   };
+
+  useEffect(() => {
+    // Handle scroll parameter from URL
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const scrollTo = params.get('scroll');
+      if (scrollTo) {
+        // Wait for DOM to be ready
+        setTimeout(() => {
+          const element = document.querySelector(`#${scrollTo}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }, 100);
+      }
+    }
+  }, []);
 
   return (
     <>

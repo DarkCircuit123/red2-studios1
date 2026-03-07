@@ -30,15 +30,17 @@ export default function Header() {
     // If not on homepage, navigate to homepage first
     const isHomePage = window.location.pathname === '/';
     if (!isHomePage) {
-      window.location.href = `/${hash}`;
+      window.location.href = `/?scroll=${hash.substring(1)}`;
       return;
     }
     
     // On homepage, scroll to element
-    const element = document.querySelector(hash);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    setTimeout(() => {
+      const element = document.querySelector(hash);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   return (
