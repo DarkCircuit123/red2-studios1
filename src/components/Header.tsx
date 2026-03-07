@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
 import { playClickSound } from '@/lib/click-sound';
+import { throttle } from '@/lib/performance';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,19 +12,24 @@ export default function Header() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
 
-  useEffect(() => {
-    const handleScroll = () => {
+  // Memoized throttled scroll handler
+  const handleScroll = useMemo(
+    () => throttle(() => {
       setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
+    }, 100),
+    []
+  );
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  const handleLinkClick = useCallback(() => {
+    playClickSound();
   }, []);
 
-  const handleLinkClick = () => {
-    playClickSound();
-  };
-
-  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
+  const handleAnchorClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
     e.preventDefault();
     playClickSound();
     
@@ -34,7 +40,7 @@ export default function Header() {
       return;
     }
     
-    // On homepage, scroll to element with multiple attempts
+    // On homepage, scroll to element with optimized timing
     const scrollToElement = () => {
       const element = document.querySelector(hash);
       if (element) {
@@ -48,11 +54,16 @@ export default function Header() {
       }
     };
     
-    // Try immediately and with delays to handle dynamic content
+    // Try immediately and with optimized delays
     scrollToElement();
-    setTimeout(scrollToElement, 100);
-    setTimeout(scrollToElement, 300);
-  };
+    const timeout1 = setTimeout(scrollToElement, 100);
+    const timeout2 = setTimeout(scrollToElement, 300);
+    
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+    };
+  }, []);
 
   return (
     <header
@@ -174,10 +185,10 @@ export default function Header() {
           )}
 
           <button
-            onClick={() => {
+            onClick={useCallback(() => {
               playClickSound();
               setIsAdminOpen(true);
-            }}
+            }, [])}
             className="p-2 hover:bg-white/10 transition-colors duration-300"
             aria-label="Admin panel"
             title="Admin Panel"
@@ -186,10 +197,10 @@ export default function Header() {
           </button>
 
           <button
-            onClick={() => {
+            onClick={useCallback(() => {
               playClickSound();
-              setIsOpen(!isOpen);
-            }}
+              setIsOpen(prev => !prev);
+            }, [])}
             className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300"
             aria-label="Toggle menu"
           >

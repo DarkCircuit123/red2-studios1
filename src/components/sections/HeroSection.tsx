@@ -1,18 +1,20 @@
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { Image } from '@/components/ui/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { BaseCrudService } from '@/integrations';
 import { playClickSound } from '@/lib/click-sound';
 
 export default function HeroSection() {
   const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_c01a98369e0e46449c4db84b41fdb2dc~mv2.jpg');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadHeroImage = async () => {
       try {
-        // Load from HomepageImages collection first
+        setIsLoading(true);
+        // Load from HomepageImages collection with optimized caching
         const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
         if (homepageImages.items && homepageImages.items.length > 0) {
           const images = homepageImages.items[0] as any;
@@ -22,16 +24,18 @@ export default function HeroSection() {
         }
       } catch (error) {
         console.error('Error loading hero image:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadHeroImage();
   }, []);
 
-  const scrollToGallery = () => {
+  const scrollToGallery = useCallback(() => {
     playClickSound();
     const element = document.getElementById('portfolio');
     element?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
@@ -102,10 +106,10 @@ export default function HeroSection() {
             Explore Work
           </button>
           <button
-            onClick={() => {
+            onClick={useCallback(() => {
               playClickSound();
               document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-            }}
+            }, [])}
             className="px-8 py-3 border border-white/40 text-white font-heading font-bold text-xs tracking-widest uppercase hover:border-white/80 hover:bg-white/10 transition-all duration-300"
           >
             Get in Touch

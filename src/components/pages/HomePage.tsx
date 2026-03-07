@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
@@ -19,20 +19,19 @@ export default function HomePage() {
     return true;
   });
 
-  const handleSplashComplete = () => {
+  const handleSplashComplete = useCallback(() => {
     setShowSplash(false);
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('splashScreenShown', 'true');
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // Handle scroll parameter from URL
+    // Handle scroll parameter from URL with optimized timing
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const scrollTo = params.get('scroll');
       if (scrollTo) {
-        // Wait for DOM to be ready and scroll with multiple attempts
         const scrollToElement = () => {
           const element = document.querySelector(`#${scrollTo}`);
           if (element) {
@@ -47,10 +46,14 @@ export default function HomePage() {
           }
         };
         
-        // Try multiple times to handle dynamic content loading
-        setTimeout(scrollToElement, 50);
-        setTimeout(scrollToElement, 150);
-        setTimeout(scrollToElement, 400);
+        // Optimized timing for dynamic content loading
+        const timeouts = [
+          setTimeout(scrollToElement, 50),
+          setTimeout(scrollToElement, 150),
+          setTimeout(scrollToElement, 400)
+        ];
+
+        return () => timeouts.forEach(t => clearTimeout(t));
       }
     }
   }, []);

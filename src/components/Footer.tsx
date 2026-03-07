@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Instagram, Linkedin, Mail, Facebook } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
+import { useCallback, useMemo } from 'react';
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
-  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
+  const handleAnchorClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
     e.preventDefault();
     playClickSound();
     
@@ -21,7 +22,7 @@ export default function Footer() {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, []);
 
   return (
     <footer className="bg-black border-t border-white/10">
