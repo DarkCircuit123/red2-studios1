@@ -1,5 +1,6 @@
 import React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useVirtualList } from '@/hooks/useAdvancedOptimization';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Check, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
@@ -65,6 +66,13 @@ function BookingPage() {
         return acc;
       }, {} as Record<string, BookingSlot[]>),
     [availableBookings]
+  );
+
+  // virtualization of date groups (helps when many days/slots)
+  const dateEntries = useMemo(() => Object.entries(groupedByDate), [groupedByDate]);
+  const { startIndex: startDateIndex, endIndex: endDateIndex, offset: dateOffset } = useVirtualList(
+    dateEntries,
+    { itemHeight: 200, buffer: 3 }
   );
 
   const handleSlotClick = useCallback((slot: BookingSlot) => {
@@ -296,7 +304,8 @@ function BookingPage() {
             </motion.div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Object.entries(groupedByDate).map(([date, slots], idx) => (
+              <div style={{ paddingTop: dateOffset }}>
+            {dateEntries.slice(startDateIndex, endDateIndex).map(([date, slots], idx) => (
                 <motion.div
                   key={date}
                   initial={{ opacity: 0, y: 20 }}

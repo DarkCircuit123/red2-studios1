@@ -10,7 +10,10 @@
     "env": "wix env pull",
     "check": "npx astro check --js-only",
     "test:run": "vitest run",
-    "analyze": "node src/lib/bundle-analyzer.ts"
+    "analyze": "node src/lib/bundle-analyzer.ts",
+    "postinstall": "node scripts/memoize.cjs",
+    "clean:junk": "git rm -f \"\" \\\\ || true",
+    "deploy": "npm install && npx wix release"
   },
   "dependencies": {
     "@astrojs/check": "0.9.4",

@@ -214,6 +214,13 @@ function registerCommonExploitPatterns(): void {
 function initializeSecurityHeaders(): void {
   try {
     SecurityHeadersManager.applyHeaders();
+    // add CSP meta and rotate nonce on each navigation
+    cspManager.rotateNonce();
+    cspManager.applyToMeta();
+    window.addEventListener('popstate', () => {
+      cspManager.rotateNonce();
+      cspManager.applyToMeta();
+    });
     console.log('[SECURITY] Security Headers initialized');
   } catch (error) {
     console.error('[SECURITY] Failed to initialize Security Headers', error);

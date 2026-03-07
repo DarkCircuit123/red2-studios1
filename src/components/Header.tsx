@@ -7,6 +7,7 @@ const AdminPanel = React.lazy(() => import('./AdminPanel'));
 import { playClickSound } from '@/lib/click-sound';
 import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
+import { useCSPNonce } from '@/lib/security-enhanced';
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,6 +15,25 @@ function Header() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
 
+  const nonce = useCSPNonce();
+
+  useEffect(() => {
+    if (nonce && typeof document !== 'undefined') {
+      const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+      if (meta) {
+        let content = meta.getAttribute('content') || '';
+        if (!content.includes(`'nonce-${nonce}'`)) {
+          content += `; script-src 'self' 'nonce-${nonce}'`;
+          meta.setAttribute('content', content);
+        }
+      } else {
+        const newMeta = document.createElement('meta');
+        newMeta.httpEquiv = 'Content-Security-Policy';
+        newMeta.content = `script-src 'self' 'nonce-${nonce}'`;
+        document.head.appendChild(newMeta);
+      }
+    }
+  }, [nonce]);
   // Optimized throttled scroll handler with useThrottleCallback
   const handleScroll = useThrottleCallback(() => {
     setScrolled(window.scrollY > 50);
