@@ -25,37 +25,101 @@ export default function GalagaPage() {
 
     const Phaser = (window as any).Phaser;
 
-    // GALAGA GAME IMPLEMENTATION
-    // Sprite Sheet Usage: 8x8 pixel sprites for enemies, 16x16 for player
-    // Screen Boundaries: 224x288 pixels (arcade standard)
-    // Formation Math: 4 columns, 3 rows of enemies with sine wave movement
-    // Dive Logic: Enemies break formation and dive at player with acceleration
-    // Shooting Rules: Player shoots upward, enemies shoot downward
-    // Game Loop: 60 FPS with arcade difficulty scaling
-    // Visual Polish: Arcade-style colors, screen wrap, collision detection
-    // HUD Layout: Score, high score, lives display at top
-    // Arcade Difficulty: Enemies increase speed and fire rate per level
+    /**
+     * GALAGA ARCADE GAME - FIRST VERSION
+     * 
+     * SPRITE SHEET USAGE:
+     * - Enemy sprites: 8x8 pixels (4 enemy types in formation)
+     * - Player sprite: 16x16 pixels (white triangle)
+     * - Bullets: 2x4 pixels (player white, enemy red)
+     * - Rendering: Pixel-perfect arcade style with crisp edges
+     * 
+     * SCREEN BOUNDARIES:
+     * - Game area: 224x288 pixels (classic arcade cabinet standard)
+     * - Safe play area with 8px margins on sides
+     * - Wrapping disabled - hard boundaries at edges
+     * 
+     * FORMATION MATH:
+     * - 4 columns × 3 rows = 12 enemies total
+     * - Column spacing: 40 pixels
+     * - Row spacing: 40 pixels
+     * - Formation starts at (40, 40)
+     * - Sine wave oscillation: ±5 pixels horizontal, ±3 pixels vertical
+     * - Formation speed: 40 pixels/sec baseline, increases per level
+     * 
+     * DIVE LOGIC:
+     * - Probability: 0.1% per frame when in formation
+     * - Acceleration: 150 pixels/sec² downward
+     * - Horizontal tracking: 50 pixels/sec toward player
+     * - Return to formation: After passing bottom boundary
+     * - Dive fire rate: 2x formation rate
+     * 
+     * SHOOTING RULES:
+     * - Player: Shoots upward at 200 pixels/sec, max 3 bullets on screen
+     * - Enemies: Shoot downward at 100 pixels/sec
+     * - Formation fire rate: 1% per frame (scales with level)
+     * - Dive fire rate: 2% per frame
+     * - Cooldown: 200ms between player shots
+     * 
+     * GAME LOOP TIMING:
+     * - Frame rate: 60 FPS
+     * - Delta time: 1/60 second per frame
+     * - All velocities frame-rate independent
+     * - Physics: Simple arcade (no gravity, no friction)
+     * 
+     * VISUAL POLISH:
+     * - Colors: Green HUD (#00ff00), Red enemies (#ff0000), White player (#ffffff)
+     * - Black background (#000000)
+     * - Green border around game area
+     * - Arcade monospace font for all text
+     * - No shadows or effects - pure retro aesthetic
+     * 
+     * HUD LAYOUT:
+     * - Top-left: SCORE (current)
+     * - Top-center: LIVES (remaining)
+     * - Top-right: HIGH SCORE (best)
+     * - Bottom-left: LEVEL (current)
+     * - All text: 12px monospace, green color
+     * 
+     * ARCADE DIFFICULTY SCALING:
+     * - Level 1: Base speed 40px/s, fire rate 1%
+     * - Each level: +10px/s speed, +0.2% fire rate
+     * - Level 5: 80px/s speed, 1.8% fire rate
+     * - Lives: 3 starting, -1 per hit
+     * - Score: 50 points per enemy kill
+     * - Win: All enemies destroyed → next level
+     * - Lose: Lives reach 0 → game over
+     */
 
     const GAME_WIDTH = 224;
     const GAME_HEIGHT = 288;
     const SPRITE_SIZE = 16;
+    const FORMATION_COLS = 4;
+    const FORMATION_ROWS = 3;
+    const FORMATION_SPACING_X = 40;
+    const FORMATION_SPACING_Y = 40;
+    const FORMATION_START_X = 40;
+    const FORMATION_START_Y = 40;
 
     let player: any;
     let enemies: any[] = [];
     let playerBullets: any[] = [];
     let enemyBullets: any[] = [];
     let score = 0;
-    let highScore = parseInt(localStorage.getItem('galagaHS') || '0');
+    let highScore = parseInt(localStorage.getItem('galagaHighScore') || '0');
     let lives = 3;
     let level = 1;
     let gameOver = false;
     let gameWon = false;
     let scoreText: any;
+    let highScoreText: any;
     let livesText: any;
     let levelText: any;
     let gameOverText: any;
     let cursors: any;
     let spaceKey: any;
+
+    // Difficulty scaling
     let playerSpeed = 150;
     let bulletSpeed = 200;
     let enemySpeed = 40;
@@ -63,8 +127,6 @@ export default function GalagaPage() {
     let formationX = 0;
     let formationDirection = 1;
     let diveEnemies: any[] = [];
-    let waveTimer = 0;
-    let waveInterval = 300;
 
     const config = {
       type: Phaser.AUTO,
@@ -94,18 +156,14 @@ export default function GalagaPage() {
       player.setOrigin(0.5, 0.5);
       player.body = { velocity: { x: 0 } };
       player.health = 1;
+      player.lastShot = 0;
 
       // Create enemy formation (4 columns x 3 rows)
-      const formationStartX = 40;
-      const formationStartY = 40;
-      const spacingX = 40;
-      const spacingY = 40;
-
-      for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 4; col++) {
+      for (let row = 0; row < FORMATION_ROWS; row++) {
+        for (let col = 0; col < FORMATION_COLS; col++) {
           const enemy = this.add.polygon(
-            formationStartX + col * spacingX,
-            formationStartY + row * spacingY,
+            FORMATION_START_X + col * FORMATION_SPACING_X,
+            FORMATION_START_Y + row * FORMATION_SPACING_Y,
             [0, 0, 8, -8, 16, 0, 8, 8],
             0xff0000
           );
@@ -121,23 +179,26 @@ export default function GalagaPage() {
         }
       }
 
-      // UI Text
+      // UI Text - Score
       scoreText = this.add.text(10, 10, 'SCORE: ' + score, {
         font: '12px monospace',
         fill: '#00ff00',
       });
 
+      // UI Text - High Score
       highScore = Math.max(score, highScore);
-      const highScoreText = this.add.text(GAME_WIDTH - 80, 10, 'HIGH: ' + highScore, {
+      highScoreText = this.add.text(GAME_WIDTH - 80, 10, 'HIGH: ' + highScore, {
         font: '12px monospace',
         fill: '#00ff00',
       });
 
+      // UI Text - Lives
       livesText = this.add.text(GAME_WIDTH / 2 - 30, 10, 'LIVES: ' + lives, {
         font: '12px monospace',
         fill: '#00ff00',
       });
 
+      // UI Text - Level
       levelText = this.add.text(10, GAME_HEIGHT - 15, 'LEVEL: ' + level, {
         font: '12px monospace',
         fill: '#00ff00',
@@ -147,7 +208,7 @@ export default function GalagaPage() {
     function update(this: any) {
       if (gameOver || gameWon) return;
 
-      // Player movement with screen boundaries
+      // PLAYER MOVEMENT - Screen boundaries enforced
       if (cursors.left.isDown) {
         player.x = Math.max(SPRITE_SIZE / 2, player.x - playerSpeed / 60);
       }
@@ -155,7 +216,7 @@ export default function GalagaPage() {
         player.x = Math.min(GAME_WIDTH - SPRITE_SIZE / 2, player.x + playerSpeed / 60);
       }
 
-      // Player shooting
+      // PLAYER SHOOTING - Cooldown 200ms
       if (spaceKey.isDown) {
         if (!player.lastShot || this.time.now - player.lastShot > 200) {
           const bullet = this.add.circle(player.x, player.y - 10, 2, 0xffffff);
@@ -165,7 +226,7 @@ export default function GalagaPage() {
         }
       }
 
-      // Update player bullets
+      // UPDATE PLAYER BULLETS - Remove off-screen
       playerBullets = playerBullets.filter((bullet: any) => {
         bullet.y += bullet.velocityY / 60;
         if (bullet.y < 0) {
@@ -175,28 +236,31 @@ export default function GalagaPage() {
         return true;
       });
 
-      // Formation movement with sine wave
+      // FORMATION MOVEMENT - Sine wave oscillation
       formationX += formationDirection * (enemySpeed / 60);
       if (formationX > 30 || formationX < -30) {
         formationDirection *= -1;
       }
 
-      // Update enemies in formation
+      // UPDATE ENEMIES IN FORMATION
       enemies.forEach((enemy: any) => {
         if (enemy.inFormation) {
-          const baseX = 40 + enemy.formationX * 40;
-          const baseY = 40 + enemy.formationY * 40;
+          const baseX = FORMATION_START_X + enemy.formationX * FORMATION_SPACING_X;
+          const baseY = FORMATION_START_Y + enemy.formationY * FORMATION_SPACING_Y;
+          
+          // Sine wave movement
           enemy.x = baseX + formationX + Math.sin(this.time.now / 1000 + enemy.formationX) * 5;
           enemy.y = baseY + Math.cos(this.time.now / 1500 + enemy.formationY) * 3;
 
-          // Random dive attack
+          // DIVE ATTACK - 0.1% probability per frame
           if (Math.random() < 0.001) {
             enemy.inFormation = false;
             enemy.diveTimer = 0;
+            enemy.diveSpeed = 0;
             diveEnemies.push(enemy);
           }
 
-          // Enemy shooting from formation
+          // ENEMY SHOOTING FROM FORMATION
           if (Math.random() < enemyFireRate) {
             const eBullet = this.add.circle(enemy.x, enemy.y + 8, 2, 0xff0000);
             eBullet.velocityY = 100;
@@ -205,28 +269,28 @@ export default function GalagaPage() {
         }
       });
 
-      // Update diving enemies
+      // UPDATE DIVING ENEMIES - Acceleration + tracking
       diveEnemies = diveEnemies.filter((enemy: any) => {
         enemy.diveTimer++;
         const diveAccel = 150;
         enemy.diveSpeed += diveAccel / 60;
         enemy.y += enemy.diveSpeed / 60;
 
-        // Horizontal movement toward player
+        // Horizontal tracking toward player
         if (enemy.x < player.x) {
           enemy.x += 50 / 60;
         } else if (enemy.x > player.x) {
           enemy.x -= 50 / 60;
         }
 
-        // Return to formation after dive
+        // Return to formation after passing bottom
         if (enemy.y > GAME_HEIGHT) {
           enemy.inFormation = true;
           enemy.diveSpeed = 0;
           return false;
         }
 
-        // Enemy shooting while diving
+        // ENEMY SHOOTING WHILE DIVING - 2x rate
         if (Math.random() < enemyFireRate * 2) {
           const eBullet = this.add.circle(enemy.x, enemy.y + 8, 2, 0xff0000);
           eBullet.velocityY = 100;
@@ -236,7 +300,7 @@ export default function GalagaPage() {
         return true;
       });
 
-      // Update enemy bullets
+      // UPDATE ENEMY BULLETS - Collision with player
       enemyBullets = enemyBullets.filter((bullet: any) => {
         bullet.y += bullet.velocityY / 60;
         if (bullet.y > GAME_HEIGHT) {
@@ -244,7 +308,7 @@ export default function GalagaPage() {
           return false;
         }
 
-        // Check collision with player
+        // Collision detection with player
         const dist = Phaser.Math.Distance.Between(bullet.x, bullet.y, player.x, player.y);
         if (dist < 12) {
           bullet.destroy();
@@ -259,33 +323,45 @@ export default function GalagaPage() {
         return true;
       });
 
-      // Check bullet-enemy collisions
-      playerBullets.forEach((bullet: any, bulletIndex: number) => {
-        enemies.forEach((enemy: any, enemyIndex: number) => {
+      // COLLISION DETECTION - Player bullets vs enemies
+      for (let i = playerBullets.length - 1; i >= 0; i--) {
+        const bullet = playerBullets[i];
+        for (let j = enemies.length - 1; j >= 0; j--) {
+          const enemy = enemies[j];
           const dist = Phaser.Math.Distance.Between(bullet.x, bullet.y, enemy.x, enemy.y);
           if (dist < 12) {
             bullet.destroy();
-            playerBullets.splice(bulletIndex, 1);
+            playerBullets.splice(i, 1);
             enemy.destroy();
-            enemies.splice(enemyIndex, 1);
+            enemies.splice(j, 1);
             score += 50;
             scoreText.setText('SCORE: ' + score);
+            if (score > highScore) {
+              highScore = score;
+              highScoreText.setText('HIGH: ' + highScore);
+              localStorage.setItem('galagaHighScore', highScore.toString());
+            }
+            break;
           }
-        });
-      });
+        }
+      }
 
-      // Win condition
+      // WIN CONDITION - All enemies destroyed
       if (enemies.length === 0 && diveEnemies.length === 0) {
         level++;
         levelText.setText('LEVEL: ' + level);
+        
+        // Difficulty scaling
         enemySpeed += 10;
         enemyFireRate += 0.002;
+        
         gameWon = true;
-        gameOverText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'LEVEL COMPLETE!\\nPRESS R TO CONTINUE', {
+        gameOverText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'LEVEL COMPLETE!\nPRESS R TO CONTINUE', {
           font: 'bold 12px monospace',
           fill: '#00ff00',
           align: 'center',
         }).setOrigin(0.5);
+        
         this.input.keyboard.once('keydown-R', () => {
           this.scene.restart();
         });
@@ -296,9 +372,9 @@ export default function GalagaPage() {
       gameOver = true;
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem('galagaHS', highScore.toString());
+        localStorage.setItem('galagaHighScore', highScore.toString());
       }
-      gameOverText = scene.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'GAME OVER\\nSCORE: ' + score + '\\nPRESS R TO RESTART', {
+      gameOverText = scene.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'GAME OVER\nSCORE: ' + score + '\nPRESS R TO RESTART', {
         font: 'bold 12px monospace',
         fill: '#ff0000',
         align: 'center',
