@@ -25,17 +25,53 @@ export default function GalagaPage() {
 
     const Phaser = (window as any).Phaser;
 
-    let player: any;
-    let enemies: any;
-    let bullets: any;
+    const TILE_SIZE = 30;
+    const COLS = 19;
+    const ROWS = 21;
+    const CANVAS_WIDTH = COLS * TILE_SIZE;
+    const CANVAS_HEIGHT = ROWS * TILE_SIZE;
+
+    let pacman: any;
+    let ghosts: any[] = [];
+    let pellets: any;
+    let powerPellets: any;
     let cursors: any;
     let score = 0;
-    let highScore = parseInt(localStorage.getItem('simpleHS') || '0');
+    let highScore = parseInt(localStorage.getItem('pacmanHS') || '0');
     let scoreText: any;
-    let direction = 1;
-    let lastShot = 0;
     let gameOver = false;
     let gameOverText: any;
+    let nextDirection = 'NONE';
+    let currentDirection = 'NONE';
+    let pelletsEaten = 0;
+    let totalPellets = 0;
+    let powerMode = false;
+    let powerModeTimer = 0;
+
+    // Maze layout (0 = path, 1 = wall)
+    const maze = [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+      [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
+      [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
+      [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,0,1],
+      [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+      [1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,1],
+      [1,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,1],
+      [1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1],
+      [0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0],
+      [1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1],
+      [1,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,1],
+      [1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1],
+      [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+      [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
+      [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+      [1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1],
+      [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ];
 
     const config = {
       type: Phaser.AUTO,
@@ -43,119 +79,201 @@ export default function GalagaPage() {
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: 800,
-        height: 600,
+        width: CANVAS_WIDTH,
+        height: CANVAS_HEIGHT,
       },
       physics: {
         default: 'arcade',
         arcade: { debug: false },
       },
-      scene: { preload, create, update },
+      scene: { create, update },
     };
-
-    function preload(this: any) {
-      this.load.spritesheet('ship', 'https://labs.phaser.io/assets/sprites/player.png', {
-        frameWidth: 32,
-        frameHeight: 32,
-      });
-      this.load.image('laser', 'https://labs.phaser.io/assets/sprites/laser.png');
-      this.load.image('enemy', 'https://labs.phaser.io/assets/sprites/ufo.png');
-      this.load.audio('shootSound', 'https://labs.phaser.io/assets/audio/SoundEffects/pistol.wav');
-    }
 
     function create(this: any) {
       cursors = this.input.keyboard.createCursorKeys();
 
-      /* Player */
-      player = this.physics.add.sprite(400, 520, 'ship');
-      player.setDisplaySize(70, 70);
-      player.setCollideWorldBounds(true);
+      // Create graphics for maze
+      const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+      graphics.fillStyle(0x0000ff, 1);
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (maze[r][c] === 1) {
+            graphics.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+          }
+        }
+      }
+      graphics.generateTexture('maze', CANVAS_WIDTH, CANVAS_HEIGHT);
+      graphics.destroy();
 
-      /* Groups */
-      bullets = this.physics.add.group();
-      enemies = this.physics.add.group();
+      this.add.image(0, 0, 'maze').setOrigin(0, 0);
 
-      /* UI SCORE — FIXED TO SCREEN */
-      scoreText = this.add.text(20, 20, 'SCORE ' + score + ' HIGH ' + highScore, {
-        font: '22px monospace',
+      // Create pellets
+      pellets = this.physics.add.staticGroup();
+      powerPellets = this.physics.add.staticGroup();
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (maze[r][c] === 0) {
+            const x = c * TILE_SIZE + TILE_SIZE / 2;
+            const y = r * TILE_SIZE + TILE_SIZE / 2;
+            if ((r === 1 && c === 1) || (r === 1 && c === COLS - 2) || 
+                (r === ROWS - 2 && c === 1) || (r === ROWS - 2 && c === COLS - 2)) {
+              const pp = powerPellets.create(x, y);
+              pp.setDisplaySize(8, 8);
+              pp.setTint(0xffff00);
+            } else {
+              const p = pellets.create(x, y);
+              p.setDisplaySize(3, 3);
+              p.setTint(0xffffff);
+            }
+          }
+        }
+      }
+
+      totalPellets = pellets.children.entries.length + powerPellets.children.entries.length;
+
+      // Create Pac-Man (white)
+      pacman = this.add.circle(9 * TILE_SIZE + TILE_SIZE / 2, 15 * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 0xffffff);
+      pacman.gridX = 9;
+      pacman.gridY = 15;
+
+      // Create ghosts (all red)
+      const ghostStartPositions = [
+        { x: 8, y: 9, color: 0xff0000 },
+        { x: 9, y: 9, color: 0xff0000 },
+        { x: 8, y: 10, color: 0xff0000 },
+        { x: 9, y: 10, color: 0xff0000 },
+      ];
+
+      ghostStartPositions.forEach((pos) => {
+        const ghost = this.add.circle(pos.x * TILE_SIZE + TILE_SIZE / 2, pos.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 2 - 2, pos.color);
+        ghost.gridX = pos.x;
+        ghost.gridY = pos.y;
+        ghost.direction = Phaser.Math.RND.pick(['UP', 'DOWN', 'LEFT', 'RIGHT']);
+        ghosts.push(ghost);
+      });
+
+      // UI
+      scoreText = this.add.text(10, CANVAS_HEIGHT + 10, 'SCORE: ' + score + ' HIGH: ' + highScore, {
+        font: '16px monospace',
         fill: '#ffffff',
-      }).setScrollFactor(0);
-
-      /* Spawn enemies */
-      spawnWave(this);
-
-      /* Collision detection: bullets hit enemies */
-      this.physics.add.overlap(bullets, enemies, (bullet: any, enemy: any) => {
-        bullet.destroy();
-        enemy.destroy();
-        score += 10;
-        scoreText.setText('SCORE ' + score + ' HIGH ' + highScore);
-      });
-
-      /* Collision detection: enemies reach bottom */
-      this.physics.add.overlap(player, enemies, () => {
-        endGame(this);
-      });
-
-      /* Start sound on first input */
-      this.input.keyboard.once('keydown-SPACE', () => {
-        this.sound.play('shootSound');
       });
     }
 
-    function update(this: any, time: number) {
-      if (!player || gameOver) return;
+    function update(this: any) {
+      if (gameOver) return;
 
-      /* Movement */
-      if (cursors.left.isDown) {
-        player.setVelocityX(-400);
-      } else if (cursors.right.isDown) {
-        player.setVelocityX(400);
-      } else {
-        player.setVelocityX(0);
+      // Handle input
+      if (cursors.left.isDown) nextDirection = 'LEFT';
+      if (cursors.right.isDown) nextDirection = 'RIGHT';
+      if (cursors.up.isDown) nextDirection = 'UP';
+      if (cursors.down.isDown) nextDirection = 'DOWN';
+
+      // Move Pac-Man
+      let newX = pacman.gridX;
+      let newY = pacman.gridY;
+
+      if (nextDirection !== 'NONE') {
+        if (nextDirection === 'LEFT') newX--;
+        if (nextDirection === 'RIGHT') newX++;
+        if (nextDirection === 'UP') newY--;
+        if (nextDirection === 'DOWN') newY++;
+
+        if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS && maze[newY][newX] === 0) {
+          currentDirection = nextDirection;
+        }
       }
 
-      /* Shooting */
-      if (cursors.space.isDown && time > lastShot) {
-        const b = bullets.create(player.x, player.y - 35, 'laser');
-        b.setDisplaySize(6, 20);
-        b.setVelocityY(-900);
-        this.sound.play('shootSound');
-        lastShot = time + 250;
+      if (currentDirection !== 'NONE') {
+        if (currentDirection === 'LEFT') newX = pacman.gridX - 1;
+        if (currentDirection === 'RIGHT') newX = pacman.gridX + 1;
+        if (currentDirection === 'UP') newY = pacman.gridY - 1;
+        if (currentDirection === 'DOWN') newY = pacman.gridY + 1;
+
+        if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS && maze[newY][newX] === 0) {
+          pacman.gridX = newX;
+          pacman.gridY = newY;
+          pacman.x = pacman.gridX * TILE_SIZE + TILE_SIZE / 2;
+          pacman.y = pacman.gridY * TILE_SIZE + TILE_SIZE / 2;
+        }
       }
 
-      /* Bullet cleanup */
-      bullets.children.each((b: any) => {
-        if (b && b.y < -80) b.destroy();
+      // Check pellet collision
+      pellets.children.entries.forEach((p: any) => {
+        if (p && p.gridX === pacman.gridX && p.gridY === pacman.gridY) {
+          p.destroy();
+          score += 10;
+          pelletsEaten++;
+          scoreText.setText('SCORE: ' + score + ' HIGH: ' + highScore);
+        }
       });
 
-      /* Enemy movement (simple + stable) */
-      enemies.children.each((e: any) => {
-        if (!e) return;
-        e.x += 2.5 * direction;
-        if (e.x > 760 || e.x < 40) {
-          direction *= -1;
-          e.y += 35;
-        }
-        /* Check if enemy reached bottom */
-        if (e.y > 580) {
-          endGame(this);
+      powerPellets.children.entries.forEach((p: any) => {
+        if (p && p.gridX === pacman.gridX && p.gridY === pacman.gridY) {
+          p.destroy();
+          score += 50;
+          powerMode = true;
+          powerModeTimer = 300;
+          ghosts.forEach((g: any) => g.setTint(0x0000ff));
+          scoreText.setText('SCORE: ' + score + ' HIGH: ' + highScore);
         }
       });
 
-      /* Wave reset */
-      if (enemies.countActive(true) === 0) {
-        spawnWave(this);
-      }
-    }
-
-    function spawnWave(scene: any) {
-      for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 7; c++) {
-          const e = scene.enemies.create(100 + c * 95, 80 + r * 70, 'enemy');
-          e.setDisplaySize(55, 55);
-          e.setVelocityX(60);
+      // Update power mode
+      if (powerMode) {
+        powerModeTimer--;
+        if (powerModeTimer <= 0) {
+          powerMode = false;
+          ghosts.forEach((g: any) => g.clearTint());
         }
+      }
+
+      // Move ghosts
+      ghosts.forEach((ghost: any) => {
+        if (Math.random() < 0.02) {
+          ghost.direction = Phaser.Math.RND.pick(['UP', 'DOWN', 'LEFT', 'RIGHT']);
+        }
+
+        let gNewX = ghost.gridX;
+        let gNewY = ghost.gridY;
+
+        if (ghost.direction === 'LEFT') gNewX--;
+        if (ghost.direction === 'RIGHT') gNewX++;
+        if (ghost.direction === 'UP') gNewY--;
+        if (ghost.direction === 'DOWN') gNewY++;
+
+        if (gNewX >= 0 && gNewX < COLS && gNewY >= 0 && gNewY < ROWS && maze[gNewY][gNewX] === 0) {
+          ghost.gridX = gNewX;
+          ghost.gridY = gNewY;
+          ghost.x = ghost.gridX * TILE_SIZE + TILE_SIZE / 2;
+          ghost.y = ghost.gridY * TILE_SIZE + TILE_SIZE / 2;
+        } else {
+          ghost.direction = Phaser.Math.RND.pick(['UP', 'DOWN', 'LEFT', 'RIGHT']);
+        }
+
+        // Check collision with Pac-Man
+        if (ghost.gridX === pacman.gridX && ghost.gridY === pacman.gridY) {
+          if (powerMode) {
+            ghost.destroy();
+            score += 200;
+            scoreText.setText('SCORE: ' + score + ' HIGH: ' + highScore);
+          } else {
+            endGame(this);
+          }
+        }
+      });
+
+      // Win condition
+      if (pelletsEaten === totalPellets) {
+        gameOverText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 'YOU WIN!\\nPRESS R TO RESTART', {
+          font: 'bold 24px monospace',
+          fill: '#00ff00',
+          align: 'center',
+        }).setOrigin(0.5);
+        gameOver = true;
+        this.input.keyboard.once('keydown-R', () => {
+          this.scene.restart();
+        });
       }
     }
 
@@ -163,13 +281,13 @@ export default function GalagaPage() {
       gameOver = true;
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem('simpleHS', highScore.toString());
+        localStorage.setItem('pacmanHS', highScore.toString());
       }
-      gameOverText = scene.add.text(400, 300, 'GAME OVER\nSCORE: ' + score + '\nPRESS R TO RESTART', {
-        font: 'bold 32px monospace',
+      gameOverText = scene.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 'GAME OVER\\nSCORE: ' + score + '\\nPRESS R TO RESTART', {
+        font: 'bold 24px monospace',
         fill: '#ff0000',
         align: 'center',
-      }).setOrigin(0.5).setScrollFactor(0);
+      }).setOrigin(0.5);
 
       scene.input.keyboard.once('keydown-R', () => {
         scene.scene.restart();
@@ -192,15 +310,15 @@ export default function GalagaPage() {
           #game {
             width: 100%;
             height: 100%;
-            border: 6px solid red;
+            border: 6px solid yellow;
             box-sizing: border-box;
           }
           @media (max-width: 900px) {
             #game {
               width: 90vw;
-              height: 67.5vw;
-              max-width: 800px;
-              max-height: 600px;
+              height: auto;
+              max-width: 570px;
+              max-height: 630px;
             }
           }
         `}</style>
