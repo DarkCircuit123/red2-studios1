@@ -372,6 +372,7 @@ export default function GalagaPage() {
             enemyBullets.splice(i, 1);
             continue;
           }
+          drawSprite(SPRITE_CONFIG.sprites.laser, enemyBullets[i].x - 4, enemyBullets[i].y, 1);
         }
 
         // Update formation
