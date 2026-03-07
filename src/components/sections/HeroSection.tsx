@@ -66,7 +66,7 @@ export default function HeroSection() {
           />
         )}
         {/* Minimal dark overlay for text readability */}
-        <div className="absolute inset-0 bg-black/30 opacity-[1]" />
+        <div className="absolute inset-0 bg-black/30 opacity-[0.51]" />
       </div>
       {/* Content with elegant fade-in and delay sequencing */}
       <div className="relative z-10 max-w-[120rem] mx-auto px-8 text-left w-full h-full flex flex-col justify-center">
