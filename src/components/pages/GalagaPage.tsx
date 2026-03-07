@@ -32,14 +32,15 @@ export default function GalagaPage() {
     let cursors: any;
     let score = 0;
     let wave = 1;
-    let highScore = localStorage.getItem('viralHighScore') || 0;
+    let direction = 1;
+    let highScore = localStorage.getItem('museumHS') || 0;
     let scoreText: any;
-    let titleText: any;
+    let musicIntensity = 0;
 
     const config = {
       type: Phaser.AUTO,
       parent: 'game',
-      width: 1200,
+      width: 1100,
       height: 800,
       physics: {
         default: 'arcade',
@@ -62,28 +63,17 @@ export default function GalagaPage() {
     function create(this: any) {
       cursors = this.input.keyboard.createCursorKeys();
 
-      /* Title Intro Sequence */
-      titleText = this.add.text(350, 350, 'GALACTIC DEFENDER', {
-        font: '64px monospace',
-        fill: '#ff0000',
-      });
-
-      this.tweens.add({
-        targets: titleText,
-        alpha: 0,
-        duration: 5000,
-        ease: 'Quad.easeOut',
-      });
+      this.sound.add('music', { loop: true, volume: 0.3 }).play();
 
       /* Stars */
       for (let i = 0; i < 260; i++) {
         this.add
-          .image(Phaser.Math.Between(0, 1200), Phaser.Math.Between(0, 800), 'star')
+          .image(Phaser.Math.Between(0, 1100), Phaser.Math.Between(0, 800), 'star')
           .setScale(0.12);
       }
 
       /* Player */
-      player = this.physics.add.sprite(600, 700, 'ships', 0);
+      player = this.physics.add.sprite(550, 700, 'ships', 0);
       player.setDisplaySize(90, 90);
       player.setCollideWorldBounds(true);
 
@@ -106,10 +96,14 @@ export default function GalagaPage() {
     function update(this: any) {
       if (!player) return;
 
-      /* Player */
-      if (cursors.left.isDown) player.setVelocityX(-420);
-      else if (cursors.right.isDown) player.setVelocityX(420);
-      else player.setVelocityX(0);
+      /* Movement */
+      if (cursors.left.isDown) {
+        player.setVelocityX(-450);
+      } else if (cursors.right.isDown) {
+        player.setVelocityX(450);
+      } else {
+        player.setVelocityX(0);
+      }
 
       /* Shooting */
       if (this.input.keyboard.checkDown(cursors.space, 140)) {
@@ -117,50 +111,55 @@ export default function GalagaPage() {
 
         if (b) {
           b.setDisplaySize(10, 30);
-          b.setVelocityY(-1100);
+          b.setVelocityY(-1200);
         }
       }
 
       /* Bullet cleanup */
-      bullets.children.each(function (b: any) {
+      bullets.children.each((b: any) => {
         if (b && b.y < -100) b.destroy();
       });
 
-      /* Swarm Intelligence */
-      let swarmCenter = 0;
+      /* Predictive swarm AI */
+      let playerBias = player.body.velocity.x;
 
-      enemies.children.each(function (e: any) {
+      enemies.children.each((e: any) => {
         if (!e) return;
 
-        swarmCenter += e.x;
+        /* Swarm organic motion */
+        e.x += (3 + wave * 0.12) * direction;
+        e.y += Math.sin(Date.now() * 0.001 + e.x * 0.01) * 0.5;
 
-        /* Dynamic swarm pattern */
-        e.x += Math.sin(Date.now() * 0.001 + e.y * 0.01) * (2 + wave * 0.08);
-        e.y += Math.cos(Date.now() * 0.0008 + e.x * 0.01) * 1.5;
+        /* Edge bounce */
+        if (e.x > 1050 || e.x < 50) {
+          direction *= -1;
+          e.y += 45;
+        }
 
-        /* Dive attack */
+        /* Predictive dive AI */
         if (Math.random() > 0.999) {
           e.state = 'dive';
-          e.targetX = player.x;
+          e.targetX = player.x + playerBias * 0.6;
         }
 
         if (e.state === 'dive') {
           e.y += 7 + wave * 0.4;
           e.x += Math.sign(e.targetX - e.x) * 3;
         }
-      }, this);
+      });
 
       /* Wave progression */
       if (enemies.countActive(true) === 0) {
         wave++;
         spawnWave(this);
+        musicIntensity += 0.05;
       }
     }
 
     function spawnWave(scene: any) {
       for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 8; c++) {
-          let e = scene.enemies.create(180 + c * 110, 100 + r * 80, 'ships', 1);
+        for (let c = 0; c < 9; c++) {
+          let e = scene.enemies.create(120 + c * 110, 120 + r * 75, 'ships', 1);
 
           e.setDisplaySize(70, 70);
           e.health = 2 + wave;
@@ -181,15 +180,15 @@ export default function GalagaPage() {
         let boom = this.add.image(enemy.x, enemy.y, 'boom');
         boom.setScale(1.2);
 
-        this.time.delayedCall(200, () => boom.destroy());
+        this.time.delayedCall(250, () => boom.destroy());
       }
 
       if (score > highScore) {
         highScore = Math.floor(score);
-        localStorage.setItem('viralHighScore', highScore);
+        localStorage.setItem('museumHS', highScore);
       }
 
-      scoreText.setText('SCORE ' + Math.floor(score) + ' HIGH ' + highScore);
+      scoreText.setText('SCORE ' + score + ' HIGH ' + highScore);
     }
 
     new Phaser.Game(config);
@@ -200,30 +199,27 @@ export default function GalagaPage() {
       <Header />
       <div className="pt-20 w-full flex flex-col items-center justify-center bg-black min-h-screen">
         <style>{`
-          #cabinet {
-            width: 1400px;
+          #museumCabinet {
+            width: 1300px;
             height: 900px;
-            background: radial-gradient(circle at center, #300000, #000000);
+            background: radial-gradient(circle at center, #200000, #000000);
             border-radius: 50px;
             padding: 40px;
             box-shadow:
-              0 0 150px rgba(255, 0, 0, 0.3),
+              0 0 180px rgba(255, 0, 0, 0.25),
               inset 0 0 200px rgba(0, 0, 0, 0.95);
             position: relative;
           }
 
-          #scan {
+          #crtGlow {
             position: absolute;
             pointer-events: none;
-            width: 1200px;
+            width: 1100px;
             height: 800px;
-            background: repeating-linear-gradient(
-              to bottom,
-              rgba(0, 0, 0, 0.12),
-              rgba(0, 0, 0, 0.12) 2px,
-              rgba(255, 255, 255, 0.02) 3px
-            );
-            mix-blend-mode: overlay;
+            background: radial-gradient(circle at center,
+              rgba(255, 0, 0, 0.12),
+              rgba(0, 0, 0, 0.95));
+            mix-blend-mode: screen;
             top: 40px;
             left: 40px;
             border-radius: 8px;
@@ -234,9 +230,9 @@ export default function GalagaPage() {
             z-index: 1;
           }
         `}</style>
-        <div id="cabinet">
+        <div id="museumCabinet">
           <div id="game" />
-          <div id="scan" />
+          <div id="crtGlow" />
         </div>
       </div>
       <Footer />
