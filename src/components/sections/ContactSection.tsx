@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, AlertCircle } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
+import { advancedSpamDetection, behavioralBiometrics, ddosMitigation } from '@/lib/next-gen-security';
+import { InputValidator, RateLimiter } from '@/lib/security-enhanced';
+
+const contactFormLimiter = new RateLimiter(3, 60000); // 3 submissions per minute
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -9,9 +13,63 @@ export default function ContactSection() {
     email: '',
     subject: '',
     message: '',
+    honeypot: '', // Hidden field for bot detection
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error' | 'blocked'>('idle');
+  const [blockMessage, setBlockMessage] = useState('');
+  const formStartTime = useRef<number>(0);
+  const lastKeyPressTime = useRef<number>(0);
+  const keyPressIntervals = useRef<number[]>([]);
+  const mouseMovements = useRef<{ x: number; y: number }[]>([]);
+  const lastMousePos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Initialize form tracking on mount
+  useEffect(() => {
+    formStartTime.current = Date.now();
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - lastMousePos.current.x, 2) +
+        Math.pow(e.clientY - lastMousePos.current.y, 2)
+      );
+      mouseMovements.current.push({ x: e.clientX, y: e.clientY });
+      if (mouseMovements.current.length > 100) {
+        mouseMovements.current.shift();
+      }
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+
+      // Track behavior for biometrics
+      behavioralBiometrics.recordBehavior({
+        mouseX: e.clientX,
+        mouseY: e.clientY,
+        keyPressInterval: 0,
+        scrollVelocity: 0,
+        clickPrecision: distance,
+        focusTime: 0,
+        blurTime: 0,
+      });
+    };
+
+    const handleKeyPress = () => {
+      const now = Date.now();
+      if (lastKeyPressTime.current > 0) {
+        keyPressIntervals.current.push(now - lastKeyPressTime.current);
+        if (keyPressIntervals.current.length > 50) {
+          keyPressIntervals.current.shift();
+        }
+      }
+      lastKeyPressTime.current = now;
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('keypress', handleKeyPress);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('keypress', handleKeyPress);
+    };
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -24,13 +82,95 @@ export default function ContactSection() {
     setIsSubmitting(true);
 
     try {
-      // Simulate form submission
+      // 1. Check honeypot (bot detection)
+      if (formData.honeypot) {
+        console.warn('[SECURITY] Honeypot triggered - likely bot');
+        setSubmitStatus('blocked');
+        setBlockMessage('Submission blocked: Invalid data detected');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Rate limiting check
+      const clientFingerprint = `${navigator.userAgent}-${window.location.hostname}`;
+      if (!contactFormLimiter.isAllowed(clientFingerprint)) {
+        console.warn('[SECURITY] Rate limit exceeded for contact form');
+        setSubmitStatus('blocked');
+        setBlockMessage('Too many submissions. Please try again later.');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. DDoS check
+      const ddosCheck = ddosMitigation.recordRequest(clientFingerprint);
+      if (ddosCheck.recommendation === 'BLOCK') {
+        console.warn('[SECURITY] DDoS mitigation triggered');
+        setSubmitStatus('blocked');
+        setBlockMessage('Request blocked for security reasons');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 4. Input validation
+      if (!InputValidator.isValidEmail(formData.email)) {
+        setSubmitStatus('error');
+        setBlockMessage('Invalid email address');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 5. Form fill time check (bots fill too fast)
+      const fillTime = Date.now() - formStartTime.current;
+      if (fillTime < 2000) {
+        console.warn('[SECURITY] Form filled too quickly - likely bot');
+        setSubmitStatus('blocked');
+        setBlockMessage('Submission blocked: Invalid behavior detected');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 6. Behavioral biometrics check
+      if (behavioralBiometrics.isBotLikeBehavior()) {
+        console.warn('[SECURITY] Bot-like behavior detected');
+        setSubmitStatus('blocked');
+        setBlockMessage('Submission blocked: Suspicious activity detected');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 7. Advanced spam detection
+      const spamAnalysis = advancedSpamDetection.analyzeSubmission({
+        timestamp: Date.now(),
+        data: formData,
+        fillTime,
+        honeypotTriggered: false,
+      });
+
+      if (spamAnalysis.isSpam) {
+        console.warn('[SECURITY] Spam detected:', spamAnalysis.detectedPatterns);
+        setSubmitStatus('blocked');
+        setBlockMessage('Submission blocked: Spam detected');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // All security checks passed - simulate form submission
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setSubmitStatus('success');
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setFormData({ name: '', email: '', subject: '', message: '', honeypot: '' });
+      formStartTime.current = Date.now();
       setTimeout(() => setSubmitStatus('idle'), 3000);
     } catch (error) {
+      console.error('[FORM ERROR]', error);
       setSubmitStatus('error');
+      setBlockMessage('An error occurred. Please try again.');
       setTimeout(() => setSubmitStatus('idle'), 3000);
     } finally {
       setIsSubmitting(false);
@@ -220,6 +360,17 @@ export default function ContactSection() {
                 />
               </div>
 
+              {/* Honeypot field - hidden from users */}
+              <input
+                type="text"
+                name="honeypot"
+                value={formData.honeypot}
+                onChange={handleChange}
+                style={{ display: 'none' }}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+
               {/* Status Messages */}
               {submitStatus === 'success' && (
                 <motion.div
@@ -240,7 +391,20 @@ export default function ContactSection() {
                   className="p-4 bg-red-500/10 border border-red-500/30"
                 >
                   <p className="text-sm font-paragraph text-red-400">
-                    Something went wrong. Please try again.
+                    {blockMessage || 'Something went wrong. Please try again.'}
+                  </p>
+                </motion.div>
+              )}
+
+              {submitStatus === 'blocked' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-orange-500/10 border border-orange-500/30 flex gap-3"
+                >
+                  <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm font-paragraph text-orange-400">
+                    {blockMessage}
                   </p>
                 </motion.div>
               )}
