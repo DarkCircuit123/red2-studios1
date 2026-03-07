@@ -1,7 +1,33 @@
 import { type FittingType, getPlaceholder, sdk, STATIC_MEDIA_URL } from '@wix/image-kit'
 import { forwardRef, type ImgHTMLAttributes, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useSize } from '@/hooks/use-size'
-import './image.css'
+
+// Inline CSS for image animation
+const imageStyles = `
+  @keyframes scanMask {
+    0% {
+        mask-position: 0% 200%;
+    }
+    100% {
+        mask-position: 0% -100%;
+    }
+  }
+
+  img[src*='12d367_71ebdd7141d041e4be3d91d80d4578dd'] {
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 1) 50%, transparent 100%);
+    mask-size: 100% 200%;
+    mask-repeat: no-repeat;
+    animation: scanMask 2s linear infinite;
+  }
+`;
+
+// Inject styles into document head
+if (typeof document !== 'undefined' && !document.getElementById('image-styles')) {
+  const styleElement = document.createElement('style');
+  styleElement.id = 'image-styles';
+  styleElement.textContent = imageStyles;
+  document.head.appendChild(styleElement);
+}
 
 const FALLBACK_IMAGE_URL = "https://static.wixstatic.com/media/12d367_4f26ccd17f8f4e3a8958306ea08c2332~mv2.png";
 
