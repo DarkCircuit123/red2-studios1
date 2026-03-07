@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Linkedin, Mail } from 'lucide-react';
+import { Instagram, Linkedin, Mail, Facebook } from 'lucide-react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -107,13 +107,22 @@ export default function Footer() {
             </h4>
             <div className="flex gap-4">
               <a
-                href="https://instagram.com"
+                href="https://instagram.com/jmichaelzuniga"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-white/60 hover:text-white transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5" />
+              </a>
+              <a
+                href="https://www.facebook.com/jordanmzuniga/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 text-white/60 hover:text-white transition-colors"
+                aria-label="Facebook"
+              >
+                <Facebook className="w-5 h-5" />
               </a>
               <a
                 href="https://linkedin.com"

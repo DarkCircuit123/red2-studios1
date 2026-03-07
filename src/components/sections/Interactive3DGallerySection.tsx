@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { Box, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Box, ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
@@ -74,8 +74,8 @@ export default function Interactive3DGallerySection() {
           className="mb-16"
         >
           <div className="flex items-center gap-3 mb-4">
-            <Box className="w-6 h-6 text-red-900" />
-            <span className="text-xs font-mono text-red-900 uppercase tracking-widest">3D Experience</span>
+            <Box className="w-6 h-6 text-primary" />
+            <span className="text-xs font-mono text-primary uppercase tracking-widest">3D Experience</span>
           </div>
           <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
             Immersive Gallery
@@ -208,7 +208,7 @@ export default function Interactive3DGallerySection() {
               }}
               whileHover={{ scale: 1.05 }}
               className={`flex-shrink-0 w-20 h-20 overflow-hidden border-2 transition-all duration-300 ${
-                idx === currentIndex ? 'border-red-900' : 'border-white/20 hover:border-white/60'
+                idx === currentIndex ? 'border-primary' : 'border-white/20 hover:border-white/60'
               }`}
             >
               <Image
@@ -232,6 +232,66 @@ export default function Interactive3DGallerySection() {
             💡 Tip: Move your mouse over the gallery to see the 3D depth effect
           </p>
         </motion.div>
+
+        {/* Fullscreen Modal */}
+        <AnimatePresence>
+          {isFullscreen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+              onClick={() => setIsFullscreen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                className="relative w-full h-full max-w-6xl max-h-[90vh] flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close Button */}
+                <motion.button
+                  onClick={() => setIsFullscreen(false)}
+                  whileHover={{ scale: 1.1 }}
+                  className="absolute top-4 right-4 p-3 bg-white/10 hover:bg-white/20 transition-colors z-50"
+                  aria-label="Close fullscreen"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </motion.button>
+
+                {/* Fullscreen Image Container */}
+                <div className="relative w-full h-full flex items-center justify-center">
+                  {galleryImages[0] && (
+                    <Image
+                      src={galleryImages[0]}
+                      alt="Fullscreen view"
+                      className="w-full h-full object-contain"
+                    />
+                  )}
+                </div>
+
+                {/* Navigation in Fullscreen */}
+                <motion.button
+                  onClick={handlePrev}
+                  whileHover={{ scale: 1.1 }}
+                  className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 transition-colors"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="w-6 h-6 text-white" />
+                </motion.button>
+                <motion.button
+                  onClick={handleNext}
+                  whileHover={{ scale: 1.1 }}
+                  className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 transition-colors"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="w-6 h-6 text-white" />
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );
