@@ -3,6 +3,31 @@ import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 
+// Static sound effect utility
+const playStaticSound = () => {
+  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const bufferSize = audioContext.sampleRate * 0.5; // 0.5 seconds
+  const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+  const data = buffer.getChannelData(0);
+  
+  // Generate white noise
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  
+  const source = audioContext.createBufferSource();
+  const gainNode = audioContext.createGain();
+  
+  source.buffer = buffer;
+  source.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+  
+  source.start(audioContext.currentTime);
+};
+
 interface SplashScreenProps {
   onComplete: () => void;
 }
@@ -10,6 +35,7 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [glitchActive, setGlitchActive] = useState(false);
   const logoImage = 'https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png';
 
   useEffect(() => {
@@ -35,13 +61,21 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   }, []);
 
   useEffect(() => {
-    // Total animation duration: 3.5 seconds
-    const timer = setTimeout(() => {
+    // Logo visible for 2 seconds, then glitch for 0.5 seconds, then fade out
+    const glitchTimer = setTimeout(() => {
+      setGlitchActive(true);
+      playStaticSound();
+    }, 2000);
+
+    const completeTimer = setTimeout(() => {
       setIsVisible(false);
       onComplete();
-    }, 3500);
+    }, 2500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(glitchTimer);
+      clearTimeout(completeTimer);
+    };
   }, [onComplete]);
 
   if (!isVisible) return null;
@@ -79,20 +113,31 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         }}
         animate={{ 
           scale: 1, 
-          opacity: 1,
-          y: 0
+          opacity: glitchActive ? 0 : 1,
+          y: 0,
+          x: glitchActive ? [0, -8, 8, -8, 8, 0] : 0
         }}
         transition={{
-          duration: 1.2,
-          ease: [0.34, 1.56, 0.64, 1], // Custom easing for cinematic feel
-          delay: 0.2
+          scale: {
+            duration: 1.2,
+            ease: [0.34, 1.56, 0.64, 1],
+            delay: 0.2
+          },
+          opacity: {
+            duration: 0.3,
+            delay: glitchActive ? 0 : 2
+          },
+          x: glitchActive ? {
+            duration: 0.4,
+            repeat: 0
+          } : { duration: 0 }
         }}
       >
         <Image
           src={logoImage}
           alt="RED² Logo"
-          className="w-48 h-auto md:w-64"
-          width={256}
+          className="w-56 h-auto md:w-80"
+          width={320}
         />
       </motion.div>
 
@@ -100,8 +145,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       <motion.div
         className="absolute inset-0 bg-black"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0 }}
-        transition={{ duration: 0.8, delay: 2.5 }}
+        animate={{ opacity: glitchActive ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
       />
     </motion.div>
   );
