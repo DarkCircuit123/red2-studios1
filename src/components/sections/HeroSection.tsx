@@ -66,9 +66,8 @@ export default function HeroSection() {
           />
         )}
         {/* Minimal dark overlay for text readability */}
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-black/30 opacity-[1]" />
       </div>
-
       {/* Content with elegant fade-in and delay sequencing */}
       <div className="relative z-10 max-w-[120rem] mx-auto px-8 text-left w-full h-full flex flex-col justify-center">
         {/* Main headline - bold and clean */}
@@ -119,7 +118,6 @@ export default function HeroSection() {
           </button>
         </motion.div>
       </div>
-
       {/* Scroll indicator - subtle animation */}
       <motion.div
         animate={{ y: [0, 12, 0] }}

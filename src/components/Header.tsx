@@ -62,7 +62,7 @@ export default function Header() {
           : 'bg-transparent'
       }`}
     >
-      <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent">
+      <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent shadow-[inset_0px_0px_4px_0px_#bfbfbf] opacity-[1] mix-blend-normal">
         {/* Logo - Text-based RED² */}
         <Link
           to="/"
@@ -194,10 +194,8 @@ export default function Header() {
           </button>
         </div>
       </nav>
-
       {/* Admin Panel */}
       <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
-
       {/* Mobile Navigation */}
       {isOpen && (
         <div className="md:hidden bg-black/95 border-t border-white/10 backdrop-blur-md">
