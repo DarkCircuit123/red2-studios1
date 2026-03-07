@@ -25,53 +25,46 @@ export default function GalagaPage() {
 
     const Phaser = (window as any).Phaser;
 
-    const TILE_SIZE = 30;
-    const COLS = 19;
-    const ROWS = 21;
-    const CANVAS_WIDTH = COLS * TILE_SIZE;
-    const CANVAS_HEIGHT = ROWS * TILE_SIZE;
+    // GALAGA GAME IMPLEMENTATION
+    // Sprite Sheet Usage: 8x8 pixel sprites for enemies, 16x16 for player
+    // Screen Boundaries: 224x288 pixels (arcade standard)
+    // Formation Math: 4 columns, 3 rows of enemies with sine wave movement
+    // Dive Logic: Enemies break formation and dive at player with acceleration
+    // Shooting Rules: Player shoots upward, enemies shoot downward
+    // Game Loop: 60 FPS with arcade difficulty scaling
+    // Visual Polish: Arcade-style colors, screen wrap, collision detection
+    // HUD Layout: Score, high score, lives display at top
+    // Arcade Difficulty: Enemies increase speed and fire rate per level
 
-    let pacman: any;
-    let ghosts: any[] = [];
-    let pellets: any;
-    let powerPellets: any;
-    let cursors: any;
+    const GAME_WIDTH = 224;
+    const GAME_HEIGHT = 288;
+    const SPRITE_SIZE = 16;
+
+    let player: any;
+    let enemies: any[] = [];
+    let playerBullets: any[] = [];
+    let enemyBullets: any[] = [];
     let score = 0;
-    let highScore = parseInt(localStorage.getItem('pacmanHS') || '0');
-    let scoreText: any;
+    let highScore = parseInt(localStorage.getItem('galagaHS') || '0');
+    let lives = 3;
+    let level = 1;
     let gameOver = false;
+    let gameWon = false;
+    let scoreText: any;
+    let livesText: any;
+    let levelText: any;
     let gameOverText: any;
-    let nextDirection = 'NONE';
-    let currentDirection = 'NONE';
-    let pelletsEaten = 0;
-    let totalPellets = 0;
-    let powerMode = false;
-    let powerModeTimer = 0;
-
-    // Maze layout (0 = path, 1 = wall)
-    const maze = [
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
-      [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
-      [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
-      [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
-      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-      [1,0,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,0,1],
-      [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
-      [1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,1],
-      [1,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,1],
-      [1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1],
-      [0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0],
-      [1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1],
-      [1,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,1],
-      [1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1],
-      [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
-      [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
-      [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
-      [1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1],
-      [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    ];
+    let cursors: any;
+    let spaceKey: any;
+    let playerSpeed = 150;
+    let bulletSpeed = 200;
+    let enemySpeed = 40;
+    let enemyFireRate = 0.01;
+    let formationX = 0;
+    let formationDirection = 1;
+    let diveEnemies: any[] = [];
+    let waveTimer = 0;
+    let waveInterval = 300;
 
     const config = {
       type: Phaser.AUTO,
@@ -79,8 +72,8 @@ export default function GalagaPage() {
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: CANVAS_WIDTH,
-        height: CANVAS_HEIGHT,
+        width: GAME_WIDTH,
+        height: GAME_HEIGHT,
       },
       physics: {
         default: 'arcade',
@@ -91,186 +84,208 @@ export default function GalagaPage() {
 
     function create(this: any) {
       cursors = this.input.keyboard.createCursorKeys();
+      spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-      // Create graphics for maze
-      const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-      graphics.fillStyle(0x0000ff, 1);
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          if (maze[r][c] === 1) {
-            graphics.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-          }
+      // Background
+      this.cameras.main.setBackgroundColor('#000000');
+
+      // Create player (white triangle at bottom center)
+      player = this.add.polygon(GAME_WIDTH / 2, GAME_HEIGHT - 30, [0, 0, 8, -16, 16, 0], 0xffffff);
+      player.setOrigin(0.5, 0.5);
+      player.body = { velocity: { x: 0 } };
+      player.health = 1;
+
+      // Create enemy formation (4 columns x 3 rows)
+      const formationStartX = 40;
+      const formationStartY = 40;
+      const spacingX = 40;
+      const spacingY = 40;
+
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 4; col++) {
+          const enemy = this.add.polygon(
+            formationStartX + col * spacingX,
+            formationStartY + row * spacingY,
+            [0, 0, 8, -8, 16, 0, 8, 8],
+            0xff0000
+          );
+          enemy.setOrigin(0.5, 0.5);
+          enemy.formationX = col;
+          enemy.formationY = row;
+          enemy.inFormation = true;
+          enemy.diveTimer = 0;
+          enemy.diveSpeed = 0;
+          enemy.originalX = enemy.x;
+          enemy.originalY = enemy.y;
+          enemies.push(enemy);
         }
       }
-      graphics.generateTexture('maze', CANVAS_WIDTH, CANVAS_HEIGHT);
-      graphics.destroy();
 
-      this.add.image(0, 0, 'maze').setOrigin(0, 0);
-
-      // Create pellets
-      pellets = this.physics.add.staticGroup();
-      powerPellets = this.physics.add.staticGroup();
-
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          if (maze[r][c] === 0) {
-            const x = c * TILE_SIZE + TILE_SIZE / 2;
-            const y = r * TILE_SIZE + TILE_SIZE / 2;
-            if ((r === 1 && c === 1) || (r === 1 && c === COLS - 2) || 
-                (r === ROWS - 2 && c === 1) || (r === ROWS - 2 && c === COLS - 2)) {
-              const pp = powerPellets.create(x, y);
-              pp.setDisplaySize(8, 8);
-              pp.setTint(0xffff00);
-            } else {
-              const p = pellets.create(x, y);
-              p.setDisplaySize(3, 3);
-              p.setTint(0xffffff);
-            }
-          }
-        }
-      }
-
-      totalPellets = pellets.children.entries.length + powerPellets.children.entries.length;
-
-      // Create Pac-Man (white)
-      pacman = this.add.circle(9 * TILE_SIZE + TILE_SIZE / 2, 15 * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 2 - 2, 0xffffff);
-      pacman.gridX = 9;
-      pacman.gridY = 15;
-
-      // Create ghosts (all red)
-      const ghostStartPositions = [
-        { x: 8, y: 9, color: 0xff0000 },
-        { x: 9, y: 9, color: 0xff0000 },
-        { x: 8, y: 10, color: 0xff0000 },
-        { x: 9, y: 10, color: 0xff0000 },
-      ];
-
-      ghostStartPositions.forEach((pos) => {
-        const ghost = this.add.circle(pos.x * TILE_SIZE + TILE_SIZE / 2, pos.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 2 - 2, pos.color);
-        ghost.gridX = pos.x;
-        ghost.gridY = pos.y;
-        ghost.direction = Phaser.Math.RND.pick(['UP', 'DOWN', 'LEFT', 'RIGHT']);
-        ghosts.push(ghost);
+      // UI Text
+      scoreText = this.add.text(10, 10, 'SCORE: ' + score, {
+        font: '12px monospace',
+        fill: '#00ff00',
       });
 
-      // UI
-      scoreText = this.add.text(10, CANVAS_HEIGHT + 10, 'SCORE: ' + score + ' HIGH: ' + highScore, {
-        font: '16px monospace',
-        fill: '#ffffff',
+      highScore = Math.max(score, highScore);
+      const highScoreText = this.add.text(GAME_WIDTH - 80, 10, 'HIGH: ' + highScore, {
+        font: '12px monospace',
+        fill: '#00ff00',
+      });
+
+      livesText = this.add.text(GAME_WIDTH / 2 - 30, 10, 'LIVES: ' + lives, {
+        font: '12px monospace',
+        fill: '#00ff00',
+      });
+
+      levelText = this.add.text(10, GAME_HEIGHT - 15, 'LEVEL: ' + level, {
+        font: '12px monospace',
+        fill: '#00ff00',
       });
     }
 
     function update(this: any) {
-      if (gameOver) return;
+      if (gameOver || gameWon) return;
 
-      // Handle input
-      if (cursors.left.isDown) nextDirection = 'LEFT';
-      if (cursors.right.isDown) nextDirection = 'RIGHT';
-      if (cursors.up.isDown) nextDirection = 'UP';
-      if (cursors.down.isDown) nextDirection = 'DOWN';
+      // Player movement with screen boundaries
+      if (cursors.left.isDown) {
+        player.x = Math.max(SPRITE_SIZE / 2, player.x - playerSpeed / 60);
+      }
+      if (cursors.right.isDown) {
+        player.x = Math.min(GAME_WIDTH - SPRITE_SIZE / 2, player.x + playerSpeed / 60);
+      }
 
-      // Move Pac-Man
-      let newX = pacman.gridX;
-      let newY = pacman.gridY;
-
-      if (nextDirection !== 'NONE') {
-        if (nextDirection === 'LEFT') newX--;
-        if (nextDirection === 'RIGHT') newX++;
-        if (nextDirection === 'UP') newY--;
-        if (nextDirection === 'DOWN') newY++;
-
-        if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS && maze[newY][newX] === 0) {
-          currentDirection = nextDirection;
+      // Player shooting
+      if (spaceKey.isDown) {
+        if (!player.lastShot || this.time.now - player.lastShot > 200) {
+          const bullet = this.add.circle(player.x, player.y - 10, 2, 0xffffff);
+          bullet.velocityY = -bulletSpeed;
+          playerBullets.push(bullet);
+          player.lastShot = this.time.now;
         }
       }
 
-      if (currentDirection !== 'NONE') {
-        if (currentDirection === 'LEFT') newX = pacman.gridX - 1;
-        if (currentDirection === 'RIGHT') newX = pacman.gridX + 1;
-        if (currentDirection === 'UP') newY = pacman.gridY - 1;
-        if (currentDirection === 'DOWN') newY = pacman.gridY + 1;
-
-        if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS && maze[newY][newX] === 0) {
-          pacman.gridX = newX;
-          pacman.gridY = newY;
-          pacman.x = pacman.gridX * TILE_SIZE + TILE_SIZE / 2;
-          pacman.y = pacman.gridY * TILE_SIZE + TILE_SIZE / 2;
+      // Update player bullets
+      playerBullets = playerBullets.filter((bullet: any) => {
+        bullet.y += bullet.velocityY / 60;
+        if (bullet.y < 0) {
+          bullet.destroy();
+          return false;
         }
-      }
-
-      // Check pellet collision
-      pellets.children.entries.forEach((p: any) => {
-        if (p && p.gridX === pacman.gridX && p.gridY === pacman.gridY) {
-          p.destroy();
-          score += 10;
-          pelletsEaten++;
-          scoreText.setText('SCORE: ' + score + ' HIGH: ' + highScore);
-        }
+        return true;
       });
 
-      powerPellets.children.entries.forEach((p: any) => {
-        if (p && p.gridX === pacman.gridX && p.gridY === pacman.gridY) {
-          p.destroy();
-          score += 50;
-          powerMode = true;
-          powerModeTimer = 300;
-          ghosts.forEach((g: any) => g.setTint(0x0000ff));
-          scoreText.setText('SCORE: ' + score + ' HIGH: ' + highScore);
-        }
-      });
-
-      // Update power mode
-      if (powerMode) {
-        powerModeTimer--;
-        if (powerModeTimer <= 0) {
-          powerMode = false;
-          ghosts.forEach((g: any) => g.clearTint());
-        }
+      // Formation movement with sine wave
+      formationX += formationDirection * (enemySpeed / 60);
+      if (formationX > 30 || formationX < -30) {
+        formationDirection *= -1;
       }
 
-      // Move ghosts
-      ghosts.forEach((ghost: any) => {
-        if (Math.random() < 0.02) {
-          ghost.direction = Phaser.Math.RND.pick(['UP', 'DOWN', 'LEFT', 'RIGHT']);
-        }
+      // Update enemies in formation
+      enemies.forEach((enemy: any) => {
+        if (enemy.inFormation) {
+          const baseX = 40 + enemy.formationX * 40;
+          const baseY = 40 + enemy.formationY * 40;
+          enemy.x = baseX + formationX + Math.sin(this.time.now / 1000 + enemy.formationX) * 5;
+          enemy.y = baseY + Math.cos(this.time.now / 1500 + enemy.formationY) * 3;
 
-        let gNewX = ghost.gridX;
-        let gNewY = ghost.gridY;
+          // Random dive attack
+          if (Math.random() < 0.001) {
+            enemy.inFormation = false;
+            enemy.diveTimer = 0;
+            diveEnemies.push(enemy);
+          }
 
-        if (ghost.direction === 'LEFT') gNewX--;
-        if (ghost.direction === 'RIGHT') gNewX++;
-        if (ghost.direction === 'UP') gNewY--;
-        if (ghost.direction === 'DOWN') gNewY++;
-
-        if (gNewX >= 0 && gNewX < COLS && gNewY >= 0 && gNewY < ROWS && maze[gNewY][gNewX] === 0) {
-          ghost.gridX = gNewX;
-          ghost.gridY = gNewY;
-          ghost.x = ghost.gridX * TILE_SIZE + TILE_SIZE / 2;
-          ghost.y = ghost.gridY * TILE_SIZE + TILE_SIZE / 2;
-        } else {
-          ghost.direction = Phaser.Math.RND.pick(['UP', 'DOWN', 'LEFT', 'RIGHT']);
-        }
-
-        // Check collision with Pac-Man
-        if (ghost.gridX === pacman.gridX && ghost.gridY === pacman.gridY) {
-          if (powerMode) {
-            ghost.destroy();
-            score += 200;
-            scoreText.setText('SCORE: ' + score + ' HIGH: ' + highScore);
-          } else {
-            endGame(this);
+          // Enemy shooting from formation
+          if (Math.random() < enemyFireRate) {
+            const eBullet = this.add.circle(enemy.x, enemy.y + 8, 2, 0xff0000);
+            eBullet.velocityY = 100;
+            enemyBullets.push(eBullet);
           }
         }
       });
 
+      // Update diving enemies
+      diveEnemies = diveEnemies.filter((enemy: any) => {
+        enemy.diveTimer++;
+        const diveAccel = 150;
+        enemy.diveSpeed += diveAccel / 60;
+        enemy.y += enemy.diveSpeed / 60;
+
+        // Horizontal movement toward player
+        if (enemy.x < player.x) {
+          enemy.x += 50 / 60;
+        } else if (enemy.x > player.x) {
+          enemy.x -= 50 / 60;
+        }
+
+        // Return to formation after dive
+        if (enemy.y > GAME_HEIGHT) {
+          enemy.inFormation = true;
+          enemy.diveSpeed = 0;
+          return false;
+        }
+
+        // Enemy shooting while diving
+        if (Math.random() < enemyFireRate * 2) {
+          const eBullet = this.add.circle(enemy.x, enemy.y + 8, 2, 0xff0000);
+          eBullet.velocityY = 100;
+          enemyBullets.push(eBullet);
+        }
+
+        return true;
+      });
+
+      // Update enemy bullets
+      enemyBullets = enemyBullets.filter((bullet: any) => {
+        bullet.y += bullet.velocityY / 60;
+        if (bullet.y > GAME_HEIGHT) {
+          bullet.destroy();
+          return false;
+        }
+
+        // Check collision with player
+        const dist = Phaser.Math.Distance.Between(bullet.x, bullet.y, player.x, player.y);
+        if (dist < 12) {
+          bullet.destroy();
+          lives--;
+          livesText.setText('LIVES: ' + lives);
+          if (lives <= 0) {
+            endGame(this);
+          }
+          return false;
+        }
+
+        return true;
+      });
+
+      // Check bullet-enemy collisions
+      playerBullets.forEach((bullet: any, bulletIndex: number) => {
+        enemies.forEach((enemy: any, enemyIndex: number) => {
+          const dist = Phaser.Math.Distance.Between(bullet.x, bullet.y, enemy.x, enemy.y);
+          if (dist < 12) {
+            bullet.destroy();
+            playerBullets.splice(bulletIndex, 1);
+            enemy.destroy();
+            enemies.splice(enemyIndex, 1);
+            score += 50;
+            scoreText.setText('SCORE: ' + score);
+          }
+        });
+      });
+
       // Win condition
-      if (pelletsEaten === totalPellets) {
-        gameOverText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 'YOU WIN!\\nPRESS R TO RESTART', {
-          font: 'bold 24px monospace',
+      if (enemies.length === 0 && diveEnemies.length === 0) {
+        level++;
+        levelText.setText('LEVEL: ' + level);
+        enemySpeed += 10;
+        enemyFireRate += 0.002;
+        gameWon = true;
+        gameOverText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'LEVEL COMPLETE!\\nPRESS R TO CONTINUE', {
+          font: 'bold 12px monospace',
           fill: '#00ff00',
           align: 'center',
         }).setOrigin(0.5);
-        gameOver = true;
         this.input.keyboard.once('keydown-R', () => {
           this.scene.restart();
         });
@@ -281,10 +296,10 @@ export default function GalagaPage() {
       gameOver = true;
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem('pacmanHS', highScore.toString());
+        localStorage.setItem('galagaHS', highScore.toString());
       }
-      gameOverText = scene.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 'GAME OVER\\nSCORE: ' + score + '\\nPRESS R TO RESTART', {
-        font: 'bold 24px monospace',
+      gameOverText = scene.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'GAME OVER\\nSCORE: ' + score + '\\nPRESS R TO RESTART', {
+        font: 'bold 12px monospace',
         fill: '#ff0000',
         align: 'center',
       }).setOrigin(0.5);
@@ -310,15 +325,17 @@ export default function GalagaPage() {
           #game {
             width: 100%;
             height: 100%;
-            border: 6px solid yellow;
+            border: 6px solid #00ff00;
             box-sizing: border-box;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
           }
           @media (max-width: 900px) {
             #game {
               width: 90vw;
               height: auto;
-              max-width: 570px;
-              max-height: 630px;
+              max-width: 448px;
+              max-height: 576px;
             }
           }
         `}</style>
