@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Check, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
@@ -21,7 +22,7 @@ interface BookingRequest {
   message: string;
 }
 
-export default function BookingPage() {
+function BookingPage() {
   const [bookings, setBookings] = useState<BookingSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
@@ -49,69 +50,84 @@ export default function BookingPage() {
     loadBookings();
   }, []);
 
-  const availableBookings = bookings.filter(b => b.isAvailable);
-  const groupedByDate = availableBookings.reduce((acc, booking) => {
-    const date = booking.bookingDate;
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(booking);
-    return acc;
-  }, {} as Record<string, BookingSlot[]>);
+  // derived values memoized to avoid recomputation on every render
+  const availableBookings = useMemo(
+    () => bookings.filter((b) => b.isAvailable),
+    [bookings]
+  );
 
-  const handleSlotClick = (slot: BookingSlot) => {
+  const groupedByDate = useMemo(
+    () =>
+      availableBookings.reduce((acc, booking) => {
+        const date = booking.bookingDate;
+        if (!acc[date]) acc[date] = [];
+        acc[date].push(booking);
+        return acc;
+      }, {} as Record<string, BookingSlot[]>),
+    [availableBookings]
+  );
+
+  const handleSlotClick = useCallback((slot: BookingSlot) => {
     setSelectedSlot(slot);
     setSubmitSuccess(false);
     setFormData({ name: '', email: '', phone: '', message: '' });
-  };
+  }, []);
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const handleFormChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    },
+    []
+  );
 
-  const handleSubmitBooking = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedSlot) return;
+  const handleSubmitBooking = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!selectedSlot) return;
 
-    setIsSubmitting(true);
-    try {
-      // Format the date and time for the email
-      const formattedDate = new Date(selectedSlot.bookingDate).toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric'
-      });
-      const dateTime = `${formattedDate} from ${selectedSlot.startTime} to ${selectedSlot.endTime}`;
+      setIsSubmitting(true);
+      try {
+        // Format the date and time for the email
+        const formattedDate = new Date(selectedSlot.bookingDate).toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric'
+        });
+        const dateTime = `${formattedDate} from ${selectedSlot.startTime} to ${selectedSlot.endTime}`;
 
-      // Send notification to admin via Wix backend function
-      const response = await fetch('/_functions/notifyAdmin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          sessionType: selectedSlot.sessionType,
-          dateTime: dateTime,
-          notes: formData.message || '(No additional notes)'
-        })
-      });
+        // Send notification to admin via Wix backend function
+        const response = await fetch('/_functions/notifyAdmin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            sessionType: selectedSlot.sessionType,
+            dateTime: dateTime,
+            notes: formData.message || '(No additional notes)'
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error(`Failed to send booking notification: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Failed to send booking notification: ${response.statusText}`);
+        }
+
+        setSubmitSuccess(true);
+        setSelectedSlot(null);
+        setFormData({ name: '', email: '', phone: '', message: '' });
+        setTimeout(() => setSubmitSuccess(false), 5000);
+      } catch (error) {
+        console.error('Error submitting booking:', error);
+      } finally {
+        setIsSubmitting(false);
       }
-
-      setSubmitSuccess(true);
-      setSelectedSlot(null);
-      setFormData({ name: '', email: '', phone: '', message: '' });
-      setTimeout(() => setSubmitSuccess(false), 5000);
-    } catch (error) {
-      console.error('Error submitting booking:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+    [selectedSlot, formData]
+  );
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -346,3 +362,5 @@ export default function BookingPage() {
     </div>
   );
 }
+
+export default React.memo(BookingPage);

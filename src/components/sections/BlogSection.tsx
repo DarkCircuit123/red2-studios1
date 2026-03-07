@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, User } from 'lucide-react';
@@ -7,7 +8,7 @@ import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
 
-export default function BlogSection() {
+function BlogSection() {
   const [posts, setPosts] = useState<BlogPosts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -135,3 +136,5 @@ export default function BlogSection() {
     </section>
   );
 }
+
+export default React.memo(BlogSection);

@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Rss } from 'lucide-react';
@@ -8,7 +9,7 @@ interface RSSItem {
   pubDate: string;
 }
 
-export default function RSSTickerSection() {
+function RSSTickerSection() {
   const [items, setItems] = useState<RSSItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -123,3 +124,5 @@ export default function RSSTickerSection() {
     </section>
   );
 }
+
+export default React.memo(RSSTickerSection);

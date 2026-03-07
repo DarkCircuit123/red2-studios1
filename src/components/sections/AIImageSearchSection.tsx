@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Sparkles, Tag, Filter } from 'lucide-react';
@@ -5,7 +6,7 @@ import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 
-export default function AIImageSearchSection() {
+function AIImageSearchSection() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
@@ -200,3 +201,5 @@ export default function AIImageSearchSection() {
     </section>
   );
 }
+
+export default React.memo(AIImageSearchSection);

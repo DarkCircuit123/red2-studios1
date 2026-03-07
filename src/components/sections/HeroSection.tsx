@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { Image } from '@/components/ui/image';
@@ -5,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { BaseCrudService } from '@/integrations';
 import { playClickSound } from '@/lib/click-sound';
 
-export default function HeroSection() {
+function HeroSection() {
   const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_c01a98369e0e46449c4db84b41fdb2dc~mv2.jpg');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -133,3 +134,5 @@ export default function HeroSection() {
     </section>
   );
 }
+
+export default React.memo(HeroSection);

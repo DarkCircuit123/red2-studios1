@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -10,7 +11,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
 
-export default function PortfolioDetailPage() {
+function PortfolioDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Portfolio | null>(null);
@@ -305,3 +306,5 @@ export default function PortfolioDetailPage() {
     </div>
   );
 }
+
+export default React.memo(PortfolioDetailPage);

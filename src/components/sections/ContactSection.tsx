@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, AlertCircle } from 'lucide-react';
@@ -7,7 +8,7 @@ import { InputValidator, RateLimiter } from '@/lib/security-enhanced';
 
 const contactFormLimiter = new RateLimiter(3, 60000); // 3 submissions per minute
 
-export default function ContactSection() {
+function ContactSection() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -437,3 +438,5 @@ export default function ContactSection() {
     </section>
   );
 }
+
+export default React.memo(ContactSection);

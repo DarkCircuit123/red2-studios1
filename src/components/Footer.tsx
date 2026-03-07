@@ -1,9 +1,10 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Linkedin, Mail, Facebook } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
 import { useCallback, useMemo } from 'react';
 
-export default function Footer() {
+function Footer() {
   const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   const handleAnchorClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
@@ -206,3 +207,5 @@ export default function Footer() {
     </footer>
   );
 }
+
+export default React.memo(Footer);

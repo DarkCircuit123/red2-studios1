@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
@@ -5,7 +6,7 @@ import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 
-export default function Interactive3DGallerySection() {
+function Interactive3DGallerySection() {
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -296,3 +297,5 @@ export default function Interactive3DGallerySection() {
     </section>
   );
 }
+
+export default React.memo(Interactive3DGallerySection);

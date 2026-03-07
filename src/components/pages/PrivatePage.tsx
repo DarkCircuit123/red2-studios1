@@ -1,10 +1,11 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-export default function PrivatePage() {
+function PrivatePage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -317,3 +318,5 @@ export default function PrivatePage() {
     </div>
   );
 }
+
+export default React.memo(PrivatePage);

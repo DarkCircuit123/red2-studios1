@@ -6,18 +6,42 @@
 /**
  * Content Security Policy (CSP) helper
  */
+import React, { useSyncExternalStore } from 'react';
+
 export class CSPManager {
   private directives: Map<string, string[]> = new Map();
+  private currentNonce: string = '';
 
   constructor() {
     this.initializeDefaultPolicy();
+    this.rotateNonce();
+  }
+
+  /**
+   * Generate a fresh cryptographic nonce and insert into script/style sources.
+   * Call this on each navigation or periodically to mitigate replay attacks.
+   */
+  rotateNonce(): void {
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    this.currentNonce = Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
+    const nonceValue = `'nonce-${this.currentNonce}'`;
+    this.addDirective('script-src', [nonceValue]);
+    this.addDirective('style-src', [nonceValue]);
+  }
+
+  /**
+   * Returns current nonce for usage in inline elements (React hook below).
+   */
+  getNonce(): string {
+    return this.currentNonce;
   }
 
   private initializeDefaultPolicy(): void {
-    // Default secure policy
+    // Default secure policy (nonces added by rotateNonce())
     this.directives.set('default-src', ["'self'"]);
-    this.directives.set('script-src', ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net']);
-    this.directives.set('style-src', ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']);
+    this.directives.set('script-src', ["'self'", 'https://cdn.jsdelivr.net']);
+    this.directives.set('style-src', ["'self'", 'https://fonts.googleapis.com']);
     this.directives.set('img-src', ["'self'", 'data:', 'https:']);
     this.directives.set('font-src', ["'self'", 'https://fonts.gstatic.com']);
     this.directives.set('connect-src', ["'self'", 'https:']);
@@ -27,7 +51,8 @@ export class CSPManager {
   }
 
   addDirective(directive: string, sources: string[]): void {
-    this.directives.set(directive, sources);
+    const existing = this.directives.get(directive) || [];
+    this.directives.set(directive, Array.from(new Set([...existing, ...sources])));
   }
 
   getPolicy(): string {
@@ -40,6 +65,9 @@ export class CSPManager {
 
   applyToMeta(): void {
     if (typeof document === 'undefined') return;
+
+    // attach nonce rotation hook to ensure fresh value each navigation
+    this.rotateNonce();
 
     const meta = document.createElement('meta');
     meta.httpEquiv = 'Content-Security-Policy';
@@ -97,12 +125,33 @@ export class XSSPrevention {
       .replace(/[<>]/g, '')
       .trim();
   }
+
+  /**
+   * Honeypot field checker – returns true if the hidden field has been filled
+   * (indicating a bot).
+   */
+  static checkHoneypot(form: HTMLFormElement, fieldName = 'hp_field'): boolean {
+    const field = form.querySelector<HTMLInputElement>(`input[name="${fieldName}"]`);
+    if (field && field.value) {
+      console.warn('[SECURITY] Honeypot field filled:', fieldName);
+      return true;
+    }
+    return false;
+  }
 }
 
 /**
  * CSRF Protection
  */
 export class CSRFProtection {
+  // rotate token on each page load
+  constructor() {
+    this.initializeToken();
+    window.addEventListener('beforeunload', () => {
+      this.token = this.generateToken();
+      this.storeToken();
+    });
+  }
   private token: string | null = null;
   private readonly tokenKey = 'csrf-token';
 
@@ -148,6 +197,7 @@ export class CSRFProtection {
     return {
       ...headers,
       'X-CSRF-Token': this.getToken(),
+      'X-Request-ID': crypto.randomUUID(), // correlate requests
     };
   }
 }
@@ -173,6 +223,9 @@ export class RateLimiter {
     const recentAttempts = attempts.filter((time) => now - time < this.windowMs);
 
     if (recentAttempts.length >= this.maxAttempts) {
+      // exponentially increase window on abuse
+      this.attempts.set(key, recentAttempts);
+      this.windowMs *= 2;
       return false;
     }
 
@@ -245,6 +298,12 @@ export class SecureStorage {
   }
 
   async getItem(key: string): Promise<string | null> {
+    // if value appears to be a JSON web token, verify basic structure
+    const stored = localStorage.getItem(this.prefix + key);
+    if (stored && /^eyJ[0-9A-Za-z_-]+\.[0-9A-Za-z_-]+\.[0-9A-Za-z_-]+$/.test(stored)) {
+      // could validate signature on client if public key available
+      console.log('[SECURITY] detected JWT stored in secure storage');
+    }
     const stored = localStorage.getItem(this.prefix + key);
     if (!stored) return null;
 
@@ -272,6 +331,19 @@ export class SecureStorage {
 
   removeItem(key: string): void {
     localStorage.removeItem(this.prefix + key);
+  }
+
+  /**
+   * Validate a network response against common leakage patterns
+   */
+  static async validateResponse(r: Response) {
+    try {
+      const clone = r.clone();
+      const text = await clone.text();
+      if (/(apiKey|secret|token|password)/i.test(text)) {
+        console.warn('[SECURITY] Potential sensitive data in response');
+      }
+    } catch {}
   }
 
   clear(): void {
@@ -380,3 +452,16 @@ export const cspManager = new CSPManager();
 export const csrfProtection = new CSRFProtection();
 export const rateLimiter = new RateLimiter();
 export const secureStorage = new SecureStorage();
+
+// React hook to access current CSP nonce
+import { useSyncExternalStore } from 'react';
+export function useCSPNonce() {
+  return useSyncExternalStore(
+    (cb) => {
+      // the CSPManager does not have subscription but we'll rotate nonce on each apply
+      return () => {};
+    },
+    () => cspManager.getNonce(),
+    () => cspManager.getNonce()
+  );
+}

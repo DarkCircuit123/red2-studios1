@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
@@ -32,7 +33,7 @@ interface SplashScreenProps {
   onComplete: () => void;
 }
 
-export default function SplashScreen({ onComplete }: SplashScreenProps) {
+function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [glitchActive, setGlitchActive] = useState(false);
@@ -151,3 +152,5 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     </motion.div>
   );
 }
+
+export default React.memo(SplashScreen);

@@ -1,17 +1,21 @@
+import React from 'react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
 import AboutSection from '@/components/sections/AboutSection';
-import Interactive3DGallerySection from '@/components/sections/Interactive3DGallerySection';
+// lazy load 3D gallery since it's heavy
+const Interactive3DGallerySection = React.lazy(() => import('@/components/sections/Interactive3DGallerySection'));
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
 import SplashScreen from '@/components/SplashScreen';
 import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
+import { useIntersectionObserver } from '@/hooks/useAdvancedOptimization';
 import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
 
-export default function HomePage() {
+function HomePage() {
+  const { ref: galleryRef, isVisible: galleryVisible } = useIntersectionObserver(() => {}, { threshold: 0.1 });
   const [showSplash, setShowSplash] = useState(() => {
     // Only show splash screen on first visit in this session
     if (typeof window !== 'undefined') {
@@ -78,8 +82,14 @@ export default function HomePage() {
         {/* About / Vision */}
         <AboutSection />
 
-        {/* Interactive 3D Gallery */}
-        <Interactive3DGallerySection />
+        {/* Interactive 3D Gallery (lazy load when visible) */}
+        <div ref={galleryRef as any}>
+          {galleryVisible && (
+            <React.Suspense fallback={<div className="py-20 text-center text-white/60">Loading gallery…</div>}>
+              <Interactive3DGallerySection />
+            </React.Suspense>
+          )}
+        </div>
 
         {/* RSS Ticker */}
         <RSSTickerSection />
@@ -95,3 +105,5 @@ export default function HomePage() {
     </>
   );
 }
+
+export default React.memo(HomePage);

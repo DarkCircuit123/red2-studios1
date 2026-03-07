@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, X, Edit2 } from 'lucide-react';
@@ -11,7 +12,7 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
-export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
+function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState('text');
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
@@ -174,3 +175,5 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     </AnimatePresence>
   );
 }
+
+export default React.memo(AdminPanel);

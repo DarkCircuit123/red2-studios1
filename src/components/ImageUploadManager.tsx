@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useRef } from 'react';
 import { Upload, X } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -13,7 +14,7 @@ interface ImageUploadManagerProps {
   fieldName?: string;
 }
 
-export default function ImageUploadManager({
+function ImageUploadManager({
   onImageUpload,
   currentImage,
   label = 'Upload Image',
@@ -162,3 +163,5 @@ export default function ImageUploadManager({
     </div>
   );
 }
+
+export default React.memo(ImageUploadManager);

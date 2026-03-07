@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 
@@ -6,7 +7,7 @@ interface ClientsSectionProps {
   isLoading: boolean;
 }
 
-export default function ClientsSection({ clients, isLoading }: ClientsSectionProps) {
+function ClientsSection({ clients, isLoading }: ClientsSectionProps) {
   // Use actual clients or create placeholder items
   const displayClients = clients.length > 0 ? clients : Array(8).fill(null);
 
@@ -147,3 +148,5 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
     </section>
   );
 }
+
+export default React.memo(ClientsSection);

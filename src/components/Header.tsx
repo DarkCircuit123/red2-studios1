@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { usePrefetchOnHover } from '@/hooks/usePrefetchOnHover';
 import { Link } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { useMember } from '@/integrations';
-import AdminPanel from './AdminPanel';
+const AdminPanel = React.lazy(() => import('./AdminPanel'));
 import { playClickSound } from '@/lib/click-sound';
 import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 
-export default function Header() {
+function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -30,19 +31,17 @@ export default function Header() {
   const handleAnchorClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
     e.preventDefault();
     playClickSound();
-    
+
     // If not on homepage, navigate to homepage first
     const isHomePage = window.location.pathname === '/';
     if (!isHomePage) {
       window.location.href = `/?scroll=${hash.substring(1)}`;
       return;
     }
-    
-    // On homepage, scroll to element with optimized timing
+
     const scrollToElement = () => {
       const element = document.querySelector(hash);
       if (element) {
-        // Add extra offset for fixed header
         const headerHeight = 80;
         const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
         window.scrollTo({
@@ -51,12 +50,11 @@ export default function Header() {
         });
       }
     };
-    
-    // Try immediately and with optimized delays
+
     scrollToElement();
     const timeout1 = setTimeout(scrollToElement, 100);
     const timeout2 = setTimeout(scrollToElement, 300);
-    
+
     return () => {
       clearTimeout(timeout1);
       clearTimeout(timeout2);
@@ -102,6 +100,7 @@ export default function Header() {
           <Link
             to="/portfolio"
             onClick={handleLinkClick}
+            onMouseEnter={usePrefetchOnHover('portfolio')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Work
@@ -109,6 +108,7 @@ export default function Header() {
           <Link
             to="/booking"
             onClick={handleLinkClick}
+            onMouseEnter={usePrefetchOnHover('booking')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Booking
@@ -116,6 +116,7 @@ export default function Header() {
           <Link
             to="/galleries"
             onClick={handleLinkClick}
+            onMouseEnter={usePrefetchOnHover('galleries')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Galleries
@@ -130,6 +131,7 @@ export default function Header() {
           <Link
             to="/private"
             onClick={handleLinkClick}
+            onMouseEnter={usePrefetchOnHover('private')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Private
@@ -137,6 +139,7 @@ export default function Header() {
           <Link
             to="/play"
             onClick={handleLinkClick}
+            onMouseEnter={usePrefetchOnHover('play')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Play
@@ -211,7 +214,9 @@ export default function Header() {
         </div>
       </nav>
       {/* Admin Panel */}
-      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+      <React.Suspense fallback={null}>
+        <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+      </React.Suspense>
       {/* Mobile Navigation */}
       {isOpen && (
         <div className="md:hidden bg-black/95 border-t border-white/10 backdrop-blur-md">
@@ -239,6 +244,7 @@ export default function Header() {
             <Link
               to="/portfolio"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={usePrefetchOnHover('portfolio')}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -249,6 +255,7 @@ export default function Header() {
             <Link
               to="/booking"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={usePrefetchOnHover('booking')}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -259,6 +266,7 @@ export default function Header() {
             <Link
               to="/galleries"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={usePrefetchOnHover('galleries')}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -279,6 +287,7 @@ export default function Header() {
             <Link
               to="/private"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={usePrefetchOnHover('private')}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -289,6 +298,7 @@ export default function Header() {
             <Link
               to="/play"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={usePrefetchOnHover('play')}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -347,3 +357,5 @@ export default function Header() {
     </header>
   );
 }
+
+export default React.memo(Header);

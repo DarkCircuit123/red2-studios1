@@ -1,8 +1,9 @@
+import React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import Header from '../Header';
 import Footer from '../Footer';
 
-export default function HangmanGamePage() {
+function HangmanGamePage() {
   const [gameState, setGameState] = useState({
     word: '',
     displayWord: [] as string[],
@@ -409,3 +410,5 @@ export default function HangmanGamePage() {
     </div>
   );
 }
+
+export default React.memo(HangmanGamePage);

@@ -9,7 +9,8 @@
     "release": "wix release",
     "env": "wix env pull",
     "check": "npx astro check --js-only",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "analyze": "node src/lib/bundle-analyzer.ts"
   },
   "dependencies": {
     "@astrojs/check": "0.9.4",

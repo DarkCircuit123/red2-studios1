@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, User, ArrowLeft } from 'lucide-react';
@@ -8,7 +9,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
 
-export default function BlogPage() {
+function BlogPage() {
   const [posts, setPosts] = useState<BlogPosts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -153,3 +154,5 @@ export default function BlogPage() {
     </div>
   );
 }
+
+export default React.memo(BlogPage);

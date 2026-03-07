@@ -1,9 +1,10 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { useState, useEffect, useMemo } from 'react';
 
-export default function AboutSection() {
+function AboutSection() {
   const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_91ed15e69fe34eac9f33620e3c2ee65d~mv2.png?originWidth=576&originHeight=576');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -118,3 +119,5 @@ export default function AboutSection() {
     </section>
   );
 }
+
+export default React.memo(AboutSection);

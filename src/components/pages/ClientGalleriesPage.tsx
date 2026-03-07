@@ -1,6 +1,8 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, CheckCircle, Clock } from 'lucide-react';
+import { useVirtualList, useWindowSize, useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -16,11 +18,26 @@ interface ClientGallery {
   galleryExpirationDate: string;
 }
 
-export default function ClientGalleriesPage() {
+function ClientGalleriesPage() {
   const [galleries, setGalleries] = useState<ClientGallery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [accessCode, setAccessCode] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+
+  // virtualization tracking
+  const windowSize = useWindowSize();
+  const [scrollTop, setScrollTop] = useState(() =>
+    typeof window !== 'undefined' ? window.scrollY : 0
+  );
+
+  const handleScroll = useThrottleCallback(() => {
+    setScrollTop(window.scrollY);
+  }, 100, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   useEffect(() => {
     const loadGalleries = async () => {
@@ -57,6 +74,28 @@ export default function ClientGalleriesPage() {
         return <Lock className="w-5 h-5 text-white/40" />;
     }
   };
+
+  // virtualization helpers
+  const virtualizationEnabled = galleries.length > 30;
+  const columns = useMemo(() => {
+    if (windowSize.width >= 1280) return 3;
+    if (windowSize.width >= 768) return 2;
+    return 1;
+  }, [windowSize.width]);
+
+  const itemHeight = 400;
+  const totalRows = Math.ceil(galleries.length / columns);
+
+  const { startIndex: startRow, endIndex: endRow, offset } = useVirtualList(
+    totalRows,
+    itemHeight,
+    windowSize.height,
+    scrollTop
+  );
+
+  const visibleGalleries = virtualizationEnabled
+    ? galleries.slice(startRow * columns, (endRow + 1) * columns)
+    : galleries;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -120,15 +159,27 @@ export default function ClientGalleriesPage() {
               <p className="text-white/60">No galleries available at the moment.</p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {galleries.map((gallery, idx) => (
-                <motion.div
-                  key={gallery._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="group cursor-pointer"
-                >
+            <div
+              className={"relative"}
+              style={
+                virtualizationEnabled
+                  ? { paddingTop: offset, paddingBottom: (totalRows - endRow - 1) * itemHeight }
+                  : undefined
+              }
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {visibleGalleries.map((gallery, idx) => {
+                  const index = virtualizationEnabled
+                    ? startRow * columns + idx
+                    : idx;
+                  return (
+                    <motion.div
+                      key={gallery._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="group cursor-pointer"
+                    >
                   <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5">
                     {gallery.galleryCoverImage && (
                       <Image
@@ -168,3 +219,5 @@ export default function ClientGalleriesPage() {
     </div>
   );
 }
+
+export default React.memo(ClientGalleriesPage);

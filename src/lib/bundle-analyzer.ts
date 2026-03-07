@@ -70,6 +70,11 @@ export const codeSpittingStrategy = {
     home: () => import('@/components/pages/HomePage'),
     portfolio: () => import('@/components/pages/PortfolioPage'),
     booking: () => import('@/components/pages/BookingPage'),
+    galleries: () => import('@/components/pages/ClientGalleriesPage'),
+    blog: () => import('@/components/pages/BlogPage'),
+    profile: () => import('@/components/pages/ProfilePage'),
+    private: () => import('@/components/pages/PrivatePage'),
+    play: () => import('@/components/pages/HangmanGamePage'),
   },
 
   // Split by feature

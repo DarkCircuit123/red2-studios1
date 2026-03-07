@@ -1,9 +1,10 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 
-export default function SponsorsSection() {
+function SponsorsSection() {
   const [sponsors, setSponsors] = useState([
     {
       id: '1',
@@ -87,3 +88,5 @@ export default function SponsorsSection() {
     </section>
   );
 }
+
+export default React.memo(SponsorsSection);

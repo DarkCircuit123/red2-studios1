@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useVirtualList, useWindowSize, useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -9,12 +10,27 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
 
-export default function PortfolioPage() {
+function PortfolioPage() {
   const [projects, setProjects] = useState<Portfolio[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Portfolio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  // virtualization state
+  const windowSize = useWindowSize();
+  const [scrollTop, setScrollTop] = useState(() =>
+    typeof window !== 'undefined' ? window.scrollY : 0
+  );
+
+  const handleScroll = useThrottleCallback(() => {
+    setScrollTop(window.scrollY);
+  }, 100, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -32,17 +48,44 @@ export default function PortfolioPage() {
     loadProjects();
   }, []);
 
-  // Get unique categories
-  const categories = Array.from(new Set(projects.map((p) => p.category).filter(Boolean)));
+  // Get unique categories, memoized so it's recalculated only when projects list changes
+  const categories = useMemo(
+    () => Array.from(new Set(projects.map((p) => p.category).filter(Boolean))),
+    [projects]
+  );
 
-  const handleCategoryFilter = (category: string | null) => {
+  // determine if virtualization should be active
+  const virtualizationEnabled = filteredProjects.length > 30;
+
+  // compute column count based on window width
+  const columns = useMemo(() => {
+    if (windowSize.width >= 1280) return 3;
+    if (windowSize.width >= 768) return 2;
+    return 1;
+  }, [windowSize.width]);
+
+  const itemHeight = 400; // approximate fixed height for each grid row
+  const totalRows = Math.ceil(filteredProjects.length / columns);
+
+  const { startIndex: startRow, endIndex: endRow, offset } = useVirtualList(
+    totalRows,
+    itemHeight,
+    windowSize.height,
+    scrollTop
+  );
+
+  const visibleProjects = virtualizationEnabled
+    ? filteredProjects.slice(startRow * columns, (endRow + 1) * columns)
+    : filteredProjects;
+
+  const handleCategoryFilter = useCallback((category: string | null) => {
     setSelectedCategory(category);
     if (category) {
       setFilteredProjects(projects.filter((p) => p.category === category));
     } else {
       setFilteredProjects(projects);
     }
-  };
+  }, [projects]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -135,22 +178,44 @@ export default function PortfolioPage() {
               ))}
           </div>
         ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max"
+          <div
+            className="relative"
+            style={
+              virtualizationEnabled
+                ? { paddingTop: offset, paddingBottom: (totalRows - endRow - 1) * itemHeight }
+                : undefined
+            }
           >
-            {filteredProjects.map((project, index) => (
-              <motion.div
-                key={project._id}
-                variants={itemVariants}
-                onMouseEnter={() => setHoveredId(project._id)}
-                onMouseLeave={() => setHoveredId(null)}
-                className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
-                  index === 0 ? 'md:col-span-2 md:row-span-2' : ''
-                } ${index === 1 ? 'md:row-span-2' : ''}`}
-              >
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max"
+            >
+              {visibleProjects.map((project, idx) => {
+                const index = virtualizationEnabled
+                  ? startRow * columns + idx
+                  : idx;
+                return (
+                  <motion.div
+                    key={project._id}
+                    variants={itemVariants}
+                    onMouseEnter={() => setHoveredId(project._id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
+                      virtualizationEnabled
+                        ? ''
+                        : index === 0
+                        ? 'md:col-span-2 md:row-span-2'
+                        : ''
+                    } ${
+                      virtualizationEnabled
+                        ? ''
+                        : index === 1
+                        ? 'md:row-span-2'
+                        : ''
+                    }`}
+                  >
                 {/* Aspect ratio container */}
                 <div className="relative w-full aspect-square">
                   {/* Image */}
@@ -225,3 +290,5 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
+export default React.memo(PortfolioPage);
