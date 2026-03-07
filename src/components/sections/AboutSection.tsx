@@ -4,11 +4,13 @@ import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 
 export default function AboutSection() {
-  const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_fef6e24ab9f94ffc87e37c2461c2f84c~mv2.png?originWidth=1600&originHeight=1152');
+  const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_91ed15e69fe34eac9f33620e3c2ee65d~mv2.png?originWidth=576&originHeight=576');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadAboutImage = async () => {
       try {
+        setIsLoading(true);
         const watermarkSettings = await BaseCrudService.getAll('watermarksettings', {}, { limit: 1 });
         if (watermarkSettings.items && watermarkSettings.items.length > 0) {
           const settings = watermarkSettings.items[0] as any;
@@ -18,6 +20,8 @@ export default function AboutSection() {
         }
       } catch (error) {
         console.error('Error loading about image:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadAboutImage();
@@ -91,13 +95,21 @@ export default function AboutSection() {
             className="relative h-full"
           >
             <div className="aspect-square overflow-hidden bg-white/5">
-              <Image
-                src={aboutImage}
-                alt="Jordan Michael Zuniga"
-                className="w-full h-full object-cover"
-              />
-              {/* Subtle grain overlay */}
-              <div className="absolute inset-0 bg-grain opacity-5" />
+              {!isLoading && (
+                <>
+                  <Image
+                    src={aboutImage}
+                    alt="Jordan Michael Zuniga"
+                    width={600}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Subtle grain overlay */}
+                  <div className="absolute inset-0 bg-grain opacity-5" />
+                </>
+              )}
+              {isLoading && (
+                <div className="w-full h-full bg-white/10 animate-pulse" />
+              )}
             </div>
           </motion.div>
         </div>
