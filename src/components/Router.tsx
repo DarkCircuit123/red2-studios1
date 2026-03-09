@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
@@ -7,17 +7,47 @@ import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import SEOOptimizer from '@/components/SEOOptimizer';
 import { useContentProtection } from '@/hooks/useContentProtection';
 
-// lazy-loaded pages
-const HomePage = React.lazy(() => import('./pages/HomePage'));
-const PortfolioPage = React.lazy(() => import('./pages/PortfolioPage'));
-const PortfolioDetailPage = React.lazy(() => import('./pages/PortfolioDetailPage'));
-const BookingPage = React.lazy(() => import('./pages/BookingPage'));
-const ClientGalleriesPage = React.lazy(() => import('./pages/ClientGalleriesPage'));
-const BlogPage = React.lazy(() => import('./pages/BlogPage'));
-const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
-const PrivatePage = React.lazy(() => import('./pages/PrivatePage'));
-const HangmanGamePage = React.lazy(() => import('./pages/HangmanGamePage'));
-const DataExportPage = React.lazy(() => import('./pages/DataExportPage'));
+// lazy-loaded pages with explicit error boundaries
+const HomePage = lazy(() => import('./pages/HomePage').catch(err => {
+  console.error('Failed to load HomePage:', err);
+  throw err;
+}));
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage').catch(err => {
+  console.error('Failed to load PortfolioPage:', err);
+  throw err;
+}));
+const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage').catch(err => {
+  console.error('Failed to load PortfolioDetailPage:', err);
+  throw err;
+}));
+const BookingPage = lazy(() => import('./pages/BookingPage').catch(err => {
+  console.error('Failed to load BookingPage:', err);
+  throw err;
+}));
+const ClientGalleriesPage = lazy(() => import('./pages/ClientGalleriesPage').catch(err => {
+  console.error('Failed to load ClientGalleriesPage:', err);
+  throw err;
+}));
+const BlogPage = lazy(() => import('./pages/BlogPage').catch(err => {
+  console.error('Failed to load BlogPage:', err);
+  throw err;
+}));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').catch(err => {
+  console.error('Failed to load ProfilePage:', err);
+  throw err;
+}));
+const PrivatePage = lazy(() => import('./pages/PrivatePage').catch(err => {
+  console.error('Failed to load PrivatePage:', err);
+  throw err;
+}));
+const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage').catch(err => {
+  console.error('Failed to load HangmanGamePage:', err);
+  throw err;
+}));
+const DataExportPage = lazy(() => import('./pages/DataExportPage').catch(err => {
+  console.error('Failed to load DataExportPage:', err);
+  throw err;
+}));
 
 // Layout component that includes ScrollToTop and SEO Optimizer
 function Layout() {
@@ -36,6 +66,18 @@ function LayoutContent() {
   return <Outlet />;
 }
 
+// Fallback component for suspense
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -45,7 +87,7 @@ const router = createBrowserRouter([
       {
         index: true,
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<LoadingFallback />}>
             <HomePage />
           </Suspense>
         ),
@@ -53,7 +95,7 @@ const router = createBrowserRouter([
       {
         path: "portfolio",
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<LoadingFallback />}>
             <PortfolioPage />
           </Suspense>
         ),
@@ -61,7 +103,7 @@ const router = createBrowserRouter([
       {
         path: "portfolio/:id",
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<LoadingFallback />}>
             <PortfolioDetailPage />
           </Suspense>
         ),
@@ -69,7 +111,7 @@ const router = createBrowserRouter([
       {
         path: "booking",
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<LoadingFallback />}>
             <BookingPage />
           </Suspense>
         ),
@@ -77,7 +119,7 @@ const router = createBrowserRouter([
       {
         path: "galleries",
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<LoadingFallback />}>
             <ClientGalleriesPage />
           </Suspense>
         ),
@@ -85,7 +127,7 @@ const router = createBrowserRouter([
       {
         path: "blog",
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<LoadingFallback />}>
             <BlogPage />
           </Suspense>
         ),
@@ -94,7 +136,7 @@ const router = createBrowserRouter([
         path: "profile",
         element: (
           <MemberProtectedRoute>
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<LoadingFallback />}>
               <ProfilePage />
             </Suspense>
           </MemberProtectedRoute>
@@ -103,7 +145,7 @@ const router = createBrowserRouter([
       {
         path: "private",
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<LoadingFallback />}>
             <PrivatePage />
           </Suspense>
         ),
@@ -111,7 +153,7 @@ const router = createBrowserRouter([
       {
         path: "play",
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<LoadingFallback />}>
             <HangmanGamePage />
           </Suspense>
         ),
@@ -119,7 +161,7 @@ const router = createBrowserRouter([
       {
         path: "data-export",
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<LoadingFallback />}>
             <DataExportPage />
           </Suspense>
         ),
