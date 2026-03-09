@@ -6,6 +6,7 @@ import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import SEOOptimizer from '@/components/SEOOptimizer';
+import { useContentProtection } from '@/hooks/useContentProtection';
 
 // lazy-loaded pages
 const HomePage = React.lazy(() => import('./pages/HomePage'));
@@ -21,6 +22,8 @@ const DataExportPage = React.lazy(() => import('./pages/DataExportPage'));
 
 // Layout component that includes ScrollToTop and SEO Optimizer
 function Layout() {
+  useContentProtection(true);
+
   return (
     <>
       <SEOOptimizer />
