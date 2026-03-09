@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Red2TerminalPage: React.FC = () => {
@@ -10,6 +10,9 @@ const Red2TerminalPage: React.FC = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   const [glitchActive, setGlitchActive] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const [hardDrivesSpinning, setHardDrivesSpinning] = useState(false);
+  const [keyboardLightsActive, setKeyboardLightsActive] = useState(false);
 
   const fullText = `> NODE CONNECTION DETECTED
 > AUTHENTICATION TOKEN ACCEPTED
@@ -44,6 +47,83 @@ const Red2TerminalPage: React.FC = () => {
     '> EXECUTING PAYLOAD',
     '> SYSTEM COMPROMISED',
   ];
+
+  // Audio synthesis functions
+  const playStaticNoise = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+    const duration = 0.3;
+
+    const bufferSize = ctx.sampleRate * duration;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+
+    const gainNode = ctx.createGain();
+    gainNode.gain.setValueAtTime(0.1, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+    source.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    source.start(now);
+  };
+
+  const playScreech = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+    const duration = 0.2;
+
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + duration);
+
+    gainNode.gain.setValueAtTime(0.15, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + duration);
+  };
+
+  const playBeep = (frequency: number = 1000, duration: number = 0.1) => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(frequency, now);
+
+    gainNode.gain.setValueAtTime(0.1, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + duration);
+  };
 
   // Stage 1: Initial black screen (1 second)
   useEffect(() => {
@@ -106,9 +186,25 @@ const Red2TerminalPage: React.FC = () => {
     if (stage !== 'meltdown') return;
 
     setScreenShake(true);
+    setHardDrivesSpinning(true);
+    setKeyboardLightsActive(true);
+
+    // Play initial screeches and static
+    playScreech();
+    setTimeout(() => playStaticNoise(), 100);
+    setTimeout(() => playScreech(), 200);
+
     const lines: string[] = [];
     const meltdownDuration = 3000;
     const startTime = Date.now();
+
+    // Play periodic sound effects during meltdown
+    const soundInterval = setInterval(() => {
+      const random = Math.random();
+      if (random < 0.3) playStaticNoise();
+      else if (random < 0.6) playScreech();
+      else playBeep(Math.random() * 1000 + 200, 0.05);
+    }, 200);
 
     const generateLines = () => {
       const newLines = [];
@@ -137,7 +233,10 @@ const Red2TerminalPage: React.FC = () => {
         setMeltdownLines(generateLines());
       } else {
         clearInterval(meltdownInterval);
+        clearInterval(soundInterval);
         setScreenShake(false);
+        setHardDrivesSpinning(false);
+        setKeyboardLightsActive(false);
         setMeltdownLines([]);
         setStage('fadeout');
       }
@@ -145,7 +244,10 @@ const Red2TerminalPage: React.FC = () => {
 
     return () => {
       clearInterval(meltdownInterval);
+      clearInterval(soundInterval);
       setScreenShake(false);
+      setHardDrivesSpinning(false);
+      setKeyboardLightsActive(false);
     };
   }, [stage]);
 
@@ -255,23 +357,36 @@ const Red2TerminalPage: React.FC = () => {
 
             {/* Hard drive and processing indicators */}
             <div className="absolute bottom-8 left-8 flex gap-4">
-              <div className="w-8 h-8 border-2 border-green-400 rounded-full animate-spin" />
+              {/* Spinning hard drives */}
+              {hardDrivesSpinning && (
+                <>
+                  <div className="w-8 h-8 border-2 border-green-400 rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-2 border-green-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
+                  <div className="w-8 h-8 border-2 border-red-600 rounded-full animate-spin" style={{ animationDuration: '0.6s' }} />
+                </>
+              )}
               <div className="w-6 h-6 bg-green-400 animate-pulse" />
               <div className="w-6 h-6 bg-red-600 animate-pulse" style={{ animationDelay: '0.3s' }} />
             </div>
 
-            {/* Keyboard lights simulation */}
+            {/* Keyboard lights simulation - more intense */}
             <div className="absolute bottom-8 right-8 flex gap-2">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="w-4 h-4 rounded-full animate-pulse"
-                  style={{
-                    backgroundColor: ['#00FF66', '#FF0000', '#00FF66', '#FF0000'][i],
-                    animationDelay: `${i * 0.1}s`,
-                  }}
-                />
-              ))}
+              {keyboardLightsActive && (
+                <>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className="w-5 h-5 rounded-full animate-pulse shadow-lg"
+                      style={{
+                        backgroundColor: ['#00FF66', '#FF0000', '#00FF66', '#FF0000', '#00FF66', '#FF0000'][i],
+                        animationDuration: `${0.2 + Math.random() * 0.3}s`,
+                        animationDelay: `${i * 0.05}s`,
+                        boxShadow: `0 0 10px ${['#00FF66', '#FF0000', '#00FF66', '#FF0000', '#00FF66', '#FF0000'][i]}`,
+                      }}
+                    />
+                  ))}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -327,8 +442,17 @@ const Red2TerminalPage: React.FC = () => {
           50% { opacity: 0.5; }
         }
 
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
         .animate-pulse {
           animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .animate-spin {
+          animation: spin 1s linear infinite;
         }
       `}</style>
     </div>
