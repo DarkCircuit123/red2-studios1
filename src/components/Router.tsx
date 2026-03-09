@@ -48,6 +48,10 @@ const DataExportPage = lazy(() => import('./pages/DataExportPage').catch(err => 
   console.error('Failed to load DataExportPage:', err);
   throw err;
 }));
+const ChatPage = lazy(() => import('./pages/ChatPage').catch(err => {
+  console.error('Failed to load ChatPage:', err);
+  throw err;
+}));
 
 // Layout component that includes ScrollToTop and SEO Optimizer
 function Layout() {
@@ -163,6 +167,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <DataExportPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "chat",
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <ChatPage />
           </Suspense>
         ),
       },

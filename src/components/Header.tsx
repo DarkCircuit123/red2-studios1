@@ -198,6 +198,14 @@ function Header() {
           >
             Play
           </Link>
+          <Link
+            to="/chat"
+            onClick={handleLinkClick}
+            onMouseEnter={usePrefetchOnHover('chat')}
+            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+          >
+            Chat
+          </Link>
         </div>
 
         {/* Admin & Mobile Menu */}
@@ -359,6 +367,17 @@ function Header() {
               }}
             >
               Play
+            </Link>
+            <Link
+              to="/chat"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
+              onMouseEnter={usePrefetchOnHover('chat')}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
+            >
+              Chat
             </Link>
             {/* Mobile Auth */}
             {!isLoading && (
