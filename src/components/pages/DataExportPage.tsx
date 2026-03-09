@@ -253,10 +253,12 @@ function DataExportPageContent() {
   );
 }
 
-export default function DataExportPage() {
+function DataExportPage() {
   return (
     <MemberProtectedRoute messageToSignIn="Sign in to access the data export center">
       <DataExportPageContent />
     </MemberProtectedRoute>
   );
 }
+
+export default React.memo(DataExportPage);

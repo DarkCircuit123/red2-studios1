@@ -3,7 +3,7 @@ import ChatRoom from '@/components/ChatRoom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-export default function ChatPage() {
+function ChatPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -14,3 +14,5 @@ export default function ChatPage() {
     </div>
   );
 }
+
+export default React.memo(ChatPage);
