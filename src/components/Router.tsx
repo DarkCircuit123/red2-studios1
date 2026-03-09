@@ -18,6 +18,7 @@ import PrivatePage from './pages/PrivatePage';
 import HangmanGamePage from './pages/HangmanGamePage';
 import DataExportPage from './pages/DataExportPage';
 import ChatPage from './pages/ChatPage';
+import Red2TerminalPage from './pages/Red2TerminalPage';
 
 function Layout() {
   return (
@@ -80,6 +81,10 @@ const router = createBrowserRouter([
       {
         path: "play",
         element: <HangmanGamePage />,
+      },
+      {
+        path: "terminal",
+        element: <Red2TerminalPage />,
       },
       {
         path: "data-export",

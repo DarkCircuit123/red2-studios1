@@ -57,16 +57,16 @@ function PrivatePage() {
     const isCorrect = password.toLowerCase() === correctPassword;
 
     if (isCorrect) {
-      // Password is correct - redirect to terminal page
+      // Password is correct - redirect to home page
       setIsUnlocked(true);
       setPassword('');
       sessionStorage.setItem('privatePageUnlocked', 'true');
       sessionStorage.setItem('privatePageFailedAttempts', '0');
       setFailedAttempts(0);
       
-      // Redirect to terminal page after a brief delay
+      // Redirect to home page after a brief delay
       setTimeout(() => {
-        navigate('/play');
+        navigate('/');
       }, 300);
     } else {
       // Password is incorrect
