@@ -11,7 +11,7 @@ import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
 import SplashScreen from '@/components/SplashScreen';
 import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
-import { useIntersectionObserver } from '@/hooks/useAdvancedOptimization';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
 import { useSEO } from '@/hooks/useSEO';
 
