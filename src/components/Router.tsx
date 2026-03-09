@@ -7,51 +7,18 @@ import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import SEOOptimizer from '@/components/SEOOptimizer';
 import { useContentProtection } from '@/hooks/useContentProtection';
 
-// lazy-loaded pages with explicit error boundaries
-const HomePage = lazy(() => import('./pages/HomePage').catch(err => {
-  console.error('Failed to load HomePage:', err);
-  throw err;
-}));
-const PortfolioPage = lazy(() => import('./pages/PortfolioPage').catch(err => {
-  console.error('Failed to load PortfolioPage:', err);
-  throw err;
-}));
-const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage').catch(err => {
-  console.error('Failed to load PortfolioDetailPage:', err);
-  throw err;
-}));
-const BookingPage = lazy(() => import('./pages/BookingPage').catch(err => {
-  console.error('Failed to load BookingPage:', err);
-  throw err;
-}));
-const ClientGalleriesPage = lazy(() => import('./pages/ClientGalleriesPage').catch(err => {
-  console.error('Failed to load ClientGalleriesPage:', err);
-  throw err;
-}));
-const BlogPage = lazy(() => import('./pages/BlogPage').catch(err => {
-  console.error('Failed to load BlogPage:', err);
-  throw err;
-}));
-const ProfilePage = lazy(() => import('./pages/ProfilePage').catch(err => {
-  console.error('Failed to load ProfilePage:', err);
-  throw err;
-}));
-const PrivatePage = lazy(() => import('./pages/PrivatePage').catch(err => {
-  console.error('Failed to load PrivatePage:', err);
-  throw err;
-}));
-const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage').catch(err => {
-  console.error('Failed to load HangmanGamePage:', err);
-  throw err;
-}));
-const DataExportPage = lazy(() => import('./pages/DataExportPage').catch(err => {
-  console.error('Failed to load DataExportPage:', err);
-  throw err;
-}));
-const ChatPage = lazy(() => import('./pages/ChatPage').catch(err => {
-  console.error('Failed to load ChatPage:', err);
-  throw err;
-}));
+// lazy-loaded pages
+const HomePage = lazy(() => import('./pages/HomePage'));
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
+const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage'));
+const BookingPage = lazy(() => import('./pages/BookingPage'));
+const ClientGalleriesPage = lazy(() => import('./pages/ClientGalleriesPage'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const PrivatePage = lazy(() => import('./pages/PrivatePage'));
+const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage'));
+const DataExportPage = lazy(() => import('./pages/DataExportPage'));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
 
 // Layout component that includes ScrollToTop and SEO Optimizer
 function Layout() {
