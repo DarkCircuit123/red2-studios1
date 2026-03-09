@@ -3,7 +3,7 @@ import { useMember } from '@/integrations';
 import { useChatStore, ChatMessage } from '@/lib/chatStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, LogOut } from 'lucide-react';
+import { Send, Heart, Share2, MoreHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 
@@ -12,10 +12,14 @@ export default function ChatRoom() {
   const { messages, addMessage } = useChatStore();
   const [messageText, setMessageText] = useState('');
   const [isOnline, setIsOnline] = useState(true);
+  const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 0);
   };
 
   useEffect(() => {
@@ -40,113 +44,172 @@ export default function ChatRoom() {
     setMessageText('');
   };
 
+  const toggleLike = (messageId: string) => {
+    const newLiked = new Set(likedMessages);
+    if (newLiked.has(messageId)) {
+      newLiked.delete(messageId);
+    } else {
+      newLiked.add(messageId);
+    }
+    setLikedMessages(newLiked);
+  };
+
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5 p-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-4xl font-heading font-bold text-foreground mb-4">Chat Room</h1>
-          <p className="text-lg font-paragraph text-foreground/70 mb-8">
-            Sign in to join the conversation
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
+        >
+          <h1 className="text-5xl font-heading font-bold text-white mb-4">Messages</h1>
+          <p className="text-lg font-paragraph text-gray-300 mb-8">
+            Sign in to start chatting with others
           </p>
           <Button
             onClick={actions.login}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg"
+            className="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white px-8 py-3 rounded-full font-bold text-lg"
           >
-            Sign In to Chat
+            Sign In
           </Button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       {/* Header */}
-      <div className="bg-primary text-primary-foreground p-4 shadow-md">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
+      <div className="bg-black/50 backdrop-blur-md border-b border-gray-700/50 px-4 py-3 sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-heading font-bold">Chat Room</h1>
-            <p className="text-sm opacity-90 flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-              {isOnline ? 'Online' : 'Offline'}
+            <h1 className="text-xl font-heading font-bold text-white">Messages</h1>
+            <p className="text-xs text-gray-400 flex items-center gap-2 mt-1">
+              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-500'}`}></span>
+              {isOnline ? 'Active now' : 'Away'}
             </p>
           </div>
-          <Button
+          <button
             onClick={actions.logout}
-            variant="outline"
-            className="text-primary-foreground border-primary-foreground hover:bg-primary-foreground/10"
+            className="text-gray-400 hover:text-white transition-colors p-2"
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background">
-        <div className="max-w-4xl mx-auto w-full">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gradient-to-br from-gray-900 via-gray-800 to-black"
+        style={{
+          scrollBehavior: 'smooth',
+        }}
+      >
+        <div className="max-w-2xl mx-auto w-full">
           <AnimatePresence>
             {messages.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex items-center justify-center h-full text-center"
+                className="flex items-center justify-center h-96 text-center"
               >
                 <div>
-                  <p className="text-foreground/50 font-paragraph text-lg">
-                    No messages yet. Start the conversation!
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-red-500 mx-auto mb-4 flex items-center justify-center">
+                    <Send className="w-8 h-8 text-white" />
+                  </div>
+                  <p className="text-gray-400 font-paragraph text-base">
+                    No messages yet
+                  </p>
+                  <p className="text-gray-500 font-paragraph text-sm mt-1">
+                    Start a conversation!
                   </p>
                 </div>
               </motion.div>
             ) : (
               messages.map((msg, index) => {
                 const isCurrentUser = msg.userId === member?._id;
+                const isLiked = likedMessages.has(msg.id);
+                
                 return (
                   <motion.div
                     key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: index * 0.02, duration: 0.3 }}
+                    className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} group`}
                   >
                     <div
-                      className={`flex gap-3 max-w-xs lg:max-w-md ${
+                      className={`flex gap-2 max-w-xs lg:max-w-sm ${
                         isCurrentUser ? 'flex-row-reverse' : 'flex-row'
                       }`}
                     >
                       {/* Avatar */}
-                      <div
-                        className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white ${
-                          isCurrentUser ? 'bg-primary' : 'bg-secondary'
-                        }`}
-                      >
-                        {msg.userAvatar ? (
-                          <Image src={msg.userAvatar} alt={msg.userName} className="w-full h-full rounded-full object-cover" />
-                        ) : (
-                          msg.userName.charAt(0).toUpperCase()
-                        )}
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white bg-gradient-to-br from-pink-500 to-red-500 overflow-hidden ring-2 ring-gray-700">
+                          {msg.userAvatar ? (
+                            <Image
+                              src={msg.userAvatar}
+                              alt={msg.userName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>{msg.userName.charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Message Bubble */}
-                      <div className={isCurrentUser ? 'items-end' : 'items-start'}>
-                        <p className="text-xs font-paragraph text-foreground/60 px-3 mb-1">
+                      {/* Message Content */}
+                      <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
+                        {/* Username */}
+                        <p className="text-xs font-paragraph text-gray-400 px-3 mb-1">
                           {msg.userName}
                         </p>
-                        <div
-                          className={`px-4 py-2 rounded-lg ${
+
+                        {/* Message Bubble */}
+                        <motion.div
+                          whileHover={{ scale: 1.02 }}
+                          className={`px-4 py-2.5 rounded-2xl backdrop-blur-sm transition-all ${
                             isCurrentUser
-                              ? 'bg-primary text-primary-foreground rounded-br-none'
-                              : 'bg-secondary/10 text-foreground rounded-bl-none'
+                              ? 'bg-gradient-to-br from-pink-500 to-red-500 text-white rounded-br-sm'
+                              : 'bg-gray-700/60 text-gray-100 rounded-bl-sm hover:bg-gray-700'
                           }`}
                         >
-                          <p className="font-paragraph break-words">{msg.content}</p>
-                        </div>
-                        <p className="text-xs font-paragraph text-foreground/40 px-3 mt-1">
+                          <p className="font-paragraph break-words text-sm leading-relaxed">
+                            {msg.content}
+                          </p>
+                        </motion.div>
+
+                        {/* Time */}
+                        <p className="text-xs font-paragraph text-gray-500 px-3 mt-1">
                           {msg.timestamp.toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
                         </p>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className={`flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'}`}>
+                        <motion.button
+                          whileHover={{ scale: 1.2 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => toggleLike(msg.id)}
+                          className={`p-1.5 rounded-full transition-colors ${
+                            isLiked
+                              ? 'bg-red-500/30 text-red-400'
+                              : 'bg-gray-700/50 text-gray-400 hover:bg-gray-600/50'
+                          }`}
+                        >
+                          <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.2 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="p-1.5 rounded-full bg-gray-700/50 text-gray-400 hover:bg-gray-600/50 transition-colors"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </motion.button>
                       </div>
                     </div>
                   </motion.div>
@@ -154,29 +217,40 @@ export default function ChatRoom() {
               })
             )}
           </AnimatePresence>
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
       </div>
 
       {/* Input Area */}
-      <div className="bg-background border-t border-foreground/10 p-4 shadow-lg">
-        <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto">
-          <div className="flex gap-3">
-            <Input
-              type="text"
-              placeholder="Type a message..."
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              className="flex-1 rounded-lg border-foreground/20 focus:border-primary"
-              disabled={!isOnline}
-            />
-            <Button
+      <div className="bg-black/50 backdrop-blur-md border-t border-gray-700/50 px-4 py-3 sticky bottom-0">
+        <form onSubmit={handleSendMessage} className="max-w-2xl mx-auto">
+          <div className="flex gap-2 items-end">
+            {/* Input Field */}
+            <div className="flex-1 relative">
+              <Input
+                type="text"
+                placeholder="Say something..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                disabled={!isOnline}
+                className="w-full bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-500 rounded-full px-4 py-2.5 focus:border-pink-500 focus:ring-pink-500/20 transition-all"
+              />
+            </div>
+
+            {/* Send Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               type="submit"
               disabled={!messageText.trim() || !isOnline}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 rounded-lg"
+              className={`p-2.5 rounded-full transition-all ${
+                messageText.trim() && isOnline
+                  ? 'bg-gradient-to-r from-pink-500 to-red-500 text-white hover:from-pink-600 hover:to-red-600 shadow-lg shadow-pink-500/50'
+                  : 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
+              }`}
             >
-              <Send className="w-4 h-4" />
-            </Button>
+              <Send className="w-5 h-5" />
+            </motion.button>
           </div>
         </form>
       </div>
