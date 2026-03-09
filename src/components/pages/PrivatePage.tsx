@@ -1,17 +1,20 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 function PrivatePage() {
+  const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
 
   useEffect(() => {
     // Check if already unlocked in session
@@ -30,6 +33,12 @@ function PrivatePage() {
         sessionStorage.removeItem('privatePageLockedUntil');
       }
     }
+
+    // Load failed attempts
+    const attempts = sessionStorage.getItem('privatePageFailedAttempts');
+    if (attempts) {
+      setFailedAttempts(parseInt(attempts, 10));
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,40 +52,42 @@ function PrivatePage() {
     setIsLoading(true);
     setError('');
 
-    try {
-      // Call backend API for password verification
-      const response = await fetch('/api/verify-access', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      });
+    // Check password locally (case-insensitive)
+    const correctPassword = 'classified';
+    const isCorrect = password.toLowerCase() === correctPassword;
 
-      const data = await response.json();
+    if (isCorrect) {
+      // Password is correct - redirect to terminal page
+      setIsUnlocked(true);
+      setPassword('');
+      sessionStorage.setItem('privatePageUnlocked', 'true');
+      sessionStorage.setItem('privatePageFailedAttempts', '0');
+      setFailedAttempts(0);
+      
+      // Redirect to terminal page after a brief delay
+      setTimeout(() => {
+        navigate('/play');
+      }, 300);
+    } else {
+      // Password is incorrect
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      sessionStorage.setItem('privatePageFailedAttempts', newAttempts.toString());
 
-      if (response.ok && data.success) {
-        setIsUnlocked(true);
-        setPassword('');
-        sessionStorage.setItem('privatePageUnlocked', 'true');
-      } else if (response.status === 429) {
-        // Rate limited - lock the page
+      if (newAttempts >= 5) {
+        // Lock the page after 5 failed attempts
         const lockDuration = 30 * 60 * 1000; // 30 minutes
         const lockUntil = Date.now() + lockDuration;
         sessionStorage.setItem('privatePageLockedUntil', lockUntil.toString());
         setIsLocked(true);
         setError('Too many failed attempts. Access locked for 30 minutes.');
-        setPassword('');
       } else {
-        setError(data.message || 'Access denied. Invalid credentials.');
-        setPassword('');
+        setError(`Access denied. Invalid credentials. (${5 - newAttempts} attempts remaining)`);
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-      console.error('Access verification error:', err);
-    } finally {
-      setIsLoading(false);
+      setPassword('');
     }
+
+    setIsLoading(false);
   };
 
   return (
