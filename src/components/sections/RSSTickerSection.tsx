@@ -18,16 +18,15 @@ function RSSTickerSection() {
     const fetchRSS = async () => {
       try {
         setIsLoading(true);
-        // Using a reliable photography RSS feed - 500px Photography
-        // We'll use a CORS proxy to fetch the RSS feed
-        const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.500px.com/stories.xml';
+        // Using Vogue RSS feed - one of the most active and prestigious fashion feeds
+        const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.vogue.com/feed/rss';
         
         const response = await fetch(rssUrl);
         const data = await response.json();
 
         if (data.items && data.items.length > 0) {
-          const feedItems = data.items.slice(0, 20).map((item: any) => ({
-            title: item.title || 'Photography Update',
+          const feedItems = data.items.slice(0, 15).map((item: any) => ({
+            title: item.title || 'Fashion Update',
             link: item.link || '#',
             pubDate: item.pubDate || new Date().toISOString(),
           }));
@@ -38,30 +37,30 @@ function RSSTickerSection() {
         }
       } catch {
         setError(true);
-        // Fallback items if RSS fails
+        // Fallback items if RSS fails - fashion-themed content
         setItems([
           {
-            title: 'Exploring Light and Shadow in Modern Photography',
+            title: 'Spring Fashion Trends: What\'s Hot This Season',
             link: '#',
             pubDate: new Date().toISOString(),
           },
           {
-            title: 'The Art of Composition: A Photographers Guide',
+            title: 'Luxury Brands Redefine Elegance for 2026',
             link: '#',
             pubDate: new Date().toISOString(),
           },
           {
-            title: 'Mastering Portrait Photography Techniques',
+            title: 'Sustainable Fashion: The Future of Style',
             link: '#',
             pubDate: new Date().toISOString(),
           },
           {
-            title: 'Digital vs Film: The Eternal Debate',
+            title: 'Runway Highlights: Designer Collections Unveiled',
             link: '#',
             pubDate: new Date().toISOString(),
           },
           {
-            title: 'Capturing Moments: The Essence of Street Photography',
+            title: 'Celebrity Style: Icons Setting Fashion Standards',
             link: '#',
             pubDate: new Date().toISOString(),
           },
@@ -88,7 +87,7 @@ function RSSTickerSection() {
         <div className="max-w-[120rem] mx-auto px-8 mb-6 flex items-center gap-3">
           <Rss className="w-4 h-4 text-red-900" />
           <span className="text-xs font-mono text-red-900 uppercase tracking-widest">
-            Photography Feed
+            Fashion Feed • Vogue
           </span>
         </div>
 
