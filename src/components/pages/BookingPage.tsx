@@ -44,8 +44,8 @@ function BookingPage() {
       try {
         const result = await BaseCrudService.getAll<BookingSlot>('bookingavailability', {}, { limit: 100 });
         setBookings(result.items || []);
-      } catch (error) {
-        console.error('Error loading bookings:', error);
+      } catch {
+        // Error handled silently
       } finally {
         setIsLoading(false);
       }
@@ -131,8 +131,8 @@ function BookingPage() {
         setSelectedSlot(null);
         setFormData({ name: '', email: '', phone: '', message: '' });
         setTimeout(() => setSubmitSuccess(false), 5000);
-      } catch (error) {
-        console.error('Error submitting booking:', error);
+      } catch {
+        // Error handled silently
       } finally {
         setIsSubmitting(false);
       }

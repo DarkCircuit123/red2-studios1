@@ -16,7 +16,7 @@ import {
   exploitPreventionEngine,
   zeroDayProtection,
 } from './advanced-threat-detection';
-import { CSPManager, SecurityHeadersManager, RateLimiter } from './security-enhanced';
+import { CSPManager, SecurityHeadersManager, RateLimiter, cspManager } from './security-enhanced';
 
 /**
  * Initialize all security systems

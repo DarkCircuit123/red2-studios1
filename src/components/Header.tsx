@@ -240,10 +240,10 @@ function Header() {
           )}
 
           <button
-            onClick={useCallback(() => {
+            onClick={() => {
               playClickSound();
               setIsAdminOpen(true);
-            }, [])}
+            }}
             className="p-2 hover:bg-white/10 transition-colors duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Admin panel"
             title="Admin Panel"
@@ -252,10 +252,10 @@ function Header() {
           </button>
 
           <button
-            onClick={useCallback(() => {
+            onClick={() => {
               playClickSound();
               setIsOpen(prev => !prev);
-            }, [])}
+            }}
             className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Toggle menu"
           >
