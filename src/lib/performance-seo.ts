@@ -3,6 +3,8 @@
  * Implements Core Web Vitals and performance best practices
  */
 
+import { initializeCoreWebVitals } from '@/lib/core-web-vitals';
+
 /**
  * Report Web Vitals to analytics
  */
@@ -192,6 +194,7 @@ export function initializeSEOPerformance() {
   optimizeFontLoading();
   reportWebVitals();
   monitorPerformance();
+  initializeCoreWebVitals();
 
   // Lazy load images after page load
   window.addEventListener('load', () => {

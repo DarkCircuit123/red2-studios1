@@ -1,0 +1,437 @@
+/**
+ * Mobile-First Responsive Design
+ * Optimized for all screen sizes with progressive enhancement
+ */
+
+/* ===== Base Mobile Styles (320px and up) ===== */
+
+:root {
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+
+  /* Typography */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /* Line heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* Mobile-first base styles */
+body {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  padding: 0;
+  margin: 0;
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Responsive containers */
+.container {
+  width: 100%;
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Responsive typography */
+h1 {
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-lg);
+}
+
+h2 {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-md);
+}
+
+h3 {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-md);
+}
+
+p {
+  margin-bottom: var(--spacing-md);
+  line-height: var(--line-height-relaxed);
+}
+
+/* Responsive grid */
+.grid {
+  display: grid;
+  gap: var(--spacing-md);
+  grid-template-columns: 1fr;
+}
+
+/* Responsive flex */
+.flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+/* Responsive buttons */
+button,
+.button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  min-height: 44px; /* Touch target */
+  min-width: 44px;
+}
+
+/* Responsive forms */
+input,
+textarea,
+select {
+  font-size: var(--font-size-base);
+  padding: var(--spacing-sm) var(--spacing-md);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ===== Tablet Styles (640px and up) ===== */
+@media (min-width: 640px) {
+  :root {
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+  }
+
+  h1 {
+    font-size: var(--font-size-3xl);
+  }
+
+  h2 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .container {
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== Tablet Large Styles (768px and up) ===== */
+@media (min-width: 768px) {
+  :root {
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+  }
+
+  .container {
+    max-width: 720px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Hide mobile navigation */
+  .nav-mobile {
+    display: none;
+  }
+
+  /* Show desktop navigation */
+  .nav-desktop {
+    display: flex;
+  }
+}
+
+/* ===== Desktop Styles (1024px and up) ===== */
+@media (min-width: 1024px) {
+  :root {
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+  }
+
+  .container {
+    max-width: 960px;
+  }
+
+  h1 {
+    font-size: var(--font-size-3xl);
+  }
+
+  h2 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .grid-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* ===== Large Desktop Styles (1280px and up) ===== */
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1200px;
+  }
+
+  h1 {
+    font-size: 2.25rem;
+  }
+
+  h2 {
+    font-size: 1.875rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .grid-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .grid-6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ===== Extra Large Desktop Styles (1536px and up) ===== */
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1400px;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .grid-6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ===== Touch Device Optimizations ===== */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Remove hover effects */
+  button:hover,
+  a:hover {
+    background-color: transparent;
+  }
+
+  /* Add active state instead */
+  button:active,
+  a:active {
+    opacity: 0.7;
+  }
+}
+
+/* ===== Print Styles ===== */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+
+  button,
+  .button {
+    display: none;
+  }
+
+  .no-print {
+    display: none;
+  }
+
+  img {
+    max-width: 100%;
+  }
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== Dark Mode Support ===== */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+
+  a {
+    color: #4a9eff;
+  }
+
+  input,
+  textarea,
+  select {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border-color: #444;
+  }
+}
+
+/* ===== High Contrast Mode ===== */
+@media (prefers-contrast: more) {
+  body {
+    font-weight: 600;
+  }
+
+  button,
+  a {
+    text-decoration: underline;
+  }
+}
+
+/* ===== Landscape Orientation ===== */
+@media (orientation: landscape) and (max-height: 500px) {
+  h1 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  h2 {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  p {
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
+/* ===== Utility Classes ===== */
+
+/* Responsive display */
+.hidden-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hidden-mobile {
+    display: block;
+  }
+
+  .hidden-desktop {
+    display: none;
+  }
+}
+
+/* Responsive spacing */
+.p-mobile {
+  padding: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+  .p-desktop {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Responsive text alignment */
+.text-center-mobile {
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .text-left-desktop {
+    text-align: left;
+  }
+}
+
+/* Responsive columns */
+.col-full {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .col-half {
+    grid-column: span 2;
+  }
+
+  .col-third {
+    grid-column: span 1;
+  }
+}
