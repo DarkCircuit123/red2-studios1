@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
@@ -8,7 +8,6 @@ import Interactive3DGallerySection from '@/components/sections/Interactive3DGall
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
-import SplashScreen from '@/components/SplashScreen';
 import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
@@ -18,20 +17,6 @@ function HomePage() {
   useSEO('home');
 
   const { ref: galleryRef, isVisible: galleryVisible } = useIntersectionObserver(() => {}, { threshold: 0.1 });
-  const [showSplash, setShowSplash] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const splashShown = sessionStorage.getItem('splashScreenShown');
-      return !splashShown;
-    }
-    return true;
-  });
-
-  const handleSplashComplete = useCallback(() => {
-    setShowSplash(false);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('splashScreenShown', 'true');
-    }
-  }, []);
 
   useEffect(() => {
     initializeSecuritySystems();
@@ -68,32 +53,29 @@ function HomePage() {
   });
 
   return (
-    <>
-      {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
-      <div className="min-h-screen bg-black text-white">
-        <Header />
+    <div className="min-h-screen bg-black text-white">
+      <Header />
 
-        <HeroSection />
+      <HeroSection />
 
-        <AboutSection />
+      <AboutSection />
 
-        <div ref={galleryRef as any}>
-          {galleryVisible && (
-            <React.Suspense fallback={<div className="py-20 text-center text-white/60">Loading gallery…</div>}>
-              <Interactive3DGallerySection />
-            </React.Suspense>
-          )}
-        </div>
-
-        <RSSTickerSection />
-
-        <SponsorsSection />
-
-        <ContactSection />
-
-        <Footer />
+      <div ref={galleryRef as any}>
+        {galleryVisible && (
+          <React.Suspense fallback={<div className="py-20 text-center text-white/60">Loading gallery…</div>}>
+            <Interactive3DGallerySection />
+          </React.Suspense>
+        )}
       </div>
-    </>
+
+      <RSSTickerSection />
+
+      <SponsorsSection />
+
+      <ContactSection />
+
+      <Footer />
+    </div>
   );
 }
 

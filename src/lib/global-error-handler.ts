@@ -1,3 +1,5 @@
+import { logger } from './debug-logger';
+
 interface ErrorEvent {
   message: string;
   filename: string;
@@ -27,7 +29,7 @@ export function initializeGlobalErrorHandlers() {
     handleError('Unhandled Promise Rejection', event.reason);
   });
 
-  console.log('Global error handler initialized');
+  logger.debug('Global error handler initialized', {}, { module: 'GlobalErrorHandler' });
 }
 
 function handleError(type: string, error: any, context?: Record<string, any>) {
@@ -44,14 +46,14 @@ function handleError(type: string, error: any, context?: Record<string, any>) {
     errorLog.shift();
   }
 
-  console.error(`${type}:`, errorInfo);
+  logger.error(`${type}:`, errorInfo, { module: 'GlobalErrorHandler' });
 
   if (
     error?.message?.includes('Failed to fetch') ||
     error?.message?.includes('dynamically imported') ||
     error?.message?.includes('chunk')
   ) {
-    console.warn('Detected module loading error - consider page reload');
+    logger.warn('Detected module loading error - consider page reload', {}, { module: 'GlobalErrorHandler' });
   }
 }
 

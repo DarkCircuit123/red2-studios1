@@ -1,3 +1,5 @@
+import { logger } from './debug-logger';
+
 interface ModuleCache {
   [key: string]: Promise<any>;
 }
@@ -47,9 +49,10 @@ export async function loadModuleWithRetry<T = any>(
       lastError = error instanceof Error ? error : new Error(String(error));
       
       if (attempt < finalConfig.maxRetries) {
-        console.warn(
+        logger.warn(
           `Attempt ${attempt + 1}/${finalConfig.maxRetries + 1} failed for ${moduleName}. Retrying in ${delay}ms...`,
-          lastError.message
+          lastError.message,
+          { module: 'ModuleLoader' }
         );
         await sleep(delay);
         delay *= finalConfig.backoffMultiplier;
@@ -75,7 +78,7 @@ export async function preloadModules(
       const module = await loadModuleWithRetry(importFn, name);
       results.set(name, module);
     } catch (error) {
-      console.error(`Failed to preload ${name}:`, error);
+      logger.error(`Failed to preload ${name}:`, error, { module: 'ModuleLoader' });
       results.set(name, null);
     }
   });

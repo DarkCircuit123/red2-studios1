@@ -47,8 +47,8 @@ function ClientGalleriesPage() {
       try {
         const result = await BaseCrudService.getAll<ClientGallery>('clientgalleries', {}, { limit: 50 });
         setGalleries(result.items || []);
-      } catch (error) {
-        console.error('Error loading galleries:', error);
+      } catch {
+        // Error handled silently
       } finally {
         setIsLoading(false);
       }

@@ -1,4 +1,5 @@
 import { loadModuleWithRetry } from './module-loader';
+import { logger } from './debug-logger';
 
 interface PreloadConfig {
   critical: Array<{ importFn: () => Promise<any>; name: string }>;
@@ -11,28 +12,28 @@ export async function initializeModulePreloading(config: PreloadConfig) {
   if (preloadInitialized) return;
   preloadInitialized = true;
 
-  console.log('Loading critical modules...');
+  logger.debug('Loading critical modules...', {}, { module: 'ModulePreloader' });
   const criticalPromises = config.critical.map(({ importFn, name }) =>
     loadModuleWithRetry(importFn, name)
-      .catch(err => console.warn(`Failed to preload critical module ${name}:`, err))
+      .catch(err => logger.warn(`Failed to preload critical module ${name}:`, err, { module: 'ModulePreloader' }))
   );
 
   await Promise.all(criticalPromises);
 
   if ('requestIdleCallback' in window) {
     requestIdleCallback(() => {
-      console.log('Loading deferred modules...');
+      logger.debug('Loading deferred modules...', {}, { module: 'ModulePreloader' });
       config.deferred.forEach(({ importFn, name }) => {
         loadModuleWithRetry(importFn, name)
-          .catch(err => console.warn(`Failed to preload deferred module ${name}:`, err));
+          .catch(err => logger.warn(`Failed to preload deferred module ${name}:`, err, { module: 'ModulePreloader' }));
       });
     });
   } else {
     setTimeout(() => {
-      console.log('Loading deferred modules (fallback)...');
+      logger.debug('Loading deferred modules (fallback)...', {}, { module: 'ModulePreloader' });
       config.deferred.forEach(({ importFn, name }) => {
         loadModuleWithRetry(importFn, name)
-          .catch(err => console.warn(`Failed to preload deferred module ${name}:`, err));
+          .catch(err => logger.warn(`Failed to preload deferred module ${name}:`, err, { module: 'ModulePreloader' }));
       });
     }, 2000);
   }

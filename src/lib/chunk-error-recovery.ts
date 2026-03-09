@@ -1,3 +1,5 @@
+import { logger } from './debug-logger';
+
 interface ChunkErrorConfig {
   maxReloadAttempts: number;
   reloadDelay: number;
@@ -41,14 +43,16 @@ function isChunkError(error: any): boolean {
 }
 
 function handleChunkError(error: any, config: ChunkErrorConfig) {
-  console.warn('Chunk error detected:', error.message);
+  logger.warn('Chunk error detected:', error.message, { module: 'ChunkErrorRecovery' });
 
   if (reloadAttempts < config.maxReloadAttempts) {
     reloadAttempts++;
     sessionStorage.setItem(RELOAD_ATTEMPTS_KEY, String(reloadAttempts));
 
-    console.log(
-      `Attempting recovery (${reloadAttempts}/${config.maxReloadAttempts})...`
+    logger.debug(
+      `Attempting recovery (${reloadAttempts}/${config.maxReloadAttempts})...`,
+      {},
+      { module: 'ChunkErrorRecovery' }
     );
 
     if ('caches' in window) {
@@ -61,7 +65,7 @@ function handleChunkError(error: any, config: ChunkErrorConfig) {
       window.location.reload();
     }, config.reloadDelay);
   } else {
-    console.error('Max reload attempts reached. Manual intervention required.');
+    logger.error('Max reload attempts reached. Manual intervention required.', {}, { module: 'ChunkErrorRecovery' });
     sessionStorage.removeItem(RELOAD_ATTEMPTS_KEY);
 
     showChunkErrorMessage();
