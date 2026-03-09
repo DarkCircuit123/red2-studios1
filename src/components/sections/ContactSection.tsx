@@ -1,12 +1,19 @@
 import React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, AlertCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, AlertCircle, Shield } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
 import { advancedSpamDetection, behavioralBiometrics, ddosMitigation } from '@/lib/next-gen-security';
 import { InputValidator, RateLimiter } from '@/lib/security-enhanced';
+import {
+  cleartypeUncodePrevention,
+  advancedContactSpamPrevention,
+  distributedAttackDetection,
+  behavioralAnalysisEngine,
+} from '@/lib/master-hacker-defense';
 
 const contactFormLimiter = new RateLimiter(3, 60000); // 3 submissions per minute
+const userFingerprint = `${navigator.userAgent}-${window.location.hostname}-${Date.now()}`;
 
 function ContactSection() {
   const [formData, setFormData] = useState({
@@ -115,7 +122,20 @@ function ContactSection() {
         return;
       }
 
-      // 4. Input validation
+      // 4. CLEARTYPE/UNCODE Detection - Check for obfuscated payloads
+      const cleartypeCheck = cleartypeUncodePrevention.detectCleartypeAttack(
+        JSON.stringify(formData)
+      );
+      if (cleartypeCheck.isCleartype) {
+        console.warn('[SECURITY] Cleartype/Uncode attack detected:', cleartypeCheck.detectedPatterns);
+        setSubmitStatus('blocked');
+        setBlockMessage('Submission blocked: Obfuscated payload detected');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 5. Input validation
       if (!InputValidator.isValidEmail(formData.email)) {
         setSubmitStatus('error');
         setBlockMessage('Invalid email address');
@@ -124,7 +144,7 @@ function ContactSection() {
         return;
       }
 
-      // 5. Form fill time check (bots fill too fast)
+      // 6. Form fill time check (bots fill too fast)
       const fillTime = Date.now() - formStartTime.current;
       if (fillTime < 2000) {
         console.warn('[SECURITY] Form filled too quickly - likely bot');
@@ -135,7 +155,7 @@ function ContactSection() {
         return;
       }
 
-      // 6. Behavioral biometrics check
+      // 7. Behavioral biometrics check
       if (behavioralBiometrics.isBotLikeBehavior()) {
         console.warn('[SECURITY] Bot-like behavior detected');
         setSubmitStatus('blocked');
@@ -145,7 +165,7 @@ function ContactSection() {
         return;
       }
 
-      // 7. Advanced spam detection
+      // 8. Advanced spam detection (legacy)
       const spamAnalysis = advancedSpamDetection.analyzeSubmission({
         timestamp: Date.now(),
         data: formData,
@@ -157,6 +177,49 @@ function ContactSection() {
         console.warn('[SECURITY] Spam detected:', spamAnalysis.detectedPatterns);
         setSubmitStatus('blocked');
         setBlockMessage('Submission blocked: Spam detected');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 9. Master Hacker Defense - Advanced Contact Form Spam Prevention
+      const advancedSpamCheck = advancedContactSpamPrevention.analyzeContactForm(formData);
+      if (advancedSpamCheck.isSpam) {
+        console.warn('[SECURITY] Advanced spam detected:', advancedSpamCheck.detectedThreats);
+        setSubmitStatus('blocked');
+        setBlockMessage(`Submission blocked: ${advancedSpamCheck.detectedThreats[0] || 'Spam detected'}`);
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 10. Distributed Attack Detection - Check for botnet/DDoS patterns
+      const distributedAttackCheck = distributedAttackDetection.recordRequest(clientFingerprint, {
+        userAgent: navigator.userAgent,
+        geoLocation: 'browser-based',
+        payload: formData,
+      });
+
+      if (distributedAttackCheck.isAttack && distributedAttackCheck.confidence > 0.7) {
+        console.warn('[SECURITY] Distributed attack detected:', distributedAttackCheck.attackType);
+        setSubmitStatus('blocked');
+        setBlockMessage('Submission blocked: Suspicious activity pattern detected');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 11. Behavioral Analysis - Detect anomalous user behavior
+      const behaviorCheck = behavioralAnalysisEngine.recordUserBehavior(userFingerprint, {
+        responseTime: fillTime,
+        mouseVelocity: mouseMovements.current.length / (fillTime / 1000),
+        timestamp: Date.now(),
+      });
+
+      if (behaviorCheck.isAnomalous && behaviorCheck.riskScore > 0.5) {
+        console.warn('[SECURITY] Anomalous behavior detected:', behaviorCheck.anomalies);
+        setSubmitStatus('blocked');
+        setBlockMessage('Submission blocked: Unusual behavior detected');
         setTimeout(() => setSubmitStatus('idle'), 3000);
         setIsSubmitting(false);
         return;
@@ -427,6 +490,14 @@ function ContactSection() {
                   </>
                 )}
               </button>
+
+              {/* Security Status Indicator */}
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <Shield className="w-3.5 h-3.5 text-white/40" />
+                <p className="text-xs font-mono text-white/30 uppercase tracking-widest">
+                  Protected by 11-layer security
+                </p>
+              </div>
 
               <p className="text-xs font-mono text-white/30 text-center uppercase tracking-widest">
                 I typically respond within 24 hours

@@ -305,48 +305,49 @@ function BookingPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div style={{ paddingTop: dateOffset }}>
-            {dateEntries.slice(startDateIndex, endDateIndex).map(([date, slots], idx) => (
-                <motion.div
-                  key={date}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="border border-white/10 rounded-lg p-6 hover:border-white/30 transition-colors"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <Calendar className="w-5 h-5 text-white/60" />
-                    <h3 className="text-lg font-heading font-bold">
-                      {new Date(date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </h3>
-                  </div>
+                {dateEntries.slice(startDateIndex, endDateIndex).map(([date, slots], idx) => (
+                  <motion.div
+                    key={date}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="border border-white/10 rounded-lg p-6 hover:border-white/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <Calendar className="w-5 h-5 text-white/60" />
+                      <h3 className="text-lg font-heading font-bold">
+                        {new Date(date).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </h3>
+                    </div>
 
-                  <div className="space-y-3">
-                    {slots.map((slot) => (
-                      <button
-                        key={slot._id}
-                        onClick={() => handleSlotClick(slot)}
-                        className="w-full p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded transition-all duration-300 text-left hover:border-white/30"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-white/40" />
-                            <span className="text-sm font-mono">
-                              {slot.startTime} - {slot.endTime}
+                    <div className="space-y-3">
+                      {slots.map((slot) => (
+                        <button
+                          key={slot._id}
+                          onClick={() => handleSlotClick(slot)}
+                          className="w-full p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded transition-all duration-300 text-left hover:border-white/30"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-white/40" />
+                              <span className="text-sm font-mono">
+                                {slot.startTime} - {slot.endTime}
+                              </span>
+                            </div>
+                            <span className="text-xs text-white/50 uppercase tracking-wide">
+                              {slot.sessionType}
                             </span>
                           </div>
-                          <span className="text-xs text-white/50 uppercase tracking-wide">
-                            {slot.sessionType}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           )}
 

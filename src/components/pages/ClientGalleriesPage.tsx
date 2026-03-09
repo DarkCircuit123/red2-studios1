@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, CheckCircle, Clock } from 'lucide-react';
 import { useVirtualList, useWindowSize, useThrottleCallback } from '@/hooks/useAdvancedOptimization';
@@ -180,36 +180,38 @@ function ClientGalleriesPage() {
                       transition={{ delay: idx * 0.1 }}
                       className="group cursor-pointer"
                     >
-                  <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5">
-                    {gallery.galleryCoverImage && (
-                      <Image
-                        src={gallery.galleryCoverImage}
-                        alt={gallery.clientName}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
+                      <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5">
+                        {gallery.galleryCoverImage && (
+                          <Image
+                            src={gallery.galleryCoverImage}
+                            alt={gallery.clientName}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-heading font-bold">{gallery.clientName}</h3>
-                      {getStatusIcon(gallery.approvalStatus)}
-                    </div>
-                    <p className="text-sm text-white/60">{gallery.clientEmail}</p>
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="text-xs text-white/40 uppercase tracking-wide">
-                        {gallery.approvalStatus || 'Pending'}
-                      </span>
-                      {gallery.galleryExpirationDate && (
-                        <span className="text-xs text-white/40">
-                          Expires: {new Date(gallery.galleryExpirationDate).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-heading font-bold">{gallery.clientName}</h3>
+                          {getStatusIcon(gallery.approvalStatus)}
+                        </div>
+                        <p className="text-sm text-white/60">{gallery.clientEmail}</p>
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-xs text-white/40 uppercase tracking-wide">
+                            {gallery.approvalStatus || 'Pending'}
+                          </span>
+                          {gallery.galleryExpirationDate && (
+                            <span className="text-xs text-white/40">
+                              Expires: {new Date(gallery.galleryExpirationDate).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

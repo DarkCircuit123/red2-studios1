@@ -9,6 +9,7 @@ import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
+import React from 'react';
 
 function PortfolioPage() {
   const [projects, setProjects] = useState<Portfolio[]>([]);
@@ -216,53 +217,55 @@ function PortfolioPage() {
                         : ''
                     }`}
                   >
-                {/* Aspect ratio container */}
-                <div className="relative w-full aspect-square">
-                  {/* Image */}
-                  <Image
-                    src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
-                    alt={project.projectName}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
+                    {/* Aspect ratio container */}
+                    <div className="relative w-full aspect-square">
+                      {/* Image */}
+                      <Image
+                        src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
+                        alt={project.projectName}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
 
-                  {/* Subtle grain overlay */}
-                  <div className="absolute inset-0 bg-grain opacity-5" />
+                      {/* Subtle grain overlay */}
+                      <div className="absolute inset-0 bg-grain opacity-5" />
 
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
 
-                  {/* Content - appears on hover */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={hoveredId === project._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute inset-0 flex flex-col items-end justify-end p-8"
-                  >
-                    <div className="text-right">
-                      <p className="text-xs font-mono text-white/60 mb-3 uppercase tracking-widest">
-                        {project.category}
-                      </p>
-                      <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
-                        {project.projectName}
-                      </h3>
-                      <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
-                        <span className="text-sm font-paragraph">View</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
+                      {/* Content - appears on hover */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={hoveredId === project._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                        transition={{ duration: 0.3 }}
+                        className="absolute inset-0 flex flex-col items-end justify-end p-8"
+                      >
+                        <div className="text-right">
+                          <p className="text-xs font-mono text-white/60 mb-3 uppercase tracking-widest">
+                            {project.category}
+                          </p>
+                          <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
+                            {project.projectName}
+                          </h3>
+                          <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
+                            <span className="text-sm font-paragraph">View</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </motion.div>
+
+                      {/* Link */}
+                      <Link
+                        to={`/portfolio/${project._id}`}
+                        onClick={playClickSound}
+                        className="absolute inset-0"
+                        aria-label={`View ${project.projectName}`}
+                      />
                     </div>
                   </motion.div>
-
-                  {/* Link */}
-                  <Link
-                    to={`/portfolio/${project._id}`}
-                    onClick={playClickSound}
-                    className="absolute inset-0"
-                    aria-label={`View ${project.projectName}`}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                );
+              })}
+            </motion.div>
+          </div>
         )}
 
         {/* Empty State */}
