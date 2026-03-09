@@ -27,8 +27,8 @@ function Footer() {
 
   return (
     <footer className="bg-black border-t border-white/10">
-      <div className="max-w-[120rem] mx-auto px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-12 sm:mb-16">
           {/* Brand */}
           <div>
             <h3 className="text-lg font-heading font-bold text-white mb-3 tracking-wide">
@@ -174,29 +174,29 @@ function Footer() {
 
         {/* Divider */}
         <div className="border-t border-white/10 pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
             <p className="text-xs font-mono text-white/30">
               © {currentYear} Studio. All rights reserved.
             </p>
-            <div className="flex gap-6">
+            <div className="flex gap-4 sm:gap-6">
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
+                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest py-1"
               >
                 Privacy
               </a>
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
+                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest py-1"
               >
                 Terms
               </a>
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
+                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest py-1"
               >
                 Cookies
               </a>

@@ -114,8 +114,8 @@ function Header() {
           : 'bg-transparent'
       }`}
     >
-      <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent shadow-[inset_0px_0px_4px_0px_#bfbfbf] opacity-[1] mix-blend-normal">
-        {/* Logo - Text-based RED² */}
+      <nav className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-4 sm:py-5 flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent shadow-[inset_0px_0px_4px_0px_#bfbfbf] opacity-[1] mix-blend-normal">
+        {/* Logo - Text-based RED² - mobile optimized */}
         <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: logoFaded ? 0 : 1 }}
@@ -129,14 +129,14 @@ function Header() {
             }}
             className="relative flex items-center gap-0"
           >
-            <span className="text-2xl font-heading font-bold text-white tracking-tight">
+            <span className="text-xl sm:text-2xl font-heading font-bold text-white tracking-tight">
               RED<span className="text-primary">²</span>
             </span>
           </Link>
         </motion.div>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-12">
+        <div className="hidden md:flex items-center gap-8 lg:gap-12">
           <a
             href="#portfolio"
             onClick={(e) => handleAnchorClick(e, '#portfolio')}
@@ -201,7 +201,7 @@ function Header() {
         </div>
 
         {/* Admin & Mobile Menu */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 sm:gap-6">
           {/* Auth Links */}
           {!isLoading && (
             <>
@@ -244,7 +244,7 @@ function Header() {
               playClickSound();
               setIsAdminOpen(true);
             }, [])}
-            className="p-2 hover:bg-white/10 transition-colors duration-300"
+            className="p-2 hover:bg-white/10 transition-colors duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Admin panel"
             title="Admin Panel"
           >
@@ -256,7 +256,7 @@ function Header() {
               playClickSound();
               setIsOpen(prev => !prev);
             }, [])}
-            className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300"
+            className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Toggle menu"
           >
             {isOpen ? (
@@ -273,11 +273,11 @@ function Header() {
       </React.Suspense>
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="md:hidden bg-black/95 border-t border-white/10 backdrop-blur-md">
-          <div className="max-w-[120rem] mx-auto px-8 py-6 flex flex-col gap-6">
+        <div className="md:hidden bg-black/95 border-t border-white/10 backdrop-blur-md max-h-[calc(100vh-80px)] overflow-y-auto">
+          <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-6 flex flex-col gap-6">
             <a
               href="#portfolio"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
               onClick={(e) => {
                 handleAnchorClick(e, '#portfolio');
                 setIsOpen(false);
@@ -287,7 +287,7 @@ function Header() {
             </a>
             <a
               href="#about"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
               onClick={(e) => {
                 handleAnchorClick(e, '#about');
                 setIsOpen(false);
@@ -297,7 +297,7 @@ function Header() {
             </a>
             <Link
               to="/portfolio"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
               onMouseEnter={usePrefetchOnHover('portfolio')}
               onClick={() => {
                 handleLinkClick();
@@ -308,7 +308,7 @@ function Header() {
             </Link>
             <Link
               to="/booking"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
               onMouseEnter={usePrefetchOnHover('booking')}
               onClick={() => {
                 handleLinkClick();
@@ -319,7 +319,7 @@ function Header() {
             </Link>
             <Link
               to="/galleries"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
               onMouseEnter={usePrefetchOnHover('galleries')}
               onClick={() => {
                 handleLinkClick();
@@ -330,7 +330,7 @@ function Header() {
             </Link>
             <a
               href="#contact"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
               onClick={(e) => {
                 handleAnchorClick(e, '#contact');
                 setIsOpen(false);
@@ -340,7 +340,7 @@ function Header() {
             </a>
             <Link
               to="/private"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
               onMouseEnter={usePrefetchOnHover('private')}
               onClick={() => {
                 handleLinkClick();
@@ -351,7 +351,7 @@ function Header() {
             </Link>
             <Link
               to="/play"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
               onMouseEnter={usePrefetchOnHover('play')}
               onClick={() => {
                 handleLinkClick();
@@ -368,7 +368,7 @@ function Header() {
                     <div className="border-t border-white/10 pt-6">
                       <Link
                         to="/profile"
-                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest block mb-4"
+                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest block mb-4 py-2"
                         onClick={() => {
                           handleLinkClick();
                           setIsOpen(false);
@@ -382,7 +382,7 @@ function Header() {
                           actions.logout();
                           setIsOpen(false);
                         }}
-                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2"
+                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2 py-2"
                       >
                         <LogOut className="w-3 h-3" />
                         Sign Out
@@ -397,7 +397,7 @@ function Header() {
                         actions.login();
                         setIsOpen(false);
                       }}
-                      className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+                      className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
                     >
                       Client Login
                     </button>

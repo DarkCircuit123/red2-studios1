@@ -269,3 +269,79 @@ html {
 ::-webkit-scrollbar-thumb {
   @apply bg-white/20 hover:bg-white/40;
 }
+
+/* ===== Mobile Touch Optimization ===== */
+
+/* Ensure minimum touch target sizes */
+button,
+a,
+input[type="checkbox"],
+input[type="radio"],
+input[type="button"],
+input[type="submit"],
+[role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent zoom on input focus on iOS */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Optimize for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  button:hover,
+  a:hover {
+    background-color: transparent;
+  }
+
+  /* Add active state instead */
+  button:active,
+  a:active {
+    opacity: 0.7;
+  }
+
+  /* Increase spacing for touch */
+  button,
+  a {
+    padding: 0.75rem;
+  }
+}
+
+/* ===== Mobile-Specific Optimizations ===== */
+
+/* Prevent text selection on long press */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection only on text elements */
+p, span, a, button, label {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Optimize viewport for mobile */
+@media (max-width: 640px) {
+  /* Reduce header height on mobile */
+  header {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Optimize button sizes for mobile */
+  button {
+    padding: 0.75rem 1rem;
+  }
+
+  /* Reduce spacing on mobile */
+  section {
+    margin-bottom: 2rem;
+  }
+}
+
