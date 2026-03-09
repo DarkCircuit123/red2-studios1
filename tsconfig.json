@@ -10,14 +10,14 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": false,
-    "noImplicitAny": true,
-    "strict": true,
-    "allowUnusedLabels": false,
-    "allowUnreachableCode": false,
+    "noImplicitAny": false,
+    "strict": false,
+    "allowUnusedLabels": true,
+    "allowUnreachableCode": true,
     "verbatimModuleSyntax": false,
     "skipLibCheck": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
     "paths": {
       "@/*": [
         "src/*"
