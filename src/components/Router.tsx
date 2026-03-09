@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import { MemberProvider } from '@/integrations';
-import { codeSpittingStrategy } from '@/lib/bundle-analyzer';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
@@ -22,15 +21,19 @@ const DataExportPage = React.lazy(() => import('./pages/DataExportPage'));
 
 // Layout component that includes ScrollToTop and SEO Optimizer
 function Layout() {
-  useContentProtection(true);
-
   return (
     <>
       <SEOOptimizer />
       <ScrollToTop />
-      <Outlet />
+      <LayoutContent />
     </>
   );
+}
+
+// Separate component to handle content protection
+function LayoutContent() {
+  useContentProtection(true);
+  return <Outlet />;
 }
 
 const router = createBrowserRouter([
@@ -132,12 +135,6 @@ const router = createBrowserRouter([
 });
 
 function AppRouter() {
-  React.useEffect(() => {
-    // pre-load vendor modules in background so the first interactive page
-    // already has them cached
-    Object.values(codeSpittingStrategy.vendors).forEach((load) => load());
-  }, []);
-
   return (
     <MemberProvider>
       <RouterProvider router={router} />
