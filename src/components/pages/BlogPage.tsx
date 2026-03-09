@@ -8,8 +8,11 @@ import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
+import { useSEO } from '@/hooks/useSEO';
 
 function BlogPage() {
+  // SEO optimization for blog page
+  useSEO('blog');
   const [posts, setPosts] = useState<BlogPosts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

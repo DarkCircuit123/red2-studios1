@@ -6,6 +6,7 @@ import { Calendar, Clock, Check, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useSEO } from '@/hooks/useSEO';
 
 interface BookingSlot {
   _id: string;
@@ -24,6 +25,8 @@ interface BookingRequest {
 }
 
 function BookingPage() {
+  // SEO optimization for booking page
+  useSEO('booking');
   const [bookings, setBookings] = useState<BookingSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);

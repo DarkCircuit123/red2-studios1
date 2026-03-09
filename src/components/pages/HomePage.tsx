@@ -13,8 +13,12 @@ import SplashScreen from '@/components/SplashScreen';
 import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
 import { useIntersectionObserver } from '@/hooks/useAdvancedOptimization';
 import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
+import { useSEO } from '@/hooks/useSEO';
 
 function HomePage() {
+  // SEO optimization for homepage
+  useSEO('home');
+
   const { ref: galleryRef, isVisible: galleryVisible } = useIntersectionObserver(() => {}, { threshold: 0.1 });
   const [showSplash, setShowSplash] = useState(() => {
     // Only show splash screen on first visit in this session

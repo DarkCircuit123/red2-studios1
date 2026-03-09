@@ -10,8 +10,11 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
 import React from 'react';
+import { useSEO } from '@/hooks/useSEO';
 
 function PortfolioPage() {
+  // SEO optimization for portfolio page
+  useSEO('portfolio');
   const [projects, setProjects] = useState<Portfolio[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Portfolio[]>([]);
   const [isLoading, setIsLoading] = useState(true);

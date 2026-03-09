@@ -7,6 +7,7 @@ import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Image } from '@/components/ui/image';
+import { useSEO } from '@/hooks/useSEO';
 
 interface ClientGallery {
   _id: string;
@@ -19,6 +20,8 @@ interface ClientGallery {
 }
 
 function ClientGalleriesPage() {
+  // SEO optimization for galleries page
+  useSEO('galleries');
   const [galleries, setGalleries] = useState<ClientGallery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [accessCode, setAccessCode] = useState('');

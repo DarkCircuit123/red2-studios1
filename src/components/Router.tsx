@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
+import SEOOptimizer from '@/components/SEOOptimizer';
 
 // lazy-loaded pages
 const HomePage = React.lazy(() => import('./pages/HomePage'));
@@ -16,11 +17,13 @@ const BlogPage = React.lazy(() => import('./pages/BlogPage'));
 const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
 const PrivatePage = React.lazy(() => import('./pages/PrivatePage'));
 const HangmanGamePage = React.lazy(() => import('./pages/HangmanGamePage'));
+const DataExportPage = React.lazy(() => import('./pages/DataExportPage'));
 
-// Layout component that includes ScrollToTop
+// Layout component that includes ScrollToTop and SEO Optimizer
 function Layout() {
   return (
     <>
+      <SEOOptimizer />
       <ScrollToTop />
       <Outlet />
     </>
@@ -104,6 +107,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<div>Loading...</div>}>
             <HangmanGamePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "data-export",
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <DataExportPage />
           </Suspense>
         ),
       },
