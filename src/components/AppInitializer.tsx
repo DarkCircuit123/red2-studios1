@@ -19,32 +19,6 @@ export function AppInitializer() {
     // Initialize global error handlers
     initializeGlobalErrorHandlers();
 
-    // Initialize module preloading with critical and deferred modules
-    initializeModulePreloading({
-      critical: [
-        // HomePage is critical - preload immediately
-        {
-          importFn: () => import('./pages/HomePage'),
-          name: 'HomePage',
-        },
-      ],
-      deferred: [
-        // Other pages can be preloaded when browser is idle
-        {
-          importFn: () => import('./pages/PortfolioPage'),
-          name: 'PortfolioPage',
-        },
-        {
-          importFn: () => import('./pages/BlogPage'),
-          name: 'BlogPage',
-        },
-        {
-          importFn: () => import('./pages/BookingPage'),
-          name: 'BookingPage',
-        },
-      ],
-    });
-
     // Reset reload attempts on successful app load
     resetReloadAttempts();
   }, []);

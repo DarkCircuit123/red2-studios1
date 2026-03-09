@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
@@ -7,6 +7,9 @@ import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import SEOOptimizer from '@/components/SEOOptimizer';
 import { useContentProtection } from '@/hooks/useContentProtection';
 import { AppInitializer } from '@/components/AppInitializer';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+// Import all pages with explicit static imports
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import PortfolioDetailPage from './pages/PortfolioDetailPage';
@@ -22,18 +25,22 @@ import Red2TerminalPage from './pages/Red2TerminalPage';
 
 function Layout() {
   return (
-    <>
+    <Suspense fallback={<LoadingSpinner />}>
       <AppInitializer />
       <SEOOptimizer />
       <ScrollToTop />
       <LayoutContent />
-    </>
+    </Suspense>
   );
 }
 
 function LayoutContent() {
   useContentProtection(true);
-  return <Outlet />;
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <Outlet />
+    </Suspense>
+  );
 }
 
 const router = createBrowserRouter([
@@ -106,9 +113,11 @@ const router = createBrowserRouter([
 
 function AppRouter() {
   return (
-    <MemberProvider>
-      <RouterProvider router={router} />
-    </MemberProvider>
+    <Suspense fallback={<LoadingSpinner />}>
+      <MemberProvider>
+        <RouterProvider router={router} />
+      </MemberProvider>
+    </Suspense>
   );
 }
 
