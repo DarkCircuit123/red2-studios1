@@ -30,8 +30,8 @@ function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             setHeroImage(service.infographic);
           }
         }
-      } catch (error) {
-        console.error('Error loading hero image:', error);
+      } catch {
+        // Error handled silently
       }
     };
     
@@ -124,7 +124,6 @@ function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       fieldName="infographic"
                       onImageUpload={(url) => {
                         setHeroImage(url);
-                        console.log('Hero image uploaded:', url);
                       }}
                     />
                   </div>

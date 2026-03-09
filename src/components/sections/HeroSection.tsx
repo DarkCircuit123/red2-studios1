@@ -23,8 +23,8 @@ function HeroSection() {
             setHeroImage(images.heroImage);
           }
         }
-      } catch (error) {
-        console.error('Error loading hero image:', error);
+      } catch {
+        // Error handled silently
       } finally {
         setIsLoading(false);
       }

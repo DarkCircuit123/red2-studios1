@@ -36,8 +36,7 @@ function RSSTickerSection() {
         } else {
           setError(true);
         }
-      } catch (err) {
-        console.error('Error fetching RSS:', err);
+      } catch {
         setError(true);
         // Fallback items if RSS fails
         setItems([

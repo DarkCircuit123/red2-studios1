@@ -53,8 +53,8 @@ function SplashScreen({ onComplete }: SplashScreenProps) {
             }
           }
         }
-      } catch (error) {
-        console.error('Error loading splash content:', error);
+      } catch {
+        // Error handled silently
       }
     };
 

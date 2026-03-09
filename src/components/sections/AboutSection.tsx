@@ -20,8 +20,8 @@ function AboutSection() {
             setAboutImage(images.aboutSectionImage);
           }
         }
-      } catch (error) {
-        console.error('Error loading about image:', error);
+      } catch {
+        // Error handled silently
       } finally {
         setIsLoading(false);
       }

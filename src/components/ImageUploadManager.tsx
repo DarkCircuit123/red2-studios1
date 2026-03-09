@@ -77,8 +77,7 @@ function ImageUploadManager({
                     setIsProcessing(false);
                   };
                   reader.readAsDataURL(blob);
-                } catch (error) {
-                  console.error('Error saving to CMS:', error);
+                } catch {
                   onImageUpload(url);
                   setIsProcessing(false);
                 }
@@ -93,8 +92,7 @@ function ImageUploadManager({
         img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
-    } catch (error) {
-      console.error('Error processing image:', error);
+    } catch {
       setIsProcessing(false);
     }
   };

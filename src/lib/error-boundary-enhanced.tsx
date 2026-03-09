@@ -41,9 +41,6 @@ export class EnhancedErrorBoundary extends React.Component<ErrorBoundaryProps, E
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Log error
-    console.error('Error caught by boundary:', error, errorInfo);
-
     // Call custom error handler
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
@@ -142,8 +139,7 @@ export class ErrorRecoveryManager {
     try {
       await strategy();
       return true;
-    } catch (error) {
-      console.error(`Recovery strategy failed for ${errorType}:`, error);
+    } catch {
       return false;
     }
   }
@@ -177,8 +173,6 @@ export const errorRecoveryManager = new ErrorRecoveryManager();
  */
 export function useErrorHandler() {
   const handleError = (error: Error, context?: string): void => {
-    console.error(`Error${context ? ` in ${context}` : ''}:`, error);
-
     // Send to error tracking service (e.g., Sentry)
     if (typeof window !== 'undefined' && (window as any).Sentry) {
       (window as any).Sentry.captureException(error);
@@ -197,8 +191,7 @@ export async function withErrorHandling<T>(
 ): Promise<T | null> {
   try {
     return await fn();
-  } catch (error) {
-    console.error(`Error${context ? ` in ${context}` : ''}:`, error);
+  } catch {
     return null;
   }
 }

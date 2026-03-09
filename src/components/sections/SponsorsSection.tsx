@@ -27,8 +27,8 @@ function SponsorsSection() {
           }));
           setSponsors(sponsorsList);
         }
-      } catch (error) {
-        console.error('Error loading sponsors:', error);
+      } catch {
+        // Error handled silently
       }
     };
     loadSponsors();

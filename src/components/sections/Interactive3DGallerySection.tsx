@@ -18,8 +18,8 @@ function Interactive3DGallerySection() {
       try {
         const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 12 });
         setPortfolioItems(data.items || []);
-      } catch (error) {
-        console.error('Error loading portfolio:', error);
+      } catch {
+        // Error handled silently
       }
     };
     loadPortfolio();
