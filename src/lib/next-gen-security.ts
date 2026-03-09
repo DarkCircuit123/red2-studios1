@@ -2,7 +2,7 @@
  * Next-Gen Security System (2026 Red Team Hardening)
  * Advanced protection against sophisticated attacks:
  * - Quantum-resistant cryptography preparation
- * - AI-powered anomaly detection
+ * - Behavioral anomaly detection
  * - Advanced DDoS mitigation
  * - Behavioral biometrics
  * - Obfuscation & anti-reverse-engineering
@@ -61,7 +61,7 @@ export class QuantumSafeCrypto {
 }
 
 /**
- * AI-Powered Behavioral Biometrics
+ * Behavioral Biometrics
  * Detects bot behavior through advanced pattern analysis
  */
 export class BehavioralBiometrics {
@@ -372,7 +372,7 @@ export class CodeObfuscation {
 
 /**
  * Advanced Spam Detection Engine
- * AI-powered spam and malicious form submission detection
+ * Spam and malicious form submission detection
  */
 export class AdvancedSpamDetection {
   private submissionHistory: FormSubmission[] = [];

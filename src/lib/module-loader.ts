@@ -1,8 +1,3 @@
-/**
- * Advanced Module Loader with Retry Mechanism
- * Handles dynamic imports with automatic retry, caching, and fallback strategies
- */
-
 interface ModuleCache {
   [key: string]: Promise<any>;
 }
@@ -22,14 +17,8 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 const moduleCache: ModuleCache = {};
 const failedModules = new Set<string>();
 
-/**
- * Sleep utility for retry delays
- */
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-/**
- * Load a module with retry mechanism
- */
 export async function loadModuleWithRetry<T = any>(
   importFn: () => Promise<T>,
   moduleName: string,
@@ -37,12 +26,10 @@ export async function loadModuleWithRetry<T = any>(
 ): Promise<T> {
   const finalConfig = { ...DEFAULT_RETRY_CONFIG, ...config };
   
-  // Check cache first
   if (moduleCache[moduleName]) {
     return moduleCache[moduleName];
   }
 
-  // If module previously failed, use cached failure
   if (failedModules.has(moduleName)) {
     throw new Error(`Module ${moduleName} has failed to load previously`);
   }
@@ -61,7 +48,7 @@ export async function loadModuleWithRetry<T = any>(
       
       if (attempt < finalConfig.maxRetries) {
         console.warn(
-          `[ModuleLoader] Attempt ${attempt + 1}/${finalConfig.maxRetries + 1} failed for ${moduleName}. Retrying in ${delay}ms...`,
+          `Attempt ${attempt + 1}/${finalConfig.maxRetries + 1} failed for ${moduleName}. Retrying in ${delay}ms...`,
           lastError.message
         );
         await sleep(delay);
@@ -70,7 +57,6 @@ export async function loadModuleWithRetry<T = any>(
     }
   }
 
-  // Mark module as failed
   failedModules.add(moduleName);
   delete moduleCache[moduleName];
   
@@ -79,9 +65,6 @@ export async function loadModuleWithRetry<T = any>(
   );
 }
 
-/**
- * Preload multiple modules in parallel
- */
 export async function preloadModules(
   modules: Array<{ importFn: () => Promise<any>; name: string }>
 ): Promise<Map<string, any>> {
@@ -92,7 +75,7 @@ export async function preloadModules(
       const module = await loadModuleWithRetry(importFn, name);
       results.set(name, module);
     } catch (error) {
-      console.error(`[ModuleLoader] Failed to preload ${name}:`, error);
+      console.error(`Failed to preload ${name}:`, error);
       results.set(name, null);
     }
   });
@@ -101,17 +84,11 @@ export async function preloadModules(
   return results;
 }
 
-/**
- * Clear module cache (useful for testing or manual reset)
- */
 export function clearModuleCache(): void {
   Object.keys(moduleCache).forEach(key => delete moduleCache[key]);
   failedModules.clear();
 }
 
-/**
- * Get cache statistics
- */
 export function getModuleLoaderStats() {
   return {
     cachedModules: Object.keys(moduleCache).length,

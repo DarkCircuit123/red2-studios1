@@ -1,8 +1,3 @@
-/**
- * Chunk Error Recovery System
- * Automatically recovers from chunk loading failures by reloading the page
- */
-
 interface ChunkErrorConfig {
   maxReloadAttempts: number;
   reloadDelay: number;
@@ -16,17 +11,12 @@ const DEFAULT_CONFIG: ChunkErrorConfig = {
 let reloadAttempts = 0;
 const RELOAD_ATTEMPTS_KEY = 'chunk_reload_attempts';
 
-/**
- * Initialize chunk error recovery
- */
 export function initializeChunkErrorRecovery(config: Partial<ChunkErrorConfig> = {}) {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
-  // Get stored reload attempts from sessionStorage
   const stored = sessionStorage.getItem(RELOAD_ATTEMPTS_KEY);
   reloadAttempts = stored ? parseInt(stored, 10) : 0;
 
-  // Listen for chunk loading errors
   window.addEventListener('error', (event: ErrorEvent) => {
     if (isChunkError(event.error)) {
       handleChunkError(event.error, finalConfig);
@@ -38,13 +28,8 @@ export function initializeChunkErrorRecovery(config: Partial<ChunkErrorConfig> =
       handleChunkError(event.reason, finalConfig);
     }
   });
-
-  console.log('[ChunkErrorRecovery] Initialized');
 }
 
-/**
- * Check if error is a chunk loading error
- */
 function isChunkError(error: any): boolean {
   const message = error?.message || '';
   return (
@@ -55,44 +40,34 @@ function isChunkError(error: any): boolean {
   );
 }
 
-/**
- * Handle chunk error with recovery strategy
- */
 function handleChunkError(error: any, config: ChunkErrorConfig) {
-  console.warn('[ChunkErrorRecovery] Chunk error detected:', error.message);
+  console.warn('Chunk error detected:', error.message);
 
   if (reloadAttempts < config.maxReloadAttempts) {
     reloadAttempts++;
     sessionStorage.setItem(RELOAD_ATTEMPTS_KEY, String(reloadAttempts));
 
     console.log(
-      `[ChunkErrorRecovery] Attempting recovery (${reloadAttempts}/${config.maxReloadAttempts})...`
+      `Attempting recovery (${reloadAttempts}/${config.maxReloadAttempts})...`
     );
 
-    // Clear module cache to force fresh load
     if ('caches' in window) {
       caches.keys().then(names => {
         names.forEach(name => caches.delete(name));
       });
     }
 
-    // Reload after delay
     setTimeout(() => {
       window.location.reload();
     }, config.reloadDelay);
   } else {
-    // Max attempts reached
-    console.error('[ChunkErrorRecovery] Max reload attempts reached. Manual intervention required.');
+    console.error('Max reload attempts reached. Manual intervention required.');
     sessionStorage.removeItem(RELOAD_ATTEMPTS_KEY);
 
-    // Show error message to user
     showChunkErrorMessage();
   }
 }
 
-/**
- * Show error message to user
- */
 function showChunkErrorMessage() {
   const message = document.createElement('div');
   message.id = 'chunk-error-message';
@@ -141,9 +116,6 @@ function showChunkErrorMessage() {
   document.body.appendChild(message);
 }
 
-/**
- * Reset reload attempts (call after successful load)
- */
 export function resetReloadAttempts() {
   reloadAttempts = 0;
   sessionStorage.removeItem(RELOAD_ATTEMPTS_KEY);

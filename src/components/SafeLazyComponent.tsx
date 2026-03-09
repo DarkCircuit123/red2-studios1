@@ -1,8 +1,3 @@
-/**
- * Safe Lazy Component Wrapper
- * Wraps lazy-loaded components with error boundary and loading state
- */
-
 import React, { Suspense, ComponentType, ReactNode } from 'react';
 import ModuleErrorBoundary from './ModuleErrorBoundary';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -13,9 +8,6 @@ interface SafeLazyComponentProps {
   errorFallback?: ReactNode;
 }
 
-/**
- * Wraps a lazy component with error boundary and loading state
- */
 export function withSafeLazy<P extends object>(
   LazyComponent: React.LazyExoticComponent<ComponentType<P>>,
   options: SafeLazyComponentProps = {}
@@ -39,9 +31,6 @@ export function withSafeLazy<P extends object>(
   return SafeComponent;
 }
 
-/**
- * Standalone component for wrapping children with error boundary
- */
 export function SafeLazyWrapper({
   children,
   moduleName = 'Module',

@@ -21,7 +21,6 @@ function Header() {
 
   const handleLogoClick = useCallback(() => {
     if (!logoFaded) {
-      // Play fade-out sound
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -59,7 +58,6 @@ function Header() {
       }
     }
   }, [nonce]);
-  // Optimized throttled scroll handler with useThrottleCallback
   const handleScroll = useThrottleCallback(() => {
     setScrolled(window.scrollY > 50);
   }, 100);
@@ -77,7 +75,6 @@ function Header() {
     e.preventDefault();
     playClickSound();
 
-    // If not on homepage, navigate to homepage first
     const isHomePage = window.location.pathname === '/';
     if (!isHomePage) {
       window.location.href = `/?scroll=${hash.substring(1)}`;

@@ -1,12 +1,12 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Sparkles, Tag, Filter } from 'lucide-react';
+import { Search, Tag, Filter } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 
-function AIImageSearchSection() {
+function ImageSearchSection() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
@@ -33,7 +33,6 @@ function AIImageSearchSection() {
   useEffect(() => {
     let results = portfolioItems;
 
-    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       results = results.filter(
@@ -44,7 +43,6 @@ function AIImageSearchSection() {
       );
     }
 
-    // Filter by selected tags
     if (selectedTags.length > 0) {
       results = results.filter((item) =>
         selectedTags.some(
@@ -67,7 +65,6 @@ function AIImageSearchSection() {
   return (
     <section className="relative w-full py-24 md:py-32 bg-black">
       <div className="max-w-[120rem] mx-auto px-8">
-        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -76,18 +73,16 @@ function AIImageSearchSection() {
           className="mb-16"
         >
           <div className="flex items-center gap-3 mb-4">
-            <Sparkles className="w-6 h-6 text-red-900" />
-            <span className="text-xs font-mono text-red-900 uppercase tracking-widest">AI-Powered</span>
+            <span className="text-xs font-mono text-red-900 uppercase tracking-widest">Search</span>
           </div>
           <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
-            Smart Image Discovery
+            Image Discovery
           </h2>
           <p className="text-base font-paragraph text-white/60 max-w-xl leading-relaxed">
-            Intelligent search and tagging system. Find exactly what you're looking for with AI-powered image recognition and semantic search.
+            Search and filter through our portfolio. Find exactly what you're looking for with our search and tagging system.
           </p>
         </motion.div>
 
-        {/* Search Bar */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -107,7 +102,6 @@ function AIImageSearchSection() {
           </div>
         </motion.div>
 
-        {/* Tag Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -139,7 +133,6 @@ function AIImageSearchSection() {
           </div>
         </motion.div>
 
-        {/* Results Info */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -151,7 +144,6 @@ function AIImageSearchSection() {
           </p>
         </motion.div>
 
-        {/* Results Grid */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -202,4 +194,4 @@ function AIImageSearchSection() {
   );
 }
 
-export default React.memo(AIImageSearchSection);
+export default React.memo(ImageSearchSection);

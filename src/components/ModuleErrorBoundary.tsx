@@ -1,8 +1,3 @@
-/**
- * Global Error Boundary for Lazy-Loaded Components
- * Gracefully handles module loading failures with retry capability
- */
-
 import React, { ReactNode, ReactElement } from 'react';
 import { AlertCircle, RotateCcw } from 'lucide-react';
 
@@ -38,7 +33,7 @@ class ModuleErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error(
-      `[ModuleErrorBoundary] Error in ${this.props.moduleName || 'module'}:`,
+      `Error in ${this.props.moduleName || 'module'}:`,
       error,
       errorInfo
     );
