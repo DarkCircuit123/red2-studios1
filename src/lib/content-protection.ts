@@ -124,13 +124,13 @@ export class ContentProtectionManager {
   private protectCanvas(): void {
     const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
     HTMLCanvasElement.prototype.toDataURL = function () {
-      console.warn('Canvas screenshot attempt blocked');
+
       return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     };
 
     const originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
     CanvasRenderingContext2D.prototype.getImageData = function () {
-      console.warn('Canvas data extraction attempt blocked');
+
       return originalGetImageData.call(this, 0, 0, 0, 0);
     };
   }

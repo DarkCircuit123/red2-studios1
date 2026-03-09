@@ -35,9 +35,8 @@ export function SEOOptimizer() {
     SecurityHeadersManager.applyHeaders();
     cspManager.applyToMeta();
 
-    // Generate and log sitemap (for reference)
+    // Generate sitemap
     const sitemap = generateSitemap(STATIC_ROUTES);
-    console.log('Sitemap generated:', sitemap.length, 'bytes');
 
     // Inject organization schema
     injectSchema(getOrganizationSchema(), 'org-schema');

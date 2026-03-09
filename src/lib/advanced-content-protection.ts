@@ -188,7 +188,7 @@ export class AdvancedContentProtection {
 
       if (originalGetDisplayMedia) {
         (navigator.mediaDevices as any).getDisplayMedia = function () {
-          console.warn('Screen recording is disabled');
+    
           return Promise.reject(new Error('Screen recording is not permitted'));
         };
       }
@@ -219,7 +219,7 @@ export class AdvancedContentProtection {
   private protectAgainstBotActivity(): void {
     // Check for headless browser
     if (navigator.webdriver) {
-      console.warn('Headless browser detected');
+
       this.handleThreatDetected('Automated access detected');
     }
 
@@ -336,7 +336,7 @@ export class AdvancedContentProtection {
    * Handle threat detection
    */
   private handleThreatDetected(threat: string): void {
-    console.warn(`🚨 Threat Detected: ${threat}`);
+
 
     // Log threat
     const threatLog = {

@@ -24,7 +24,7 @@ import { CSPManager, SecurityHeadersManager, RateLimiter } from './security-enha
 export function initializeSecuritySystems(): void {
   if (typeof window === 'undefined') return;
 
-  console.log('[SECURITY] Initializing security systems...');
+
 
   // 1. Initialize DOM Integrity Monitor
   initializeDOMIntegrity();
@@ -50,7 +50,7 @@ export function initializeSecuritySystems(): void {
   // 8. Setup Periodic Security Checks
   setupPeriodicSecurityChecks();
 
-  console.log('[SECURITY] All security systems initialized');
+
 }
 
 /**
@@ -102,16 +102,16 @@ function initializeNetworkValidation(): void {
       const method = args[1]?.method || 'GET';
 
       if (!networkValidator.interceptRequest(url, method)) {
-        console.warn('[SECURITY] Request blocked by network validator', { url, method });
+
         return Promise.reject(new Error('Request blocked by security policy'));
       }
 
       return originalFetch.apply(this, args);
     };
 
-    console.log('[SECURITY] Network Validation initialized');
+
   } catch (error) {
-    console.error('[SECURITY] Failed to initialize Network Validation', error);
+
   }
 }
 
@@ -126,9 +126,9 @@ function initializeThreatDetection(): void {
     // Register common exploit patterns
     registerCommonExploitPatterns();
 
-    console.log('[SECURITY] Threat Detection initialized');
+
   } catch (error) {
-    console.error('[SECURITY] Failed to initialize Threat Detection', error);
+
   }
 }
 
@@ -263,13 +263,13 @@ function setupGlobalErrorHandling(): void {
 
     // Analyze error for security implications
     if (isSuspiciousError(event.message)) {
-      console.warn('[SECURITY] Suspicious error detected', event);
+
     }
   });
 
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
-    console.error('[SECURITY] Unhandled promise rejection', event.reason);
+
   });
 }
 

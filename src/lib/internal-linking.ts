@@ -260,9 +260,5 @@ export function initializeInternalLinking(): void {
   addRelAttributes(links);
   setupInternalLinkTracking();
 
-  // Validate on load (for debugging)
   const validation = validateInternalLinks();
-  if (validation.broken.length > 0) {
-    console.warn('Broken internal links found:', validation.broken);
-  }
 }
