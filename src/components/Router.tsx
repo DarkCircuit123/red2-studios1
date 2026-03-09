@@ -6,24 +6,61 @@ import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import SEOOptimizer from '@/components/SEOOptimizer';
 import { useContentProtection } from '@/hooks/useContentProtection';
+import { withSafeLazy } from '@/components/SafeLazyComponent';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { AppInitializer } from '@/components/AppInitializer';
 
-// lazy-loaded pages
-const HomePage = lazy(() => import('./pages/HomePage'));
-const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
-const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage'));
-const BookingPage = lazy(() => import('./pages/BookingPage'));
-const ClientGalleriesPage = lazy(() => import('./pages/ClientGalleriesPage'));
-const BlogPage = lazy(() => import('./pages/BlogPage'));
-const ProfilePage = lazy(() => import('./pages/ProfilePage'));
-const PrivatePage = lazy(() => import('./pages/PrivatePage'));
-const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage'));
-const DataExportPage = lazy(() => import('./pages/DataExportPage'));
-const ChatPage = lazy(() => import('./pages/ChatPage'));
+// lazy-loaded pages with retry mechanism
+const HomePage = withSafeLazy(
+  lazy(() => import('./pages/HomePage')),
+  { moduleName: 'HomePage' }
+);
+const PortfolioPage = withSafeLazy(
+  lazy(() => import('./pages/PortfolioPage')),
+  { moduleName: 'PortfolioPage' }
+);
+const PortfolioDetailPage = withSafeLazy(
+  lazy(() => import('./pages/PortfolioDetailPage')),
+  { moduleName: 'PortfolioDetailPage' }
+);
+const BookingPage = withSafeLazy(
+  lazy(() => import('./pages/BookingPage')),
+  { moduleName: 'BookingPage' }
+);
+const ClientGalleriesPage = withSafeLazy(
+  lazy(() => import('./pages/ClientGalleriesPage')),
+  { moduleName: 'ClientGalleriesPage' }
+);
+const BlogPage = withSafeLazy(
+  lazy(() => import('./pages/BlogPage')),
+  { moduleName: 'BlogPage' }
+);
+const ProfilePage = withSafeLazy(
+  lazy(() => import('./pages/ProfilePage')),
+  { moduleName: 'ProfilePage' }
+);
+const PrivatePage = withSafeLazy(
+  lazy(() => import('./pages/PrivatePage')),
+  { moduleName: 'PrivatePage' }
+);
+const HangmanGamePage = withSafeLazy(
+  lazy(() => import('./pages/HangmanGamePage')),
+  { moduleName: 'HangmanGamePage' }
+);
+const DataExportPage = withSafeLazy(
+  lazy(() => import('./pages/DataExportPage')),
+  { moduleName: 'DataExportPage' }
+);
+const ChatPage = withSafeLazy(
+  lazy(() => import('./pages/ChatPage')),
+  { moduleName: 'ChatPage' }
+);
 
 // Layout component that includes ScrollToTop and SEO Optimizer
 function Layout() {
   return (
     <>
+      <AppInitializer />
       <SEOOptimizer />
       <ScrollToTop />
       <LayoutContent />
@@ -41,10 +78,7 @@ function LayoutContent() {
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-foreground">Loading...</p>
-      </div>
+      <LoadingSpinner />
     </div>
   );
 }
@@ -57,93 +91,51 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <HomePage />
-          </Suspense>
-        ),
+        element: <HomePage />,
       },
       {
         path: "portfolio",
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <PortfolioPage />
-          </Suspense>
-        ),
+        element: <PortfolioPage />,
       },
       {
         path: "portfolio/:id",
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <PortfolioDetailPage />
-          </Suspense>
-        ),
+        element: <PortfolioDetailPage />,
       },
       {
         path: "booking",
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <BookingPage />
-          </Suspense>
-        ),
+        element: <BookingPage />,
       },
       {
         path: "galleries",
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <ClientGalleriesPage />
-          </Suspense>
-        ),
+        element: <ClientGalleriesPage />,
       },
       {
         path: "blog",
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <BlogPage />
-          </Suspense>
-        ),
+        element: <BlogPage />,
       },
       {
         path: "profile",
         element: (
           <MemberProtectedRoute>
-            <Suspense fallback={<LoadingFallback />}>
-              <ProfilePage />
-            </Suspense>
+            <ProfilePage />
           </MemberProtectedRoute>
         ),
       },
       {
         path: "private",
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <PrivatePage />
-          </Suspense>
-        ),
+        element: <PrivatePage />,
       },
       {
         path: "play",
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <HangmanGamePage />
-          </Suspense>
-        ),
+        element: <HangmanGamePage />,
       },
       {
         path: "data-export",
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <DataExportPage />
-          </Suspense>
-        ),
+        element: <DataExportPage />,
       },
       {
         path: "chat",
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <ChatPage />
-          </Suspense>
-        ),
+        element: <ChatPage />,
       },
       {
         path: "*",
