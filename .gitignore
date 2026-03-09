@@ -41,3 +41,8 @@ docs/*
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# accidental files generated during refactor
+""
+\
+
