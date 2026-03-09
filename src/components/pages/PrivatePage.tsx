@@ -10,11 +10,8 @@ function PrivatePage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [error, setError] = useState('');
-  const [attempts, setAttempts] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-
-  // Secret password - in production, this would be handled server-side
-  const SECRET_PASSWORD = 'classified';
 
   useEffect(() => {
     // Check if already unlocked in session
@@ -23,12 +20,19 @@ function PrivatePage() {
       setIsUnlocked(true);
     }
 
-    // Reset attempts counter on page load (fresh start each time)
-    sessionStorage.removeItem('privatePageAttempts');
-    sessionStorage.removeItem('privatePageLocked');
+    // Check if account is locked
+    const lockedUntil = sessionStorage.getItem('privatePageLockedUntil');
+    if (lockedUntil) {
+      const lockTime = parseInt(lockedUntil, 10);
+      if (Date.now() < lockTime) {
+        setIsLocked(true);
+      } else {
+        sessionStorage.removeItem('privatePageLockedUntil');
+      }
+    }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (isLocked) {
@@ -36,24 +40,42 @@ function PrivatePage() {
       return;
     }
 
-    if (password === SECRET_PASSWORD) {
-      setIsUnlocked(true);
-      setError('');
-      setPassword('');
-      sessionStorage.setItem('privatePageUnlocked', 'true');
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      setError('Access denied. Invalid credentials.');
-      setPassword('');
+    setIsLoading(true);
+    setError('');
 
-      if (newAttempts >= 3) {
+    try {
+      // Call backend API for password verification
+      const response = await fetch('/api/verify-access', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setIsUnlocked(true);
+        setPassword('');
+        sessionStorage.setItem('privatePageUnlocked', 'true');
+      } else if (response.status === 429) {
+        // Rate limited - lock the page
+        const lockDuration = 30 * 60 * 1000; // 30 minutes
+        const lockUntil = Date.now() + lockDuration;
+        sessionStorage.setItem('privatePageLockedUntil', lockUntil.toString());
         setIsLocked(true);
-        setTimeout(() => {
-          setIsLocked(false);
-          setAttempts(0);
-        }, 30000); // Lock for 30 seconds
+        setError('Too many failed attempts. Access locked for 30 minutes.');
+        setPassword('');
+      } else {
+        setError(data.message || 'Access denied. Invalid credentials.');
+        setPassword('');
       }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      console.error('Access verification error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -164,28 +186,16 @@ function PrivatePage() {
                     className="p-3 bg-red-900/20 border border-red-900/50 text-red-400 text-sm font-mono"
                   >
                     {error}
-                    {isLocked && (
-                      <p className="text-xs mt-2 text-red-400/70">
-                        System locked. Try again in 30 seconds.
-                      </p>
-                    )}
                   </motion.div>
-                )}
-
-                {/* Attempt Counter */}
-                {attempts > 0 && !isLocked && (
-                  <div className="text-center text-xs font-mono text-white/40">
-                    Failed attempts: {attempts}/3
-                  </div>
                 )}
 
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isLocked || password.length === 0}
+                  disabled={isLocked || password.length === 0 || isLoading}
                   className="w-full py-3 bg-red-900 text-white font-heading font-bold text-sm uppercase tracking-widest hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 border border-red-900"
                 >
-                  {isLocked ? 'SYSTEM LOCKED' : 'AUTHENTICATE'}
+                  {isLoading ? 'VERIFYING...' : isLocked ? 'SYSTEM LOCKED' : 'AUTHENTICATE'}
                 </button>
               </motion.form>
 
@@ -295,7 +305,6 @@ function PrivatePage() {
                   onClick={() => {
                     setIsUnlocked(false);
                     setPassword('');
-                    setAttempts(0);
                     setError('');
                     sessionStorage.removeItem('privatePageUnlocked');
                   }}
