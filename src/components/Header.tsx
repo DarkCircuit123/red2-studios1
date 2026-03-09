@@ -8,14 +8,39 @@ import { playClickSound } from '@/lib/click-sound';
 import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 import { useCSPNonce } from '@/lib/security-enhanced';
+import { motion } from 'framer-motion';
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [logoFaded, setLogoFaded] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
 
   const nonce = useCSPNonce();
+
+  const handleLogoClick = useCallback(() => {
+    if (!logoFaded) {
+      // Play fade-out sound
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+      
+      setLogoFaded(true);
+    }
+  }, [logoFaded]);
 
   useEffect(() => {
     if (nonce && typeof document !== 'undefined') {
@@ -91,15 +116,24 @@ function Header() {
     >
       <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent shadow-[inset_0px_0px_4px_0px_#bfbfbf] opacity-[1] mix-blend-normal">
         {/* Logo - Text-based RED² */}
-        <Link
-          to="/"
-          onClick={handleLinkClick}
-          className="relative flex items-center gap-0"
+        <motion.div
+          initial={{ opacity: 1 }}
+          animate={{ opacity: logoFaded ? 0 : 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <span className="text-2xl font-heading font-bold text-white tracking-tight">
-            RED<span className="text-primary">²</span>
-          </span>
-        </Link>
+          <Link
+            to="/"
+            onClick={() => {
+              handleLogoClick();
+              handleLinkClick();
+            }}
+            className="relative flex items-center gap-0"
+          >
+            <span className="text-2xl font-heading font-bold text-white tracking-tight">
+              RED<span className="text-primary">²</span>
+            </span>
+          </Link>
+        </motion.div>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-12">
