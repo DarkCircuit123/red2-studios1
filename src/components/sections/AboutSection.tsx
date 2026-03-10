@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { useState, useEffect, useRef } from 'react';
@@ -38,12 +37,7 @@ export default function AboutSection() {
         {/* Asymmetrical layout - image right, text left */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-start">
           {/* Content - left side */}
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
+          <div>
             <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-12 tracking-tighter leading-tight">
               About Jordan Michael Zuniga
             </h2>
@@ -89,34 +83,24 @@ export default function AboutSection() {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Image - right side, full-bleed aesthetic */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="relative h-full"
-          >
+          <div className="relative h-full">
             <div className="aspect-square overflow-hidden bg-white/5">
               {!isLoading && (
-                <>
-                  <Image
-                    src={aboutImage}
-                    alt="Jordan Michael Zuniga"
-                    width={600}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Subtle grain overlay */}
-                  <div className="absolute inset-0 bg-grain opacity-5" />
-                </>
+                <Image
+                  src={aboutImage}
+                  alt="Jordan Michael Zuniga"
+                  width={600}
+                  className="w-full h-full object-cover"
+                />
               )}
               {isLoading && (
-                <div className="w-full h-full bg-white/10 animate-pulse" />
+                <div className="w-full h-full bg-white/10" />
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

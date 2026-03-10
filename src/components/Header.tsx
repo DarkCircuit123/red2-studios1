@@ -88,56 +88,56 @@ export default function Header() {
           <a
             href="#portfolio"
             onClick={(e) => handleAnchorClick(e, '#portfolio')}
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
           >
             Gallery
           </a>
           <a
             href="#about"
             onClick={(e) => handleAnchorClick(e, '#about')}
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
           >
             About
           </a>
           <Link
             to="/portfolio"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
           >
             Work
           </Link>
           <Link
             to="/booking"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
           >
             Booking
           </Link>
           <Link
             to="/galleries"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
           >
             Galleries
           </Link>
           <a
             href="#contact"
             onClick={(e) => handleAnchorClick(e, '#contact')}
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
           >
             Contact
           </a>
           <Link
             to="/private"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
           >
             Private
           </Link>
           <Link
             to="/play"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
           >
             Play
           </Link>
