@@ -2,8 +2,10 @@ import { create } from 'zustand';
 
 interface ClientSession {
   clientEmail: string;
-  galleryId: string;
+  galleryId?: string;
   clientName: string;
+  accountId?: string;
+  isAccountLogin?: boolean;
 }
 
 interface AdminSession {

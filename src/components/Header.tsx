@@ -158,6 +158,14 @@ export default function Header() {
             Client Login
           </Link>
           <Link
+            to="/client-register"
+            onClick={handleLinkClick}
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
+          >
+            Client Register
+          </Link>
+          <Link
             to="/admin-login"
             onClick={handleLinkClick}
             onMouseEnter={playHoverSound}
@@ -338,6 +346,17 @@ export default function Header() {
               }}
             >
               Client Login
+            </Link>
+            <Link
+              to="/client-register"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
+            >
+              Client Register
             </Link>
             <Link
               to="/admin-login"

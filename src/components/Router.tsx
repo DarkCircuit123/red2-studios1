@@ -14,7 +14,9 @@ import ProfilePage from './pages/ProfilePage';
 import PrivatePage from './pages/PrivatePage';
 import HangmanGamePage from './pages/HangmanGamePage';
 import ClientLoginPage from './pages/ClientLoginPage';
+import ClientRegisterPage from './pages/ClientRegisterPage';
 import ClientGalleryViewPage from './pages/ClientGalleryViewPage';
+import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import { useEffect, useRef } from 'react';
@@ -88,6 +90,14 @@ const router = createBrowserRouter([
       {
         path: "client-login",
         element: <ClientLoginPage />,
+      },
+      {
+        path: "client-register",
+        element: <ClientRegisterPage />,
+      },
+      {
+        path: "client-gallery-dashboard",
+        element: <ClientGalleryDashboardPage />,
       },
       {
         path: "client-gallery/:id",

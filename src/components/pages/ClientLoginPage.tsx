@@ -17,6 +17,14 @@ interface ClientGallery {
   galleryExpirationDate: string;
 }
 
+interface ClientAccount {
+  _id: string;
+  clientName: string;
+  email: string;
+  passwordHash: string;
+  isActive: boolean;
+}
+
 export default function ClientLoginPage() {
   const navigate = useNavigate();
   const { setClientSession } = useAuthStore();
@@ -24,8 +32,20 @@ export default function ClientLoginPage() {
   const [accessCode, setAccessCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loginMode, setLoginMode] = useState<'code' | 'account'>('code');
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // Simple hash function for password (must match registration)
+  const hashPassword = (pwd: string): string => {
+    let hash = 0;
+    for (let i = 0; i < pwd.length; i++) {
+      const char = pwd.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(36);
+  };
+
+  const handleLoginWithCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -73,6 +93,54 @@ export default function ClientLoginPage() {
     }
   };
 
+  const handleLoginWithAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const result = await BaseCrudService.getAll<ClientAccount>('clientaccounts', {}, { limit: 100 });
+      const accounts = result.items || [];
+
+      const account = accounts.find((acc) => acc.email?.toLowerCase() === email.toLowerCase());
+
+      if (!account) {
+        setError('Invalid email or password. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!account.isActive) {
+        setError('This account has been deactivated. Please contact support.');
+        setIsLoading(false);
+        return;
+      }
+
+      const passwordHash = hashPassword(accessCode);
+      if (account.passwordHash !== passwordHash) {
+        setError('Invalid email or password. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Set client session
+      setClientSession({
+        clientEmail: account.email || '',
+        clientName: account.clientName || '',
+        accountId: account._id,
+        isAccountLogin: true,
+      });
+
+      // Redirect to gallery dashboard
+      navigate('/client-gallery-dashboard');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('An error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
@@ -95,8 +163,39 @@ export default function ClientLoginPage() {
                 Client Access
               </h1>
               <p className="text-lg text-white/60">
-                Enter your email and access code to view your gallery
+                Sign in to view your gallery
               </p>
+            </motion.div>
+
+            {/* Login Mode Tabs */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="flex gap-4 mb-8"
+            >
+              <button
+                type="button"
+                onClick={() => setLoginMode('code')}
+                className={`flex-1 py-2 px-4 font-heading font-bold text-sm tracking-widest uppercase rounded-lg transition-all duration-300 ${
+                  loginMode === 'code'
+                    ? 'bg-white text-black'
+                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                }`}
+              >
+                Access Code
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginMode('account')}
+                className={`flex-1 py-2 px-4 font-heading font-bold text-sm tracking-widest uppercase rounded-lg transition-all duration-300 ${
+                  loginMode === 'account'
+                    ? 'bg-white text-black'
+                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                }`}
+              >
+                Account
+              </button>
             </motion.div>
 
             {/* Login Form */}
@@ -104,7 +203,7 @@ export default function ClientLoginPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              onSubmit={handleLogin}
+              onSubmit={loginMode === 'code' ? handleLoginWithCode : handleLoginWithAccount}
               className="space-y-6"
             >
               {/* Error Message */}
@@ -137,25 +236,31 @@ export default function ClientLoginPage() {
                 </div>
               </div>
 
-              {/* Access Code Input */}
+              {/* Access Code/Password Input */}
               <div>
                 <label className="block text-sm font-heading font-bold text-white mb-2 uppercase tracking-wide">
-                  Access Code
+                  {loginMode === 'code' ? 'Access Code' : 'Password'}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                   <input
-                    type="text"
+                    type={loginMode === 'code' ? 'text' : 'password'}
                     value={accessCode}
-                    onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                    placeholder="Enter your code"
+                    onChange={(e) =>
+                      setAccessCode(loginMode === 'code' ? e.target.value.toUpperCase() : e.target.value)
+                    }
+                    placeholder={loginMode === 'code' ? 'Enter your code' : 'Enter your password'}
                     required
-                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300 font-mono tracking-widest"
+                    className={`w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300 ${
+                      loginMode === 'code' ? 'font-mono tracking-widest' : ''
+                    }`}
                   />
                 </div>
-                <p className="text-xs text-white/40 mt-2">
-                  Check your email for your unique access code
-                </p>
+                {loginMode === 'code' && (
+                  <p className="text-xs text-white/40 mt-2">
+                    Check your email for your unique access code
+                  </p>
+                )}
               </div>
 
               {/* Submit Button */}
@@ -164,7 +269,7 @@ export default function ClientLoginPage() {
                 disabled={isLoading || !email || !accessCode}
                 className="w-full py-3 bg-white text-black font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
               >
-                {isLoading ? 'Verifying...' : 'Access Gallery'}
+                {isLoading ? 'Verifying...' : 'Sign In'}
               </button>
             </motion.form>
 
@@ -175,12 +280,21 @@ export default function ClientLoginPage() {
               transition={{ delay: 0.2 }}
               className="mt-8 p-4 bg-white/5 border border-white/10 rounded-lg text-center"
             >
-              <p className="text-sm text-white/60">
-                Don't have an access code?{' '}
-                <a href="#contact" className="text-white hover:text-white/80 transition-colors">
-                  Contact us
-                </a>
-              </p>
+              {loginMode === 'code' ? (
+                <p className="text-sm text-white/60">
+                  Don't have an access code?{' '}
+                  <a href="#contact" className="text-white hover:text-white/80 transition-colors font-bold">
+                    Contact us
+                  </a>
+                </p>
+              ) : (
+                <p className="text-sm text-white/60">
+                  Don't have an account?{' '}
+                  <a href="/client-register" className="text-white hover:text-white/80 transition-colors font-bold">
+                    Create one
+                  </a>
+                </p>
+              )}
             </motion.div>
           </div>
         </div>
