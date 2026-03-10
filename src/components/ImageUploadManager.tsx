@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, X, AlertCircle, CheckCircle, Edit2 } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
@@ -12,9 +12,6 @@ interface ImageUploadManagerProps {
   itemId?: string;
   fieldName?: string;
   acceptedFormats?: string[];
-  displayName?: string;
-  onDisplayNameChange?: (name: string) => void;
-  showDisplayNameField?: boolean;
 }
 
 // Supported image formats with MIME types
@@ -39,17 +36,12 @@ export default function ImageUploadManager({
   collectionId,
   itemId,
   fieldName,
-  acceptedFormats,
-  displayName = '',
-  onDisplayNameChange,
-  showDisplayNameField = false
+  acceptedFormats
 }: ImageUploadManagerProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [tempName, setTempName] = useState(displayName);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isValidFileType = (file: File): boolean => {
@@ -156,61 +148,8 @@ export default function ImageUploadManager({
     }
   };
 
-  const handleSaveName = () => {
-    if (onDisplayNameChange) {
-      onDisplayNameChange(tempName);
-    }
-    setIsEditingName(false);
-  };
-
   return (
     <div className="w-full space-y-3">
-      {/* Display Name Field */}
-      {showDisplayNameField && (
-        <div className="bg-black/5 border border-black/10 rounded-lg p-3">
-          {isEditingName ? (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={tempName}
-                onChange={(e) => setTempName(e.target.value)}
-                placeholder="Enter display name..."
-                className="flex-1 px-3 py-2 bg-white border border-black/20 rounded text-sm text-black placeholder-black/40 focus:outline-none focus:border-black/40"
-                autoFocus
-              />
-              <button
-                onClick={handleSaveName}
-                className="px-3 py-2 bg-black text-white text-xs font-bold rounded hover:bg-black/80 transition-colors"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => {
-                  setIsEditingName(false);
-                  setTempName(displayName);
-                }}
-                className="px-3 py-2 bg-black/10 text-black text-xs font-bold rounded hover:bg-black/20 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-black/60 uppercase tracking-wide mb-1">Display Name</p>
-                <p className="text-sm text-black font-medium">{displayName || 'Not set'}</p>
-              </div>
-              <button
-                onClick={() => setIsEditingName(true)}
-                className="p-2 hover:bg-black/10 rounded transition-colors"
-              >
-                <Edit2 className="w-4 h-4 text-black/60" />
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
       <motion.div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
