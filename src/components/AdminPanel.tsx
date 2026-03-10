@@ -4,7 +4,7 @@ import { Settings, X, Edit2 } from 'lucide-react';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import { BaseCrudService } from '@/integrations';
-import { Services } from '@/entities/index';
+import { Services, HomepageImages } from '@/entities/index';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -12,15 +12,19 @@ interface AdminPanelProps {
 }
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState('text');
+  const [activeTab, setActiveTab] = useState('photos');
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
   const [heroImage, setHeroImage] = useState<string | undefined>();
   const [serviceId, setServiceId] = useState<string | undefined>();
+  const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const loadHeroImage = async () => {
+    const loadImages = async () => {
+      setIsLoading(true);
       try {
+        // Load hero image from services
         const services = await BaseCrudService.getAll<Services>('services', {}, { limit: 1 });
         if (services.items && services.items.length > 0) {
           const service = services.items[0];
@@ -29,13 +33,21 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             setHeroImage(service.infographic);
           }
         }
+
+        // Load homepage images
+        const homepageImagesResult = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
+        if (homepageImagesResult.items && homepageImagesResult.items.length > 0) {
+          setHomepageImages(homepageImagesResult.items[0]);
+        }
       } catch (error) {
-        console.error('Error loading hero image:', error);
+        console.error('Error loading images:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
     if (isOpen) {
-      loadHeroImage();
+      loadImages();
     }
   }, [isOpen]);
 
@@ -74,61 +86,127 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               </button>
             </div>
 
+            {/* Tabs */}
+            <div className="sticky top-16 bg-white border-b border-black/10 px-6 py-4 flex gap-2">
+              <button
+                onClick={() => setActiveTab('photos')}
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all ${
+                  activeTab === 'photos'
+                    ? 'bg-black text-white'
+                    : 'bg-black/5 text-black hover:bg-black/10'
+                }`}
+              >
+                Site Photos
+              </button>
+              <button
+                onClick={() => setActiveTab('text')}
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all ${
+                  activeTab === 'text'
+                    ? 'bg-black text-white'
+                    : 'bg-black/5 text-black hover:bg-black/10'
+                }`}
+              >
+                Text Content
+              </button>
+            </div>
+
             {/* Content */}
             <div className="p-6 space-y-8">
-              {/* Text Content Section */}
-              <div>
-                <h3 className="text-sm font-heading font-bold text-black mb-4 uppercase tracking-wide">
-                  Site Text
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
-                      Site Title
-                    </label>
-                    <TextEditableField
-                      value={siteTitle}
-                      onSave={setSiteTitle}
-                      className="text-lg font-heading font-bold text-black"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
-                      Tagline
-                    </label>
-                    <TextEditableField
-                      value={siteTagline}
-                      onSave={setSiteTagline}
-                      className="text-sm text-black/70"
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Site Photos Tab */}
+              {activeTab === 'photos' && (
+                <div>
+                  <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
+                    Manage Site Photos
+                  </h3>
+                  <div className="space-y-6">
+                    {/* Hero Image */}
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
+                        Hero Background Image
+                      </label>
+                      <ImageUploadManager
+                        label="Upload Hero Image"
+                        currentImage={heroImage}
+                        collectionId="services"
+                        itemId={serviceId}
+                        fieldName="infographic"
+                        onImageUpload={(url) => {
+                          setHeroImage(url);
+                        }}
+                      />
+                    </div>
 
-              {/* Image Management Section */}
-              <div>
-                <h3 className="text-sm font-heading font-bold text-black mb-4 uppercase tracking-wide">
-                  Images
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
-                      Hero Background
-                    </label>
-                    <ImageUploadManager
-                      label="Upload Hero Image"
-                      currentImage={heroImage}
-                      collectionId="services"
-                      itemId={serviceId}
-                      fieldName="infographic"
-                      onImageUpload={(url) => {
-                        setHeroImage(url);
-                        console.log('Hero image uploaded:', url);
-                      }}
-                    />
+                    {/* About Section Image */}
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
+                        About Section Image
+                      </label>
+                      <ImageUploadManager
+                        label="Upload About Image"
+                        currentImage={homepageImages?.aboutSectionImage}
+                        collectionId="homepageimages"
+                        itemId={homepageImages?._id}
+                        fieldName="aboutSectionImage"
+                        onImageUpload={(url) => {
+                          if (homepageImages) {
+                            setHomepageImages({ ...homepageImages, aboutSectionImage: url });
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* Contact Background Image */}
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
+                        Contact Section Background
+                      </label>
+                      <ImageUploadManager
+                        label="Upload Contact Background"
+                        currentImage={homepageImages?.contactBackgroundImage}
+                        collectionId="homepageimages"
+                        itemId={homepageImages?._id}
+                        fieldName="contactBackgroundImage"
+                        onImageUpload={(url) => {
+                          if (homepageImages) {
+                            setHomepageImages({ ...homepageImages, contactBackgroundImage: url });
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Text Content Tab */}
+              {activeTab === 'text' && (
+                <div>
+                  <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
+                    Site Text
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                        Site Title
+                      </label>
+                      <TextEditableField
+                        value={siteTitle}
+                        onSave={setSiteTitle}
+                        className="text-lg font-heading font-bold text-black"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                        Tagline
+                      </label>
+                      <TextEditableField
+                        value={siteTagline}
+                        onSave={setSiteTagline}
+                        className="text-sm text-black/70"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* CMS Collections Info */}
               <div className="bg-black/5 border border-black/10 rounded-lg p-4">
