@@ -78,7 +78,7 @@ export default function HeroSection() {
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-heading font-black text-white leading-none tracking-tight uppercase">
             Visual
             <br />
-            <span className="font-black text-color-7">Storytelling</span>
+            <span className="font-black text-[#690103ff]">Storytelling</span>
           </h1>
         </motion.div>
 
