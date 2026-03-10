@@ -239,15 +239,15 @@ export default function ContactSection() {
                   <MapPin className="w-5 h-5 text-white/60" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-mono uppercase tracking-widest text-white/40 mb-2">
-                    Location
-                  </h3>
                   <p className="text-base font-paragraph text-white">
                     New York, NY
                     <br />
                     Available for travel
                   </p>
-                </div>
+                <h3 className="text-sm font-mono uppercase tracking-widest text-white/40 mb-2">
+                    Location
+                  </h3>
+                  </div>
               </div>
             </div>
 
