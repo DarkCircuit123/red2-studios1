@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { initializeGlobalErrorHandlers } from '@/lib/global-error-handler';
-import { initializeModulePreloading } from '@/lib/module-preloader';
 import { initializeChunkErrorRecovery, resetReloadAttempts } from '@/lib/chunk-error-recovery';
 import { initializeErrorSuppression } from '@/lib/error-suppression';
 
