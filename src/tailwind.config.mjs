@@ -27,7 +27,7 @@ export default {
                 mono: ['Space Mono', 'monospace'],
             },
             colors: {
-                primary: '#4a0e0e',
+                primary: '#c41e3a',
                 'primary-foreground': '#ffffff',
                 secondary: '#000000',
                 'secondary-foreground': '#ffffff',
