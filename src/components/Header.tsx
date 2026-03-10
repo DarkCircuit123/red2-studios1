@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
-import { playClickSound } from '@/lib/click-sound';
+import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 
@@ -88,56 +88,64 @@ export default function Header() {
           <a
             href="#portfolio"
             onClick={(e) => handleAnchorClick(e, '#portfolio')}
-            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
           >
             Gallery
           </a>
           <a
             href="#about"
             onClick={(e) => handleAnchorClick(e, '#about')}
-            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
           >
             About
           </a>
           <Link
             to="/portfolio"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
           >
             Work
           </Link>
           <Link
             to="/booking"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
           >
             Booking
           </Link>
           <Link
             to="/galleries"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
           >
             Galleries
           </Link>
           <a
             href="#contact"
             onClick={(e) => handleAnchorClick(e, '#contact')}
-            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
           >
             Contact
           </a>
           <Link
             to="/private"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
           >
             Private
           </Link>
           <Link
             to="/play"
             onClick={handleLinkClick}
-            className="text-xs font-mono text-white/60 hover:text-white hover:scale-105 transition-all duration-300 uppercase tracking-widest"
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
           >
             Play
           </Link>
@@ -219,6 +227,7 @@ export default function Header() {
             <a
               href="#portfolio"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
               onClick={(e) => {
                 handleAnchorClick(e, '#portfolio');
                 setIsOpen(false);
@@ -229,6 +238,7 @@ export default function Header() {
             <a
               href="#about"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
               onClick={(e) => {
                 handleAnchorClick(e, '#about');
                 setIsOpen(false);
@@ -239,6 +249,7 @@ export default function Header() {
             <Link
               to="/portfolio"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -249,6 +260,7 @@ export default function Header() {
             <Link
               to="/booking"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -259,6 +271,7 @@ export default function Header() {
             <Link
               to="/galleries"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -269,6 +282,7 @@ export default function Header() {
             <a
               href="#contact"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
               onClick={(e) => {
                 handleAnchorClick(e, '#contact');
                 setIsOpen(false);
@@ -279,6 +293,7 @@ export default function Header() {
             <Link
               to="/private"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -289,6 +304,7 @@ export default function Header() {
             <Link
               to="/play"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
