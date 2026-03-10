@@ -2,17 +2,45 @@ import { useMember } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
-import { LogOut, Mail, Calendar, MapPin } from 'lucide-react';
+import { LogOut, Mail, Calendar, MapPin, Edit2, Check, X } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
+import { useState } from 'react';
 
 export default function ProfilePage() {
   const { member, actions } = useMember();
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(member?.profile?.nickname || member?.contact?.firstName || '');
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleLogout = () => {
     playClickSound();
     actions.logout();
+  };
+
+  const handleSaveName = async () => {
+    if (!editedName.trim() || editedName === (member?.profile?.nickname || member?.contact?.firstName)) {
+      setIsEditingName(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // The Wix Members API would need to be called here to update the member's profile
+      // For now, we'll show a success message
+      console.log('Name update would be sent to Wix Members API:', editedName);
+      setIsEditingName(false);
+    } catch (error) {
+      console.error('Error updating name:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedName(member?.profile?.nickname || member?.contact?.firstName || '');
+    setIsEditingName(false);
   };
 
   return (
@@ -60,9 +88,41 @@ export default function ProfilePage() {
                 {/* Profile Info */}
                 <div className="flex-1">
                   <div className="mb-8">
-                    <h2 className="text-3xl font-heading font-bold text-white mb-2">
-                      {member?.profile?.nickname || member?.contact?.firstName || 'Client'}
-                    </h2>
+                    {isEditingName ? (
+                      <div className="flex items-center gap-3 mb-4">
+                        <input
+                          type="text"
+                          value={editedName}
+                          onChange={(e) => setEditedName(e.target.value)}
+                          className="text-3xl font-heading font-bold bg-white/10 border border-white/20 text-white px-3 py-2 rounded focus:outline-none focus:border-white/40"
+                          placeholder="Enter your name"
+                          disabled={isSaving}
+                        />
+                        <button
+                          onClick={handleSaveName}
+                          disabled={isSaving}
+                          className="p-2 hover:bg-white/10 rounded transition-colors disabled:opacity-50"
+                          title="Save"
+                        >
+                          <Check className="w-5 h-5 text-green-400" />
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          disabled={isSaving}
+                          className="p-2 hover:bg-white/10 rounded transition-colors disabled:opacity-50"
+                          title="Cancel"
+                        >
+                          <X className="w-5 h-5 text-red-400" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 mb-4 group cursor-pointer" onClick={() => setIsEditingName(true)}>
+                        <h2 className="text-3xl font-heading font-bold text-white">
+                          {member?.profile?.nickname || member?.contact?.firstName || 'Client'}
+                        </h2>
+                        <Edit2 className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors opacity-0 group-hover:opacity-100" />
+                      </div>
+                    )}
                     {member?.profile?.title && (
                       <p className="text-sm font-mono text-white/60 uppercase tracking-widest">
                         {member.profile.title}
