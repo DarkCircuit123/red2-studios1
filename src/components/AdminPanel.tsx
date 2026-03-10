@@ -19,6 +19,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Display name state for images
+  const [imageDisplayNames, setImageDisplayNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadImages = async () => {
@@ -174,6 +177,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         collectionId="homepageimages"
                         itemId={homepageImages?._id}
                         fieldName="heroImage"
+                        displayName={imageDisplayNames['hero'] || ''}
+                        onDisplayNameChange={(name) => setImageDisplayNames({ ...imageDisplayNames, hero: name })}
+                        showDisplayNameField={true}
                         onImageUpload={(url) => {
                           if (homepageImages) {
                             setHomepageImages({ ...homepageImages, heroImage: url });
@@ -193,6 +199,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         collectionId="homepageimages"
                         itemId={homepageImages?._id}
                         fieldName="aboutSectionImage"
+                        displayName={imageDisplayNames['about'] || ''}
+                        onDisplayNameChange={(name) => setImageDisplayNames({ ...imageDisplayNames, about: name })}
+                        showDisplayNameField={true}
                         onImageUpload={(url) => {
                           if (homepageImages) {
                             setHomepageImages({ ...homepageImages, aboutSectionImage: url });
@@ -212,6 +221,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         collectionId="homepageimages"
                         itemId={homepageImages?._id}
                         fieldName="contactBackgroundImage"
+                        displayName={imageDisplayNames['contact'] || ''}
+                        onDisplayNameChange={(name) => setImageDisplayNames({ ...imageDisplayNames, contact: name })}
+                        showDisplayNameField={true}
                         onImageUpload={(url) => {
                           if (homepageImages) {
                             setHomepageImages({ ...homepageImages, contactBackgroundImage: url });
@@ -250,6 +262,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 collectionId="portfolio"
                                 itemId={item._id}
                                 fieldName="mainImage"
+                                displayName={imageDisplayNames[`portfolio-${item._id}-main`] || ''}
+                                onDisplayNameChange={(name) => setImageDisplayNames({ ...imageDisplayNames, [`portfolio-${item._id}-main`]: name })}
+                                showDisplayNameField={true}
                                 onImageUpload={(url) => {
                                   setPortfolioItems(portfolioItems.map(p => 
                                     p._id === item._id ? { ...p, mainImage: url } : p
@@ -269,6 +284,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 collectionId="portfolio"
                                 itemId={item._id}
                                 fieldName="galleryImage1"
+                                displayName={imageDisplayNames[`portfolio-${item._id}-gal1`] || ''}
+                                onDisplayNameChange={(name) => setImageDisplayNames({ ...imageDisplayNames, [`portfolio-${item._id}-gal1`]: name })}
+                                showDisplayNameField={true}
                                 onImageUpload={(url) => {
                                   setPortfolioItems(portfolioItems.map(p => 
                                     p._id === item._id ? { ...p, galleryImage1: url } : p
@@ -287,6 +305,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 collectionId="portfolio"
                                 itemId={item._id}
                                 fieldName="galleryImage2"
+                                displayName={imageDisplayNames[`portfolio-${item._id}-gal2`] || ''}
+                                onDisplayNameChange={(name) => setImageDisplayNames({ ...imageDisplayNames, [`portfolio-${item._id}-gal2`]: name })}
+                                showDisplayNameField={true}
                                 onImageUpload={(url) => {
                                   setPortfolioItems(portfolioItems.map(p => 
                                     p._id === item._id ? { ...p, galleryImage2: url } : p
@@ -305,6 +326,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 collectionId="portfolio"
                                 itemId={item._id}
                                 fieldName="galleryImage3"
+                                displayName={imageDisplayNames[`portfolio-${item._id}-gal3`] || ''}
+                                onDisplayNameChange={(name) => setImageDisplayNames({ ...imageDisplayNames, [`portfolio-${item._id}-gal3`]: name })}
+                                showDisplayNameField={true}
                                 onImageUpload={(url) => {
                                   setPortfolioItems(portfolioItems.map(p => 
                                     p._id === item._id ? { ...p, galleryImage3: url } : p
@@ -341,6 +365,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             collectionId="clientspress"
                             itemId={sponsor._id}
                             fieldName="clientLogo"
+                            displayName={imageDisplayNames[`sponsor-${sponsor._id}`] || ''}
+                            onDisplayNameChange={(name) => setImageDisplayNames({ ...imageDisplayNames, [`sponsor-${sponsor._id}`]: name })}
+                            showDisplayNameField={true}
                             onImageUpload={(url) => {
                               setSponsors(sponsors.map(s => 
                                 s._id === sponsor._id ? { ...s, clientLogo: url } : s
