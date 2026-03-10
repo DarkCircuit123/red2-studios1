@@ -1,13 +1,8 @@
-import React from 'react';
 import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
-import SEOOptimizer from '@/components/SEOOptimizer';
-import { AppInitializer } from '@/components/AppInitializer';
-
-// Import all pages with explicit static imports
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import PortfolioDetailPage from './pages/PortfolioDetailPage';
@@ -17,15 +12,11 @@ import BlogPage from './pages/BlogPage';
 import ProfilePage from './pages/ProfilePage';
 import PrivatePage from './pages/PrivatePage';
 import HangmanGamePage from './pages/HangmanGamePage';
-import DataExportPage from './pages/DataExportPage';
-import ChatPage from './pages/ChatPage';
-import Red2TerminalPage from './pages/Red2TerminalPage';
 
+// Layout component that includes ScrollToTop
 function Layout() {
   return (
     <>
-      <AppInitializer />
-      <SEOOptimizer />
       <ScrollToTop />
       <Outlet />
     </>
@@ -79,18 +70,6 @@ const router = createBrowserRouter([
         element: <HangmanGamePage />,
       },
       {
-        path: "terminal",
-        element: <Red2TerminalPage />,
-      },
-      {
-        path: "data-export",
-        element: <DataExportPage />,
-      },
-      {
-        path: "chat",
-        element: <ChatPage />,
-      },
-      {
         path: "*",
         element: <Navigate to="/" replace />,
       },
@@ -100,12 +79,10 @@ const router = createBrowserRouter([
   basename: import.meta.env.BASE_NAME,
 });
 
-function AppRouter() {
+export default function AppRouter() {
   return (
     <MemberProvider>
       <RouterProvider router={router} />
     </MemberProvider>
   );
 }
-
-export default AppRouter;

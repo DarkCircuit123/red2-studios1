@@ -1,10 +1,9 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 
-function SponsorsSection() {
+export default function SponsorsSection() {
   const [sponsors, setSponsors] = useState([
     {
       id: '1',
@@ -28,8 +27,7 @@ function SponsorsSection() {
           setSponsors(sponsorsList);
         }
       } catch (error) {
-        console.error('Failed to load sponsors:', error);
-        // Keep default sponsor on error
+        console.error('Error loading sponsors:', error);
       }
     };
     loadSponsors();
@@ -89,5 +87,3 @@ function SponsorsSection() {
     </section>
   );
 }
-
-export default React.memo(SponsorsSection);

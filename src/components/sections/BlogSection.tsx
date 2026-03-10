@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, User } from 'lucide-react';
@@ -8,7 +7,7 @@ import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
 
-function BlogSection() {
+export default function BlogSection() {
   const [posts, setPosts] = useState<BlogPosts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,8 +17,7 @@ function BlogSection() {
         const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 6 });
         setPosts(result.items || []);
       } catch (error) {
-        console.error('Failed to load blog posts:', error);
-        // Keep empty array on error
+        console.error('Error loading blog posts:', error);
       } finally {
         setIsLoading(false);
       }
@@ -137,5 +135,3 @@ function BlogSection() {
     </section>
   );
 }
-
-export default React.memo(BlogSection);

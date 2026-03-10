@@ -1,9 +1,8 @@
-import React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import Header from '../Header';
 import Footer from '../Footer';
 
-function HangmanGamePage() {
+export default function HangmanGamePage() {
   const [gameState, setGameState] = useState({
     word: '',
     displayWord: [] as string[],
@@ -90,141 +89,75 @@ function HangmanGamePage() {
   // Initialize audio context
   useEffect(() => {
     if (!audioContextRef.current) {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      audioContextRef.current = new AudioContextClass();
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
   }, []);
 
-  // Play correct guess sound - uplifting ding
+  // Play success sound
   const playSuccessSound = () => {
     if (!audioContextRef.current) return;
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
-    
-    // Create a pleasant bell-like sound
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
+    const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    const gainOsc2 = ctx.createGain();
 
-    osc1.connect(gain);
-    osc2.connect(gainOsc2);
+    osc.connect(gain);
     gain.connect(ctx.destination);
-    gainOsc2.connect(ctx.destination);
 
-    // Main tone
-    osc1.frequency.setValueAtTime(523.25, now); // C5
-    osc1.frequency.setValueAtTime(659.25, now + 0.05); // E5
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.setValueAtTime(1000, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
 
-    // Harmonic overtone
-    osc2.frequency.setValueAtTime(1046.5, now); // C6
-    gainOsc2.gain.setValueAtTime(0.1, now);
-    gainOsc2.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-
-    osc1.start(now);
-    osc1.stop(now + 0.3);
-    osc2.start(now);
-    osc2.stop(now + 0.25);
+    osc.start(now);
+    osc.stop(now + 0.2);
   };
 
-  // Play incorrect guess sound - buzzer
+  // Play wrong sound
   const playWrongSound = () => {
     if (!audioContextRef.current) return;
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
-    
-    // Create a buzzer effect with noise
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
 
-    osc.connect(filter);
-    filter.connect(gain);
+    osc.connect(gain);
     gain.connect(ctx.destination);
 
-    // Buzzer tone
-    osc.frequency.setValueAtTime(150, now);
-    osc.frequency.setValueAtTime(120, now + 0.08);
-    
-    filter.type = 'highpass';
-    filter.frequency.setValueAtTime(200, now);
-
-    gain.gain.setValueAtTime(0.25, now);
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.setValueAtTime(100, now + 0.15);
+    gain.gain.setValueAtTime(0.3, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
 
     osc.start(now);
     osc.stop(now + 0.15);
   };
 
-  // Play winning sound - celebratory fanfare
-  const playWinSound = () => {
-    if (!audioContextRef.current) return;
-    const ctx = audioContextRef.current;
-    const now = ctx.currentTime;
-    
-    // Create a fanfare with multiple notes
-    const notes = [
-      { freq: 523.25, time: 0, duration: 0.15 },      // C5
-      { freq: 659.25, time: 0.15, duration: 0.15 },   // E5
-      { freq: 783.99, time: 0.3, duration: 0.15 },    // G5
-      { freq: 1046.5, time: 0.45, duration: 0.3 },    // C6
-    ];
-
-    notes.forEach(note => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.frequency.setValueAtTime(note.freq, now + note.time);
-      gain.gain.setValueAtTime(0.2, now + note.time);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
-
-      osc.start(now + note.time);
-      osc.stop(now + note.time + note.duration);
-    });
-  };
-
-  // Play losing sound - sad trombone with extra effect
+  // Play funny losing sounds
   const playFunnyLosingSound = () => {
     if (!audioContextRef.current) return;
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
     
-    // Sad trombone effect with wobble
+    // Sad trombone effect
     const osc = ctx.createOscillator();
-    const lfo = ctx.createOscillator();
     const gain = ctx.createGain();
-    const lfoGain = ctx.createGain();
     
     osc.connect(gain);
-    lfo.connect(lfoGain);
-    lfoGain.connect(osc.frequency);
     gain.connect(ctx.destination);
     
-    // Main frequency sweep
     osc.frequency.setValueAtTime(400, now);
-    osc.frequency.exponentialRampToValueAtTime(80, now + 0.6);
-    
-    // LFO wobble effect
-    lfo.frequency.setValueAtTime(4, now);
-    lfoGain.gain.setValueAtTime(30, now);
-    
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.5);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
     
     osc.start(now);
-    osc.stop(now + 0.6);
-    lfo.start(now);
-    lfo.stop(now + 0.6);
+    osc.stop(now + 0.5);
   };
 
   // Initialize game with selected category
   const startGame = (category: string) => {
-    const categoryWords = categories[category as keyof typeof categories];
+    const categoryWords = (categories as any)[category];
     const newWord = categoryWords[Math.floor(Math.random() * categoryWords.length)].toUpperCase();
 
     setGameState({
@@ -265,15 +198,12 @@ function HangmanGamePage() {
     const isWon = !newDisplayWord.includes('_');
     const isLost = newWrongGuesses >= maxWrong;
 
-    if (isWon) {
-      // Play winning sound
-      playWinSound();
-    } else if (isLost) {
+    if (isLost) {
       // Play funny losing sound and redirect
       playFunnyLosingSound();
       setTimeout(() => {
         window.location.href = 'https://www.looser.com';
-      }, 700);
+      }, 600);
     }
 
     setGameState({
@@ -479,5 +409,3 @@ function HangmanGamePage() {
     </div>
   );
 }
-
-export default React.memo(HangmanGamePage);

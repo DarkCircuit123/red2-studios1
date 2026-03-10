@@ -1,5 +1,4 @@
-import React from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
@@ -8,15 +7,35 @@ import Interactive3DGallerySection from '@/components/sections/Interactive3DGall
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
-import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
-import { useSEO } from '@/hooks/useSEO';
+import SplashScreen from '@/components/SplashScreen';
+import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
+import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
 
-function HomePage() {
-  useSEO('home');
+export default function HomePage() {
+  const [showSplash, setShowSplash] = useState(() => {
+    // Only show splash screen on first visit in this session
+    if (typeof window !== 'undefined') {
+      const splashShown = sessionStorage.getItem('splashScreenShown');
+      return !splashShown;
+    }
+    return true;
+  });
 
-  const { ref: galleryRef, isVisible: galleryVisible } = useIntersectionObserver(() => {}, { threshold: 0.1 });
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('splashScreenShown', 'true');
+    }
+  }, []);
 
+  // Initialize security systems on component mount
   useEffect(() => {
+    initializeSecuritySystems();
+    setupSecurityEventListeners();
+  }, []);
+
+  // Optimized scroll parameter handling with useEffectOnce
+  useEffectOnce(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const scrollTo = params.get('scroll');
@@ -30,10 +49,12 @@ function HomePage() {
               top: elementPosition,
               behavior: 'smooth'
             });
+            // Clean up URL after successful scroll
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         };
         
+        // Optimized timing for dynamic content loading
         const timeouts = [
           setTimeout(scrollToElement, 50),
           setTimeout(scrollToElement, 150),
@@ -43,33 +64,34 @@ function HomePage() {
         return () => timeouts.forEach(t => clearTimeout(t));
       }
     }
-  }, []);
+  });
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Header />
+    <>
+      {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+      <div className="min-h-screen bg-black text-white">
+        <Header />
 
-      <HeroSection />
+        {/* Hero Section */}
+        <HeroSection />
 
-      <AboutSection />
+        {/* About / Vision */}
+        <AboutSection />
 
-      <div ref={galleryRef as any}>
-        {galleryVisible && (
-          <React.Suspense fallback={<div className="py-20 text-center text-white/60">Loading gallery…</div>}>
-            <Interactive3DGallerySection />
-          </React.Suspense>
-        )}
+        {/* Interactive 3D Gallery */}
+        <Interactive3DGallerySection />
+
+        {/* RSS Ticker */}
+        <RSSTickerSection />
+
+        {/* Sponsored By */}
+        <SponsorsSection />
+
+        {/* Contact / Booking */}
+        <ContactSection />
+
+        <Footer />
       </div>
-
-      <RSSTickerSection />
-
-      <SponsorsSection />
-
-      <ContactSection />
-
-      <Footer />
-    </div>
+    </>
   );
 }
-
-export default React.memo(HomePage);

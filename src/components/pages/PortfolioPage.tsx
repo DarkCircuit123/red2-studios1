@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useVirtualList, useWindowSize, useThrottleCallback } from '@/hooks/useAdvancedOptimization';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -9,32 +8,13 @@ import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
-import React from 'react';
-import { useSEO } from '@/hooks/useSEO';
 
-function PortfolioPage() {
-  // SEO optimization for portfolio page
-  useSEO('portfolio');
+export default function PortfolioPage() {
   const [projects, setProjects] = useState<Portfolio[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Portfolio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-
-  // virtualization state
-  const windowSize = useWindowSize();
-  const [scrollTop, setScrollTop] = useState(() =>
-    typeof window !== 'undefined' ? window.scrollY : 0
-  );
-
-  const handleScroll = useThrottleCallback(() => {
-    setScrollTop(window.scrollY);
-  }, 100, []);
-
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -43,8 +23,7 @@ function PortfolioPage() {
         setProjects(data.items || []);
         setFilteredProjects(data.items || []);
       } catch (error) {
-        console.error('Failed to load portfolio projects:', error);
-        // Keep empty arrays on error
+        console.error('Error loading projects:', error);
       } finally {
         setIsLoading(false);
       }
@@ -53,44 +32,17 @@ function PortfolioPage() {
     loadProjects();
   }, []);
 
-  // Get unique categories, memoized so it's recalculated only when projects list changes
-  const categories = useMemo(
-    () => Array.from(new Set(projects.map((p) => p.category).filter(Boolean))),
-    [projects]
-  );
+  // Get unique categories
+  const categories = Array.from(new Set(projects.map((p) => p.category).filter(Boolean)));
 
-  // determine if virtualization should be active
-  const virtualizationEnabled = filteredProjects.length > 30;
-
-  // compute column count based on window width
-  const columns = useMemo(() => {
-    if (windowSize.width >= 1280) return 3;
-    if (windowSize.width >= 768) return 2;
-    return 1;
-  }, [windowSize.width]);
-
-  const itemHeight = 400; // approximate fixed height for each grid row
-  const totalRows = Math.ceil(filteredProjects.length / columns);
-
-  const { startIndex: startRow, endIndex: endRow, offset } = useVirtualList(
-    totalRows,
-    itemHeight,
-    windowSize.height,
-    scrollTop
-  );
-
-  const visibleProjects = virtualizationEnabled
-    ? filteredProjects.slice(startRow * columns, (endRow + 1) * columns)
-    : filteredProjects;
-
-  const handleCategoryFilter = useCallback((category: string | null) => {
+  const handleCategoryFilter = (category: string | null) => {
     setSelectedCategory(category);
     if (category) {
       setFilteredProjects(projects.filter((p) => p.category === category));
     } else {
       setFilteredProjects(projects);
     }
-  }, [projects]);
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -183,93 +135,69 @@ function PortfolioPage() {
               ))}
           </div>
         ) : (
-          <div
-            className="relative"
-            style={
-              virtualizationEnabled
-                ? { paddingTop: offset, paddingBottom: (totalRows - endRow - 1) * itemHeight }
-                : undefined
-            }
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max"
           >
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max"
-            >
-              {visibleProjects.map((project, idx) => {
-                const index = virtualizationEnabled
-                  ? startRow * columns + idx
-                  : idx;
-                return (
+            {filteredProjects.map((project, index) => (
+              <motion.div
+                key={project._id}
+                variants={itemVariants}
+                onMouseEnter={() => setHoveredId(project._id)}
+                onMouseLeave={() => setHoveredId(null)}
+                className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
+                  index === 0 ? 'md:col-span-2 md:row-span-2' : ''
+                } ${index === 1 ? 'md:row-span-2' : ''}`}
+              >
+                {/* Aspect ratio container */}
+                <div className="relative w-full aspect-square">
+                  {/* Image */}
+                  <Image
+                    src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
+                    alt={project.projectName}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+
+                  {/* Subtle grain overlay */}
+                  <div className="absolute inset-0 bg-grain opacity-5" />
+
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
+
+                  {/* Content - appears on hover */}
                   <motion.div
-                    key={project._id}
-                    variants={itemVariants}
-                    onMouseEnter={() => setHoveredId(project._id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
-                      virtualizationEnabled
-                        ? ''
-                        : index === 0
-                        ? 'md:col-span-2 md:row-span-2'
-                        : ''
-                    } ${
-                      virtualizationEnabled
-                        ? ''
-                        : index === 1
-                        ? 'md:row-span-2'
-                        : ''
-                    }`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={hoveredId === project._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0 flex flex-col items-end justify-end p-8"
                   >
-                    {/* Aspect ratio container */}
-                    <div className="relative w-full aspect-square">
-                      {/* Image */}
-                      <Image
-                        src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
-                        alt={project.projectName}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-
-                      {/* Subtle grain overlay */}
-                      <div className="absolute inset-0 bg-grain opacity-5" />
-
-                      {/* Overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
-
-                      {/* Content - appears on hover */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={hoveredId === project._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                        transition={{ duration: 0.3 }}
-                        className="absolute inset-0 flex flex-col items-end justify-end p-8"
-                      >
-                        <div className="text-right">
-                          <p className="text-xs font-mono text-white/60 mb-3 uppercase tracking-widest">
-                            {project.category}
-                          </p>
-                          <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
-                            {project.projectName}
-                          </h3>
-                          <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
-                            <span className="text-sm font-paragraph">View</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </div>
-                        </div>
-                      </motion.div>
-
-                      {/* Link */}
-                      <Link
-                        to={`/portfolio/${project._id}`}
-                        onClick={playClickSound}
-                        className="absolute inset-0"
-                        aria-label={`View ${project.projectName}`}
-                      />
+                    <div className="text-right">
+                      <p className="text-xs font-mono text-white/60 mb-3 uppercase tracking-widest">
+                        {project.category}
+                      </p>
+                      <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
+                        {project.projectName}
+                      </h3>
+                      <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
+                        <span className="text-sm font-paragraph">View</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
                     </div>
                   </motion.div>
-                );
-              })}
-            </motion.div>
-          </div>
+
+                  {/* Link */}
+                  <Link
+                    to={`/portfolio/${project._id}`}
+                    onClick={playClickSound}
+                    className="absolute inset-0"
+                    aria-label={`View ${project.projectName}`}
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
         )}
 
         {/* Empty State */}
@@ -297,5 +225,3 @@ function PortfolioPage() {
     </div>
   );
 }
-
-export default React.memo(PortfolioPage);

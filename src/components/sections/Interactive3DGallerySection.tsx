@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
@@ -6,7 +5,7 @@ import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 
-function Interactive3DGallerySection() {
+export default function Interactive3DGallerySection() {
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -19,8 +18,7 @@ function Interactive3DGallerySection() {
         const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 12 });
         setPortfolioItems(data.items || []);
       } catch (error) {
-        console.error('Failed to load portfolio:', error);
-        // Keep empty array on error
+        console.error('Error loading portfolio:', error);
       }
     };
     loadPortfolio();
@@ -298,5 +296,3 @@ function Interactive3DGallerySection() {
     </section>
   );
 }
-
-export default React.memo(Interactive3DGallerySection);

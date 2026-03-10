@@ -1,10 +1,9 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { useState, useEffect, useMemo } from 'react';
 
-function AboutSection() {
+export default function AboutSection() {
   const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_91ed15e69fe34eac9f33620e3c2ee65d~mv2.png?originWidth=576&originHeight=576');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -21,8 +20,7 @@ function AboutSection() {
           }
         }
       } catch (error) {
-        console.error('Failed to load about image:', error);
-        // Keep default image on error
+        console.error('Error loading about image:', error);
       } finally {
         setIsLoading(false);
       }
@@ -31,10 +29,10 @@ function AboutSection() {
   }, []);
 
   return (
-    <section id="about" className="relative w-full py-16 sm:py-24 md:py-32 bg-black">
-      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8">
+    <section id="about" className="relative w-full py-24 md:py-32 bg-black">
+      <div className="max-w-[120rem] mx-auto px-8">
         {/* Asymmetrical layout - image right, text left */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 md:gap-16 lg:gap-24 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-start">
           {/* Content - left side */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
@@ -42,28 +40,28 @@ function AboutSection() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-6 sm:mb-8 md:mb-12 tracking-tighter leading-tight">
+            <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-12 tracking-tighter leading-tight">
               About Jordan Michael Zuniga
             </h2>
 
-            <div className="space-y-4 sm:space-y-6 md:space-y-8 mb-8 sm:mb-12">
-              <p className="text-xs sm:text-sm md:text-base font-paragraph text-white/70 leading-relaxed">
+            <div className="space-y-8 mb-12">
+              <p className="text-base font-paragraph text-white/70 leading-relaxed">
                 Jordan Michael Zuniga is a visionary photographer specializing in capturing the essence of visual storytelling through bold imagery and refined aesthetics. With a passion for precision and luxury restraint, Jordan has developed a distinctive visual language that merges minimalist composition with powerful narrative.
               </p>
 
-              <p className="text-xs sm:text-sm md:text-base font-paragraph text-white/70 leading-relaxed">
+              <p className="text-base font-paragraph text-white/70 leading-relaxed">
                 His work spans editorial, commercial, and campaign photography, collaborating with emerging and established designers. Each frame is meticulously crafted to elevate brands and create lasting impressions through thoughtful composition and technical excellence.
               </p>
 
-              <p className="text-xs sm:text-sm md:text-base font-paragraph text-white/70 leading-relaxed">
+              <p className="text-base font-paragraph text-white/70 leading-relaxed">
                 Specializing in fashion and lifestyle photography, Jordan brings a unique perspective that combines technical mastery with creative vision. Every project is an opportunity to push creative boundaries and deliver something truly exceptional.
               </p>
             </div>
 
-            {/* Stats - ultra-minimal - mobile optimized */}
-            <div className="grid grid-cols-3 gap-6 sm:gap-8 md:gap-12 pt-8 sm:pt-12 border-t border-white/10">
+            {/* Stats - ultra-minimal */}
+            <div className="grid grid-cols-3 gap-12 pt-12 border-t border-white/10">
               <div>
-                <p className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-white mb-2 sm:mb-3">
+                <p className="text-4xl font-heading font-bold text-white mb-3">
                   500+
                 </p>
                 <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
@@ -71,7 +69,7 @@ function AboutSection() {
                 </p>
               </div>
               <div>
-                <p className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-white mb-2 sm:mb-3">
+                <p className="text-4xl font-heading font-bold text-white mb-3">
                   50+
                 </p>
                 <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
@@ -79,7 +77,7 @@ function AboutSection() {
                 </p>
               </div>
               <div>
-                <p className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-white mb-2 sm:mb-3">
+                <p className="text-4xl font-heading font-bold text-white mb-3">
                   12+
                 </p>
                 <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
@@ -120,5 +118,3 @@ function AboutSection() {
     </section>
   );
 }
-
-export default React.memo(AboutSection);

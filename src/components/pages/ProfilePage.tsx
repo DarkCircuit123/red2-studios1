@@ -1,4 +1,3 @@
-import React from 'react';
 import { useMember } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -8,7 +7,7 @@ import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
 
-function ProfilePage() {
+export default function ProfilePage() {
   const { member, actions } = useMember();
 
   const handleLogout = () => {
@@ -151,5 +150,3 @@ function ProfilePage() {
     </div>
   );
 }
-
-export default React.memo(ProfilePage);

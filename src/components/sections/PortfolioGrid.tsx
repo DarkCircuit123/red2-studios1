@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -12,7 +11,7 @@ interface PortfolioGridProps {
   isLoading: boolean;
 }
 
-function PortfolioGrid({ items, isLoading }: PortfolioGridProps) {
+export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   // Use first 6 items or create placeholder items
@@ -146,5 +145,3 @@ function PortfolioGrid({ items, isLoading }: PortfolioGridProps) {
     </section>
   );
 }
-
-export default React.memo(PortfolioGrid);

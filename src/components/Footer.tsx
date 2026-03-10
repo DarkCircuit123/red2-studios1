@@ -1,21 +1,23 @@
-import React, { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Linkedin, Mail, Facebook } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
+import { useCallback, useMemo } from 'react';
 
-function Footer() {
+export default function Footer() {
   const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   const handleAnchorClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
     e.preventDefault();
     playClickSound();
     
+    // If not on homepage, navigate to homepage first
     const isHomePage = window.location.pathname === '/';
     if (!isHomePage) {
       window.location.href = `/${hash}`;
       return;
     }
     
+    // On homepage, scroll to element
     const element = document.querySelector(hash);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -24,8 +26,9 @@ function Footer() {
 
   return (
     <footer className="bg-black border-t border-white/10">
-      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-12 sm:mb-16">
+      <div className="max-w-[120rem] mx-auto px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+          {/* Brand */}
           <div>
             <h3 className="text-lg font-heading font-bold text-white mb-3 tracking-wide">
               RED2
@@ -35,6 +38,7 @@ function Footer() {
             </p>
           </div>
 
+          {/* Navigation */}
           <div>
             <h4 className="text-xs font-mono font-semibold text-white/40 mb-6 uppercase tracking-widest">
               Navigation
@@ -78,6 +82,7 @@ function Footer() {
             </ul>
           </div>
 
+          {/* Services */}
           <div>
             <h4 className="text-xs font-mono font-semibold text-white/40 mb-6 uppercase tracking-widest">
               Services
@@ -122,6 +127,7 @@ function Footer() {
             </ul>
           </div>
 
+          {/* Social */}
           <div>
             <h4 className="text-xs font-mono font-semibold text-white/40 mb-6 uppercase tracking-widest">
               Connect
@@ -165,30 +171,31 @@ function Footer() {
           </div>
         </div>
 
+        {/* Divider */}
         <div className="border-t border-white/10 pt-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs font-mono text-white/30">
               © {currentYear} Studio. All rights reserved.
             </p>
-            <div className="flex gap-4 sm:gap-6">
+            <div className="flex gap-6">
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest py-1"
+                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
               >
                 Privacy
               </a>
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest py-1"
+                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
               >
                 Terms
               </a>
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest py-1"
+                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
               >
                 Cookies
               </a>
@@ -199,5 +206,3 @@ function Footer() {
     </footer>
   );
 }
-
-export default React.memo(Footer);

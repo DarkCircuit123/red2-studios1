@@ -1,12 +1,9 @@
-import React from 'react';
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useVirtualList } from '@/hooks/useAdvancedOptimization';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Check, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useSEO } from '@/hooks/useSEO';
 
 interface BookingSlot {
   _id: string;
@@ -24,9 +21,7 @@ interface BookingRequest {
   message: string;
 }
 
-function BookingPage() {
-  // SEO optimization for booking page
-  useSEO('booking');
+export default function BookingPage() {
   const [bookings, setBookings] = useState<BookingSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
@@ -45,8 +40,7 @@ function BookingPage() {
         const result = await BaseCrudService.getAll<BookingSlot>('bookingavailability', {}, { limit: 100 });
         setBookings(result.items || []);
       } catch (error) {
-        console.error('Failed to load booking slots:', error);
-        // Keep empty array on error
+        console.error('Error loading bookings:', error);
       } finally {
         setIsLoading(false);
       }
@@ -55,92 +49,69 @@ function BookingPage() {
     loadBookings();
   }, []);
 
-  // derived values memoized to avoid recomputation on every render
-  const availableBookings = useMemo(
-    () => bookings.filter((b) => b.isAvailable),
-    [bookings]
-  );
+  const availableBookings = bookings.filter(b => b.isAvailable);
+  const groupedByDate = availableBookings.reduce((acc, booking) => {
+    const date = booking.bookingDate;
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(booking);
+    return acc;
+  }, {} as Record<string, BookingSlot[]>);
 
-  const groupedByDate = useMemo(
-    () =>
-      availableBookings.reduce((acc, booking) => {
-        const date = booking.bookingDate;
-        if (!acc[date]) acc[date] = [];
-        acc[date].push(booking);
-        return acc;
-      }, {} as Record<string, BookingSlot[]>),
-    [availableBookings]
-  );
-
-  // virtualization of date groups (helps when many days/slots)
-  const dateEntries = useMemo(() => Object.entries(groupedByDate), [groupedByDate]);
-  const { startIndex: startDateIndex, endIndex: endDateIndex, offset: dateOffset } = useVirtualList(
-    dateEntries,
-    { itemHeight: 200, buffer: 3 }
-  );
-
-  const handleSlotClick = useCallback((slot: BookingSlot) => {
+  const handleSlotClick = (slot: BookingSlot) => {
     setSelectedSlot(slot);
     setSubmitSuccess(false);
     setFormData({ name: '', email: '', phone: '', message: '' });
-  }, []);
+  };
 
-  const handleFormChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const { name, value } = e.target;
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    },
-    []
-  );
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-  const handleSubmitBooking = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!selectedSlot) return;
+  const handleSubmitBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSlot) return;
 
-      setIsSubmitting(true);
-      try {
-        // Format the date and time for the email
-        const formattedDate = new Date(selectedSlot.bookingDate).toLocaleDateString('en-US', {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric'
-        });
-        const dateTime = `${formattedDate} from ${selectedSlot.startTime} to ${selectedSlot.endTime}`;
+    setIsSubmitting(true);
+    try {
+      // Format the date and time for the email
+      const formattedDate = new Date(selectedSlot.bookingDate).toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric'
+      });
+      const dateTime = `${formattedDate} from ${selectedSlot.startTime} to ${selectedSlot.endTime}`;
 
-        // Send notification to admin via Wix backend function
-        const response = await fetch('/_functions/notifyAdmin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            sessionType: selectedSlot.sessionType,
-            dateTime: dateTime,
-            notes: formData.message || '(No additional notes)'
-          })
-        });
+      // Send notification to admin via Wix backend function
+      const response = await fetch('/_functions/notifyAdmin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          sessionType: selectedSlot.sessionType,
+          dateTime: dateTime,
+          notes: formData.message || '(No additional notes)'
+        })
+      });
 
-        if (!response.ok) {
-          throw new Error(`Failed to send booking notification: ${response.statusText}`);
-        }
-
-        setSubmitSuccess(true);
-        setSelectedSlot(null);
-        setFormData({ name: '', email: '', phone: '', message: '' });
-        setTimeout(() => setSubmitSuccess(false), 5000);
-      } catch (error) {
-        console.error('Failed to submit booking:', error);
-        // Error handled silently
-      } finally {
-        setIsSubmitting(false);
+      if (!response.ok) {
+        throw new Error(`Failed to send booking notification: ${response.statusText}`);
       }
-    },
-    [selectedSlot, formData]
-  );
+
+      setSubmitSuccess(true);
+      setSelectedSlot(null);
+      setFormData({ name: '', email: '', phone: '', message: '' });
+      setTimeout(() => setSubmitSuccess(false), 5000);
+    } catch (error) {
+      console.error('Error submitting booking:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -309,50 +280,48 @@ function BookingPage() {
             </motion.div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div style={{ paddingTop: dateOffset }}>
-                {dateEntries.slice(startDateIndex, endDateIndex).map(([date, slots], idx) => (
-                  <motion.div
-                    key={date}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="border border-white/10 rounded-lg p-6 hover:border-white/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 mb-4">
-                      <Calendar className="w-5 h-5 text-white/60" />
-                      <h3 className="text-lg font-heading font-bold">
-                        {new Date(date).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </h3>
-                    </div>
+              {Object.entries(groupedByDate).map(([date, slots], idx) => (
+                <motion.div
+                  key={date}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="border border-white/10 rounded-lg p-6 hover:border-white/30 transition-colors"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <Calendar className="w-5 h-5 text-white/60" />
+                    <h3 className="text-lg font-heading font-bold">
+                      {new Date(date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </h3>
+                  </div>
 
-                    <div className="space-y-3">
-                      {slots.map((slot) => (
-                        <button
-                          key={slot._id}
-                          onClick={() => handleSlotClick(slot)}
-                          className="w-full p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded transition-all duration-300 text-left hover:border-white/30"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-white/40" />
-                              <span className="text-sm font-mono">
-                                {slot.startTime} - {slot.endTime}
-                              </span>
-                            </div>
-                            <span className="text-xs text-white/50 uppercase tracking-wide">
-                              {slot.sessionType}
+                  <div className="space-y-3">
+                    {slots.map((slot) => (
+                      <button
+                        key={slot._id}
+                        onClick={() => handleSlotClick(slot)}
+                        className="w-full p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded transition-all duration-300 text-left hover:border-white/30"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-white/40" />
+                            <span className="text-sm font-mono">
+                              {slot.startTime} - {slot.endTime}
                             </span>
                           </div>
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+                          <span className="text-xs text-white/50 uppercase tracking-wide">
+                            {slot.sessionType}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
             </div>
           )}
 
@@ -377,5 +346,3 @@ function BookingPage() {
     </div>
   );
 }
-
-export default React.memo(BookingPage);

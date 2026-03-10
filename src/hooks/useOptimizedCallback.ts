@@ -29,32 +29,10 @@ export function useOptimizedCallback<T extends (...args: any[]) => any>(
     };
   }, []);
 
-  // simple deep comparison optimized for most use cases
-  const argsEqual = (a: any[], b: any[]): boolean => {
-    if (a === b) return true;
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) {
-      const x = a[i];
-      const y = b[i];
-      if (x === y) continue;
-      if (typeof x !== typeof y) return false;
-      if (x && y && typeof x === 'object') {
-        try {
-          if (JSON.stringify(x) !== JSON.stringify(y)) return false;
-        } catch {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    }
-    return true;
-  };
-
   return useCallback(
     ((...args: any[]) => {
       // Memoize args to prevent unnecessary calls
-      if (memoizeArgs && lastArgsRef.current && argsEqual(lastArgsRef.current, args)) {
+      if (memoizeArgs && lastArgsRef.current && JSON.stringify(lastArgsRef.current) === JSON.stringify(args)) {
         return;
       }
       lastArgsRef.current = args;

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { Edit2, Check, X } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -12,7 +11,7 @@ interface TextEditableFieldProps {
   placeholder?: string;
 }
 
-function TextEditableField({
+export default function TextEditableField({
   value,
   onSave,
   isEditable = true,
@@ -114,5 +113,3 @@ function TextEditableField({
     </motion.div>
   );
 }
-
-export default React.memo(TextEditableField);

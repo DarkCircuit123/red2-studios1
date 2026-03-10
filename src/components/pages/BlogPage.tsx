@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, User, ArrowLeft } from 'lucide-react';
@@ -8,11 +7,8 @@ import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
-import { useSEO } from '@/hooks/useSEO';
 
-function BlogPage() {
-  // SEO optimization for blog page
-  useSEO('blog');
+export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPosts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,8 +18,7 @@ function BlogPage() {
         const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 50 });
         setPosts(result.items || []);
       } catch (error) {
-        console.error('Failed to load blog posts:', error);
-        // Keep empty array on error
+        console.error('Error loading blog posts:', error);
       } finally {
         setIsLoading(false);
       }
@@ -158,5 +153,3 @@ function BlogPage() {
     </div>
   );
 }
-
-export default React.memo(BlogPage);

@@ -1,18 +1,18 @@
 ---
 import { Head } from "@/components/Head";
-import AppRoot from "@/components/AppRoot";
+import AppRouter from "@/components/Router";
 import "@wix/wix-vibe-plugins/plugins-vars.css";
 import "@wix/wix-vibe-plugins/plugins-theme.css";
 import "@/styles/global.css";
 ---
 
-<html lang="en">
+<html lang="en" class="w-full h-full">
   <head>
     <Head />
   </head>
-  <body>
-    <div id="root">
-      <AppRoot client:only="react" />
+  <body class="w-full h-full">
+    <div id="root" class="w-full h-full">
+      <AppRouter client:only="react" />
     </div>
   </body>
 </html>

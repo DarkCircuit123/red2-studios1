@@ -5,8 +5,6 @@
 
 import { useEffect, useRef, useCallback, useMemo, useState, DependencyList } from 'react';
 import { adaptiveLoadingManager, performanceMetricsCollector } from '@/lib/advanced-optimization';
-import { useOptimizedCallback } from './useOptimizedCallback';
-import { useEventListener } from './useEventListener';
 
 /**
  * useAsync Hook
@@ -21,27 +19,20 @@ export function useAsync<T, E = string>(
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<E | null>(null);
 
-  // use shared isMounted hook to avoid updating after unmount
-  const isMounted = useIsMounted();
-
   const execute = useCallback(async () => {
     setStatus('pending');
     setData(null);
     setError(null);
     try {
       const response = await asyncFunction();
-      if (isMounted()) {
-        setData(response);
-        setStatus('success');
-      }
+      setData(response);
+      setStatus('success');
       return response;
     } catch (error) {
-      if (isMounted()) {
-        setError(error as E);
-        setStatus('error');
-      }
+      setError(error as E);
+      setStatus('error');
     }
-  }, deps ? deps : [asyncFunction, isMounted]);
+  }, deps ? deps : [asyncFunction]);
 
   useEffect(() => {
     if (immediate) {
@@ -74,36 +65,13 @@ export function useDeepMemo<T>(factory: () => T, deps: DependencyList): T {
   const ref = useRef<T>();
   const signalRef = useRef<DependencyList>();
 
-  // naive recursive deep equal optimized for small dependency arrays
   const isDeepEqual = (a: DependencyList, b: DependencyList): boolean => {
     if (a === b) return true;
     if (!a || !b) return false;
     if (a.length !== b.length) return false;
 
-    const compare = (x: any, y: any): boolean => {
-      if (x === y) return true;
-      if (typeof x !== typeof y) return false;
-      if (x && y && typeof x === 'object') {
-        if (Array.isArray(x) && Array.isArray(y)) {
-          if (x.length !== y.length) return false;
-          for (let i = 0; i < x.length; i++) {
-            if (!compare(x[i], y[i])) return false;
-          }
-          return true;
-        }
-        const keysX = Object.keys(x);
-        const keysY = Object.keys(y);
-        if (keysX.length !== keysY.length) return false;
-        for (const key of keysX) {
-          if (!compare(x[key], y[key])) return false;
-        }
-        return true;
-      }
-      return false;
-    };
-
     for (let i = 0; i < a.length; i++) {
-      if (!compare(a[i], b[i])) {
+      if (JSON.stringify(a[i]) !== JSON.stringify(b[i])) {
         return false;
       }
     }
@@ -152,29 +120,80 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
 
 /**
  * useDebounceCallback Hook
- * Debounces callback execution; now backed by useOptimizedCallback for
- * consistent memoization and option expansion.
+ * Debounces callback execution
  */
 export function useDebounceCallback<T extends (...args: any[]) => any>(
   callback: T,
   delay: number,
-  deps: DependencyList = []
+  deps?: DependencyList
 ): T {
-  // include delay in deps so the wrapped hook can watch it
-  return useOptimizedCallback(callback, [...deps, delay], { debounceMs: delay });
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  const debouncedCallback = useCallback(
+    (...args: any[]) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    deps ? [...deps, delay] : [callback, delay]
+  ) as T;
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return debouncedCallback;
 }
 
 /**
  * useThrottleCallback Hook
- * Throttles callback execution; delegates to useOptimizedCallback for shared
- * logic.
+ * Throttles callback execution
  */
 export function useThrottleCallback<T extends (...args: any[]) => any>(
   callback: T,
   delay: number,
-  deps: DependencyList = []
+  deps?: DependencyList
 ): T {
-  return useOptimizedCallback(callback, [...deps, delay], { throttleMs: delay });
+  const lastRunRef = useRef<number>(0);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  const throttledCallback = useCallback(
+    (...args: any[]) => {
+      const now = Date.now();
+      const timeSinceLastRun = now - lastRunRef.current;
+
+      if (timeSinceLastRun >= delay) {
+        callback(...args);
+        lastRunRef.current = now;
+      } else {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+          callback(...args);
+          lastRunRef.current = Date.now();
+        }, delay - timeSinceLastRun);
+      }
+    },
+    deps ? [...deps, delay] : [callback, delay]
+  ) as T;
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return throttledCallback;
 }
 
 /**
@@ -186,12 +205,11 @@ export function useIntersectionObserverRef(
   options: IntersectionObserverInit = {}
 ) {
   const ref = useRef<HTMLDivElement>(null);
-  const { threshold, root, rootMargin } = options;
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       callback(entry.isIntersecting);
-    }, { threshold, root, rootMargin });
+    }, options);
 
     if (ref.current) {
       observer.observe(ref.current);
@@ -200,7 +218,7 @@ export function useIntersectionObserverRef(
     return () => {
       observer.disconnect();
     };
-  }, [callback, threshold, root, rootMargin]);
+  }, [callback, options]);
 
   return ref;
 }
@@ -214,13 +232,17 @@ export function useAdaptiveLoading() {
     adaptiveLoadingManager.getConnectionInfo()
   );
 
-  const updateConnectionInfo = useCallback(() => {
-    setConnectionInfo(adaptiveLoadingManager.getConnectionInfo());
-  }, []);
+  useEffect(() => {
+    const updateConnectionInfo = () => {
+      setConnectionInfo(adaptiveLoadingManager.getConnectionInfo());
+    };
 
-  // useEventListener makes the cleanup automatic and the listener stable
-  const connection = (navigator as any).connection;
-  useEventListener('change', updateConnectionInfo, undefined, connection);
+    const connection = (navigator as any).connection;
+    if (connection) {
+      connection.addEventListener('change', updateConnectionInfo);
+      return () => connection.removeEventListener('change', updateConnectionInfo);
+    }
+  }, []);
 
   return connectionInfo;
 }
@@ -287,17 +309,17 @@ export function useWindowSize() {
     height: typeof window !== 'undefined' ? window.innerHeight : 0,
   });
 
-  const update = useCallback(() => {
+  const handleResize = useThrottleCallback(() => {
     setWindowSize({
       width: window.innerWidth,
       height: window.innerHeight,
     });
-  }, []);
+  }, 150);
 
-  const handleResize = useThrottleCallback(update, 150, []);
-
-  // use the generalized event listener helper instead of manual effect
-  useEventListener('resize', handleResize, { passive: true });
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [handleResize]);
 
   return windowSize;
 }
@@ -341,66 +363,4 @@ export function useUpdateEffect(effect: () => void | (() => void), deps: Depende
     }
     return effect();
   }, deps);
-}
-
-/**
- * useDebouncedValue Hook
- * Returns a debounced version of a value that only updates after delay ms
- */
-export function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-
-  return debounced;
-}
-
-/**
- * useThrottledValue Hook
- * Returns a value that only updates at most once per `limit` ms
- */
-export function useThrottledValue<T>(value: T, limit: number): T {
-  const [throttled, setThrottled] = useState(value);
-  const lastRef = useRef(Date.now());
-
-  useEffect(() => {
-    const now = Date.now();
-    if (now - lastRef.current >= limit) {
-      setThrottled(value);
-      lastRef.current = now;
-    } else {
-      const handle = setTimeout(() => {
-        setThrottled(value);
-        lastRef.current = Date.now();
-      }, limit - (now - lastRef.current));
-      return () => clearTimeout(handle);
-    }
-  }, [value, limit]);
-
-  return throttled;
-}
-
-/**
- * useVirtualList
- * Provides start/end indices for rendering a windowed subset of an array.
- * Only supports fixed-height items.
- */
-export function useVirtualList(
-  itemCount: number,
-  itemHeight: number,
-  containerHeight: number,
-  scrollTop: number
-) {
-  const startIndex = Math.floor(scrollTop / itemHeight);
-  const endIndex = Math.min(itemCount - 1, Math.floor((scrollTop + containerHeight) / itemHeight));
-  const offset = startIndex * itemHeight;
-
-  return {
-    startIndex,
-    endIndex,
-    offset,
-  };
 }

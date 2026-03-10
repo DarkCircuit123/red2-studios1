@@ -12,7 +12,6 @@ interface UseIntersectionObserverOptions {
 }
 
 export function useIntersectionObserver<T extends HTMLElement>(
-  callback: (isVisible: boolean) => void,
   options: UseIntersectionObserverOptions = {}
 ) {
   const {
@@ -28,10 +27,7 @@ export function useIntersectionObserver<T extends HTMLElement>(
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const visible = entry.isIntersecting;
-        callback(visible);
-
-        if (visible) {
+        if (entry.isIntersecting) {
           setIsVisible(true);
           setHasBeenVisible(true);
 
@@ -60,7 +56,7 @@ export function useIntersectionObserver<T extends HTMLElement>(
       }
       observer.disconnect();
     };
-  }, [callback, threshold, rootMargin, triggerOnce]);
+  }, [threshold, rootMargin, triggerOnce]);
 
   return {
     ref,

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useRef } from 'react';
 import { Upload, X } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -14,7 +13,7 @@ interface ImageUploadManagerProps {
   fieldName?: string;
 }
 
-function ImageUploadManager({
+export default function ImageUploadManager({
   onImageUpload,
   currentImage,
   label = 'Upload Image',
@@ -77,7 +76,8 @@ function ImageUploadManager({
                     setIsProcessing(false);
                   };
                   reader.readAsDataURL(blob);
-                } catch {
+                } catch (error) {
+                  console.error('Error saving to CMS:', error);
                   onImageUpload(url);
                   setIsProcessing(false);
                 }
@@ -92,7 +92,8 @@ function ImageUploadManager({
         img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
-    } catch {
+    } catch (error) {
+      console.error('Error processing image:', error);
       setIsProcessing(false);
     }
   };
@@ -161,5 +162,3 @@ function ImageUploadManager({
     </div>
   );
 }
-
-export default React.memo(ImageUploadManager);

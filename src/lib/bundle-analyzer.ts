@@ -62,42 +62,24 @@ export async function lazyLoadModule<T>(
 }
 
 /**
- * Code splitting strategy - STATIC IMPORTS ONLY
- * All dynamic imports have been replaced with static imports to prevent repeated fetch attempts
+ * Code splitting strategy
  */
-import HomePage from '@/components/pages/HomePage';
-import PortfolioPage from '@/components/pages/PortfolioPage';
-import BookingPage from '@/components/pages/BookingPage';
-import ClientGalleriesPage from '@/components/pages/ClientGalleriesPage';
-import BlogPage from '@/components/pages/BlogPage';
-import ProfilePage from '@/components/pages/ProfilePage';
-import PrivatePage from '@/components/pages/PrivatePage';
-import HangmanGamePage from '@/components/pages/HangmanGamePage';
-import Interactive3DGallerySection from '@/components/sections/Interactive3DGallerySection';
-import BlogSection from '@/components/sections/BlogSection';
-import ContactSection from '@/components/sections/ContactSection';
-
 export const codeSpittingStrategy = {
-  // Split by route - static imports
+  // Split by route
   routes: {
-    home: () => Promise.resolve({ default: HomePage }),
-    portfolio: () => Promise.resolve({ default: PortfolioPage }),
-    booking: () => Promise.resolve({ default: BookingPage }),
-    galleries: () => Promise.resolve({ default: ClientGalleriesPage }),
-    blog: () => Promise.resolve({ default: BlogPage }),
-    profile: () => Promise.resolve({ default: ProfilePage }),
-    private: () => Promise.resolve({ default: PrivatePage }),
-    play: () => Promise.resolve({ default: HangmanGamePage }),
+    home: () => import('@/components/pages/HomePage'),
+    portfolio: () => import('@/components/pages/PortfolioPage'),
+    booking: () => import('@/components/pages/BookingPage'),
   },
 
-  // Split by feature - static imports
+  // Split by feature
   features: {
-    gallery: () => Promise.resolve({ default: Interactive3DGallerySection }),
-    blog: () => Promise.resolve({ default: BlogSection }),
-    contact: () => Promise.resolve({ default: ContactSection }),
+    gallery: () => import('@/components/sections/Interactive3DGallerySection'),
+    blog: () => import('@/components/sections/BlogSection'),
+    contact: () => import('@/components/sections/ContactSection'),
   },
 
-  // Split by vendor - static imports
+  // Split by vendor
   vendors: {
     framerMotion: () => import('framer-motion'),
     recharts: () => import('recharts'),

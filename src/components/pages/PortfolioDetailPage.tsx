@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -11,7 +10,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
 
-function PortfolioDetailPage() {
+export default function PortfolioDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Portfolio | null>(null);
@@ -32,8 +31,7 @@ function PortfolioDetailPage() {
         const projectData = await BaseCrudService.getById<Portfolio>('portfolio', id);
         setProject(projectData);
       } catch (error) {
-        console.error('Failed to load portfolio project:', error);
-        // Keep empty state on error
+        console.error('Error loading project:', error);
       } finally {
         setIsLoading(false);
       }
@@ -307,5 +305,3 @@ function PortfolioDetailPage() {
     </div>
   );
 }
-
-export default React.memo(PortfolioDetailPage);

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Rss } from 'lucide-react';
@@ -9,7 +8,7 @@ interface RSSItem {
   pubDate: string;
 }
 
-function RSSTickerSection() {
+export default function RSSTickerSection() {
   const [items, setItems] = useState<RSSItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -18,15 +17,16 @@ function RSSTickerSection() {
     const fetchRSS = async () => {
       try {
         setIsLoading(true);
-        // Using Vogue RSS feed - one of the most active and prestigious fashion feeds
-        const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.vogue.com/feed/rss';
+        // Using a reliable photography RSS feed - 500px Photography
+        // We'll use a CORS proxy to fetch the RSS feed
+        const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.500px.com/stories.xml';
         
         const response = await fetch(rssUrl);
         const data = await response.json();
 
         if (data.items && data.items.length > 0) {
-          const feedItems = data.items.slice(0, 15).map((item: any) => ({
-            title: item.title || 'Fashion Update',
+          const feedItems = data.items.slice(0, 20).map((item: any) => ({
+            title: item.title || 'Photography Update',
             link: item.link || '#',
             pubDate: item.pubDate || new Date().toISOString(),
           }));
@@ -35,33 +35,33 @@ function RSSTickerSection() {
         } else {
           setError(true);
         }
-      } catch (error) {
-        console.error('Failed to fetch RSS feed:', error);
+      } catch (err) {
+        console.error('Error fetching RSS:', err);
         setError(true);
-        // Fallback items if RSS fails - fashion-themed content
+        // Fallback items if RSS fails
         setItems([
           {
-            title: 'Spring Fashion Trends: What\'s Hot This Season',
+            title: 'Exploring Light and Shadow in Modern Photography',
             link: '#',
             pubDate: new Date().toISOString(),
           },
           {
-            title: 'Luxury Brands Redefine Elegance for 2026',
+            title: 'The Art of Composition: A Photographers Guide',
             link: '#',
             pubDate: new Date().toISOString(),
           },
           {
-            title: 'Sustainable Fashion: The Future of Style',
+            title: 'Mastering Portrait Photography Techniques',
             link: '#',
             pubDate: new Date().toISOString(),
           },
           {
-            title: 'Runway Highlights: Designer Collections Unveiled',
+            title: 'Digital vs Film: The Eternal Debate',
             link: '#',
             pubDate: new Date().toISOString(),
           },
           {
-            title: 'Celebrity Style: Icons Setting Fashion Standards',
+            title: 'Capturing Moments: The Essence of Street Photography',
             link: '#',
             pubDate: new Date().toISOString(),
           },
@@ -88,7 +88,7 @@ function RSSTickerSection() {
         <div className="max-w-[120rem] mx-auto px-8 mb-6 flex items-center gap-3">
           <Rss className="w-4 h-4 text-red-900" />
           <span className="text-xs font-mono text-red-900 uppercase tracking-widest">
-            Fashion Feed • Vogue
+            Photography Feed
           </span>
         </div>
 
@@ -123,5 +123,3 @@ function RSSTickerSection() {
     </section>
   );
 }
-
-export default React.memo(RSSTickerSection);

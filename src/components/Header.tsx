@@ -1,42 +1,19 @@
-import React, { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
-import { usePrefetchOnHover } from '@/hooks/usePrefetchOnHover';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
 import { playClickSound } from '@/lib/click-sound';
+import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
-import { motion } from 'framer-motion';
 
-function Header() {
+export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [logoFaded, setLogoFaded] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
 
-  const handleLogoClick = useCallback(() => {
-    if (!logoFaded) {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
-      
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
-      
-      setLogoFaded(true);
-    }
-  }, [logoFaded]);
-
+  // Optimized throttled scroll handler with useThrottleCallback
   const handleScroll = useThrottleCallback(() => {
     setScrolled(window.scrollY > 50);
   }, 100);
@@ -53,16 +30,19 @@ function Header() {
   const handleAnchorClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
     e.preventDefault();
     playClickSound();
-
+    
+    // If not on homepage, navigate to homepage first
     const isHomePage = window.location.pathname === '/';
     if (!isHomePage) {
       window.location.href = `/?scroll=${hash.substring(1)}`;
       return;
     }
-
+    
+    // On homepage, scroll to element with optimized timing
     const scrollToElement = () => {
       const element = document.querySelector(hash);
       if (element) {
+        // Add extra offset for fixed header
         const headerHeight = 80;
         const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
         window.scrollTo({
@@ -71,49 +51,40 @@ function Header() {
         });
       }
     };
-
+    
+    // Try immediately and with optimized delays
     scrollToElement();
     const timeout1 = setTimeout(scrollToElement, 100);
     const timeout2 = setTimeout(scrollToElement, 300);
-
+    
     return () => {
       clearTimeout(timeout1);
       clearTimeout(timeout2);
     };
   }, []);
 
-  const headerClass = useMemo(() => 
-    `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled
-        ? 'bg-black/95 backdrop-blur-md border-b border-white/10'
-        : 'bg-transparent'
-    }`,
-    [scrolled]
-  );
-
   return (
-    <header className={headerClass}>
-      <nav className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-4 sm:py-5 flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent shadow-[inset_0px_0px_4px_0px_#bfbfbf] opacity-[1] mix-blend-normal">
-        <motion.div
-          initial={{ opacity: 1 }}
-          animate={{ opacity: logoFaded ? 0 : 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'bg-black/95 backdrop-blur-md border-b border-white/10'
+          : 'bg-transparent'
+      }`}
+    >
+      <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent shadow-[inset_0px_0px_4px_0px_#bfbfbf] opacity-[1] mix-blend-normal">
+        {/* Logo - Text-based RED² */}
+        <Link
+          to="/"
+          onClick={handleLinkClick}
+          className="relative flex items-center gap-0"
         >
-          <Link
-            to="/"
-            onClick={() => {
-              handleLogoClick();
-              handleLinkClick();
-            }}
-            className="relative flex items-center gap-0"
-          >
-            <span className="text-xl sm:text-2xl font-heading font-bold text-white tracking-tight">
-              RED<span className="text-primary">²</span>
-            </span>
-          </Link>
-        </motion.div>
+          <span className="text-2xl font-heading font-bold text-white tracking-tight">
+            RED<span className="text-primary">²</span>
+          </span>
+        </Link>
 
-        <div className="hidden md:flex items-center gap-8 lg:gap-12">
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-12">
           <a
             href="#portfolio"
             onClick={(e) => handleAnchorClick(e, '#portfolio')}
@@ -131,7 +102,6 @@ function Header() {
           <Link
             to="/portfolio"
             onClick={handleLinkClick}
-            onMouseEnter={usePrefetchOnHover('portfolio')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Work
@@ -139,7 +109,6 @@ function Header() {
           <Link
             to="/booking"
             onClick={handleLinkClick}
-            onMouseEnter={usePrefetchOnHover('booking')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Booking
@@ -147,7 +116,6 @@ function Header() {
           <Link
             to="/galleries"
             onClick={handleLinkClick}
-            onMouseEnter={usePrefetchOnHover('galleries')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Galleries
@@ -162,7 +130,6 @@ function Header() {
           <Link
             to="/private"
             onClick={handleLinkClick}
-            onMouseEnter={usePrefetchOnHover('private')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Private
@@ -170,22 +137,15 @@ function Header() {
           <Link
             to="/play"
             onClick={handleLinkClick}
-            onMouseEnter={usePrefetchOnHover('play')}
             className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
           >
             Play
           </Link>
-          <Link
-            to="/chat"
-            onClick={handleLinkClick}
-            onMouseEnter={usePrefetchOnHover('chat')}
-            className="text-xs font-mono text-white/60 hover:text-white transition-colors duration-300 uppercase tracking-widest"
-          >
-            Chat
-          </Link>
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-6">
+        {/* Admin & Mobile Menu */}
+        <div className="flex items-center gap-6">
+          {/* Auth Links */}
           {!isLoading && (
             <>
               {isAuthenticated ? (
@@ -223,11 +183,11 @@ function Header() {
           )}
 
           <button
-            onClick={() => {
+            onClick={useCallback(() => {
               playClickSound();
               setIsAdminOpen(true);
-            }}
-            className="p-2 hover:bg-white/10 transition-colors duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            }, [])}
+            className="p-2 hover:bg-white/10 transition-colors duration-300"
             aria-label="Admin panel"
             title="Admin Panel"
           >
@@ -235,11 +195,11 @@ function Header() {
           </button>
 
           <button
-            onClick={() => {
+            onClick={useCallback(() => {
               playClickSound();
               setIsOpen(prev => !prev);
-            }}
-            className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            }, [])}
+            className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300"
             aria-label="Toggle menu"
           >
             {isOpen ? (
@@ -250,15 +210,15 @@ function Header() {
           </button>
         </div>
       </nav>
-      <Suspense fallback={null}>
-        <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
-      </Suspense>
+      {/* Admin Panel */}
+      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+      {/* Mobile Navigation */}
       {isOpen && (
-        <div className="md:hidden bg-black/95 border-t border-white/10 backdrop-blur-md max-h-[calc(100vh-80px)] overflow-y-auto">
-          <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-6 flex flex-col gap-6">
+        <div className="md:hidden bg-black/95 border-t border-white/10 backdrop-blur-md">
+          <div className="max-w-[120rem] mx-auto px-8 py-6 flex flex-col gap-6">
             <a
               href="#portfolio"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={(e) => {
                 handleAnchorClick(e, '#portfolio');
                 setIsOpen(false);
@@ -268,7 +228,7 @@ function Header() {
             </a>
             <a
               href="#about"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={(e) => {
                 handleAnchorClick(e, '#about');
                 setIsOpen(false);
@@ -278,8 +238,7 @@ function Header() {
             </a>
             <Link
               to="/portfolio"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
-              onMouseEnter={usePrefetchOnHover('portfolio')}
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -289,8 +248,7 @@ function Header() {
             </Link>
             <Link
               to="/booking"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
-              onMouseEnter={usePrefetchOnHover('booking')}
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -300,8 +258,7 @@ function Header() {
             </Link>
             <Link
               to="/galleries"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
-              onMouseEnter={usePrefetchOnHover('galleries')}
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -311,7 +268,7 @@ function Header() {
             </Link>
             <a
               href="#contact"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={(e) => {
                 handleAnchorClick(e, '#contact');
                 setIsOpen(false);
@@ -321,8 +278,7 @@ function Header() {
             </a>
             <Link
               to="/private"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
-              onMouseEnter={usePrefetchOnHover('private')}
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -332,8 +288,7 @@ function Header() {
             </Link>
             <Link
               to="/play"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
-              onMouseEnter={usePrefetchOnHover('play')}
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
               onClick={() => {
                 handleLinkClick();
                 setIsOpen(false);
@@ -341,43 +296,35 @@ function Header() {
             >
               Play
             </Link>
-            <Link
-              to="/chat"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
-              onMouseEnter={usePrefetchOnHover('chat')}
-              onClick={() => {
-                handleLinkClick();
-                setIsOpen(false);
-              }}
-            >
-              Chat
-            </Link>
+            {/* Mobile Auth */}
             {!isLoading && (
               <>
                 {isAuthenticated ? (
-                  <div className="border-t border-white/10 pt-6">
-                    <Link
-                      to="/profile"
-                      className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest block mb-4 py-2"
-                      onClick={() => {
-                        handleLinkClick();
-                        setIsOpen(false);
-                      }}
-                    >
-                      {member?.profile?.nickname || 'Profile'}
-                    </Link>
-                    <button
-                      onClick={() => {
-                        playClickSound();
-                        actions.logout();
-                        setIsOpen(false);
-                      }}
-                      className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2 py-2"
-                    >
-                      <LogOut className="w-3 h-3" />
-                      Sign Out
-                    </button>
-                  </div>
+                  <>
+                    <div className="border-t border-white/10 pt-6">
+                      <Link
+                        to="/profile"
+                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest block mb-4"
+                        onClick={() => {
+                          handleLinkClick();
+                          setIsOpen(false);
+                        }}
+                      >
+                        {member?.profile?.nickname || 'Profile'}
+                      </Link>
+                      <button
+                        onClick={() => {
+                          playClickSound();
+                          actions.logout();
+                          setIsOpen(false);
+                        }}
+                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2"
+                      >
+                        <LogOut className="w-3 h-3" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <div className="border-t border-white/10 pt-6">
                     <button
@@ -386,7 +333,7 @@ function Header() {
                         actions.login();
                         setIsOpen(false);
                       }}
-                      className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest py-2"
+                      className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
                     >
                       Client Login
                     </button>
@@ -400,5 +347,3 @@ function Header() {
     </header>
   );
 }
-
-export default React.memo(Header);
