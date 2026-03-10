@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { usePrefetchOnHover } from '@/hooks/usePrefetchOnHover';
 import { Link } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { playClickSound } from '@/lib/click-sound';
-import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
-import { useCSPNonce } from '@/lib/security-enhanced';
 import { motion } from 'framer-motion';
 
 function Header() {
@@ -17,8 +14,6 @@ function Header() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [logoFaded, setLogoFaded] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
-
-  const nonce = useCSPNonce();
 
   const handleLogoClick = useCallback(() => {
     if (!logoFaded) {
@@ -42,23 +37,6 @@ function Header() {
     }
   }, [logoFaded]);
 
-  useEffect(() => {
-    if (nonce && typeof document !== 'undefined') {
-      const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-      if (meta) {
-        let content = meta.getAttribute('content') || '';
-        if (!content.includes(`'nonce-${nonce}'`)) {
-          content += `; script-src 'self' 'nonce-${nonce}'`;
-          meta.setAttribute('content', content);
-        }
-      } else {
-        const newMeta = document.createElement('meta');
-        newMeta.httpEquiv = 'Content-Security-Policy';
-        newMeta.content = `script-src 'self' 'nonce-${nonce}'`;
-        document.head.appendChild(newMeta);
-      }
-    }
-  }, [nonce]);
   const handleScroll = useThrottleCallback(() => {
     setScrolled(window.scrollY > 50);
   }, 100);

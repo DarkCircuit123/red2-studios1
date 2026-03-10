@@ -5,7 +5,6 @@ import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import SEOOptimizer from '@/components/SEOOptimizer';
-import { useContentProtection } from '@/hooks/useContentProtection';
 import { AppInitializer } from '@/components/AppInitializer';
 
 // Import all pages with explicit static imports
@@ -23,7 +22,6 @@ import ChatPage from './pages/ChatPage';
 import Red2TerminalPage from './pages/Red2TerminalPage';
 
 function Layout() {
-  useContentProtection(true);
   return (
     <>
       <AppInitializer />
