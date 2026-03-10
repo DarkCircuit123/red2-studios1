@@ -27,6 +27,16 @@ export default function Header() {
     playClickSound();
   }, []);
 
+  const handleAdminClick = useCallback(() => {
+    playClickSound();
+    setIsAdminOpen(true);
+  }, []);
+
+  const handleMobileMenuClick = useCallback(() => {
+    playClickSound();
+    setIsOpen(prev => !prev);
+  }, []);
+
   const handleAnchorClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
     e.preventDefault();
     playClickSound();
@@ -191,10 +201,7 @@ export default function Header() {
           )}
 
           <button
-            onClick={useCallback(() => {
-              playClickSound();
-              setIsAdminOpen(true);
-            }, [])}
+            onClick={handleAdminClick}
             className="p-2 hover:bg-white/10 transition-colors duration-300"
             aria-label="Admin panel"
             title="Admin Panel"
@@ -203,10 +210,7 @@ export default function Header() {
           </button>
 
           <button
-            onClick={useCallback(() => {
-              playClickSound();
-              setIsOpen(prev => !prev);
-            }, [])}
+            onClick={handleMobileMenuClick}
             className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300"
             aria-label="Toggle menu"
           >

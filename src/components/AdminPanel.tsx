@@ -22,47 +22,57 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
 
   useEffect(() => {
     const loadImages = async () => {
+      if (!isOpen) return;
+      
       setIsLoading(true);
       try {
         // Load homepage images (hero image is stored here)
         try {
           const homepageImagesResult = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
-          if (homepageImagesResult.items && homepageImagesResult.items.length > 0) {
+          if (homepageImagesResult?.items && homepageImagesResult.items.length > 0) {
             setHomepageImages(homepageImagesResult.items[0]);
           }
         } catch (error) {
           console.warn('Failed to load homepage images:', error);
+          setHomepageImages(null);
         }
 
         // Load portfolio items
         try {
           const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
-          if (portfolioResult.items) {
+          if (portfolioResult?.items) {
             setPortfolioItems(portfolioResult.items);
+          } else {
+            setPortfolioItems([]);
           }
         } catch (error) {
           console.warn('Failed to load portfolio items:', error);
+          setPortfolioItems([]);
         }
 
         // Load sponsors/clients
         try {
           const sponsorsResult = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
-          if (sponsorsResult.items) {
+          if (sponsorsResult?.items) {
             setSponsors(sponsorsResult.items);
+          } else {
+            setSponsors([]);
           }
         } catch (error) {
           console.warn('Failed to load sponsors:', error);
+          setSponsors([]);
         }
       } catch (error) {
         console.error('Error loading images:', error);
+        setHomepageImages(null);
+        setPortfolioItems([]);
+        setSponsors([]);
       } finally {
         setIsLoading(false);
       }
     };
     
-    if (isOpen) {
-      loadImages();
-    }
+    loadImages();
   }, [isOpen]);
 
   return (
