@@ -7,11 +7,10 @@ import { BaseCrudService } from '@/integrations';
 // Static sound effect utility
 const playStaticSound = () => {
   const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-  const bufferSize = audioContext.sampleRate * 0.5; // 0.5 seconds
+  const bufferSize = audioContext.sampleRate * 0.5;
   const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
   const data = buffer.getChannelData(0);
   
-  // Generate white noise
   for (let i = 0; i < bufferSize; i++) {
     data[i] = Math.random() * 2 - 1;
   }
@@ -62,7 +61,6 @@ function SplashScreen({ onComplete }: SplashScreenProps) {
   }, []);
 
   useEffect(() => {
-    // Logo visible for 2 seconds, then glitch for 0.5 seconds, then fade out
     const glitchTimer = setTimeout(() => {
       setGlitchActive(true);
       playStaticSound();
@@ -89,7 +87,6 @@ function SplashScreen({ onComplete }: SplashScreenProps) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5, delay: 3 }}
     >
-      {/* Background video loop - optional */}
       {videoUrl && (
         <video
           autoPlay
@@ -104,7 +101,6 @@ function SplashScreen({ onComplete }: SplashScreenProps) {
 
       <div className="absolute inset-0 bg-black" />
 
-      {/* Animated logo container */}
       <motion.div
         className="relative z-10"
         initial={{ 
@@ -142,7 +138,6 @@ function SplashScreen({ onComplete }: SplashScreenProps) {
         />
       </motion.div>
 
-      {/* Fade out animation */}
       <motion.div
         className="absolute inset-0 bg-black"
         initial={{ opacity: 0 }}

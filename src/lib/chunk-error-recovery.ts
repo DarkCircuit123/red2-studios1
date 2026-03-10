@@ -19,8 +19,6 @@ export function initializeChunkErrorRecovery(config: Partial<ChunkErrorConfig> =
   const stored = sessionStorage.getItem(RELOAD_ATTEMPTS_KEY);
   reloadAttempts = stored ? parseInt(stored, 10) : 0;
 
-  // Only listen for chunk errors - NOT for "Failed to fetch" errors from dynamic imports
-  // since we now use static imports for Router
   window.addEventListener('error', (event: ErrorEvent) => {
     if (isChunkError(event.error) && !event.error?.message?.includes('Router')) {
       handleChunkError(event.error, finalConfig);

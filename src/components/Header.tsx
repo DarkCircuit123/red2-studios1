@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
 import { usePrefetchOnHover } from '@/hooks/usePrefetchOnHover';
 import { Link } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
@@ -82,16 +82,18 @@ function Header() {
     };
   }, []);
 
+  const headerClass = useMemo(() => 
+    `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled
+        ? 'bg-black/95 backdrop-blur-md border-b border-white/10'
+        : 'bg-transparent'
+    }`,
+    [scrolled]
+  );
+
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-black/95 backdrop-blur-md border-b border-white/10'
-          : 'bg-transparent'
-      }`}
-    >
+    <header className={headerClass}>
       <nav className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-4 sm:py-5 flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent shadow-[inset_0px_0px_4px_0px_#bfbfbf] opacity-[1] mix-blend-normal">
-        {/* Logo - Text-based RED² - mobile optimized */}
         <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: logoFaded ? 0 : 1 }}
@@ -111,7 +113,6 @@ function Header() {
           </Link>
         </motion.div>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8 lg:gap-12">
           <a
             href="#portfolio"
@@ -184,9 +185,7 @@ function Header() {
           </Link>
         </div>
 
-        {/* Admin & Mobile Menu */}
         <div className="flex items-center gap-3 sm:gap-6">
-          {/* Auth Links */}
           {!isLoading && (
             <>
               {isAuthenticated ? (
@@ -251,11 +250,9 @@ function Header() {
           </button>
         </div>
       </nav>
-      {/* Admin Panel */}
       <Suspense fallback={null}>
         <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
       </Suspense>
-      {/* Mobile Navigation */}
       {isOpen && (
         <div className="md:hidden bg-black/95 border-t border-white/10 backdrop-blur-md max-h-[calc(100vh-80px)] overflow-y-auto">
           <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-6 flex flex-col gap-6">
@@ -355,35 +352,32 @@ function Header() {
             >
               Chat
             </Link>
-            {/* Mobile Auth */}
             {!isLoading && (
               <>
                 {isAuthenticated ? (
-                  <>
-                    <div className="border-t border-white/10 pt-6">
-                      <Link
-                        to="/profile"
-                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest block mb-4 py-2"
-                        onClick={() => {
-                          handleLinkClick();
-                          setIsOpen(false);
-                        }}
-                      >
-                        {member?.profile?.nickname || 'Profile'}
-                      </Link>
-                      <button
-                        onClick={() => {
-                          playClickSound();
-                          actions.logout();
-                          setIsOpen(false);
-                        }}
-                        className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2 py-2"
-                      >
-                        <LogOut className="w-3 h-3" />
-                        Sign Out
-                      </button>
-                    </div>
-                  </>
+                  <div className="border-t border-white/10 pt-6">
+                    <Link
+                      to="/profile"
+                      className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest block mb-4 py-2"
+                      onClick={() => {
+                        handleLinkClick();
+                        setIsOpen(false);
+                      }}
+                    >
+                      {member?.profile?.nickname || 'Profile'}
+                    </Link>
+                    <button
+                      onClick={() => {
+                        playClickSound();
+                        actions.logout();
+                        setIsOpen(false);
+                      }}
+                      className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-2 py-2"
+                    >
+                      <LogOut className="w-3 h-3" />
+                      Sign Out
+                    </button>
+                  </div>
                 ) : (
                   <div className="border-t border-white/10 pt-6">
                     <button

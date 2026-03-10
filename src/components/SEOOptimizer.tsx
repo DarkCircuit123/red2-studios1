@@ -1,8 +1,3 @@
-/**
- * SEO Optimizer Component
- * Initializes all SEO optimizations on app load
- */
-
 import { useEffect } from 'react';
 import { initializeSEOPerformance } from '@/lib/performance-seo';
 import { generateSitemap, STATIC_ROUTES } from '@/lib/sitemap-generator';
@@ -16,35 +11,19 @@ import { SecurityHeadersManager, cspManager } from '@/lib/security-enhanced';
 
 export function SEOOptimizer() {
   useEffect(() => {
-    // Initialize performance optimizations
     initializeSEOPerformance();
-
-    // Initialize image optimizations
     initializeImageOptimizations();
-
-    // Initialize GPU animations
     initializeGPUAnimations();
-
-    // Initialize internal linking
     initializeInternalLinking();
-
-    // Setup semantic HTML structure
     setupSemanticStructure();
-
-    // Apply security headers
     SecurityHeadersManager.applyHeaders();
     cspManager.applyToMeta();
 
-    // Generate sitemap
     const sitemap = generateSitemap(STATIC_ROUTES);
 
-    // Inject organization schema
     injectSchema(getOrganizationSchema(), 'org-schema');
-
-    // Inject local business schema
     injectSchema(getLocalBusinessSchema(), 'local-business-schema');
 
-    // Setup page SEO with Open Graph tags
     setupPageSEO({
       title: 'RED² Photography Studio - Professional Photography Services',
       description: 'Professional photography studio specializing in portraits, commercial photography, and studio services. Book your session today.',

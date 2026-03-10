@@ -1,8 +1,3 @@
-/**
- * Enhanced Error Boundary with recovery strategies
- * Provides graceful error handling and recovery mechanisms
- */
-
 import React, { ReactNode, ErrorInfo } from 'react';
 
 interface ErrorBoundaryProps {
@@ -18,9 +13,6 @@ interface ErrorBoundaryState {
   errorCount: number;
 }
 
-/**
- * Enhanced Error Boundary Component
- */
 export class EnhancedErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   private resetTimeout: NodeJS.Timeout | null = null;
 
@@ -74,12 +66,10 @@ export class EnhancedErrorBoundary extends React.Component<ErrorBoundaryProps, E
 
   render(): ReactNode {
     if (this.state.hasError && this.state.error) {
-      // Use custom fallback if provided
       if (this.props.fallback) {
         return this.props.fallback(this.state.error, this.reset);
       }
 
-      // Default fallback UI
       return (
         <div
           style={{
@@ -120,9 +110,6 @@ export class EnhancedErrorBoundary extends React.Component<ErrorBoundaryProps, E
   }
 }
 
-/**
- * Error recovery strategies
- */
 export class ErrorRecoveryManager {
   private recoveryStrategies: Map<string, () => Promise<void>> = new Map();
 
@@ -144,36 +131,27 @@ export class ErrorRecoveryManager {
     }
   }
 
-  // Built-in recovery strategies
   static readonly strategies = {
     networkError: async () => {
-      // Retry with exponential backoff
       await new Promise((resolve) => setTimeout(resolve, 1000));
     },
 
     memoryError: async () => {
-      // Clear caches and force garbage collection
       if ('gc' in window) {
         (window as any).gc();
       }
     },
 
     renderError: async () => {
-      // Force re-render
       window.location.reload();
     },
   };
 }
 
-// Global error recovery manager
 export const errorRecoveryManager = new ErrorRecoveryManager();
 
-/**
- * Hook for error handling
- */
 export function useErrorHandler() {
-  const handleError = (error: Error, context?: string): void => {
-    // Send to error tracking service (e.g., Sentry)
+  const handleError = (error: Error): void => {
     if (typeof window !== 'undefined' && (window as any).Sentry) {
       (window as any).Sentry.captureException(error);
     }
@@ -182,12 +160,8 @@ export function useErrorHandler() {
   return { handleError };
 }
 
-/**
- * Async error handler wrapper
- */
 export async function withErrorHandling<T>(
-  fn: () => Promise<T>,
-  context?: string
+  fn: () => Promise<T>
 ): Promise<T | null> {
   try {
     return await fn();

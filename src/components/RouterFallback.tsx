@@ -1,7 +1,3 @@
-/**
- * Fallback component for Router when it fails to load
- * This ensures the site continues to render even if Router.tsx is unavailable
- */
 export default function RouterFallback() {
   return (
     <div

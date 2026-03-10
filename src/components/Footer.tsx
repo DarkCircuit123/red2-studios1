@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Linkedin, Mail, Facebook } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
-import { useCallback, useMemo } from 'react';
 
 function Footer() {
   const currentYear = useMemo(() => new Date().getFullYear(), []);
@@ -11,14 +10,12 @@ function Footer() {
     e.preventDefault();
     playClickSound();
     
-    // If not on homepage, navigate to homepage first
     const isHomePage = window.location.pathname === '/';
     if (!isHomePage) {
       window.location.href = `/${hash}`;
       return;
     }
     
-    // On homepage, scroll to element
     const element = document.querySelector(hash);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -29,7 +26,6 @@ function Footer() {
     <footer className="bg-black border-t border-white/10">
       <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-12 sm:mb-16">
-          {/* Brand */}
           <div>
             <h3 className="text-lg font-heading font-bold text-white mb-3 tracking-wide">
               RED2
@@ -39,7 +35,6 @@ function Footer() {
             </p>
           </div>
 
-          {/* Navigation */}
           <div>
             <h4 className="text-xs font-mono font-semibold text-white/40 mb-6 uppercase tracking-widest">
               Navigation
@@ -83,7 +78,6 @@ function Footer() {
             </ul>
           </div>
 
-          {/* Services */}
           <div>
             <h4 className="text-xs font-mono font-semibold text-white/40 mb-6 uppercase tracking-widest">
               Services
@@ -128,7 +122,6 @@ function Footer() {
             </ul>
           </div>
 
-          {/* Social */}
           <div>
             <h4 className="text-xs font-mono font-semibold text-white/40 mb-6 uppercase tracking-widest">
               Connect
@@ -172,7 +165,6 @@ function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
             <p className="text-xs font-mono text-white/30">

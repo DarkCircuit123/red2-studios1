@@ -2,10 +2,6 @@ import React, { Suspense, useState, useEffect } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
 
-/**
- * Error boundary for Router loading failures
- * Catches errors and provides fallback UI
- */
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean }
@@ -35,7 +31,6 @@ export default function AppRoot() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Small delay to ensure Router is properly initialized
     const timer = setTimeout(() => setIsReady(true), 50);
     return () => clearTimeout(timer);
   }, []);
