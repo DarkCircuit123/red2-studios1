@@ -78,7 +78,7 @@ export default function HeroSection() {
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-heading font-black text-white leading-none tracking-tight uppercase">
             Visual
             <br />
-            <span className="font-black text-[#a01e1eff]">Storytelling</span>
+            <span className="font-black text-color-7">Storytelling</span>
           </h1>
         </motion.div>
 
@@ -101,7 +101,7 @@ export default function HeroSection() {
         >
           <button
             onClick={scrollToGallery}
-            className="px-8 py-3 bg-primary text-white font-heading font-bold text-xs tracking-widest uppercase hover:bg-primary/80 transition-all duration-300 hover:scale-105"
+            className="px-8 py-3 text-white font-heading font-bold text-xs tracking-widest uppercase hover:bg-primary/80 transition-all duration-300 hover:scale-105 bg-color-7"
           >
             Explore Work
           </button>
