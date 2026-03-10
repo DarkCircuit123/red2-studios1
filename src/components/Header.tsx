@@ -134,14 +134,6 @@ export default function Header() {
             Contact
           </a>
           <Link
-            to="/private"
-            onClick={handleLinkClick}
-            onMouseEnter={playHoverSound}
-            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
-          >
-            Private
-          </Link>
-          <Link
             to="/play"
             onClick={handleLinkClick}
             onMouseEnter={playHoverSound}
@@ -314,17 +306,6 @@ export default function Header() {
             >
               Contact
             </a>
-            <Link
-              to="/private"
-              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
-              onMouseEnter={playHoverSound}
-              onClick={() => {
-                handleLinkClick();
-                setIsOpen(false);
-              }}
-            >
-              Private
-            </Link>
             <Link
               to="/play"
               className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
