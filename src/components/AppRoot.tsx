@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
 
@@ -28,17 +28,6 @@ class RouterErrorBoundary extends React.Component<
 }
 
 export default function AppRoot() {
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsReady(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!isReady) {
-    return <RouterFallback />;
-  }
-
   return (
     <RouterErrorBoundary>
       <Suspense fallback={<RouterFallback />}>
