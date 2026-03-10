@@ -42,8 +42,9 @@ function PortfolioPage() {
         const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
         setProjects(data.items || []);
         setFilteredProjects(data.items || []);
-      } catch {
-        // Error handled silently
+      } catch (error) {
+        console.error('Failed to load portfolio projects:', error);
+        // Keep empty arrays on error
       } finally {
         setIsLoading(false);
       }

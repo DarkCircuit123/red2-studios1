@@ -20,8 +20,9 @@ function AboutSection() {
             setAboutImage(images.aboutSectionImage);
           }
         }
-      } catch {
-        // Error handled silently
+      } catch (error) {
+        console.error('Failed to load about image:', error);
+        // Keep default image on error
       } finally {
         setIsLoading(false);
       }

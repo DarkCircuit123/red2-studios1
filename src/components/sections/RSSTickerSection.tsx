@@ -35,7 +35,8 @@ function RSSTickerSection() {
         } else {
           setError(true);
         }
-      } catch {
+      } catch (error) {
+        console.error('Failed to fetch RSS feed:', error);
         setError(true);
         // Fallback items if RSS fails - fashion-themed content
         setItems([

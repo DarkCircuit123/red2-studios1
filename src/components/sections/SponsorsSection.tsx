@@ -27,8 +27,9 @@ function SponsorsSection() {
           }));
           setSponsors(sponsorsList);
         }
-      } catch {
-        // Error handled silently
+      } catch (error) {
+        console.error('Failed to load sponsors:', error);
+        // Keep default sponsor on error
       }
     };
     loadSponsors();

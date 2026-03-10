@@ -47,8 +47,9 @@ function DataExportPageContent() {
           'Services': services.totalCount || 0,
           'Team Members': team.totalCount || 0,
         });
-      } catch {
-        // Error handled silently
+      } catch (error) {
+        console.error('Failed to load data statistics:', error);
+        // Keep empty stats on error
       } finally {
         setIsLoading(false);
       }
@@ -73,7 +74,8 @@ function DataExportPageContent() {
 
       setExportStatus(`✓ ${collectionName} exported successfully!`);
       setTimeout(() => setExportStatus(null), 3000);
-    } catch {
+    } catch (error) {
+      console.error(`Failed to export ${collectionName}:`, error);
       setExportStatus(`✗ Failed to export ${collectionName}`);
     } finally {
       setIsExporting(false);
@@ -118,7 +120,8 @@ function DataExportPageContent() {
 
       setExportStatus('✓ All data exported successfully!');
       setTimeout(() => setExportStatus(null), 3000);
-    } catch {
+    } catch (error) {
+      console.error('Failed to export all data:', error);
       setExportStatus('✗ Failed to export all data');
     } finally {
       setIsExporting(false);

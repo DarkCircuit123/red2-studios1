@@ -23,8 +23,9 @@ function HeroSection() {
             setHeroImage(images.heroImage);
           }
         }
-      } catch {
-        // Error handled silently
+      } catch (error) {
+        console.error('Failed to load hero image:', error);
+        // Keep default image on error
       } finally {
         setIsLoading(false);
       }
@@ -41,29 +42,33 @@ function HeroSection() {
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
       {/* Full-bleed hero background - video or image */}
-      <div className="absolute inset-0 z-0">
-        {videoUrl ? (
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover"
-          >
-            <source src={videoUrl} type="video/mp4" />
-            <Image
-              src={heroImage}
-              alt="Hero background"
-              className="w-full h-full object-cover"
-            />
-          </video>
-        ) : (
-          <Image
-            src={heroImage}
-            alt="Hero background"
-            className="w-full h-full object-cover"
-          />
-        )}
+      <div className="absolute inset-0 z-0 bg-black">
+        {!isLoading && heroImage ? (
+          <>
+            {videoUrl ? (
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover"
+              >
+                <source src={videoUrl} type="video/mp4" />
+                <Image
+                  src={heroImage}
+                  alt="Hero background"
+                  className="w-full h-full object-cover"
+                />
+              </video>
+            ) : (
+              <Image
+                src={heroImage}
+                alt="Hero background"
+                className="w-full h-full object-cover"
+              />
+            )}
+          </>
+        ) : null}
         {/* Minimal dark overlay for text readability */}
         <div className="absolute inset-0 bg-black/30 opacity-[0.51]" />
       </div>

@@ -31,8 +31,9 @@ function PortfolioDetailPage() {
         // Load specific project
         const projectData = await BaseCrudService.getById<Portfolio>('portfolio', id);
         setProject(projectData);
-      } catch {
-        // Error handled silently
+      } catch (error) {
+        console.error('Failed to load portfolio project:', error);
+        // Keep empty state on error
       } finally {
         setIsLoading(false);
       }
