@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { usePrefetchOnHover } from '@/hooks/usePrefetchOnHover';
 import { Link } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { useMember } from '@/integrations';
-const AdminPanel = React.lazy(() => import('./AdminPanel'));
+import AdminPanel from './AdminPanel';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { playClickSound } from '@/lib/click-sound';
 import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
@@ -273,9 +274,9 @@ function Header() {
         </div>
       </nav>
       {/* Admin Panel */}
-      <React.Suspense fallback={null}>
+      <Suspense fallback={null}>
         <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
-      </React.Suspense>
+      </Suspense>
       {/* Mobile Navigation */}
       {isOpen && (
         <div className="md:hidden bg-black/95 border-t border-white/10 backdrop-blur-md max-h-[calc(100vh-80px)] overflow-y-auto">
