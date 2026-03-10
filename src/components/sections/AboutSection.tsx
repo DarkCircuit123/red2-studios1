@@ -1,16 +1,20 @@
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function AboutSection() {
   const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_91ed15e69fe34eac9f33620e3c2ee65d~mv2.png?originWidth=576&originHeight=576');
   const [isLoading, setIsLoading] = useState(true);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate fetches
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
     const loadAboutImage = async () => {
       try {
-        setIsLoading(true);
         // Load from HomepageImages collection first
         const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
         if (homepageImages.items && homepageImages.items.length > 0) {
