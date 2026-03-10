@@ -6,24 +6,7 @@ import { BaseCrudService } from '@/integrations';
 import { useAuthStore } from '@/lib/clientAuthStore';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
-interface ClientGallery {
-  _id: string;
-  clientName: string;
-  clientEmail: string;
-  galleryAccessCode: string;
-  approvalStatus: string;
-  galleryCoverImage: string;
-  galleryExpirationDate: string;
-}
-
-interface ClientAccount {
-  _id: string;
-  clientName: string;
-  email: string;
-  passwordHash: string;
-  isActive: boolean;
-}
+import { ClientProofingGalleries } from '@/entities';
 
 export default function ClientLoginPage() {
   const navigate = useNavigate();
@@ -32,26 +15,14 @@ export default function ClientLoginPage() {
   const [accessCode, setAccessCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [loginMode, setLoginMode] = useState<'code' | 'account'>('code');
 
-  // Simple hash function for password (must match registration)
-  const hashPassword = (pwd: string): string => {
-    let hash = 0;
-    for (let i = 0; i < pwd.length; i++) {
-      const char = pwd.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(36);
-  };
-
-  const handleLoginWithCode = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const result = await BaseCrudService.getAll<ClientGallery>('clientgalleries', {}, { limit: 100 });
+      const result = await BaseCrudService.getAll<ClientProofingGalleries>('clientgalleries', {}, { limit: 100 });
       const galleries = result.items || [];
 
       const gallery = galleries.find(
@@ -93,54 +64,6 @@ export default function ClientLoginPage() {
     }
   };
 
-  const handleLoginWithAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const result = await BaseCrudService.getAll<ClientAccount>('clientaccounts', {}, { limit: 100 });
-      const accounts = result.items || [];
-
-      const account = accounts.find((acc) => acc.email?.toLowerCase() === email.toLowerCase());
-
-      if (!account) {
-        setError('Invalid email or password. Please try again.');
-        setIsLoading(false);
-        return;
-      }
-
-      if (!account.isActive) {
-        setError('This account has been deactivated. Please contact support.');
-        setIsLoading(false);
-        return;
-      }
-
-      const passwordHash = hashPassword(accessCode);
-      if (account.passwordHash !== passwordHash) {
-        setError('Invalid email or password. Please try again.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Set client session
-      setClientSession({
-        clientEmail: account.email || '',
-        clientName: account.clientName || '',
-        accountId: account._id,
-        isAccountLogin: true,
-      });
-
-      // Redirect to gallery dashboard
-      navigate('/client-gallery-dashboard');
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('An error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
@@ -167,43 +90,12 @@ export default function ClientLoginPage() {
               </p>
             </motion.div>
 
-            {/* Login Mode Tabs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="flex gap-4 mb-8"
-            >
-              <button
-                type="button"
-                onClick={() => setLoginMode('code')}
-                className={`flex-1 py-2 px-4 font-heading font-bold text-sm tracking-widest uppercase rounded-lg transition-all duration-300 ${
-                  loginMode === 'code'
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                }`}
-              >
-                Access Code
-              </button>
-              <button
-                type="button"
-                onClick={() => setLoginMode('account')}
-                className={`flex-1 py-2 px-4 font-heading font-bold text-sm tracking-widest uppercase rounded-lg transition-all duration-300 ${
-                  loginMode === 'account'
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                }`}
-              >
-                Account
-              </button>
-            </motion.div>
-
             {/* Login Form */}
             <motion.form
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              onSubmit={loginMode === 'code' ? handleLoginWithCode : handleLoginWithAccount}
+              onSubmit={handleLogin}
               className="space-y-6"
             >
               {/* Error Message */}
@@ -236,31 +128,25 @@ export default function ClientLoginPage() {
                 </div>
               </div>
 
-              {/* Access Code/Password Input */}
+              {/* Access Code Input */}
               <div>
                 <label className="block text-sm font-heading font-bold text-white mb-2 uppercase tracking-wide">
-                  {loginMode === 'code' ? 'Access Code' : 'Password'}
+                  Access Code
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                   <input
-                    type={loginMode === 'code' ? 'text' : 'password'}
+                    type="text"
                     value={accessCode}
-                    onChange={(e) =>
-                      setAccessCode(loginMode === 'code' ? e.target.value.toUpperCase() : e.target.value)
-                    }
-                    placeholder={loginMode === 'code' ? 'Enter your code' : 'Enter your password'}
+                    onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                    placeholder="Enter your code"
                     required
-                    className={`w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300 ${
-                      loginMode === 'code' ? 'font-mono tracking-widest' : ''
-                    }`}
+                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300 font-mono tracking-widest"
                   />
                 </div>
-                {loginMode === 'code' && (
-                  <p className="text-xs text-white/40 mt-2">
-                    Check your email for your unique access code
-                  </p>
-                )}
+                <p className="text-xs text-white/40 mt-2">
+                  Check your email for your unique access code
+                </p>
               </div>
 
               {/* Submit Button */}
@@ -280,21 +166,12 @@ export default function ClientLoginPage() {
               transition={{ delay: 0.2 }}
               className="mt-8 p-4 bg-white/5 border border-white/10 rounded-lg text-center"
             >
-              {loginMode === 'code' ? (
-                <p className="text-sm text-white/60">
-                  Don't have an access code?{' '}
-                  <a href="#contact" className="text-white hover:text-white/80 transition-colors font-bold">
-                    Contact us
-                  </a>
-                </p>
-              ) : (
-                <p className="text-sm text-white/60">
-                  Don't have an account?{' '}
-                  <a href="/client-register" className="text-white hover:text-white/80 transition-colors font-bold">
-                    Create one
-                  </a>
-                </p>
-              )}
+              <p className="text-sm text-white/60">
+                Don't have an access code?{' '}
+                <a href="#contact" className="text-white hover:text-white/80 transition-colors font-bold">
+                  Contact us
+                </a>
+              </p>
             </motion.div>
           </div>
         </div>
