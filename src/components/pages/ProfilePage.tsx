@@ -2,17 +2,24 @@ import { useMember } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
-import { LogOut, Mail, Calendar, MapPin, Edit2, Check, X } from 'lucide-react';
+import { LogOut, Mail, Calendar, MapPin, Edit2, Check, X, AlertCircle } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ProfilePage() {
   const { member, actions } = useMember();
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(member?.profile?.nickname || member?.contact?.firstName || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // Update editedName when member changes
+  useEffect(() => {
+    setEditedName(member?.profile?.nickname || member?.contact?.firstName || '');
+  }, [member?.profile?.nickname, member?.contact?.firstName]);
 
   const handleLogout = () => {
     playClickSound();
@@ -22,17 +29,39 @@ export default function ProfilePage() {
   const handleSaveName = async () => {
     if (!editedName.trim() || editedName === (member?.profile?.nickname || member?.contact?.firstName)) {
       setIsEditingName(false);
+      setError(null);
       return;
     }
 
     setIsSaving(true);
+    setError(null);
+    setSuccess(false);
+    
     try {
-      // The Wix Members API would need to be called here to update the member's profile
-      // For now, we'll show a success message
-      console.log('Name update would be sent to Wix Members API:', editedName);
-      setIsEditingName(false);
-    } catch (error) {
-      console.error('Error updating name:', error);
+      // Use the Wix Members API to update the member's profile
+      // The updateMember function should handle the API call
+      if (actions.updateMember) {
+        await actions.updateMember({
+          profile: {
+            nickname: editedName.trim()
+          }
+        });
+        setSuccess(true);
+        setIsEditingName(false);
+        // Reload member data to reflect changes
+        if (actions.loadCurrentMember) {
+          await actions.loadCurrentMember();
+        }
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        throw new Error('Update member function not available');
+      }
+    } catch (err) {
+      console.error('Error updating name:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update name. Please try again.');
+      // Revert to original name on error
+      setEditedName(member?.profile?.nickname || member?.contact?.firstName || '');
     } finally {
       setIsSaving(false);
     }
@@ -64,6 +93,30 @@ export default function ProfilePage() {
                 Manage your account and access your galleries
               </p>
             </div>
+
+            {/* Error/Success Messages */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8 p-4 bg-red-900/20 border border-red-500/50 rounded flex items-center gap-3"
+              >
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <p className="text-sm font-paragraph text-red-200">{error}</p>
+              </motion.div>
+            )}
+            
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mb-8 p-4 bg-green-900/20 border border-green-500/50 rounded flex items-center gap-3"
+              >
+                <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
+                <p className="text-sm font-paragraph text-green-200">Name updated successfully!</p>
+              </motion.div>
+            )}
 
             {/* Profile Card */}
             <div className="bg-white/5 border border-white/10 p-12 mb-12">
