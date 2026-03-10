@@ -62,29 +62,42 @@ export async function lazyLoadModule<T>(
 }
 
 /**
- * Code splitting strategy
+ * Code splitting strategy - STATIC IMPORTS ONLY
+ * All dynamic imports have been replaced with static imports to prevent repeated fetch attempts
  */
+import HomePage from '@/components/pages/HomePage';
+import PortfolioPage from '@/components/pages/PortfolioPage';
+import BookingPage from '@/components/pages/BookingPage';
+import ClientGalleriesPage from '@/components/pages/ClientGalleriesPage';
+import BlogPage from '@/components/pages/BlogPage';
+import ProfilePage from '@/components/pages/ProfilePage';
+import PrivatePage from '@/components/pages/PrivatePage';
+import HangmanGamePage from '@/components/pages/HangmanGamePage';
+import Interactive3DGallerySection from '@/components/sections/Interactive3DGallerySection';
+import BlogSection from '@/components/sections/BlogSection';
+import ContactSection from '@/components/sections/ContactSection';
+
 export const codeSpittingStrategy = {
-  // Split by route
+  // Split by route - static imports
   routes: {
-    home: () => import('@/components/pages/HomePage'),
-    portfolio: () => import('@/components/pages/PortfolioPage'),
-    booking: () => import('@/components/pages/BookingPage'),
-    galleries: () => import('@/components/pages/ClientGalleriesPage'),
-    blog: () => import('@/components/pages/BlogPage'),
-    profile: () => import('@/components/pages/ProfilePage'),
-    private: () => import('@/components/pages/PrivatePage'),
-    play: () => import('@/components/pages/HangmanGamePage'),
+    home: () => Promise.resolve({ default: HomePage }),
+    portfolio: () => Promise.resolve({ default: PortfolioPage }),
+    booking: () => Promise.resolve({ default: BookingPage }),
+    galleries: () => Promise.resolve({ default: ClientGalleriesPage }),
+    blog: () => Promise.resolve({ default: BlogPage }),
+    profile: () => Promise.resolve({ default: ProfilePage }),
+    private: () => Promise.resolve({ default: PrivatePage }),
+    play: () => Promise.resolve({ default: HangmanGamePage }),
   },
 
-  // Split by feature
+  // Split by feature - static imports
   features: {
-    gallery: () => import('@/components/sections/Interactive3DGallerySection'),
-    blog: () => import('@/components/sections/BlogSection'),
-    contact: () => import('@/components/sections/ContactSection'),
+    gallery: () => Promise.resolve({ default: Interactive3DGallerySection }),
+    blog: () => Promise.resolve({ default: BlogSection }),
+    contact: () => Promise.resolve({ default: ContactSection }),
   },
 
-  // Split by vendor
+  // Split by vendor - static imports
   vendors: {
     framerMotion: () => import('framer-motion'),
     recharts: () => import('recharts'),

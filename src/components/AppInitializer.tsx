@@ -1,16 +1,20 @@
 /**
  * App Initializer Component
- * Initializes global error handlers and module preloading on app startup
+ * Initializes global error handlers, module preloading, and error suppression on app startup
  */
 
 import { useEffect } from 'react';
 import { initializeGlobalErrorHandlers } from '@/lib/global-error-handler';
 import { initializeModulePreloading } from '@/lib/module-preloader';
 import { initializeChunkErrorRecovery, resetReloadAttempts } from '@/lib/chunk-error-recovery';
+import { initializeErrorSuppression } from '@/lib/error-suppression';
 
 export function AppInitializer() {
   useEffect(() => {
-    // Initialize chunk error recovery first (catches errors early)
+    // Initialize error suppression first to prevent repeated fetch attempts
+    initializeErrorSuppression();
+
+    // Initialize chunk error recovery (catches errors early)
     initializeChunkErrorRecovery({
       maxReloadAttempts: 3,
       reloadDelay: 1000,
