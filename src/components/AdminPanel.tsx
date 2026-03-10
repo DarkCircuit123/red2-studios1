@@ -324,7 +324,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               {activeTab === 'sponsors' && (
                 <div>
                   <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
-                    Manage Sponsor Logos
+                    Manage Sponsors
                   </h3>
                   <div className="space-y-8 max-h-96 overflow-y-auto">
                     {sponsors.length === 0 ? (
@@ -335,18 +335,49 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                           <h4 className="text-xs font-heading font-bold text-black mb-4 uppercase tracking-wide">
                             {sponsor.clientName || 'Untitled Sponsor'}
                           </h4>
-                          <ImageUploadManager
-                            label="Upload Sponsor Logo"
-                            currentImage={sponsor.clientLogo}
-                            collectionId="clientspress"
-                            itemId={sponsor._id}
-                            fieldName="clientLogo"
-                            onImageUpload={(url) => {
-                              setSponsors(sponsors.map(s => 
-                                s._id === sponsor._id ? { ...s, clientLogo: url } : s
-                              ));
-                            }}
-                          />
+                          <div className="space-y-4">
+                            {/* Sponsor Name */}
+                            <div>
+                              <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                                Sponsor Name (Hover Text)
+                              </label>
+                              <TextEditableField
+                                value={sponsor.clientName || ''}
+                                onSave={async (newName) => {
+                                  try {
+                                    await BaseCrudService.update('clientspress', {
+                                      _id: sponsor._id,
+                                      clientName: newName
+                                    });
+                                    setSponsors(sponsors.map(s => 
+                                      s._id === sponsor._id ? { ...s, clientName: newName } : s
+                                    ));
+                                  } catch (error) {
+                                    console.error('Error updating sponsor name:', error);
+                                  }
+                                }}
+                                className="text-sm text-black"
+                              />
+                            </div>
+                            {/* Sponsor Logo */}
+                            <div>
+                              <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                                Sponsor Logo
+                              </label>
+                              <ImageUploadManager
+                                label="Upload Sponsor Logo"
+                                currentImage={sponsor.clientLogo}
+                                collectionId="clientspress"
+                                itemId={sponsor._id}
+                                fieldName="clientLogo"
+                                onImageUpload={(url) => {
+                                  setSponsors(sponsors.map(s => 
+                                    s._id === sponsor._id ? { ...s, clientLogo: url } : s
+                                  ));
+                                }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       ))
                     )}
