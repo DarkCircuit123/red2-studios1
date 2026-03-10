@@ -91,15 +91,20 @@ export default function ImageUploadManager({
                 _id: itemId,
                 [fieldName]: base64
               });
+              onImageUpload(base64);
+              setUploadStatus('success');
+              setTimeout(() => setUploadStatus('idle'), 3000);
             } catch (cmsError) {
-              console.warn('CMS update failed, but continuing with local update:', cmsError);
-              // Continue anyway - the image is still updated locally
+              console.error('CMS update failed:', cmsError);
+              setErrorMessage('Failed to save image to CMS. Please try again.');
+              setUploadStatus('error');
             }
+          } else {
+            // No CMS info, just update locally
+            onImageUpload(base64);
+            setUploadStatus('success');
+            setTimeout(() => setUploadStatus('idle'), 3000);
           }
-          
-          onImageUpload(base64);
-          setUploadStatus('success');
-          setTimeout(() => setUploadStatus('idle'), 3000);
           setIsProcessing(false);
         } catch (error) {
           console.error('Error processing image:', error);
