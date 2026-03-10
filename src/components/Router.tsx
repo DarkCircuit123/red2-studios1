@@ -13,6 +13,10 @@ import BlogPage from './pages/BlogPage';
 import ProfilePage from './pages/ProfilePage';
 import PrivatePage from './pages/PrivatePage';
 import HangmanGamePage from './pages/HangmanGamePage';
+import ClientLoginPage from './pages/ClientLoginPage';
+import ClientGalleryViewPage from './pages/ClientGalleryViewPage';
+import AdminLoginPage from './pages/AdminLoginPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import { useEffect, useRef } from 'react';
 
 // Layout component that includes ScrollToTop and page change sound
@@ -80,6 +84,22 @@ const router = createBrowserRouter([
       {
         path: "play",
         element: <HangmanGamePage />,
+      },
+      {
+        path: "client-login",
+        element: <ClientLoginPage />,
+      },
+      {
+        path: "client-gallery/:id",
+        element: <ClientGalleryViewPage />,
+      },
+      {
+        path: "admin-login",
+        element: <AdminLoginPage />,
+      },
+      {
+        path: "admin-dashboard",
+        element: <AdminDashboardPage />,
       },
       {
         path: "*",

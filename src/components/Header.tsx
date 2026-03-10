@@ -149,6 +149,22 @@ export default function Header() {
           >
             Play
           </Link>
+          <Link
+            to="/client-login"
+            onClick={handleLinkClick}
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
+          >
+            Client Login
+          </Link>
+          <Link
+            to="/admin-login"
+            onClick={handleLinkClick}
+            onMouseEnter={playHoverSound}
+            className="text-xs font-mono text-white/60 hover:text-white hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
+          >
+            Admin
+          </Link>
         </div>
 
         {/* Admin & Mobile Menu */}
@@ -311,6 +327,28 @@ export default function Header() {
               }}
             >
               Play
+            </Link>
+            <Link
+              to="/client-login"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
+            >
+              Client Login
+            </Link>
+            <Link
+              to="/admin-login"
+              className="text-xs font-mono text-white/60 hover:text-white transition-colors uppercase tracking-widest"
+              onMouseEnter={playHoverSound}
+              onClick={() => {
+                handleLinkClick();
+                setIsOpen(false);
+              }}
+            >
+              Admin
             </Link>
             {/* Mobile Auth */}
             {!isLoading && (
