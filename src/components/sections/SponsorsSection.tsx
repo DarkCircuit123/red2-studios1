@@ -18,12 +18,17 @@ export default function SponsorsSection() {
       try {
         const clientsData = await BaseCrudService.getAll('clientspress', {}, { limit: 50 });
         if (clientsData.items && clientsData.items.length > 0) {
-          const sponsorsList = clientsData.items.map((item: any) => ({
-            id: item._id,
-            name: item.clientName || 'Sponsor',
-            logo: item.clientLogo || 'https://static.wixstatic.com/media/e9d727_d938c5afb26f4253beab928151fb3578~mv2.jpg',
-            link: item.externalLink || 'https://example.com'
-          }));
+          const sponsorsList = clientsData.items.map((item: any) => {
+            const isBorisFX = item.clientName?.toLowerCase().includes('boris');
+            return {
+              id: item._id,
+              name: item.clientName || 'Sponsor',
+              logo: isBorisFX 
+                ? (item.clientLogo || 'https://static.wixstatic.com/media/e9d727_d938c5afb26f4253beab928151fb3578~mv2.jpg')
+                : 'https://static.wixstatic.com/media/e9d727_640dbe9d85624b36858be9f9f1b7d40b~mv2.png?originWidth=384&originHeight=256',
+              link: item.externalLink || 'https://example.com'
+            };
+          });
           setSponsors(sponsorsList);
         }
       } catch (error) {
