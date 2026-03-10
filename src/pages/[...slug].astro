@@ -1,5 +1,6 @@
 ---
 import { Head } from "@/components/Head";
+import AppRoot from "@/components/AppRoot";
 import "@wix/wix-vibe-plugins/plugins-vars.css";
 import "@wix/wix-vibe-plugins/plugins-theme.css";
 import "@/styles/global.css";
@@ -10,17 +11,8 @@ import "@/styles/global.css";
     <Head />
   </head>
   <body>
-    <div id="root"></div>
-    <script>
-      import AppRouter from "@/components/Router";
-      import React from "react";
-      import { createRoot } from "react-dom/client";
-
-      const container = document.getElementById("root");
-      if (container) {
-        const root = createRoot(container);
-        root.render(React.createElement(AppRouter));
-      }
-    </script>
+    <div id="root">
+      <AppRoot client:only="react" />
+    </div>
   </body>
 </html>

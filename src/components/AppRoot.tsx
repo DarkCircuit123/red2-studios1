@@ -1,22 +1,31 @@
-import React, { Suspense } from 'react';
-import AppRouter from '@/components/Router';
+import React, { Suspense, lazy } from 'react';
 import RouterFallback from '@/components/RouterFallback';
+
+// Lazy load Router with error handling
+const AppRouter = lazy(() => 
+  import('@/components/Router').catch(err => {
+    console.error('Failed to load Router:', err);
+    return { default: RouterFallback };
+  })
+);
 
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; errorCount: number }
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, errorCount: 0 };
   }
 
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(error: Error) {
+    console.error('Router error boundary caught:', error);
     return { hasError: true };
   }
 
   componentDidCatch(error: Error) {
     console.error('Router failed to load:', error);
+    this.setState(prev => ({ errorCount: prev.errorCount + 1 }));
   }
 
   render() {
