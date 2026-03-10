@@ -1,7 +1,6 @@
 import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
-import { playShutterSound } from '@/lib/click-sound';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import HomePage from './pages/HomePage';
@@ -19,20 +18,9 @@ import ClientGalleryViewPage from './pages/ClientGalleryViewPage';
 import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
-import { useEffect, useRef } from 'react';
 
-// Layout component that includes ScrollToTop and page change sound
+// Layout component that includes ScrollToTop
 function Layout() {
-  const location = useLocation();
-  const prevLocationRef = useRef(location.pathname);
-
-  useEffect(() => {
-    if (prevLocationRef.current !== location.pathname) {
-      playShutterSound();
-      prevLocationRef.current = location.pathname;
-    }
-  }, [location.pathname]);
-
   return (
     <>
       <ScrollToTop />
