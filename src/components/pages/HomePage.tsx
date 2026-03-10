@@ -8,9 +8,7 @@ import Interactive3DGallerySection from '@/components/sections/Interactive3DGall
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
-import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
-import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
 import { useSEO } from '@/hooks/useSEO';
 
 function HomePage() {
@@ -19,11 +17,6 @@ function HomePage() {
   const { ref: galleryRef, isVisible: galleryVisible } = useIntersectionObserver(() => {}, { threshold: 0.1 });
 
   useEffect(() => {
-    initializeSecuritySystems();
-    setupSecurityEventListeners();
-  }, []);
-
-  useEffectOnce(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const scrollTo = params.get('scroll');
@@ -50,7 +43,7 @@ function HomePage() {
         return () => timeouts.forEach(t => clearTimeout(t));
       }
     }
-  });
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white">
