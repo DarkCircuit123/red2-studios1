@@ -6,7 +6,8 @@ import { BaseCrudService } from '@/integrations';
 
 // Static sound effect utility
 const playStaticSound = () => {
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+  const audioContext = new AudioContextClass();
   const bufferSize = audioContext.sampleRate * 0.5;
   const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
   const data = buffer.getChannelData(0);

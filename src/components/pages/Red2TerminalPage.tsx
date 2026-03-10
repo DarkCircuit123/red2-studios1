@@ -459,4 +459,4 @@ const Red2TerminalPage: React.FC = () => {
   );
 };
 
-export default Red2TerminalPage;
+export default React.memo(Red2TerminalPage);

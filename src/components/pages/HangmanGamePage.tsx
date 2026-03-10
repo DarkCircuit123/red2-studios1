@@ -90,7 +90,8 @@ function HangmanGamePage() {
   // Initialize audio context
   useEffect(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      audioContextRef.current = new AudioContextClass();
     }
   }, []);
 
@@ -223,7 +224,7 @@ function HangmanGamePage() {
 
   // Initialize game with selected category
   const startGame = (category: string) => {
-    const categoryWords = (categories as any)[category];
+    const categoryWords = categories[category as keyof typeof categories];
     const newWord = categoryWords[Math.floor(Math.random() * categoryWords.length)].toUpperCase();
 
     setGameState({
