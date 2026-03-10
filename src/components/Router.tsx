@@ -1,6 +1,7 @@
 import { MemberProvider } from '@/integrations';
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
+import { playShutterSound } from '@/lib/click-sound';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import HomePage from './pages/HomePage';
@@ -12,9 +13,20 @@ import BlogPage from './pages/BlogPage';
 import ProfilePage from './pages/ProfilePage';
 import PrivatePage from './pages/PrivatePage';
 import HangmanGamePage from './pages/HangmanGamePage';
+import { useEffect, useRef } from 'react';
 
-// Layout component that includes ScrollToTop
+// Layout component that includes ScrollToTop and page change sound
 function Layout() {
+  const location = useLocation();
+  const prevLocationRef = useRef(location.pathname);
+
+  useEffect(() => {
+    if (prevLocationRef.current !== location.pathname) {
+      playShutterSound();
+      prevLocationRef.current = location.pathname;
+    }
+  }, [location.pathname]);
+
   return (
     <>
       <ScrollToTop />
