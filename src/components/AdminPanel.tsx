@@ -4,7 +4,7 @@ import { Settings, X, Edit2 } from 'lucide-react';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import { BaseCrudService } from '@/integrations';
-import { Services, HomepageImages } from '@/entities/index';
+import { Services, HomepageImages, Portfolio, ClientsPress } from '@/entities/index';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -16,6 +16,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
+  const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
+  const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -26,6 +28,18 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
         const homepageImagesResult = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
         if (homepageImagesResult.items && homepageImagesResult.items.length > 0) {
           setHomepageImages(homepageImagesResult.items[0]);
+        }
+
+        // Load portfolio items
+        const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
+        if (portfolioResult.items) {
+          setPortfolioItems(portfolioResult.items);
+        }
+
+        // Load sponsors/clients
+        const sponsorsResult = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
+        if (sponsorsResult.items) {
+          setSponsors(sponsorsResult.items);
         }
       } catch (error) {
         console.error('Error loading images:', error);
@@ -75,10 +89,10 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             </div>
 
             {/* Tabs */}
-            <div className="sticky top-16 bg-white border-b border-black/10 px-6 py-4 flex gap-2">
+            <div className="sticky top-16 bg-white border-b border-black/10 px-6 py-4 flex gap-2 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('photos')}
-                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all ${
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
                   activeTab === 'photos'
                     ? 'bg-black text-white'
                     : 'bg-black/5 text-black hover:bg-black/10'
@@ -87,8 +101,28 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 Site Photos
               </button>
               <button
+                onClick={() => setActiveTab('portfolio')}
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
+                  activeTab === 'portfolio'
+                    ? 'bg-black text-white'
+                    : 'bg-black/5 text-black hover:bg-black/10'
+                }`}
+              >
+                Portfolio
+              </button>
+              <button
+                onClick={() => setActiveTab('sponsors')}
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
+                  activeTab === 'sponsors'
+                    ? 'bg-black text-white'
+                    : 'bg-black/5 text-black hover:bg-black/10'
+                }`}
+              >
+                Sponsors
+              </button>
+              <button
                 onClick={() => setActiveTab('text')}
-                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all ${
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
                   activeTab === 'text'
                     ? 'bg-black text-white'
                     : 'bg-black/5 text-black hover:bg-black/10'
@@ -163,6 +197,137 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         }}
                       />
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Portfolio Tab */}
+              {activeTab === 'portfolio' && (
+                <div>
+                  <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
+                    Manage Portfolio Images
+                  </h3>
+                  <div className="space-y-8 max-h-96 overflow-y-auto">
+                    {portfolioItems.length === 0 ? (
+                      <p className="text-sm text-black/60">No portfolio items found. Add items in the CMS.</p>
+                    ) : (
+                      portfolioItems.map((item) => (
+                        <div key={item._id} className="border-t border-black/10 pt-6">
+                          <h4 className="text-xs font-heading font-bold text-black mb-4 uppercase tracking-wide">
+                            {item.projectName || 'Untitled Project'}
+                          </h4>
+                          <div className="space-y-4">
+                            {/* Main Image */}
+                            <div>
+                              <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                                Main Image
+                              </label>
+                              <ImageUploadManager
+                                label="Upload Main Image"
+                                currentImage={item.mainImage}
+                                collectionId="portfolio"
+                                itemId={item._id}
+                                fieldName="mainImage"
+                                onImageUpload={(url) => {
+                                  setPortfolioItems(portfolioItems.map(p => 
+                                    p._id === item._id ? { ...p, mainImage: url } : p
+                                  ));
+                                }}
+                              />
+                            </div>
+
+                            {/* Gallery Images */}
+                            <div>
+                              <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                                Gallery Image 1
+                              </label>
+                              <ImageUploadManager
+                                label="Upload Gallery Image 1"
+                                currentImage={item.galleryImage1}
+                                collectionId="portfolio"
+                                itemId={item._id}
+                                fieldName="galleryImage1"
+                                onImageUpload={(url) => {
+                                  setPortfolioItems(portfolioItems.map(p => 
+                                    p._id === item._id ? { ...p, galleryImage1: url } : p
+                                  ));
+                                }}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                                Gallery Image 2
+                              </label>
+                              <ImageUploadManager
+                                label="Upload Gallery Image 2"
+                                currentImage={item.galleryImage2}
+                                collectionId="portfolio"
+                                itemId={item._id}
+                                fieldName="galleryImage2"
+                                onImageUpload={(url) => {
+                                  setPortfolioItems(portfolioItems.map(p => 
+                                    p._id === item._id ? { ...p, galleryImage2: url } : p
+                                  ));
+                                }}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                                Gallery Image 3
+                              </label>
+                              <ImageUploadManager
+                                label="Upload Gallery Image 3"
+                                currentImage={item.galleryImage3}
+                                collectionId="portfolio"
+                                itemId={item._id}
+                                fieldName="galleryImage3"
+                                onImageUpload={(url) => {
+                                  setPortfolioItems(portfolioItems.map(p => 
+                                    p._id === item._id ? { ...p, galleryImage3: url } : p
+                                  ));
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sponsors Tab */}
+              {activeTab === 'sponsors' && (
+                <div>
+                  <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
+                    Manage Sponsor Logos
+                  </h3>
+                  <div className="space-y-8 max-h-96 overflow-y-auto">
+                    {sponsors.length === 0 ? (
+                      <p className="text-sm text-black/60">No sponsors found. Add sponsors in the CMS.</p>
+                    ) : (
+                      sponsors.map((sponsor) => (
+                        <div key={sponsor._id} className="border-t border-black/10 pt-6">
+                          <h4 className="text-xs font-heading font-bold text-black mb-4 uppercase tracking-wide">
+                            {sponsor.clientName || 'Untitled Sponsor'}
+                          </h4>
+                          <ImageUploadManager
+                            label="Upload Sponsor Logo"
+                            currentImage={sponsor.clientLogo}
+                            collectionId="clientspress"
+                            itemId={sponsor._id}
+                            fieldName="clientLogo"
+                            onImageUpload={(url) => {
+                              setSponsors(sponsors.map(s => 
+                                s._id === sponsor._id ? { ...s, clientLogo: url } : s
+                              ));
+                            }}
+                          />
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
