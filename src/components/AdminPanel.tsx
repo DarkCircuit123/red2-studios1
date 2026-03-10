@@ -15,8 +15,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState('photos');
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
-  const [heroImage, setHeroImage] = useState<string | undefined>();
-  const [serviceId, setServiceId] = useState<string | undefined>();
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,17 +22,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     const loadImages = async () => {
       setIsLoading(true);
       try {
-        // Load hero image from services
-        const services = await BaseCrudService.getAll<Services>('services', {}, { limit: 1 });
-        if (services.items && services.items.length > 0) {
-          const service = services.items[0];
-          setServiceId(service._id);
-          if (service.infographic) {
-            setHeroImage(service.infographic);
-          }
-        }
-
-        // Load homepage images
+        // Load homepage images (hero image is stored here)
         const homepageImagesResult = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
         if (homepageImagesResult.items && homepageImagesResult.items.length > 0) {
           setHomepageImages(homepageImagesResult.items[0]);
@@ -126,12 +114,14 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       </label>
                       <ImageUploadManager
                         label="Upload Hero Image"
-                        currentImage={heroImage}
-                        collectionId="services"
-                        itemId={serviceId}
-                        fieldName="infographic"
+                        currentImage={homepageImages?.heroImage}
+                        collectionId="homepageimages"
+                        itemId={homepageImages?._id}
+                        fieldName="heroImage"
                         onImageUpload={(url) => {
-                          setHeroImage(url);
+                          if (homepageImages) {
+                            setHomepageImages({ ...homepageImages, heroImage: url });
+                          }
                         }}
                       />
                     </div>

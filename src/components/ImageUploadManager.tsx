@@ -37,59 +37,30 @@ export default function ImageUploadManager({
   const processImage = async (file: File) => {
     setIsProcessing(true);
     try {
-      // Create a canvas for auto-crop and resize
+      // Convert file to base64 directly for CMS storage
       const reader = new FileReader();
-      reader.onload = async (e) => {
-        const img = new Image();
-        img.onload = async () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          // Auto-crop to square and resize to 1200x1200 for optimal quality
-          const size = Math.min(img.width, img.height);
-          const x = (img.width - size) / 2;
-          const y = (img.height - size) / 2;
-          
-          canvas.width = 1200;
-          canvas.height = 1200;
-          
-          ctx?.drawImage(img, x, y, size, size, 0, 0, 1200, 1200);
-          
-          // Convert to blob and create URL
-          canvas.toBlob(async (blob) => {
-            if (blob) {
-              const url = URL.createObjectURL(blob);
-              
-              // If collection info provided, save to CMS
-              if (collectionId && itemId && fieldName) {
-                try {
-                  // Convert blob to base64 for storage
-                  const reader = new FileReader();
-                  reader.onload = async (event) => {
-                    const base64 = event.target?.result as string;
-                    // Save to CMS
-                    await BaseCrudService.update(collectionId, {
-                      _id: itemId,
-                      [fieldName]: base64
-                    });
-                    onImageUpload(base64);
-                    setIsProcessing(false);
-                  };
-                  reader.readAsDataURL(blob);
-                } catch (error) {
-                  console.error('Error saving to CMS:', error);
-                  onImageUpload(url);
-                  setIsProcessing(false);
-                }
-              } else {
-                // Fallback to local URL if no CMS info
-                onImageUpload(url);
-                setIsProcessing(false);
-              }
-            }
-          }, 'image/jpeg', 0.95);
-        };
-        img.src = e.target?.result as string;
+      reader.onload = async (event) => {
+        const base64 = event.target?.result as string;
+        
+        // If collection info provided, save to CMS
+        if (collectionId && itemId && fieldName) {
+          try {
+            // Save to CMS with base64 image data
+            await BaseCrudService.update(collectionId, {
+              _id: itemId,
+              [fieldName]: base64
+            });
+            onImageUpload(base64);
+            setIsProcessing(false);
+          } catch (error) {
+            console.error('Error saving to CMS:', error);
+            setIsProcessing(false);
+          }
+        } else {
+          // Fallback if no CMS info
+          onImageUpload(base64);
+          setIsProcessing(false);
+        }
       };
       reader.readAsDataURL(file);
     } catch (error) {
