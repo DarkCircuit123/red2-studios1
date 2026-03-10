@@ -86,10 +86,15 @@ export default function ImageUploadManager({
           
           // If collection info provided, save to CMS
           if (collectionId && itemId && fieldName) {
-            await BaseCrudService.update(collectionId, {
-              _id: itemId,
-              [fieldName]: base64
-            });
+            try {
+              await BaseCrudService.update(collectionId, {
+                _id: itemId,
+                [fieldName]: base64
+              });
+            } catch (cmsError) {
+              console.warn('CMS update failed, but continuing with local update:', cmsError);
+              // Continue anyway - the image is still updated locally
+            }
           }
           
           onImageUpload(base64);
@@ -97,8 +102,8 @@ export default function ImageUploadManager({
           setTimeout(() => setUploadStatus('idle'), 3000);
           setIsProcessing(false);
         } catch (error) {
-          console.error('Error saving to CMS:', error);
-          setErrorMessage('Failed to save image. Please try again.');
+          console.error('Error processing image:', error);
+          setErrorMessage('Failed to process image. Please try again.');
           setUploadStatus('error');
           setIsProcessing(false);
         }

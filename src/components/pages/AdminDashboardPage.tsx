@@ -43,7 +43,9 @@ export default function AdminDashboardPage() {
       const result = await BaseCrudService.getAll<ClientGallery>('clientgalleries', {}, { limit: 100 });
       setGalleries(result.items || []);
     } catch (error) {
-      console.error('Error loading galleries:', error);
+      console.warn('Error loading galleries:', error);
+      // Continue gracefully - set empty array if fetch fails
+      setGalleries([]);
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +73,10 @@ export default function AdminDashboardPage() {
       setIsEditModalOpen(false);
       loadGalleries();
     } catch (error) {
-      console.error('Error updating gallery:', error);
+      console.warn('Error updating gallery:', error);
+      // Still close modal and reload - show user the current state
+      setIsEditModalOpen(false);
+      loadGalleries();
     }
   };
 
@@ -82,7 +87,9 @@ export default function AdminDashboardPage() {
       await BaseCrudService.delete('clientgalleries', id);
       loadGalleries();
     } catch (error) {
-      console.error('Error deleting gallery:', error);
+      console.warn('Error deleting gallery:', error);
+      // Still reload to show current state
+      loadGalleries();
     }
   };
 

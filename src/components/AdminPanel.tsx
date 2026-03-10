@@ -25,21 +25,33 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
       setIsLoading(true);
       try {
         // Load homepage images (hero image is stored here)
-        const homepageImagesResult = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
-        if (homepageImagesResult.items && homepageImagesResult.items.length > 0) {
-          setHomepageImages(homepageImagesResult.items[0]);
+        try {
+          const homepageImagesResult = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
+          if (homepageImagesResult.items && homepageImagesResult.items.length > 0) {
+            setHomepageImages(homepageImagesResult.items[0]);
+          }
+        } catch (error) {
+          console.warn('Failed to load homepage images:', error);
         }
 
         // Load portfolio items
-        const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
-        if (portfolioResult.items) {
-          setPortfolioItems(portfolioResult.items);
+        try {
+          const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
+          if (portfolioResult.items) {
+            setPortfolioItems(portfolioResult.items);
+          }
+        } catch (error) {
+          console.warn('Failed to load portfolio items:', error);
         }
 
         // Load sponsors/clients
-        const sponsorsResult = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
-        if (sponsorsResult.items) {
-          setSponsors(sponsorsResult.items);
+        try {
+          const sponsorsResult = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
+          if (sponsorsResult.items) {
+            setSponsors(sponsorsResult.items);
+          }
+        } catch (error) {
+          console.warn('Failed to load sponsors:', error);
         }
       } catch (error) {
         console.error('Error loading images:', error);
