@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
 
   // Admin password - in production, this should be environment variable
-  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
+  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'Iloveanna1!';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
