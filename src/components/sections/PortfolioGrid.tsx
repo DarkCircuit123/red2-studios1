@@ -94,16 +94,16 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
                   initial={{ opacity: 0, y: 20 }}
                   animate={hoveredId === item?._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ duration: 0.3 }}
-                  className="absolute inset-0 flex flex-col items-end justify-end p-8"
+                  className="absolute inset-0 flex flex-col items-end justify-end p-6 md:p-8"
                 >
-                  <div className="text-right">
-                    <p className="text-xs font-mono text-white/60 mb-3 uppercase tracking-widest">
+                  <div className="text-right w-full">
+                    <p className="text-xs font-mono text-white/60 mb-4 uppercase tracking-widest line-clamp-2 break-words">
                       {item?.category || 'Fashion'}
                     </p>
-                    <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
+                    <h3 className="text-xl md:text-2xl font-heading font-bold text-white mb-4 tracking-tight line-clamp-3">
                       {item?.projectName || 'Untitled Project'}
                     </h3>
-                    <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
+                    <div className="flex items-center justify-end gap-2 text-white hover:gap-3 transition-all">
                       <span className="text-sm font-paragraph">View</span>
                       <ArrowRight className="w-4 h-4" />
                     </div>
