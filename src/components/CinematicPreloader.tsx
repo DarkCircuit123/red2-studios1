@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
+import { getCinematicSoundEngine } from '@/lib/cinematic-sound';
 
 interface CinematicPreloaderProps {
   onComplete: () => void;
@@ -8,7 +9,6 @@ interface CinematicPreloaderProps {
 }
 
 export default function CinematicPreloader({ onComplete, isLoading }: CinematicPreloaderProps) {
-  const audioContextRef = useRef<AudioContext | null>(null);
   const [showPreloader, setShowPreloader] = useState(true);
   const logoImage = 'https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png';
 
@@ -23,105 +23,30 @@ export default function CinematicPreloader({ onComplete, isLoading }: CinematicP
     }
   }, [isLoading, showPreloader, onComplete]);
 
+  // Initialize and play cinematic sound
   useEffect(() => {
-    // Initialize audio context immediately
-    const initAudio = () => {
-      if (!audioContextRef.current) {
-        try {
-          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-          // Resume audio context if suspended
-          if (audioContextRef.current.state === 'suspended') {
-            audioContextRef.current.resume();
-          }
-        } catch (e) {
-          console.warn('AudioContext not available');
-        }
-      }
-    };
+    if (!showPreloader) return;
 
-    // Try to initialize immediately
-    initAudio();
-
-    // Also try on user interaction as fallback
-    const handleUserInteraction = () => {
-      initAudio();
+    const soundEngine = getCinematicSoundEngine();
+    
+    // Resume audio context on user interaction
+    const handleUserInteraction = async () => {
+      await soundEngine.resumeAudioContext();
     };
 
     document.addEventListener('click', handleUserInteraction);
     document.addEventListener('touchstart', handleUserInteraction);
 
+    // Play the intro sound with slight delay to ensure context is ready
+    const soundTimer = setTimeout(() => {
+      soundEngine.playIntroSound();
+    }, 100);
+
     return () => {
+      clearTimeout(soundTimer);
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('touchstart', handleUserInteraction);
     };
-  }, []);
-
-  // Play cinematic sound effects
-  useEffect(() => {
-    if (!showPreloader) return;
-
-    const playSound = (frequency: number, duration: number, delay: number, type: 'sine' | 'square' = 'sine') => {
-      const ctx = audioContextRef.current;
-      if (!ctx) return;
-
-      setTimeout(() => {
-        try {
-          // Resume context if suspended
-          if (ctx.state === 'suspended') {
-            ctx.resume();
-          }
-
-          const oscillator = ctx.createOscillator();
-          const gainNode = ctx.createGain();
-
-          oscillator.connect(gainNode);
-          gainNode.connect(ctx.destination);
-
-          oscillator.type = type;
-          oscillator.frequency.value = frequency;
-
-          gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
-
-          oscillator.start(ctx.currentTime);
-          oscillator.stop(ctx.currentTime + duration);
-        } catch (e) {
-          console.warn('Sound playback error:', e);
-        }
-      }, delay);
-    };
-
-    // Cinematic whoosh sound - multi-layered (0.3s delay)
-    playSound(250, 0.7, 300, 'sine');
-    playSound(180, 0.7, 320, 'sine');
-    playSound(120, 0.7, 340, 'sine');
-
-    // Deep bass impact - powerful (1.2s delay)
-    playSound(60, 0.5, 1200, 'sine');
-    playSound(45, 0.5, 1220, 'sine');
-    playSound(80, 0.4, 1240, 'sine');
-
-    // Mid-range resonance - building (1.8s delay)
-    playSound(150, 0.6, 1800, 'sine');
-    playSound(200, 0.6, 1820, 'sine');
-
-    // High-frequency shimmer (2.3s delay)
-    playSound(400, 0.5, 2300, 'sine');
-    playSound(500, 0.5, 2320, 'sine');
-
-    // Atmospheric pad - sustain (2.8s delay)
-    playSound(110, 1.0, 2800, 'sine');
-    playSound(165, 1.0, 2820, 'sine');
-
-    // Cinematic swell - climax (3.2s delay)
-    playSound(220, 0.8, 3200, 'sine');
-    playSound(330, 0.8, 3220, 'sine');
-    playSound(440, 0.8, 3240, 'sine');
-
-    // Final fade out - ethereal (3.8s delay)
-    playSound(140, 1.2, 3800, 'sine');
-    playSound(210, 1.2, 3820, 'sine');
-
   }, [showPreloader]);
 
   if (!showPreloader) {
