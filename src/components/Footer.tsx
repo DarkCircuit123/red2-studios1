@@ -26,29 +26,29 @@ export default function Footer() {
 
   return (
     <footer className="bg-black border-t border-white/10">
-      <div className="max-w-[120rem] mx-auto px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+      <div className="max-w-[120rem] mx-auto px-6 md:px-8 py-16 md:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-16 mb-16">
           {/* Brand */}
           <div>
-            <h3 className="text-lg font-heading font-bold text-white mb-3 tracking-wide">
-              RED2
+            <h3 className="text-xl md:text-2xl font-heading font-bold text-white mb-4 tracking-wide">
+              RED²
             </h3>
-            <p className="text-sm font-paragraph text-white/50">
+            <p className="text-sm md:text-base font-paragraph text-white/60 leading-relaxed">
               High-end fashion photography & visual storytelling
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h4 className="text-xs font-mono font-semibold text-white/40 mb-6 uppercase tracking-widest">
+            <h4 className="text-xs font-mono font-semibold text-white/50 mb-6 uppercase tracking-widest">
               Navigation
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li>
                 <a
                   href="#portfolio"
                   onClick={(e) => handleAnchorClick(e, '#portfolio')}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
+                  className="text-sm md:text-base font-paragraph text-white/70 hover:text-white transition-colors duration-300"
                 >
                   Gallery
                 </a>
@@ -57,7 +57,7 @@ export default function Footer() {
                 <a
                   href="#about"
                   onClick={(e) => handleAnchorClick(e, '#about')}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
+                  className="text-sm md:text-base font-paragraph text-white/70 hover:text-white transition-colors duration-300"
                 >
                   About
                 </a>
@@ -65,7 +65,7 @@ export default function Footer() {
               <li>
                 <Link
                   to="/portfolio"
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
+                  className="text-sm md:text-base font-paragraph text-white/70 hover:text-white transition-colors duration-300"
                 >
                   Work
                 </Link>
@@ -74,7 +74,7 @@ export default function Footer() {
                 <a
                   href="#contact"
                   onClick={(e) => handleAnchorClick(e, '#contact')}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
+                  className="text-sm md:text-base font-paragraph text-white/70 hover:text-white transition-colors duration-300"
                 >
                   Contact
                 </a>
@@ -84,15 +84,15 @@ export default function Footer() {
 
           {/* Services */}
           <div>
-            <h4 className="text-xs font-mono font-semibold text-white/40 mb-6 uppercase tracking-widest">
+            <h4 className="text-xs font-mono font-semibold text-white/50 mb-6 uppercase tracking-widest">
               Services
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li>
                 <a
                   href="#about"
                   onClick={(e) => handleAnchorClick(e, '#about')}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
+                  className="text-sm md:text-base font-paragraph text-white/70 hover:text-white transition-colors duration-300"
                 >
                   Editorial
                 </a>
@@ -101,7 +101,7 @@ export default function Footer() {
                 <a
                   href="#about"
                   onClick={(e) => handleAnchorClick(e, '#about')}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
+                  className="text-sm md:text-base font-paragraph text-white/70 hover:text-white transition-colors duration-300"
                 >
                   Commercial
                 </a>
@@ -110,7 +110,7 @@ export default function Footer() {
                 <a
                   href="#about"
                   onClick={(e) => handleAnchorClick(e, '#about')}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
+                  className="text-sm md:text-base font-paragraph text-white/70 hover:text-white transition-colors duration-300"
                 >
                   Campaigns
                 </a>
@@ -119,7 +119,7 @@ export default function Footer() {
                 <a
                   href="#about"
                   onClick={(e) => handleAnchorClick(e, '#about')}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
+                  className="text-sm md:text-base font-paragraph text-white/70 hover:text-white transition-colors duration-300"
                 >
                   Consulting
                 </a>
@@ -129,7 +129,7 @@ export default function Footer() {
 
           {/* Social */}
           <div>
-            <h4 className="text-xs font-mono font-semibold text-white/40 mb-6 uppercase tracking-widest">
+            <h4 className="text-xs font-mono font-semibold text-white/50 mb-6 uppercase tracking-widest">
               Connect
             </h4>
             <div className="flex gap-4">
@@ -137,7 +137,7 @@ export default function Footer() {
                 href="https://instagram.com/jmichaelzuniga"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-white/60 hover:text-white transition-colors"
+                className="p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5" />
@@ -146,7 +146,7 @@ export default function Footer() {
                 href="https://www.facebook.com/jordanmzuniga/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-white/60 hover:text-white transition-colors"
+                className="p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
                 aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5" />
@@ -155,14 +155,14 @@ export default function Footer() {
                 href="https://linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-white/60 hover:text-white transition-colors"
+                className="p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-5 h-5" />
               </a>
               <a
                 href="mailto:hello@studio.com"
-                className="p-2 text-white/60 hover:text-white transition-colors"
+                className="p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
                 aria-label="Email"
               >
                 <Mail className="w-5 h-5" />
@@ -172,30 +172,30 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-white/10 pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs font-mono text-white/30">
+        <div className="border-t border-white/10 pt-8 md:pt-12">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <p className="text-xs md:text-sm font-mono text-white/40">
               © {currentYear} Studio. All rights reserved.
             </p>
-            <div className="flex gap-6">
+            <div className="flex gap-6 md:gap-8">
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
+                className="text-xs md:text-sm font-mono text-white/40 hover:text-white/70 transition-colors duration-300 uppercase tracking-widest"
               >
                 Privacy
               </a>
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
+                className="text-xs md:text-sm font-mono text-white/40 hover:text-white/70 transition-colors duration-300 uppercase tracking-widest"
               >
                 Terms
               </a>
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs font-mono text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
+                className="text-xs md:text-sm font-mono text-white/40 hover:text-white/70 transition-colors duration-300 uppercase tracking-widest"
               >
                 Cookies
               </a>

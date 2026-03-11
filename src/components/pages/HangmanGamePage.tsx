@@ -294,54 +294,55 @@ export default function HangmanGamePage() {
   return (
     <div className="min-h-screen bg-black flex flex-col pt-24">
       <Header />
-      <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-4xl flex gap-8">
-          {/* Main Game Area */}
-          <div className="flex-1">
+      <main className="flex-1 flex items-center justify-center px-4 md:px-8 py-12 md:py-16">
+        <div className="w-full max-w-6xl">
           {/* Category Selection */}
           {!selectedCategory ? (
-            <div className="bg-gradient-to-b from-gray-900 to-black rounded-lg border border-primary p-8 space-y-8">
-              <div className="text-center">
-                <h2 className="text-4xl font-heading font-bold text-primary mb-4">Select a Category</h2>
-                <p className="text-white/60 font-paragraph">Choose your difficulty level</p>
+            <div className="bg-gradient-to-br from-primary/15 via-black to-black rounded-2xl border border-primary/40 p-12 md:p-16 lg:p-20 space-y-12">
+              <div className="text-center space-y-6">
+                <h2 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-6 leading-tight">Select a Category</h2>
+                <p className="text-base md:text-lg font-paragraph text-white/70 max-w-3xl mx-auto leading-relaxed">Choose your difficulty level and test your knowledge across fashion, photography, and modeling disciplines</p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 {Object.keys(categories).map((category) => (
                   <button
                     key={category}
                     onClick={() => startGame(category)}
-                    className="p-6 bg-primary/20 border border-primary rounded-lg hover:bg-primary/40 transition-all active:scale-95"
+                    className="group relative p-10 md:p-12 bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/50 rounded-xl hover:border-primary/80 hover:from-primary/35 hover:to-primary/15 transition-all duration-300 active:scale-95 overflow-hidden"
                   >
-                    <p className="text-xl font-heading font-bold text-primary">{category}</p>
-                    <p className="text-sm text-white/60 mt-2">
-                      {(categories as any)[category].length} words
-                    </p>
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/0 group-hover:from-white/5 group-hover:to-white/0 transition-all duration-300" />
+                    <div className="relative z-10 space-y-4">
+                      <p className="text-3xl md:text-4xl font-heading font-bold text-primary group-hover:text-white transition-colors duration-300 uppercase tracking-wide">{category}</p>
+                      <p className="text-sm md:text-base font-paragraph text-white/60 group-hover:text-white/80 transition-colors duration-300">
+                        {(categories as any)[category].length} words
+                      </p>
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <>
-              {/* Game Container */}
-              <div className="flex-1 bg-gradient-to-b from-gray-900 to-black rounded-lg border border-primary p-8 space-y-8">
+            <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+              {/* Game Container - Main */}
+              <div className="lg:col-span-2 bg-gradient-to-br from-primary/15 via-black to-black rounded-2xl border border-primary/40 p-10 md:p-14 space-y-10">
                 {/* Category & Stats */}
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pb-8 border-b border-primary/20">
                   <div>
-                    <p className="text-xs font-mono text-white/60 uppercase tracking-widest">Category</p>
-                    <p className="text-xl font-heading text-primary font-bold">{gameState.category}</p>
+                    <p className="text-xs font-mono text-white/50 uppercase tracking-widest mb-2">Category</p>
+                    <p className="text-3xl md:text-4xl font-heading text-primary font-bold">{gameState.category}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs font-mono text-white/60 uppercase tracking-widest">Wrong Guesses</p>
-                    <p className={`text-2xl font-heading font-bold ${gameState.wrongGuesses >= maxWrong ? 'text-red-500' : 'text-white'}`}>
+                  <div className="text-left sm:text-right">
+                    <p className="text-xs font-mono text-white/50 uppercase tracking-widest mb-2">Wrong Guesses</p>
+                    <p className={`text-4xl md:text-5xl font-heading font-bold ${gameState.wrongGuesses >= maxWrong ? 'text-red-500' : 'text-white'}`}>
                       {gameState.wrongGuesses}/{maxWrong}
                     </p>
                   </div>
                 </div>
 
                 {/* Hangman Drawing */}
-                <div className="flex justify-center">
-                  <svg width="400" height="300" viewBox="0 0 400 300" className="w-full max-w-xs">
+                <div className="flex justify-center py-8">
+                  <svg width="400" height="300" viewBox="0 0 400 300" className="w-full max-w-sm">
                     {/* Gallows */}
                     <line x1="150" y1="250" x2="150" y2="50" stroke="#d4a574" strokeWidth="4" />
                     <line x1="150" y1="50" x2="300" y2="50" stroke="#d4a574" strokeWidth="4" />
@@ -352,54 +353,58 @@ export default function HangmanGamePage() {
                 </div>
 
                 {/* Word Display */}
-                <div className="text-center">
-                  <p className="text-5xl font-mono font-bold text-white tracking-widest">
+                <div className="text-center py-8 bg-primary/10 rounded-xl border border-primary/20 p-8">
+                  <p className="text-6xl md:text-7xl font-mono font-bold text-white tracking-widest break-words">
                     {gameState.displayWord.join(' ')}
                   </p>
                 </div>
 
                 {/* Game Status */}
                 {gameState.won && (
-                  <div className="text-center p-4 bg-green-900/30 border border-green-500 rounded">
-                    <p className="text-2xl font-heading font-bold text-green-400">YOU WIN!</p>
-                    <p className="text-lg text-green-300 mt-2">Score: {currentScore}</p>
+                  <div className="text-center p-8 bg-gradient-to-br from-green-900/40 to-green-900/10 border border-green-500/50 rounded-xl">
+                    <p className="text-4xl md:text-5xl font-heading font-bold text-green-400 mb-3">YOU WIN!</p>
+                    <p className="text-2xl font-paragraph text-green-300">Score: {currentScore}</p>
                   </div>
                 )}
 
                 {/* Guessed Letters */}
-                <div className="space-y-2">
-                  <p className="text-xs font-mono text-white/60 uppercase tracking-widest">Guessed Letters</p>
-                  <div className="flex flex-wrap gap-2">
-                    {gameState.guessed.map((letter) => (
-                      <span
-                        key={letter}
-                        className={`px-3 py-1 rounded font-mono text-sm font-bold ${
-                          gameState.word.includes(letter)
-                            ? 'bg-green-900/50 text-green-400 border border-green-500'
-                            : 'bg-red-900/50 text-red-400 border border-red-500'
-                        }`}
-                      >
-                        {letter}
-                      </span>
-                    ))}
+                <div className="space-y-4">
+                  <p className="text-xs font-mono text-white/50 uppercase tracking-widest">Guessed Letters</p>
+                  <div className="flex flex-wrap gap-3 p-6 bg-white/5 rounded-xl border border-white/10 min-h-16">
+                    {gameState.guessed.length === 0 ? (
+                      <p className="text-white/40 text-sm">No letters guessed yet</p>
+                    ) : (
+                      gameState.guessed.map((letter) => (
+                        <span
+                          key={letter}
+                          className={`px-4 py-2 rounded-lg font-mono text-base font-bold transition-all ${
+                            gameState.word.includes(letter)
+                              ? 'bg-green-900/50 text-green-300 border border-green-500/50'
+                              : 'bg-red-900/50 text-red-300 border border-red-500/50'
+                          }`}
+                        >
+                          {letter}
+                        </span>
+                      ))
+                    )}
                   </div>
                 </div>
 
                 {/* Letter Buttons */}
-                <div className="space-y-2">
-                  <p className="text-xs font-mono text-white/60 uppercase tracking-widest">Or Click Letters</p>
-                  <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                <div className="space-y-4">
+                  <p className="text-xs font-mono text-white/50 uppercase tracking-widest">Click Letters to Guess</p>
+                  <div className="grid grid-cols-7 gap-2 md:gap-3">
                     {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter) => (
                       <button
                         key={letter}
                         onClick={() => handleGuess(letter)}
                         disabled={gameState.guessed.includes(letter) || gameState.gameOver || gameState.won}
-                        className={`py-2 px-1 sm:px-2 text-xs sm:text-sm font-mono font-bold rounded transition-all ${
+                        className={`py-3 px-2 md:px-3 text-sm md:text-base font-mono font-bold rounded-lg transition-all ${
                           gameState.guessed.includes(letter)
                             ? gameState.word.includes(letter)
-                              ? 'bg-green-900/50 text-green-400 border border-green-500 cursor-not-allowed'
-                              : 'bg-red-900/50 text-red-400 border border-red-500 cursor-not-allowed'
-                            : 'bg-primary/20 text-white border border-primary hover:bg-primary/40 active:scale-95'
+                              ? 'bg-green-900/50 text-green-300 border border-green-500/50 cursor-not-allowed'
+                              : 'bg-red-900/50 text-red-300 border border-red-500/50 cursor-not-allowed'
+                            : 'bg-primary/30 text-white border border-primary/60 hover:bg-primary/50 hover:border-primary active:scale-95'
                         }`}
                       >
                         {letter}
@@ -409,18 +414,18 @@ export default function HangmanGamePage() {
                 </div>
 
                 {/* Instructions */}
-                <div className="text-center text-xs font-mono text-white/40">
-                  <p>Press letter keys or click buttons to guess. You have {maxWrong} wrong guesses.</p>
+                <div className="text-center text-sm font-paragraph text-white/50 p-6 bg-white/5 rounded-xl border border-white/10">
+                  <p>Press letter keys on your keyboard or click buttons above. You have {maxWrong} wrong guesses allowed.</p>
                 </div>
 
                 {/* New Game Button */}
-                <div className="flex justify-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
                   <button
                     onClick={newGame}
                     disabled={!gameState.won}
-                    className={`px-8 py-3 font-heading font-bold rounded transition-all active:scale-95 ${
+                    className={`px-8 py-4 font-heading font-bold text-lg rounded-lg transition-all active:scale-95 ${
                       gameState.won
-                        ? 'bg-primary text-white hover:bg-opacity-80'
+                        ? 'bg-primary text-white hover:bg-primary/90'
                         : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                     }`}
                   >
@@ -439,50 +444,50 @@ export default function HangmanGamePage() {
                         won: false,
                       });
                     }}
-                    className="px-8 py-3 bg-white/10 text-white font-heading font-bold rounded hover:bg-white/20 transition-all active:scale-95"
+                    className="px-8 py-4 bg-white/10 text-white font-heading font-bold text-lg rounded-lg hover:bg-white/20 transition-all active:scale-95"
                   >
                     Change Category
                   </button>
                 </div>
               </div>
-            </>
-          )}
-          </div>
-          
-          {/* Leaderboard Sidebar */}
-          <div className="w-64 hidden lg:block">
-            <div className="bg-gradient-to-b from-gray-900 to-black rounded-lg border border-primary p-6 sticky top-24">
-              <h3 className="text-2xl font-heading font-bold text-primary mb-6">Top 3 Scores</h3>
               
-              {leaderboard.length === 0 ? (
-                <p className="text-white/60 text-center py-8">No scores yet. Play to get on the board!</p>
-              ) : (
-                <div className="space-y-4">
-                  {leaderboard.map((entry, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-primary/10 border border-primary/30 rounded">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-heading font-bold text-primary w-6">#{index + 1}</span>
-                        <span className="text-xl font-mono font-bold text-white">{entry.initials}</span>
-                      </div>
-                      <span className="text-lg font-heading font-bold text-green-400">{entry.score}</span>
+              {/* Leaderboard Sidebar */}
+              <div className="lg:col-span-1">
+                <div className="bg-gradient-to-br from-primary/15 via-black to-black rounded-2xl border border-primary/40 p-10 sticky top-32">
+                  <h3 className="text-3xl font-heading font-bold text-white mb-8">Top 3 Scores</h3>
+                  
+                  {leaderboard.length === 0 ? (
+                    <p className="text-white/50 text-center py-12 font-paragraph">No scores yet. Play to get on the board!</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {leaderboard.map((entry, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 bg-primary/20 border border-primary/40 rounded-lg hover:border-primary/60 transition-all">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl font-heading font-bold text-primary w-8">#{index + 1}</span>
+                            <span className="text-xl font-mono font-bold text-white">{entry.initials}</span>
+                          </div>
+                          <span className="text-2xl font-heading font-bold text-green-400">{entry.score}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Initials Prompt Modal */}
         {showInitialsPrompt && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
-            <div className="bg-gradient-to-b from-gray-900 to-black rounded-lg border border-primary p-8 max-w-sm w-full">
-              <h2 className="text-2xl font-heading font-bold text-primary mb-4 text-center">Great Job!</h2>
-              <p className="text-white text-center mb-6">Enter your initials to save your score</p>
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+            <div className="bg-gradient-to-br from-primary/20 via-black to-black rounded-2xl border border-primary/50 p-12 max-w-md w-full shadow-2xl">
+              <h2 className="text-4xl font-heading font-bold text-white mb-4 text-center">Great Job!</h2>
+              <p className="text-lg font-paragraph text-white/70 text-center mb-8">Enter your initials to save your score</p>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="text-center">
-                  <p className="text-3xl font-heading font-bold text-green-400 mb-4">{currentScore} Points</p>
+                  <p className="text-5xl font-heading font-bold text-green-400 mb-2">{currentScore}</p>
+                  <p className="text-sm font-mono text-white/50 uppercase tracking-widest">Points</p>
                 </div>
                 
                 <input
@@ -491,7 +496,7 @@ export default function HangmanGamePage() {
                   value={playerInitials}
                   onChange={(e) => setPlayerInitials(e.target.value.toUpperCase())}
                   placeholder="ABC"
-                  className="w-full px-4 py-3 bg-primary/20 border border-primary rounded text-white text-center text-2xl font-mono font-bold placeholder-white/30 focus:outline-none focus:bg-primary/30"
+                  className="w-full px-6 py-4 bg-primary/20 border border-primary/60 rounded-lg text-white text-center text-3xl font-mono font-bold placeholder-white/30 focus:outline-none focus:border-primary focus:bg-primary/30 transition-all"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && playerInitials.length > 0) {
@@ -500,13 +505,13 @@ export default function HangmanGamePage() {
                   }}
                 />
                 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => saveScore(playerInitials || 'AAA', currentScore)}
                     disabled={playerInitials.length === 0}
-                    className={`flex-1 px-4 py-3 font-heading font-bold rounded transition-all active:scale-95 ${
+                    className={`flex-1 px-6 py-4 font-heading font-bold text-lg rounded-lg transition-all active:scale-95 ${
                       playerInitials.length > 0
-                        ? 'bg-primary text-white hover:bg-opacity-80'
+                        ? 'bg-primary text-white hover:bg-primary/90'
                         : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                     }`}
                   >
@@ -517,7 +522,7 @@ export default function HangmanGamePage() {
                       setShowInitialsPrompt(false);
                       setPlayerInitials('');
                     }}
-                    className="flex-1 px-4 py-3 bg-white/10 text-white font-heading font-bold rounded hover:bg-white/20 transition-all active:scale-95"
+                    className="flex-1 px-6 py-4 bg-white/10 text-white font-heading font-bold text-lg rounded-lg hover:bg-white/20 transition-all active:scale-95"
                   >
                     Skip
                   </button>

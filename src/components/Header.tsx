@@ -81,7 +81,7 @@ export default function Header() {
           : 'bg-transparent'
       }`}
     >
-      <nav className="max-w-[120rem] mx-auto px-8 py-5 flex items-center justify-between from-black/20 to-transparent shadow-[inset_0px_0px_4px_0px_#bfbfbf] mix-blend-normal bg-secondary opacity-[0.82]">
+      <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between">
         {/* Logo - Text-based RED² */}
         <Link
           to="/"
