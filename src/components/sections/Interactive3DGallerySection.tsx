@@ -91,41 +91,15 @@ export default function Interactive3DGallerySection() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
           viewport={{ once: true }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center"
+          className="flex flex-col gap-12"
         >
-          {/* Left Navigation */}
-          <div className="flex flex-col gap-6">
-            <motion.button
-              onClick={handlePrev}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-16 h-16 flex items-center justify-center bg-white/5 border border-white/20 hover:border-white/60 transition-all duration-300"
-              aria-label="Previous project"
-            >
-              <ChevronLeft className="w-6 h-6 text-white" />
-            </motion.button>
-
-            {/* Project Info */}
-            <div className="bg-white/5 border border-white/10 p-6">
-              <p className="text-xs font-mono text-white/50 uppercase tracking-widest mb-3">
-                {currentIndex + 1} / {portfolioItems.length}
-              </p>
-              <h3 className="text-2xl font-heading font-bold text-white mb-3">
-                {currentItem?.projectName || 'Project'}
-              </h3>
-              <p className="text-sm font-paragraph text-white/60 line-clamp-3">
-                {currentItem?.shortDescription || 'No description'}
-              </p>
-            </div>
-          </div>
-
-          {/* Center 3D Viewer */}
+          {/* Main 3D Viewer - Full Width and Tall */}
           <motion.div
             ref={containerRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="relative aspect-square overflow-hidden bg-white/5 border border-white/10 cursor-grab active:cursor-grabbing"
-            style={{ perspective: '1000px' }}
+            className="relative w-full min-h-[600px] md:min-h-[800px] overflow-hidden bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 hover:border-white/40 transition-all duration-300 cursor-grab active:cursor-grabbing shadow-2xl"
+            style={{ perspective: '1500px' }}
           >
             {/* 3D Carousel Effect */}
             <div className="relative w-full h-full">
@@ -134,14 +108,14 @@ export default function Interactive3DGallerySection() {
                   key={idx}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{
-                    opacity: idx === 0 ? 1 : 0.3,
-                    scale: idx === 0 ? 1 : 0.8,
+                    opacity: idx === 0 ? 1 : 0.2,
+                    scale: idx === 0 ? 1 : 0.75,
                     zIndex: idx === 0 ? 10 : 0,
                   }}
                   transition={{ duration: 0.6 }}
                   className="absolute inset-0"
                   style={{
-                    transform: `rotateY(${rotation + idx * 90}deg) translateZ(200px)`,
+                    transform: `rotateY(${rotation + idx * 90}deg) translateZ(300px)`,
                   }}
                 >
                   <Image
@@ -156,38 +130,93 @@ export default function Interactive3DGallerySection() {
             {/* Fullscreen Button */}
             <motion.button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              whileHover={{ scale: 1.1 }}
-              className="absolute top-4 right-4 p-3 bg-black/50 hover:bg-black/80 transition-colors z-20"
+              whileHover={{ scale: 1.15 }}
+              className="absolute top-6 right-6 p-4 bg-black/60 hover:bg-black/90 transition-colors z-20 rounded-lg"
               aria-label="Toggle fullscreen"
             >
-              <Maximize2 className="w-4 h-4 text-white" />
+              <Maximize2 className="w-5 h-5 text-white" />
+            </motion.button>
+
+            {/* Navigation Buttons - Larger and More Visible */}
+            <motion.button
+              onClick={handlePrev}
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.95 }}
+              className="absolute left-6 top-1/2 -translate-y-1/2 p-4 bg-black/60 hover:bg-black/90 transition-all duration-300 z-20 rounded-lg"
+              aria-label="Previous project"
+            >
+              <ChevronLeft className="w-8 h-8 text-white" />
+            </motion.button>
+
+            <motion.button
+              onClick={handleNext}
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.95 }}
+              className="absolute right-6 top-1/2 -translate-y-1/2 p-4 bg-black/60 hover:bg-black/90 transition-all duration-300 z-20 rounded-lg"
+              aria-label="Next project"
+            >
+              <ChevronRight className="w-8 h-8 text-white" />
             </motion.button>
           </motion.div>
 
-          {/* Right Navigation */}
-          <div className="flex flex-col gap-6">
-            <motion.button
-              onClick={handleNext}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-16 h-16 flex items-center justify-center bg-white/5 border border-white/20 hover:border-white/60 transition-all duration-300"
-              aria-label="Next project"
+          {/* Info Section Below - Full Width */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Project Info */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 p-8 rounded-lg"
             >
-              <ChevronRight className="w-6 h-6 text-white" />
-            </motion.button>
+              <p className="text-xs font-mono text-primary uppercase tracking-widest mb-4">
+                Project {currentIndex + 1} / {portfolioItems.length}
+              </p>
+              <h3 className="text-3xl font-heading font-bold text-white mb-4">
+                {currentItem?.projectName || 'Project'}
+              </h3>
+              <p className="text-base font-paragraph text-white/70 leading-relaxed">
+                {currentItem?.shortDescription || 'No description'}
+              </p>
+            </motion.div>
 
             {/* Image Counter */}
-            <div className="bg-white/5 border border-white/10 p-6">
-              <p className="text-xs font-mono text-white/50 uppercase tracking-widest mb-3">
-                Gallery Images
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 p-8 rounded-lg flex flex-col justify-center"
+            >
+              <p className="text-xs font-mono text-primary uppercase tracking-widest mb-4">
+                Gallery Views
               </p>
-              <p className="text-3xl font-heading font-bold text-white">
+              <p className="text-5xl font-heading font-bold text-white mb-2">
                 {galleryImages.length}
               </p>
-              <p className="text-xs font-mono text-white/40 mt-2 uppercase tracking-widest">
-                Available Views
+              <p className="text-xs font-mono text-white/50 uppercase tracking-widest">
+                Available Angles
               </p>
-            </div>
+            </motion.div>
+
+            {/* Navigation Info */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+              className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 p-8 rounded-lg flex flex-col justify-center"
+            >
+              <p className="text-xs font-mono text-primary uppercase tracking-widest mb-4">
+                Interaction
+              </p>
+              <p className="text-lg font-paragraph text-white/80 mb-3">
+                ✦ Hover for 3D depth
+              </p>
+              <p className="text-lg font-paragraph text-white/80">
+                ✦ Click arrows to rotate
+              </p>
+            </motion.div>
           </div>
         </motion.div>
 
