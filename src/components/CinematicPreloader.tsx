@@ -24,17 +24,27 @@ export default function CinematicPreloader({ onComplete, isLoading }: CinematicP
   }, [isLoading, showPreloader, onComplete]);
 
   useEffect(() => {
-    // Initialize audio context for sound design
+    // Initialize audio context immediately
     const initAudio = () => {
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        try {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+          // Resume audio context if suspended
+          if (audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume();
+          }
+        } catch (e) {
+          console.warn('AudioContext not available');
+        }
       }
     };
 
+    // Try to initialize immediately
+    initAudio();
+
+    // Also try on user interaction as fallback
     const handleUserInteraction = () => {
       initAudio();
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
     };
 
     document.addEventListener('click', handleUserInteraction);
@@ -55,20 +65,29 @@ export default function CinematicPreloader({ onComplete, isLoading }: CinematicP
       if (!ctx) return;
 
       setTimeout(() => {
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
+        try {
+          // Resume context if suspended
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
 
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
+          const oscillator = ctx.createOscillator();
+          const gainNode = ctx.createGain();
 
-        oscillator.type = type;
-        oscillator.frequency.value = frequency;
+          oscillator.connect(gainNode);
+          gainNode.connect(ctx.destination);
 
-        gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+          oscillator.type = type;
+          oscillator.frequency.value = frequency;
 
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + duration);
+          gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+          oscillator.start(ctx.currentTime);
+          oscillator.stop(ctx.currentTime + duration);
+        } catch (e) {
+          console.warn('Sound playback error:', e);
+        }
       }, delay);
     };
 
