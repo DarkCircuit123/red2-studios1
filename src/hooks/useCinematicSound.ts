@@ -25,9 +25,13 @@ export function useCinematicSound() {
     };
   }, []);
 
-  const playIntro = useCallback(() => {
+  const playIntro = useCallback(async () => {
     if (!isMuted) {
-      soundEngineRef.current.playIntroSound();
+      try {
+        await soundEngineRef.current.playIntroSound();
+      } catch (e) {
+        console.warn('Failed to play intro sound:', e);
+      }
     }
   }, [isMuted]);
 

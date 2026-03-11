@@ -42,9 +42,14 @@ export class CinematicSoundEngine {
   }
 
   public async resumeAudioContext() {
+    if (!this.audioContext) {
+      this.initializeAudioContext();
+    }
+    
     if (this.audioContext && this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume();
+        console.log('Audio context resumed successfully');
       } catch (e) {
         console.warn('Failed to resume audio context:', e);
       }
@@ -55,14 +60,15 @@ export class CinematicSoundEngine {
     if (!this.audioContext || !this.masterGain) return;
 
     const ctx = this.audioContext;
-    const now = ctx.currentTime;
 
     setTimeout(() => {
       try {
+        // Ensure audio context is running
         if (ctx.state === 'suspended') {
-          ctx.resume();
+          ctx.resume().catch(e => console.warn('Failed to resume context:', e));
         }
 
+        const now = ctx.currentTime;
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
         const filter = ctx.createBiquadFilter();
@@ -101,10 +107,13 @@ export class CinematicSoundEngine {
    * Play the complete RED² Studios cinematic intro sound
    * ~4 second orchestral composition with minimal, premium aesthetic
    */
-  public playIntroSound() {
+  public async playIntroSound() {
     if (!this.isInitialized) {
       this.initializeAudioContext();
     }
+
+    // Ensure audio context is ready
+    await this.resumeAudioContext();
 
     // PHASE 1: Deep Rising Whoosh (0.3s - 1.0s)
     // Multi-layered frequency sweep creating depth

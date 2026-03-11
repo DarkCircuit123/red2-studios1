@@ -10,6 +10,7 @@ interface CinematicPreloaderProps {
 
 export default function CinematicPreloader({ onComplete, isLoading }: CinematicPreloaderProps) {
   const [showPreloader, setShowPreloader] = useState(true);
+  const [soundPlayed, setSoundPlayed] = useState(false);
   const { playIntro } = useCinematicSound();
   const logoImage = 'https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png';
 
@@ -24,19 +25,32 @@ export default function CinematicPreloader({ onComplete, isLoading }: CinematicP
     }
   }, [isLoading, showPreloader, onComplete]);
 
-  // Play cinematic sound on preloader mount
+  // Play cinematic sound on preloader mount - triggered by user interaction
   useEffect(() => {
-    if (!showPreloader) return;
+    if (!showPreloader || soundPlayed) return;
 
-    // Play the intro sound with slight delay to ensure context is ready
-    const soundTimer = setTimeout(() => {
-      playIntro();
-    }, 100);
+    const handlePlaySound = async () => {
+      try {
+        // Play the intro sound immediately
+        await playIntro();
+        setSoundPlayed(true);
+        // Remove listeners after first play
+        document.removeEventListener('click', handlePlaySound);
+        document.removeEventListener('touchstart', handlePlaySound);
+      } catch (e) {
+        console.warn('Sound playback error:', e);
+      }
+    };
+
+    // Add listeners for user interaction to trigger sound
+    document.addEventListener('click', handlePlaySound, { once: true });
+    document.addEventListener('touchstart', handlePlaySound, { once: true });
 
     return () => {
-      clearTimeout(soundTimer);
+      document.removeEventListener('click', handlePlaySound);
+      document.removeEventListener('touchstart', handlePlaySound);
     };
-  }, [showPreloader, playIntro]);
+  }, [showPreloader, soundPlayed, playIntro]);
 
   if (!showPreloader) {
     return null;
