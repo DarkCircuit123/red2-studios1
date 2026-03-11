@@ -91,19 +91,36 @@ export default function CinematicPreloader({ onComplete, isLoading }: CinematicP
       }, delay);
     };
 
-    // Cinematic whoosh sound (0.5s delay)
-    playSound(200, 0.6, 500, 'sine');
-    playSound(150, 0.6, 520, 'sine');
+    // Cinematic whoosh sound - multi-layered (0.3s delay)
+    playSound(250, 0.7, 300, 'sine');
+    playSound(180, 0.7, 320, 'sine');
+    playSound(120, 0.7, 340, 'sine');
 
-    // Deep bass impact (1.5s delay)
-    playSound(80, 0.4, 1500, 'sine');
-    playSound(60, 0.4, 1510, 'sine');
+    // Deep bass impact - powerful (1.2s delay)
+    playSound(60, 0.5, 1200, 'sine');
+    playSound(45, 0.5, 1220, 'sine');
+    playSound(80, 0.4, 1240, 'sine');
 
-    // Atmospheric resonance (2s delay)
-    playSound(100, 0.8, 2000, 'sine');
+    // Mid-range resonance - building (1.8s delay)
+    playSound(150, 0.6, 1800, 'sine');
+    playSound(200, 0.6, 1820, 'sine');
 
-    // Fade out tone (3.5s delay)
-    playSound(120, 0.8, 3500, 'sine');
+    // High-frequency shimmer (2.3s delay)
+    playSound(400, 0.5, 2300, 'sine');
+    playSound(500, 0.5, 2320, 'sine');
+
+    // Atmospheric pad - sustain (2.8s delay)
+    playSound(110, 1.0, 2800, 'sine');
+    playSound(165, 1.0, 2820, 'sine');
+
+    // Cinematic swell - climax (3.2s delay)
+    playSound(220, 0.8, 3200, 'sine');
+    playSound(330, 0.8, 3220, 'sine');
+    playSound(440, 0.8, 3240, 'sine');
+
+    // Final fade out - ethereal (3.8s delay)
+    playSound(140, 1.2, 3800, 'sine');
+    playSound(210, 1.2, 3820, 'sine');
 
   }, [showPreloader]);
 
