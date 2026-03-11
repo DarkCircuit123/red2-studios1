@@ -309,12 +309,12 @@ export default function HangmanGamePage() {
                   <button
                     key={category}
                     onClick={() => startGame(category)}
-                    className="group relative p-10 md:p-12 bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/50 rounded-xl hover:border-primary/80 hover:from-primary/35 hover:to-primary/15 transition-all duration-300 active:scale-95 overflow-hidden"
+                    className="group relative p-8 md:p-10 bg-gradient-to-br from-primary/25 to-primary/5 border border-primary/50 rounded-xl hover:border-primary/80 hover:from-primary/35 hover:to-primary/15 transition-all duration-300 active:scale-95 overflow-hidden min-h-32 flex flex-col justify-center"
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/0 group-hover:from-white/5 group-hover:to-white/0 transition-all duration-300" />
-                    <div className="relative z-10 space-y-4">
-                      <p className="text-3xl md:text-4xl font-heading font-bold text-primary group-hover:text-white transition-colors duration-300 uppercase tracking-wide">{category}</p>
-                      <p className="text-sm md:text-base font-paragraph text-white/60 group-hover:text-white/80 transition-colors duration-300">
+                    <div className="relative z-10 space-y-3 flex flex-col items-center text-center">
+                      <p className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-heading font-bold text-primary group-hover:text-white transition-colors duration-300 uppercase tracking-wide line-clamp-2 break-words w-full">{category}</p>
+                      <p className="text-xs sm:text-sm md:text-base font-paragraph text-white/60 group-hover:text-white/80 transition-colors duration-300">
                         {(categories as any)[category].length} words
                       </p>
                     </div>
