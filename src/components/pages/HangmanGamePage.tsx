@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import Header from '../Header';
 import Footer from '../Footer';
 
+interface LeaderboardEntry {
+  initials: string;
+  score: number;
+}
+
 export default function HangmanGamePage() {
   const [gameState, setGameState] = useState({
     word: '',
@@ -14,6 +19,10 @@ export default function HangmanGamePage() {
   });
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [showInitialsPrompt, setShowInitialsPrompt] = useState(false);
+  const [playerInitials, setPlayerInitials] = useState('');
+  const [currentScore, setCurrentScore] = useState(0);
   const audioContextRef = useRef<AudioContext | null>(null);
 
   const categories = {
@@ -86,6 +95,14 @@ export default function HangmanGamePage() {
 
   const maxWrong = 6;
 
+  // Load leaderboard from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('hangmanLeaderboard');
+    if (saved) {
+      setLeaderboard(JSON.parse(saved));
+    }
+  }, []);
+
   // Initialize audio context
   useEffect(() => {
     if (!audioContextRef.current) {
@@ -155,6 +172,24 @@ export default function HangmanGamePage() {
     osc.stop(now + 0.5);
   };
 
+  // Calculate score based on wrong guesses
+  const calculateScore = (wrongGuesses: number): number => {
+    return Math.max(0, 100 - wrongGuesses * 10);
+  };
+
+  // Save score to leaderboard
+  const saveScore = (initials: string, score: number) => {
+    const newEntry: LeaderboardEntry = { initials: initials.toUpperCase(), score };
+    const updated = [...leaderboard, newEntry]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+    
+    setLeaderboard(updated);
+    localStorage.setItem('hangmanLeaderboard', JSON.stringify(updated));
+    setShowInitialsPrompt(false);
+    setPlayerInitials('');
+  };
+
   // Initialize game with selected category
   const startGame = (category: string) => {
     const categoryWords = (categories as any)[category];
@@ -206,6 +241,12 @@ export default function HangmanGamePage() {
       }, 600);
     }
 
+    if (isWon) {
+      const score = calculateScore(newWrongGuesses);
+      setCurrentScore(score);
+      setShowInitialsPrompt(true);
+    }
+
     setGameState({
       ...gameState,
       guessed: newGuessed,
@@ -254,7 +295,9 @@ export default function HangmanGamePage() {
     <div className="min-h-screen bg-black flex flex-col pt-24">
       <Header />
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-4xl flex gap-8">
+          {/* Main Game Area */}
+          <div className="flex-1">
           {/* Category Selection */}
           {!selectedCategory ? (
             <div className="bg-gradient-to-b from-gray-900 to-black rounded-lg border border-primary p-8 space-y-8">
@@ -281,7 +324,7 @@ export default function HangmanGamePage() {
           ) : (
             <>
               {/* Game Container */}
-              <div className="bg-gradient-to-b from-gray-900 to-black rounded-lg border border-primary p-8 space-y-8">
+              <div className="flex-1 bg-gradient-to-b from-gray-900 to-black rounded-lg border border-primary p-8 space-y-8">
                 {/* Category & Stats */}
                 <div className="flex justify-between items-center">
                   <div>
@@ -319,6 +362,7 @@ export default function HangmanGamePage() {
                 {gameState.won && (
                   <div className="text-center p-4 bg-green-900/30 border border-green-500 rounded">
                     <p className="text-2xl font-heading font-bold text-green-400">YOU WIN!</p>
+                    <p className="text-lg text-green-300 mt-2">Score: {currentScore}</p>
                   </div>
                 )}
 
@@ -403,7 +447,85 @@ export default function HangmanGamePage() {
               </div>
             </>
           )}
+          </div>
+          
+          {/* Leaderboard Sidebar */}
+          <div className="w-64 hidden lg:block">
+            <div className="bg-gradient-to-b from-gray-900 to-black rounded-lg border border-primary p-6 sticky top-24">
+              <h3 className="text-2xl font-heading font-bold text-primary mb-6">Top 3 Scores</h3>
+              
+              {leaderboard.length === 0 ? (
+                <p className="text-white/60 text-center py-8">No scores yet. Play to get on the board!</p>
+              ) : (
+                <div className="space-y-4">
+                  {leaderboard.map((entry, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-primary/10 border border-primary/30 rounded">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-heading font-bold text-primary w-6">#{index + 1}</span>
+                        <span className="text-xl font-mono font-bold text-white">{entry.initials}</span>
+                      </div>
+                      <span className="text-lg font-heading font-bold text-green-400">{entry.score}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Initials Prompt Modal */}
+        {showInitialsPrompt && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
+            <div className="bg-gradient-to-b from-gray-900 to-black rounded-lg border border-primary p-8 max-w-sm w-full">
+              <h2 className="text-2xl font-heading font-bold text-primary mb-4 text-center">Great Job!</h2>
+              <p className="text-white text-center mb-6">Enter your initials to save your score</p>
+              
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-3xl font-heading font-bold text-green-400 mb-4">{currentScore} Points</p>
+                </div>
+                
+                <input
+                  type="text"
+                  maxLength={3}
+                  value={playerInitials}
+                  onChange={(e) => setPlayerInitials(e.target.value.toUpperCase())}
+                  placeholder="ABC"
+                  className="w-full px-4 py-3 bg-primary/20 border border-primary rounded text-white text-center text-2xl font-mono font-bold placeholder-white/30 focus:outline-none focus:bg-primary/30"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && playerInitials.length > 0) {
+                      saveScore(playerInitials, currentScore);
+                    }
+                  }}
+                />
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => saveScore(playerInitials || 'AAA', currentScore)}
+                    disabled={playerInitials.length === 0}
+                    className={`flex-1 px-4 py-3 font-heading font-bold rounded transition-all active:scale-95 ${
+                      playerInitials.length > 0
+                        ? 'bg-primary text-white hover:bg-opacity-80'
+                        : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    Save Score
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowInitialsPrompt(false);
+                      setPlayerInitials('');
+                    }}
+                    className="flex-1 px-4 py-3 bg-white/10 text-white font-heading font-bold rounded hover:bg-white/20 transition-all active:scale-95"
+                  >
+                    Skip
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
     </div>
