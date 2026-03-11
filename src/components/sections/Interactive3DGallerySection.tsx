@@ -98,31 +98,41 @@ export default function Interactive3DGallerySection() {
             ref={containerRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="relative w-full min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px] overflow-hidden bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 hover:border-white/40 transition-all duration-300 cursor-grab active:cursor-grabbing shadow-2xl rounded-lg"
-            style={{ perspective: '1500px' }}
+            className="relative w-full min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px] bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 hover:border-white/40 transition-all duration-300 cursor-grab active:cursor-grabbing shadow-2xl rounded-lg flex items-center justify-center"
+            style={{ perspective: '1200px' }}
           >
             {/* 3D Carousel Effect */}
-            <div className="relative w-full h-full">
+            <div 
+              className="relative w-full h-full flex items-center justify-center"
+              style={{ 
+                transformStyle: 'preserve-3d',
+                perspective: '1200px'
+              }}
+            >
               {galleryImages.map((image, idx) => (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0 }}
                   animate={{
-                    opacity: idx === 0 ? 1 : 0.2,
-                    scale: idx === 0 ? 1 : 0.75,
-                    zIndex: idx === 0 ? 10 : 0,
+                    opacity: idx === 0 ? 1 : 0.3,
+                    zIndex: idx === 0 ? 10 : 5 - idx,
                   }}
                   transition={{ duration: 0.6 }}
-                  className="absolute inset-0"
+                  className="absolute flex items-center justify-center"
                   style={{
-                    transform: `rotateY(${rotation + idx * 90}deg) translateZ(300px)`,
+                    width: '80%',
+                    height: '80%',
+                    transform: `rotateY(${rotation + idx * 90}deg) translateZ(250px)`,
+                    transformStyle: 'preserve-3d',
                   }}
                 >
-                  <Image
-                    src={image}
-                    alt={`Gallery ${idx}`}
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="w-full h-full relative">
+                    <Image
+                      src={image}
+                      alt={`Gallery ${idx}`}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  </div>
                 </motion.div>
               ))}
             </div>
