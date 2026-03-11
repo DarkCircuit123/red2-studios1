@@ -8,10 +8,13 @@ import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
 import SplashScreen from '@/components/SplashScreen';
+import CinematicPreloader from '@/components/CinematicPreloader';
 import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
 import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
+import { usePreloader } from '@/hooks/usePreloader';
 
 export default function HomePage() {
+  const { isLoading, showPreloader, handlePreloaderComplete } = usePreloader();
   const [showSplash, setShowSplash] = useState(() => {
     // Only show splash screen on first visit in this session
     if (typeof window !== 'undefined') {
@@ -68,6 +71,7 @@ export default function HomePage() {
 
   return (
     <>
+      {showPreloader && <CinematicPreloader isLoading={isLoading} onComplete={handlePreloaderComplete} />}
       {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       <div className="min-h-screen bg-black text-white">
         <Header />
