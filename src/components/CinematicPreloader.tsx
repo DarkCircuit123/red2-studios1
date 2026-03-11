@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
-import { getCinematicSoundEngine } from '@/lib/cinematic-sound';
+import { useCinematicSound } from '@/hooks/useCinematicSound';
 
 interface CinematicPreloaderProps {
   onComplete: () => void;
@@ -10,6 +10,7 @@ interface CinematicPreloaderProps {
 
 export default function CinematicPreloader({ onComplete, isLoading }: CinematicPreloaderProps) {
   const [showPreloader, setShowPreloader] = useState(true);
+  const { playIntro } = useCinematicSound();
   const logoImage = 'https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png';
 
   useEffect(() => {
@@ -23,31 +24,19 @@ export default function CinematicPreloader({ onComplete, isLoading }: CinematicP
     }
   }, [isLoading, showPreloader, onComplete]);
 
-  // Initialize and play cinematic sound
+  // Play cinematic sound on preloader mount
   useEffect(() => {
     if (!showPreloader) return;
 
-    const soundEngine = getCinematicSoundEngine();
-    
-    // Resume audio context on user interaction
-    const handleUserInteraction = async () => {
-      await soundEngine.resumeAudioContext();
-    };
-
-    document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('touchstart', handleUserInteraction);
-
     // Play the intro sound with slight delay to ensure context is ready
     const soundTimer = setTimeout(() => {
-      soundEngine.playIntroSound();
+      playIntro();
     }, 100);
 
     return () => {
       clearTimeout(soundTimer);
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
     };
-  }, [showPreloader]);
+  }, [showPreloader, playIntro]);
 
   if (!showPreloader) {
     return null;
