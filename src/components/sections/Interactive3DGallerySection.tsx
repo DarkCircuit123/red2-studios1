@@ -98,7 +98,7 @@ export default function Interactive3DGallerySection() {
             ref={containerRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="relative w-full min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px] bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 hover:border-white/40 transition-all duration-300 cursor-grab active:cursor-grabbing shadow-2xl rounded-lg flex items-center justify-center"
+            className="relative w-full min-h-[250px] sm:min-h-[350px] md:min-h-[450px] bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 hover:border-white/40 transition-all duration-300 cursor-grab active:cursor-grabbing shadow-2xl rounded-lg flex items-center justify-center"
             style={{ perspective: '1200px' }}
           >
             {/* 3D Carousel Effect */}
