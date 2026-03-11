@@ -61,11 +61,11 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   }, []);
 
   useEffect(() => {
-    // Logo visible for 2 seconds, then glitch for 0.5 seconds, then fade out
+    // Logo visible for 1.5 seconds, then glitch for 1 second (intensified), then fade out
     const glitchTimer = setTimeout(() => {
       setGlitchActive(true);
       playStaticSound();
-    }, 2000);
+    }, 1500);
 
     const completeTimer = setTimeout(() => {
       setIsVisible(false);
@@ -115,7 +115,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           scale: 1, 
           opacity: glitchActive ? 0 : 1,
           y: 0,
-          x: glitchActive ? [0, -8, 8, -8, 8, 0] : 0
+          x: glitchActive ? [0, -16, 16, -16, 16, -12, 12, -8, 8, 0] : 0,
+          rotateZ: glitchActive ? [0, -2, 2, -2, 2, 0] : 0
         }}
         transition={{
           scale: {
@@ -125,10 +126,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           },
           opacity: {
             duration: 0.3,
-            delay: glitchActive ? 0 : 2
+            delay: glitchActive ? 0 : 1.5
           },
           x: glitchActive ? {
-            duration: 0.4,
+            duration: 0.8,
+            repeat: 0
+          } : { duration: 0 },
+          rotateZ: glitchActive ? {
+            duration: 0.8,
             repeat: 0
           } : { duration: 0 }
         }}
