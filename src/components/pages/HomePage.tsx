@@ -12,6 +12,12 @@ import CinematicPreloader from '@/components/CinematicPreloader';
 import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
 import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
 import { usePreloader } from '@/hooks/usePreloader';
+import {
+  preloadCriticalResources,
+  monitorCoreWebVitals,
+  deferNonCriticalJS,
+  respectReducedMotion,
+} from '@/lib/performance-enhancements';
 
 export default function HomePage() {
   const { isLoading, showPreloader, handlePreloaderComplete } = usePreloader();
@@ -37,6 +43,24 @@ export default function HomePage() {
     setupSecurityEventListeners();
   }, []);
 
+  // Initialize performance optimizations
+  useEffect(() => {
+    // Preload critical resources immediately
+    preloadCriticalResources();
+
+    // Monitor Core Web Vitals
+    monitorCoreWebVitals((metric) => {
+      if (metric.rating === 'poor') {
+        console.warn(`[Performance] ${metric.name}: ${metric.value}ms - ${metric.rating}`);
+      }
+    });
+
+    // Defer non-critical initialization
+    deferNonCriticalJS(() => {
+      // Non-critical tasks here
+    });
+  }, []);
+
   // Optimized scroll parameter handling with useEffectOnce
   useEffectOnce(() => {
     if (typeof window !== 'undefined') {
@@ -50,7 +74,7 @@ export default function HomePage() {
             const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
             window.scrollTo({
               top: elementPosition,
-              behavior: 'smooth'
+              behavior: respectReducedMotion() ? 'auto' : 'smooth'
             });
             // Clean up URL after successful scroll
             window.history.replaceState({}, document.title, window.location.pathname);

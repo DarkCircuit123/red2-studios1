@@ -22,91 +22,154 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.1,
+        staggerChildren: 0.1,
+        delayChildren: 0.15,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 40, scale: 0.95 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6 },
+      scale: 1,
+      transition: { duration: 0.7, ease: 'easeOut' },
     },
   };
 
   return (
-    <section id="portfolio" className="relative w-full py-24 md:py-32 bg-black">
-      <div className="max-w-[120rem] mx-auto px-8">
-        {/* Section Header */}
+    <section id="portfolio" className="relative w-full py-24 md:py-40 lg:py-48 bg-black overflow-hidden">
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 z-0">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          animate={{
+            background: [
+              'radial-gradient(circle at 0% 0%, rgba(73, 7, 8, 0.1) 0%, transparent 50%)',
+              'radial-gradient(circle at 100% 100%, rgba(73, 7, 8, 0.1) 0%, transparent 50%)',
+              'radial-gradient(circle at 0% 0%, rgba(73, 7, 8, 0.1) 0%, transparent 50%)',
+            ],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute inset-0"
+        />
+      </div>
+
+      <div className="max-w-[120rem] mx-auto px-8 relative z-10">
+        {/* Section Header with enhanced typography */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.9 }}
           viewport={{ once: true }}
-          className="mb-20"
+          className="mb-24 md:mb-32"
         >
-          <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
-            Selected Photos
+          <h2 className="text-7xl md:text-8xl lg:text-9xl font-heading font-black text-white mb-8 tracking-tighter leading-none">
+            Selected
+            <br />
+            <motion.span
+              className="text-primary"
+              animate={{ opacity: [1, 0.8, 1] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              Photos
+            </motion.span>
           </h2>
-          <p className="text-base font-paragraph text-white/60 max-w-xl leading-relaxed">
+          <div className="w-20 h-1 bg-gradient-to-r from-primary to-primary/40 mb-8" />
+          <p className="text-base md:text-lg font-paragraph text-white/70 max-w-2xl leading-relaxed">
             A selection of recent projects showcasing diverse aesthetics and creative directions. Each work represents precision and luxury restraint.
           </p>
         </motion.div>
 
-        {/* Grid - Asymmetrical layout */}
+        {/* Grid - Enhanced asymmetrical layout with varied sizes */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max"
+          viewport={{ once: true, margin: '-100px' }}
+          className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 auto-rows-[300px] md:auto-rows-[350px]"
         >
-          {displayItems.map((item, index) => (
-            <motion.div
-              key={item?._id || index}
-              variants={itemVariants}
-              onMouseEnter={() => item && setHoveredId(item._id)}
-              onMouseLeave={() => setHoveredId(null)}
-              className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
-                index === 0 ? 'md:col-span-2 md:row-span-2' : ''
-              } ${index === 1 ? 'md:row-span-2' : ''}`}
-            >
-              {/* Aspect ratio container */}
-              <div className={`relative w-full ${index === 0 ? 'aspect-square' : 'aspect-square'}`}>
-                {/* Image */}
+          {displayItems.map((item, index) => {
+            // Varied grid positioning for dynamic layout
+            let colSpan = 'md:col-span-1';
+            let rowSpan = 'md:row-span-1';
+            
+            if (index === 0) {
+              colSpan = 'md:col-span-2';
+              rowSpan = 'md:row-span-2';
+            } else if (index === 1) {
+              colSpan = 'md:col-span-2';
+              rowSpan = 'md:row-span-1';
+            } else if (index === 2) {
+              colSpan = 'md:col-span-2';
+              rowSpan = 'md:row-span-2';
+            } else if (index === 3) {
+              colSpan = 'md:col-span-2';
+              rowSpan = 'md:row-span-1';
+            }
+
+            return (
+              <motion.div
+                key={item?._id || index}
+                variants={itemVariants}
+                onMouseEnter={() => item && setHoveredId(item._id)}
+                onMouseLeave={() => setHoveredId(null)}
+                whileHover={{ y: -8 }}
+                className={`group relative overflow-hidden bg-white/5 cursor-pointer border border-white/10 hover:border-primary/50 transition-all duration-500 ${colSpan} ${rowSpan}`}
+              >
+                {/* Image with enhanced zoom */}
                 <Image
                   src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
                   alt={item?.projectName || 'Portfolio project'}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
 
-                {/* Subtle grain overlay */}
+                {/* Grain overlay */}
                 <div className="absolute inset-0 bg-grain opacity-5" />
 
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300" />
-
-                {/* Content - appears on hover */}
+                {/* Enhanced overlay with gradient */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={hoveredId === item?._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  initial={{ opacity: 0 }}
+                  animate={hoveredId === item?._id ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ duration: 0.3 }}
+                  className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
+                />
+
+                {/* Content - appears on hover with smooth animation */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={hoveredId === item?._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
                   className="absolute inset-0 flex flex-col items-end justify-end p-6 md:p-8"
                 >
                   <div className="text-right w-full">
-                    <p className="text-xs font-mono text-white/60 mb-4 uppercase tracking-widest line-clamp-2 break-words">
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={hoveredId === item?._id ? { opacity: 1 } : { opacity: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="text-xs font-mono text-primary mb-4 uppercase tracking-widest line-clamp-2 break-words"
+                    >
                       {item?.category || 'Fashion'}
-                    </p>
-                    <h3 className="text-xl md:text-2xl font-heading font-bold text-white mb-4 tracking-tight line-clamp-3">
+                    </motion.p>
+                    <motion.h3
+                      initial={{ opacity: 0 }}
+                      animate={hoveredId === item?._id ? { opacity: 1 } : { opacity: 0 }}
+                      transition={{ delay: 0.15 }}
+                      className="text-xl md:text-2xl lg:text-3xl font-heading font-bold text-white mb-4 tracking-tight line-clamp-3"
+                    >
                       {item?.projectName || 'Untitled Project'}
-                    </h3>
-                    <div className="flex items-center justify-end gap-2 text-white hover:gap-3 transition-all">
+                    </motion.h3>
+                    <motion.div
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={hoveredId === item?._id ? { opacity: 1, x: 0 } : { opacity: 0, x: 10 }}
+                      transition={{ delay: 0.2 }}
+                      className="flex items-center justify-end gap-2 text-white group-hover:text-primary transition-colors"
+                    >
                       <span className="text-sm font-paragraph">View</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </div>
+                      <motion.div animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                        <ArrowRight className="w-4 h-4" />
+                      </motion.div>
+                    </motion.div>
                   </div>
                 </motion.div>
 
@@ -119,27 +182,43 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
                     aria-label={`View ${item.projectName}`}
                   />
                 )}
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </motion.div>
 
-        {/* View All Button */}
+        {/* View All Button with enhanced styling */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
           viewport={{ once: true }}
-          className="mt-20 text-center"
+          className="mt-24 md:mt-32 text-center"
         >
-          <Link
-            to="/portfolio"
-            onClick={playClickSound}
-            className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 text-white font-heading font-semibold text-sm tracking-wide hover:border-white/60 hover:bg-white/10 transition-all duration-300"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
           >
-            View All Photos
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+            <Link
+              to="/portfolio"
+              onClick={playClickSound}
+              className="inline-flex items-center gap-3 px-10 py-4 border-2 border-primary text-white font-heading font-bold text-sm tracking-widest uppercase hover:bg-primary/10 transition-all duration-300 relative overflow-hidden group"
+            >
+              <span className="relative z-10">View All Photos</span>
+              <motion.div
+                animate={{ x: [0, 4, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <ArrowRight className="w-4 h-4 relative z-10" />
+              </motion.div>
+              <motion.div
+                className="absolute inset-0 bg-primary/20"
+                initial={{ x: '-100%' }}
+                whileHover={{ x: '100%' }}
+                transition={{ duration: 0.5 }}
+              />
+            </Link>
+          </motion.div>
         </motion.div>
       </div>
     </section>

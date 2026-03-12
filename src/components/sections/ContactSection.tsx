@@ -176,8 +176,23 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative w-full py-24 md:py-32 bg-black">
-      <div className="max-w-[120rem] mx-auto px-8">
+    <section id="contact" className="relative w-full py-24 md:py-40 lg:py-48 bg-black overflow-hidden">
+      {/* Animated background */}
+      <div className="absolute inset-0 z-0">
+        <motion.div
+          animate={{
+            background: [
+              'radial-gradient(circle at 0% 100%, rgba(73, 7, 8, 0.1) 0%, transparent 50%)',
+              'radial-gradient(circle at 100% 0%, rgba(73, 7, 8, 0.1) 0%, transparent 50%)',
+              'radial-gradient(circle at 0% 100%, rgba(73, 7, 8, 0.1) 0%, transparent 50%)',
+            ],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute inset-0"
+        />
+      </div>
+
+      <div className="max-w-[120rem] mx-auto px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24">
           {/* Contact Info */}
           <motion.div
@@ -186,107 +201,92 @@ export default function ContactSection() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-12 tracking-tighter">
-              Get in Touch
+            <h2 className="text-7xl md:text-8xl lg:text-9xl font-heading font-black text-white mb-12 tracking-tighter leading-none">
+              Get in
+              <br />
+              <motion.span
+                className="text-primary"
+                animate={{ opacity: [1, 0.8, 1] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                Touch
+              </motion.span>
             </h2>
 
-            <p className="text-base font-paragraph text-white/70 mb-16 leading-relaxed">
+            <p className="text-base md:text-lg font-paragraph text-white/70 mb-16 leading-relaxed">
               Ready to collaborate on your next project? I'd love to hear about your vision and discuss how we can bring it to life.
             </p>
 
-            {/* Contact Methods - Ultra-minimal */}
+            {/* Contact Methods - Enhanced with animations */}
             <div className="space-y-12">
-              <div className="flex gap-6">
-                <div className="flex-shrink-0 pt-1">
-                  <Mail className="w-5 h-5 text-white/60" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-mono uppercase tracking-widest text-white/40 mb-2">
-                    Email
-                  </h3>
-                  <a
-                    href="mailto:hello@studio.com"
-                    onClick={playClickSound}
-                    className="text-base font-paragraph text-white hover:text-white/70 transition-colors"
+              {[
+                { icon: Mail, label: 'Email', value: 'hello@studio.com', href: 'mailto:hello@studio.com' },
+                { icon: Phone, label: 'Phone', value: '+1 (234) 567-890', href: 'tel:+1234567890' },
+                { icon: MapPin, label: 'Location', value: 'New York, NY', href: '#' },
+              ].map((contact, i) => {
+                const Icon = contact.icon;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1, duration: 0.6 }}
+                    viewport={{ once: true }}
+                    className="flex gap-6 group"
                   >
-                    hello@studio.com
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex gap-6">
-                <div className="flex-shrink-0 pt-1">
-                  <Phone className="w-5 h-5 text-white/60" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-mono uppercase tracking-widest text-white/40 mb-2">
-                    Phone
-                  </h3>
-                  <a
-                    href="tel:+1234567890"
-                    onClick={playClickSound}
-                    className="text-base font-paragraph text-white hover:text-white/70 transition-colors"
-                  >
-                    +1 (234) 567-890
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex gap-6">
-                <div className="flex-shrink-0 pt-1">
-                  <MapPin className="w-5 h-5 text-white/60" />
-                </div>
-                <div>
-                  <p className="text-base font-paragraph text-white">
-                    New York, NY
-                    <br />
-                    Available for travel
-                  </p>
-                <h3 className="text-sm font-mono uppercase tracking-widest text-white/40 mb-2">
-                    Location
-                  </h3>
-                  </div>
-              </div>
+                    <motion.div
+                      className="flex-shrink-0 pt-1"
+                      whileHover={{ scale: 1.2, color: '#4A0820' }}
+                    >
+                      <Icon className="w-5 h-5 text-white/60 group-hover:text-primary transition-colors" />
+                    </motion.div>
+                    <div>
+                      <h3 className="text-xs font-mono uppercase tracking-widest text-white/40 mb-2 group-hover:text-primary transition-colors">
+                        {contact.label}
+                      </h3>
+                      <a
+                        href={contact.href}
+                        onClick={playClickSound}
+                        className="text-base font-paragraph text-white hover:text-primary transition-colors duration-300"
+                      >
+                        {contact.value}
+                      </a>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* Social Links */}
-            <div className="mt-16 pt-12 border-t border-white/10">
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              viewport={{ once: true }}
+              className="mt-16 pt-12 border-t border-primary/30"
+            >
               <p className="text-xs font-mono uppercase tracking-widest text-white/40 mb-6">
                 Follow for daily inspiration
               </p>
               <div className="flex gap-6">
-                <a
-                  href="https://instagram.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={playClickSound}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
-                >
-                  Instagram
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={playClickSound}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
-                >
-                  LinkedIn
-                </a>
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={playClickSound}
-                  className="text-sm font-paragraph text-white/60 hover:text-white transition-colors"
-                >
-                  Twitter
-                </a>
+                {['Instagram', 'LinkedIn', 'Twitter'].map((social, i) => (
+                  <motion.a
+                    key={i}
+                    href={`https://${social.toLowerCase()}.com`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={playClickSound}
+                    whileHover={{ scale: 1.1, color: '#4A0820' }}
+                    className="text-sm font-paragraph text-white/60 hover:text-primary transition-colors duration-300"
+                  >
+                    {social}
+                  </motion.a>
+                ))}
               </div>
-            </div>
+            </motion.div>
           </motion.div>
 
-          {/* Contact Form */}
+          {/* Contact Form - Enhanced */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -294,71 +294,58 @@ export default function ContactSection() {
             viewport={{ once: true }}
           >
             <form onSubmit={handleSubmit} className="space-y-8">
-              <div>
-                <label htmlFor="name" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-0 py-3 border-b border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-white transition-colors"
-                  placeholder="Your name"
-                />
-              </div>
+              {[
+                { id: 'name', label: 'Full Name', placeholder: 'Your name', type: 'text' },
+                { id: 'email', label: 'Email Address', placeholder: 'your@email.com', type: 'email' },
+                { id: 'subject', label: 'Subject', placeholder: 'Project inquiry', type: 'text' },
+              ].map((field, i) => (
+                <motion.div
+                  key={field.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1, duration: 0.6 }}
+                  viewport={{ once: true }}
+                >
+                  <label htmlFor={field.id} className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3 group-hover:text-primary transition-colors">
+                    {field.label} *
+                  </label>
+                  <motion.input
+                    type={field.type}
+                    id={field.id}
+                    name={field.id}
+                    value={formData[field.id as keyof typeof formData]}
+                    onChange={handleChange}
+                    required
+                    whileFocus={{ borderColor: '#4A0820' }}
+                    className="w-full px-0 py-3 border-b-2 border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors duration-300"
+                    placeholder={field.placeholder}
+                  />
+                </motion.div>
+              ))}
 
-              <div>
-                <label htmlFor="email" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-0 py-3 border-b border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-white transition-colors"
-                  placeholder="your@email.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="subject" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
-                  Subject *
-                </label>
-                <input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-0 py-3 border-b border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-white transition-colors"
-                  placeholder="Project inquiry"
-                />
-              </div>
-
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+                viewport={{ once: true }}
+              >
                 <label htmlFor="message" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
                   Message *
                 </label>
-                <textarea
+                <motion.textarea
                   id="message"
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
                   required
-                  rows={5}
-                  className="w-full px-0 py-3 border-b border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-white transition-colors resize-none"
+                  rows={6}
+                  whileFocus={{ borderColor: '#4A0820' }}
+                  className="w-full px-0 py-3 border-b-2 border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors duration-300 resize-none"
                   placeholder="Tell me about your project..."
                 />
-              </div>
+              </motion.div>
 
-              {/* Honeypot field - hidden from users */}
+              {/* Honeypot field */}
               <input
                 type="text"
                 name="honeypot"
@@ -369,24 +356,24 @@ export default function ContactSection() {
                 autoComplete="off"
               />
 
-              {/* Status Messages */}
+              {/* Status Messages - Enhanced */}
               {submitStatus === 'success' && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-white/5 border border-white/20"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className="p-4 bg-primary/10 border-2 border-primary rounded-lg"
                 >
-                  <p className="text-sm font-paragraph text-white/80">
-                    Thank you! I'll get back to you soon.
+                  <p className="text-sm font-paragraph text-primary font-semibold">
+                    ✓ Thank you! I'll get back to you soon.
                   </p>
                 </motion.div>
               )}
 
               {submitStatus === 'error' && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-red-500/10 border border-red-500/30"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className="p-4 bg-red-500/10 border-2 border-red-500/50 rounded-lg"
                 >
                   <p className="text-sm font-paragraph text-red-400">
                     {blockMessage || 'Something went wrong. Please try again.'}
@@ -396,9 +383,9 @@ export default function ContactSection() {
 
               {submitStatus === 'blocked' && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-orange-500/10 border border-orange-500/30 flex gap-3"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className="p-4 bg-orange-500/10 border-2 border-orange-500/50 rounded-lg flex gap-3"
                 >
                   <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
                   <p className="text-sm font-paragraph text-orange-400">
@@ -407,27 +394,49 @@ export default function ContactSection() {
                 </motion.div>
               )}
 
-              <button
+              <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-8 py-4 bg-red-900 text-white font-heading font-semibold text-sm tracking-wide hover:bg-red-800 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3"
+                whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(73, 7, 8, 0.4)' }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full px-8 py-4 bg-primary text-white font-heading font-bold text-sm tracking-widest uppercase hover:bg-primary/90 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group"
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    Send Message
-                    <Send className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+                <motion.div
+                  className="absolute inset-0 bg-white/20"
+                  initial={{ x: '-100%' }}
+                  whileHover={{ x: '100%' }}
+                  transition={{ duration: 0.5 }}
+                />
+                <span className="relative z-10">
+                  {isSubmitting ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                        className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full inline-block mr-2"
+                      />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Send Message
+                      <motion.div animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                        <Send className="w-4 h-4 inline-block ml-2" />
+                      </motion.div>
+                    </>
+                  )}
+                </span>
+              </motion.button>
 
-              <p className="text-xs font-mono text-white/30 text-center uppercase tracking-widest">
+              <motion.p
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                viewport={{ once: true }}
+                className="text-xs font-mono text-white/30 text-center uppercase tracking-widest hover:text-primary transition-colors"
+              >
                 I typically respond within 24 hours
-              </p>
+              </motion.p>
             </form>
           </motion.div>
         </div>

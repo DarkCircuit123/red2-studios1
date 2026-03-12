@@ -9,12 +9,12 @@ export default function HeroSection() {
   const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_c01a98369e0e46449c4db84b41fdb2dc~mv2.jpg');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
     const loadHeroImage = async () => {
       try {
         setIsLoading(true);
-        // Load from HomepageImages collection with optimized caching
         const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
         if (homepageImages.items && homepageImages.items.length > 0) {
           const images = homepageImages.items[0] as any;
@@ -31,16 +31,49 @@ export default function HeroSection() {
     loadHeroImage();
   }, []);
 
+  // Parallax effect with passive listener
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY * 0.5);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const scrollToGallery = useCallback(() => {
     playClickSound();
     const element = document.getElementById('portfolio');
     element?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
+  const handleContactClick = useCallback(() => {
+    playClickSound();
+    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
-      {/* Full-bleed hero background - video or image */}
-      <div className="absolute inset-0 z-0">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-primary/5 to-black opacity-60" />
+        <motion.div
+          animate={{
+            background: [
+              'radial-gradient(circle at 20% 50%, rgba(73, 7, 8, 0.15) 0%, transparent 50%)',
+              'radial-gradient(circle at 80% 50%, rgba(73, 7, 8, 0.15) 0%, transparent 50%)',
+              'radial-gradient(circle at 20% 50%, rgba(73, 7, 8, 0.15) 0%, transparent 50%)',
+            ],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute inset-0"
+        />
+      </div>
+
+      {/* Parallax image with depth */}
+      <motion.div
+        className="absolute inset-0 z-0"
+        style={{ y: scrollY }}
+      >
         {videoUrl ? (
           <video
             autoPlay
@@ -63,72 +96,90 @@ export default function HeroSection() {
             className="w-full h-full object-cover"
           />
         )}
-        {/* Minimal dark overlay for text readability */}
-        <div className="absolute inset-0 bg-black/30 opacity-[0.51]" />
-      </div>
-      {/* Content with elegant fade-in and delay sequencing */}
+        {/* Enhanced overlay with gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
+      </motion.div>
+
+      {/* Content with enhanced animations */}
       <div className="relative z-10 max-w-[120rem] mx-auto px-8 text-left w-full h-full flex flex-col justify-center">
-        {/* Main headline - bold and clean */}
+        {/* Main headline with staggered animation */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.1, ease: 'easeOut' }}
+          transition={{ duration: 1.2, delay: 0.1, ease: 'easeOut' }}
           className="mb-8"
         >
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-heading font-black text-white leading-none tracking-tight uppercase">
+          <h1 className="text-7xl md:text-8xl lg:text-9xl font-heading font-black text-white leading-none tracking-tighter uppercase">
             Visual
             <br />
-            <span className="font-black text-[#690103ff]">Storytelling</span>
+            <motion.span
+              className="font-black text-primary inline-block"
+              animate={{ textShadow: ['0 0 0px rgba(73, 7, 8, 0)', '0 0 20px rgba(73, 7, 8, 0.4)', '0 0 0px rgba(73, 7, 8, 0)'] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              Storytelling
+            </motion.span>
           </h1>
         </motion.div>
 
-        {/* Subheading - refined */}
+        {/* Subheading */}
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
+          transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
           className="text-sm md:text-base font-paragraph text-white/80 max-w-2xl mb-12 leading-relaxed font-light tracking-wide"
         >
           Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.
         </motion.p>
 
-        {/* CTA buttons - bold and minimal */}
+        {/* CTA buttons with ripple effect */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+          transition={{ duration: 1, delay: 0.6, ease: 'easeOut' }}
           className="flex flex-col sm:flex-row items-start gap-6"
         >
-          <button
+          <motion.button
             onClick={scrollToGallery}
-            className="px-8 py-3 text-white font-heading font-bold text-xs tracking-widest uppercase hover:bg-primary/80 transition-all duration-300 hover:scale-105 bg-color-7"
+            whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(73, 7, 8, 0.4)' }}
+            whileTap={{ scale: 0.98 }}
+            className="px-8 py-3 text-white font-heading font-bold text-xs tracking-widest uppercase bg-primary hover:bg-primary/90 transition-all duration-300 relative overflow-hidden group"
           >
-            Explore Work
-          </button>
-          <button
-            onClick={useCallback(() => {
-              playClickSound();
-              document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-            }, [])}
-            className="px-8 py-3 border border-white/40 text-white font-heading font-bold text-xs tracking-widest uppercase hover:border-white/80 hover:bg-white/10 transition-all duration-300"
+            <span className="relative z-10">Explore Work</span>
+            <motion.div
+              className="absolute inset-0 bg-white/20"
+              initial={{ x: '-100%' }}
+              whileHover={{ x: '100%' }}
+              transition={{ duration: 0.5 }}
+            />
+          </motion.button>
+          <motion.button
+            onClick={handleContactClick}
+            whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+            whileTap={{ scale: 0.98 }}
+            className="px-8 py-3 border border-white/40 text-white font-heading font-bold text-xs tracking-widest uppercase hover:border-white/80 transition-all duration-300 relative overflow-hidden"
           >
-            Get in Touch
-          </button>
+            <span className="relative z-10">Get in Touch</span>
+          </motion.button>
         </motion.div>
       </div>
-      {/* Scroll indicator - subtle animation */}
+
+      {/* Enhanced scroll indicator */}
       <motion.div
         animate={{ y: [0, 12, 0] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
         className="absolute bottom-12 left-8 z-10"
       >
-        <button
+        <motion.button
           onClick={scrollToGallery}
-          className="flex flex-col items-center gap-3 text-white/50 hover:text-white/70 transition-colors duration-300"
+          whileHover={{ scale: 1.1 }}
+          className="flex flex-col items-center gap-3 text-white/50 hover:text-primary transition-colors duration-300 group"
         >
-          <span className="text-xs font-mono uppercase tracking-widest">Scroll</span>
-          <ChevronDown className="w-4 h-4" />
-        </button>
+          <span className="text-xs font-mono uppercase tracking-widest group-hover:text-primary transition-colors">Scroll</span>
+          <motion.div animate={{ y: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
+            <ChevronDown className="w-4 h-4 group-hover:text-primary transition-colors" />
+          </motion.div>
+        </motion.button>
       </motion.div>
     </section>
   );
