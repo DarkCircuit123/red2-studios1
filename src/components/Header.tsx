@@ -91,7 +91,7 @@ export default function Header() {
           : 'bg-transparent'
       }`}
     >
-      <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between">
+      <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between opacity-[1] shadow-[12px_12px_4px_0px_#d9d9d9] mix-blend-normal">
         {/* Logo - Text-based RED² with shimmer effect */}
         <motion.div
           whileHover={{ scale: 1.05 }}
