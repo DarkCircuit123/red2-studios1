@@ -77,10 +77,8 @@ export default function HeroSection() {
           height={1080}
         />
       </motion.div>
-
       {/* Subtle gradient overlay - darker at bottom */}
       <div className="absolute inset-0 z-5 bg-gradient-to-b from-black/20 via-black/40 to-black/70" />
-
       {/* Content positioned in lower third with padding */}
       <div className="relative z-10 max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 text-left w-full h-full flex flex-col justify-end pb-16 sm:pb-20 md:pb-24 lg:pb-32">
         {/* Main headline with bold/larger styling */}
@@ -90,7 +88,7 @@ export default function HeroSection() {
           transition={{ duration: 1.2, delay: 0.1, ease: 'easeOut' }}
           className="mb-4 sm:mb-6 md:mb-8"
         >
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white leading-tight tracking-tight uppercase font-heading">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white leading-tight tracking-tight uppercase font-roboto-bold">
             Visual{' '}
             <motion.span
               className="font-black inline-block text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-primary font-heading"
@@ -107,7 +105,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
-          className="text-xs sm:text-sm md:text-base text-white/70 max-w-xl mb-6 sm:mb-8 md:mb-10 leading-relaxed font-light tracking-normal font-paragraph"
+          className="text-xs sm:text-sm md:text-base text-white/70 max-w-xl mb-6 sm:mb-8 md:mb-10 leading-relaxed font-light tracking-normal font-mono"
         >
           Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.
         </motion.p>
@@ -143,7 +141,6 @@ export default function HeroSection() {
           </motion.button>
         </motion.div>
       </div>
-
       {/* Enhanced scroll indicator */}
       <motion.div
         animate={{ y: [0, 12, 0] }}

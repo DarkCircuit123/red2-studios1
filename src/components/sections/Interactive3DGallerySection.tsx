@@ -80,7 +80,7 @@ export default function Interactive3DGallerySection() {
           <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
             Immersive Gallery
           </h2>
-          <p className="text-base font-paragraph text-white/60 max-w-xl leading-relaxed">
+          <p className="text-base text-white/60 max-w-xl leading-relaxed font-mono">
             Experience photography in three dimensions. Interactive 3D carousel with depth perception and spatial navigation.
           </p>
         </motion.div>
