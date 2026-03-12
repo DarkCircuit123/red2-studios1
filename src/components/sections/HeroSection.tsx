@@ -111,7 +111,7 @@ export default function HeroSection() {
             Visual
             <br />
             <motion.span
-              className="font-black inline-block text-[#4a0809ff] font-heading text-9xl"
+              className="font-black inline-block font-heading text-9xl text-[#6f0809ff]"
               animate={{ textShadow: ['0 0 0px rgba(73, 7, 8, 0)', '0 0 20px rgba(73, 7, 8, 0.4)', '0 0 0px rgba(73, 7, 8, 0)'] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
@@ -141,7 +141,7 @@ export default function HeroSection() {
             onClick={scrollToGallery}
             whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(73, 7, 8, 0.4)' }}
             whileTap={{ scale: 0.98 }}
-            className="px-8 py-3 text-white font-heading font-bold text-xs tracking-widest uppercase bg-primary hover:bg-primary/90 transition-all duration-300 relative overflow-hidden group"
+            className="px-8 py-3 text-white font-heading font-bold text-xs tracking-widest uppercase hover:bg-primary/90 transition-all duration-300 relative overflow-hidden group bg-color-7"
           >
             <span className="relative z-10">Explore Work</span>
             <motion.div
