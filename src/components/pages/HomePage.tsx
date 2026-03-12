@@ -22,12 +22,8 @@ import {
 export default function HomePage() {
   const { isLoading, showPreloader, handlePreloaderComplete } = usePreloader();
   const [showSplash, setShowSplash] = useState(() => {
-    // Only show splash screen on first visit in this session
-    if (typeof window !== 'undefined') {
-      const splashShown = sessionStorage.getItem('splashScreenShown');
-      return !splashShown;
-    }
-    return true;
+    // Splash screen is disabled - set to false to prevent it from showing
+    return false;
   });
 
   const handleSplashComplete = useCallback(() => {
