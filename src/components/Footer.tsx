@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Instagram, Linkedin, Mail, Facebook } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { playClickSound } from '@/lib/click-sound';
 import { useCallback, useMemo } from 'react';
 
@@ -30,9 +31,38 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-16 mb-16">
           {/* Brand */}
           <div>
-            <h3 className="text-xl md:text-2xl font-heading font-bold text-white mb-4 tracking-wide">
-              RED²
-            </h3>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+              className="mb-4"
+            >
+              <Link
+                to="/"
+                onClick={playClickSound}
+                className="relative flex items-center gap-0 group w-fit"
+              >
+                <span className="text-2xl font-heading font-black text-white tracking-tight hover:text-primary transition-colors duration-300">
+                  RED<span className="text-primary relative inline-block">
+                    ²
+                    {/* Shimmer effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-40"
+                      animate={{
+                        x: ['-100%', '100%'],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        repeatDelay: 0.5,
+                      }}
+                      style={{
+                        filter: 'blur(8px)',
+                      }}
+                    />
+                  </span>
+                </span>
+              </Link>
+            </motion.div>
             <p className="text-sm md:text-base font-paragraph text-white/60 leading-relaxed">
               High-end fashion photography & visual storytelling
             </p>
