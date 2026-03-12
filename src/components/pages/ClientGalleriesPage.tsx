@@ -5,6 +5,7 @@ import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Image } from '@/components/ui/image';
+import { useAuthStore } from '@/lib/clientAuthStore';
 
 interface ClientGallery {
   _id: string;
@@ -21,6 +22,7 @@ export default function ClientGalleriesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [accessCode, setAccessCode] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const { clientSession } = useAuthStore();
 
   useEffect(() => {
     const loadGalleries = async () => {
@@ -56,6 +58,11 @@ export default function ClientGalleriesPage() {
       default:
         return <Lock className="w-5 h-5 text-white/40" />;
     }
+  };
+
+  const isGalleryAccessible = (gallery: ClientGallery): boolean => {
+    if (!clientSession) return false;
+    return clientSession.galleryId === gallery._id;
   };
 
   return (
@@ -121,44 +128,70 @@ export default function ClientGalleriesPage() {
             </motion.div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {galleries.map((gallery, idx) => (
-                <motion.div
-                  key={gallery._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="group cursor-pointer"
-                >
-                  <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5">
-                    {gallery.galleryCoverImage && (
-                      <Image
-                        src={gallery.galleryCoverImage}
-                        alt={gallery.clientName}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-heading font-bold">{gallery.clientName}</h3>
-                      {getStatusIcon(gallery.approvalStatus)}
+              {galleries.map((gallery, idx) => {
+                const isAccessible = isGalleryAccessible(gallery);
+                return (
+                  <motion.div
+                    key={gallery._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="group cursor-pointer"
+                  >
+                    <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5">
+                      {gallery.galleryCoverImage && (
+                        <>
+                          <Image
+                            src={gallery.galleryCoverImage}
+                            alt={gallery.clientName}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          {/* Mosaic overlay for non-authenticated users */}
+                          {!isAccessible && (
+                            <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/60 to-black/40 flex items-center justify-center">
+                              <div className="grid grid-cols-8 gap-1 w-full h-full p-2">
+                                {Array.from({ length: 64 }).map((_, i) => (
+                                  <div
+                                    key={i}
+                                    className="bg-white/20 backdrop-blur-md rounded-sm"
+                                  />
+                                ))}
+                              </div>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Lock className="w-12 h-12 text-white/60" />
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                    <p className="text-sm text-white/60">{gallery.clientEmail}</p>
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="text-xs text-white/40 uppercase tracking-wide">
-                        {gallery.approvalStatus || 'Pending'}
-                      </span>
-                      {gallery.galleryExpirationDate && (
-                        <span className="text-xs text-white/40">
-                          Expires: {new Date(gallery.galleryExpirationDate).toLocaleDateString()}
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-heading font-bold">{gallery.clientName}</h3>
+                        {getStatusIcon(gallery.approvalStatus)}
+                      </div>
+                      <p className="text-sm text-white/60">{gallery.clientEmail}</p>
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-xs text-white/40 uppercase tracking-wide">
+                          {gallery.approvalStatus || 'Pending'}
                         </span>
+                        {gallery.galleryExpirationDate && (
+                          <span className="text-xs text-white/40">
+                            Expires: {new Date(gallery.galleryExpirationDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      {!isAccessible && (
+                        <p className="text-xs text-white/40 italic pt-2">
+                          Enter your access code to view
+                        </p>
                       )}
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </div>
