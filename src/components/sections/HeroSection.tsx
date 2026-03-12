@@ -94,7 +94,7 @@ export default function HeroSection() {
               className="font-black inline-block text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-primary font-roboto-bold"
               animate={{ opacity: [1, 0.8, 1] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            >RED</motion.span>
+            >edge</motion.span>
           </h1>
         </motion.div>
 
@@ -104,8 +104,9 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
-          className="text-xs sm:text-sm text-white/70 max-w-xl mb-6 sm:mb-8 md:mb-10 leading-relaxed tracking-normal md:text-sm font-helvetica-neue-bold font-bold not-italic no-underline"
-        >Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.</motion.p>
+          className="text-xs sm:text-sm text-white/70 max-w-xl mb-6 sm:mb-8 md:mb-10 leading-relaxed tracking-normal md:text-sm font-bold not-italic no-underline font-cormorant-garamond-v2"
+        >Twenty-five years. No filters. No apologies.
+        This is where beautiful gets dangerous.</motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}

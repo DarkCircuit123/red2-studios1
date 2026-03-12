@@ -102,7 +102,7 @@ export default function Header() {
             onClick={handleLinkClick}
             className="relative flex items-center gap-0 group"
           >
-            <span className="font-heading font-black text-white tracking-tight hover:text-primary transition-colors duration-300 text-4xl">
+            <span className="font-heading font-black text-white tracking-tight hover:text-primary transition-colors duration-300 text-5xl">
               RED<span className="text-primary">²</span>
             </span>
           </Link>
