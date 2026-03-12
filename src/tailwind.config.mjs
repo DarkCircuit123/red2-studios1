@@ -38,7 +38,12 @@ export default {
                     "sans-serif"
                 ],
 
-                "roboto-bold": ["roboto-bold", "roboto", "sans-serif"]
+                "roboto-bold": ["roboto-bold", "roboto", "sans-serif"],
+                "fira-mono": ["fira-mono", "monospace"],
+                "cormorant-garamond-v2": ["cormorant-garamond-v2", "serif"],
+                "oswald-v2": ["oswald-v2", "sans-serif"],
+                tiny5: ["tiny5", "sans-serif"],
+                "bauhaus-pro": ["bauhaus-pro", "sans-serif"]
             },
             colors: {
                 primary: "#4A0820",
