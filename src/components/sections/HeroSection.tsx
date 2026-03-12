@@ -99,7 +99,7 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
       </motion.div>
       {/* Content with enhanced animations */}
-      <div className="relative z-10 max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 text-left w-full h-full flex flex-col justify-center">
+      <div className="relative z-10 max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 text-left w-full h-full flex flex-col justify-end pb-20 md:pb-32">
         {/* Main headline with staggered animation */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
