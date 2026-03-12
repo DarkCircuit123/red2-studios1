@@ -1,233 +1,298 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { Film } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Box, ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 
 export default function Interactive3DGallerySection() {
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [rotation, setRotation] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const velocityRef = useRef(0);
-  const positionRef = useRef(0);
-  const animationFrameRef = useRef<number | null>(null);
-  const lastYRef = useRef(0);
-  const lastTimeRef = useRef(Date.now());
 
   useEffect(() => {
     const loadPortfolio = async () => {
       try {
-        const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 20 });
+        const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 12 });
         setPortfolioItems(data.items || []);
       } catch (error) {
         console.error('Error loading portfolio:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
     loadPortfolio();
   }, []);
 
-  // Physics-based momentum scrolling
-  const applyMomentum = () => {
-    if (!scrollContainerRef.current) return;
+  const currentItem = portfolioItems[currentIndex];
+  const galleryImages = currentItem
+    ? [currentItem.mainImage, currentItem.galleryImage1, currentItem.galleryImage2, currentItem.galleryImage3].filter(Boolean)
+    : [];
 
-    const friction = 0.95;
-    velocityRef.current *= friction;
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % portfolioItems.length);
+    setRotation((prev) => prev + 90);
+  };
 
-    if (Math.abs(velocityRef.current) > 0.1) {
-      positionRef.current += velocityRef.current;
-      scrollContainerRef.current.style.transform = `translateY(${positionRef.current}px)`;
-      animationFrameRef.current = requestAnimationFrame(applyMomentum);
-    } else {
-      velocityRef.current = 0;
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + portfolioItems.length) % portfolioItems.length);
+    setRotation((prev) => prev - 90);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const rotateX = (y / rect.height - 0.5) * 20;
+    const rotateY = (x / rect.width - 0.5) * 20;
+    
+    if (containerRef.current) {
+      containerRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
     }
   };
 
-  const handleWheel = (e: WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY;
-    velocityRef.current = delta * 0.5;
-    lastTimeRef.current = Date.now();
-
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-    applyMomentum();
-  };
-
-  const handleTouchStart = (e: TouchEvent) => {
-    lastYRef.current = e.touches[0].clientY;
-    lastTimeRef.current = Date.now();
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
+  const handleMouseLeave = () => {
+    if (containerRef.current) {
+      containerRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
     }
   };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    const currentY = e.touches[0].clientY;
-    const deltaY = lastYRef.current - currentY;
-    const deltaTime = Date.now() - lastTimeRef.current;
-
-    velocityRef.current = (deltaY / deltaTime) * 16;
-    positionRef.current += deltaY;
-
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.style.transform = `translateY(${positionRef.current}px)`;
-    }
-
-    lastYRef.current = currentY;
-    lastTimeRef.current = Date.now();
-  };
-
-  const handleTouchEnd = () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-    applyMomentum();
-  };
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    container.addEventListener('touchstart', handleTouchStart, { passive: false });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: false });
-
-    return () => {
-      container.removeEventListener('wheel', handleWheel);
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
-
-  if (isLoading) {
-    return null;
-  }
 
   if (portfolioItems.length === 0) {
     return null;
   }
 
-  // Create infinite loop by duplicating items
-  const allImages = portfolioItems.flatMap((item) => [
-    item.mainImage,
-    item.galleryImage1,
-    item.galleryImage2,
-    item.galleryImage3,
-  ]).filter(Boolean);
-
-  const infiniteImages = [...allImages, ...allImages, ...allImages];
-
   return (
-    <section id="portfolio" className="relative w-full py-16 md:py-20 lg:py-24 bg-black overflow-hidden">
-      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 mb-12">
+    <section id="portfolio" className="relative w-full py-16 md:py-20 lg:py-24 bg-black">
+      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
+          className="mb-12 md:mb-16"
         >
           <div className="flex items-center gap-3 mb-4">
-            <Film className="w-6 h-6 text-primary" />
-            <span className="text-xs font-mono text-primary uppercase tracking-widest">Infinite Reel</span>
+            <Box className="w-6 h-6 text-primary" />
+            <span className="text-xs font-mono text-primary uppercase tracking-widest">3D Experience</span>
           </div>
           <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
-            Vertical Gallery
+            Immersive Gallery
           </h2>
           <p className="text-base font-paragraph text-white/60 max-w-xl leading-relaxed">
-            Scroll through our portfolio with smooth momentum physics. Optimized for vertical photography with infinite loop scrolling.
+            Experience photography in three dimensions. Interactive 3D carousel with depth perception and spatial navigation.
           </p>
         </motion.div>
-      </div>
 
-      {/* Infinite Scroll Reel */}
-      <motion.div
-        ref={containerRef}
-        className="relative w-full h-screen md:h-[90vh] overflow-hidden bg-gradient-to-b from-black via-black to-black/80 cursor-grab active:cursor-grabbing"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        viewport={{ once: true }}
-      >
-        {/* Scroll Container */}
-        <div
-          ref={scrollContainerRef}
-          className="relative w-full h-full flex flex-col gap-4 md:gap-6"
-          style={{
-            willChange: 'transform',
-          }}
+        {/* 3D Gallery Container */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
+          viewport={{ once: true }}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center"
         >
-          {infiniteImages.map((image, idx) => (
-            <motion.div
-              key={`${idx}-${image}`}
-              className="relative flex-shrink-0 w-full h-screen md:h-[90vh] overflow-hidden"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
+          {/* Left Navigation */}
+          <div className="flex flex-col gap-6">
+            <motion.button
+              onClick={handlePrev}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-16 h-16 flex items-center justify-center bg-white/5 border border-white/20 hover:border-white/60 transition-all duration-300"
+              aria-label="Previous project"
+            >
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </motion.button>
+
+            {/* Project Info */}
+            <div className="bg-white/5 border border-white/10 p-6">
+              <p className="text-xs font-mono text-white/50 uppercase tracking-widest mb-3">
+                {currentIndex + 1} / {portfolioItems.length}
+              </p>
+              <h3 className="text-2xl font-heading font-bold text-white mb-3">
+                {currentItem?.projectName || 'Project'}
+              </h3>
+              <p className="text-sm font-paragraph text-white/60 line-clamp-3">
+                {currentItem?.shortDescription || 'No description'}
+              </p>
+            </div>
+          </div>
+
+          {/* Center 3D Viewer */}
+          <motion.div
+            ref={containerRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="relative overflow-hidden bg-white/5 border border-white/10 cursor-grab active:cursor-grabbing"
+            style={{ perspective: '1000px', aspectRatio: '9 / 16' }}
+          >
+            {/* 3D Carousel Effect */}
+            <div className="relative w-full h-full">
+              {galleryImages.map((image, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{
+                    opacity: idx === 0 ? 1 : 0.3,
+                    scale: idx === 0 ? 1.8 : 0.8,
+                    zIndex: idx === 0 ? 10 : 0,
+                  }}
+                  transition={{ duration: 0.6 }}
+                  className="absolute inset-0"
+                  style={{
+                    transform: `rotateY(${rotation + idx * 90}deg) translateZ(200px)`,
+                  }}
+                >
+                  <Image
+                    src={image}
+                    alt={`Gallery ${idx}`}
+                    className="w-full h-full object-cover"
+                  />
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Fullscreen Button */}
+            <motion.button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              whileHover={{ scale: 1.1 }}
+              className="absolute top-4 right-4 p-3 bg-black/50 hover:bg-black/80 transition-colors z-20"
+              aria-label="Toggle fullscreen"
+            >
+              <Maximize2 className="w-4 h-4 text-white" />
+            </motion.button>
+          </motion.div>
+
+          {/* Right Navigation */}
+          <div className="flex flex-col gap-6">
+            <motion.button
+              onClick={handleNext}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-16 h-16 flex items-center justify-center bg-white/5 border border-white/20 hover:border-white/60 transition-all duration-300"
+              aria-label="Next project"
+            >
+              <ChevronRight className="w-6 h-6 text-white" />
+            </motion.button>
+
+            {/* Image Counter */}
+            <div className="bg-white/5 border border-white/10 p-6">
+              <p className="text-xs font-mono text-white/50 uppercase tracking-widest mb-3">
+                Gallery Images
+              </p>
+              <p className="text-3xl font-heading font-bold text-white">
+                {galleryImages.length}
+              </p>
+              <p className="text-xs font-mono text-white/40 mt-2 uppercase tracking-widest">
+                Available Views
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Thumbnail Strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          viewport={{ once: true }}
+          className="mt-16 flex gap-4 overflow-x-auto pb-4"
+        >
+          {portfolioItems.slice(0, 8).map((item, idx) => (
+            <motion.button
+              key={item._id}
+              onClick={() => {
+                setCurrentIndex(idx);
+                setRotation(idx * 90);
+              }}
+              whileHover={{ scale: 1.05 }}
+              className={`flex-shrink-0 w-20 h-20 overflow-hidden border-2 transition-all duration-300 ${
+                idx === currentIndex ? 'border-primary' : 'border-white/20 hover:border-white/60'
+              }`}
             >
               <Image
-                src={image}
-                alt={`Gallery item ${idx}`}
+                src={item.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png'}
+                alt={item.projectName || 'Thumbnail'}
                 className="w-full h-full object-cover"
               />
-
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-
-              {/* Image Counter */}
-              <div className="absolute bottom-6 left-6 md:bottom-8 md:left-8 z-10">
-                <p className="text-xs font-mono text-white/60 uppercase tracking-widest">
-                  {(idx % allImages.length) + 1} / {allImages.length}
-                </p>
-              </div>
-            </motion.div>
+            </motion.button>
           ))}
-        </div>
-
-        {/* Scroll Indicator */}
-        <motion.div
-          className="absolute right-6 md:right-8 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-4"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          viewport={{ once: true }}
-        >
-          <div className="w-1 h-12 bg-white/20 rounded-full overflow-hidden">
-            <motion.div
-              className="w-full h-1/3 bg-primary rounded-full"
-              animate={{ y: [0, 8, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
-          <p className="text-xs font-mono text-white/40 uppercase tracking-widest rotate-90 whitespace-nowrap origin-center translate-y-6">
-            Scroll
-          </p>
         </motion.div>
 
         {/* Instructions */}
         <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
           viewport={{ once: true }}
+          className="mt-12 text-center"
         >
           <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
-            💡 Use scroll wheel or swipe to navigate with momentum
+            💡 Tip: Move your mouse over the gallery to see the 3D depth effect
           </p>
         </motion.div>
-      </motion.div>
+
+        {/* Fullscreen Modal */}
+        <AnimatePresence>
+          {isFullscreen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+              onClick={() => setIsFullscreen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                className="relative w-full h-full max-w-6xl max-h-[90vh] flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close Button */}
+                <motion.button
+                  onClick={() => setIsFullscreen(false)}
+                  whileHover={{ scale: 1.1 }}
+                  className="absolute top-4 right-4 p-3 bg-white/10 hover:bg-white/20 transition-colors z-50"
+                  aria-label="Close fullscreen"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </motion.button>
+
+                {/* Fullscreen Image Container */}
+                <div className="relative w-full h-full flex items-center justify-center">
+                  {galleryImages[0] && (
+                    <Image
+                      src={galleryImages[0]}
+                      alt="Fullscreen view"
+                      className="w-full h-full object-contain"
+                    />
+                  )}
+                </div>
+
+                {/* Navigation in Fullscreen */}
+                <motion.button
+                  onClick={handlePrev}
+                  whileHover={{ scale: 1.1 }}
+                  className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 transition-colors"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="w-6 h-6 text-white" />
+                </motion.button>
+                <motion.button
+                  onClick={handleNext}
+                  whileHover={{ scale: 1.1 }}
+                  className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 transition-colors"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="w-6 h-6 text-white" />
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </section>
   );
 }
