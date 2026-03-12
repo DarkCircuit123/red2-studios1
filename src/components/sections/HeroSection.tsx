@@ -67,19 +67,15 @@ export default function HeroSection() {
             className="w-full h-full object-cover"
           >
             <source src={videoUrl} type="video/mp4" />
-            <Image
-              src={heroImage}
-              alt="Hero background"
-              className="w-full h-full object-cover"
-            />
           </video>
-        ) : (
-          <Image
-            src={heroImage}
-            alt="Hero background"
-            className="w-full h-full object-cover"
-          />
-        )}
+        ) : null}
+        <Image
+          src={heroImage}
+          alt="Hero background"
+          className="w-full h-full object-cover"
+          width={1920}
+          height={1080}
+        />
       </motion.div>
 
       {/* Subtle gradient overlay - darker at bottom */}
