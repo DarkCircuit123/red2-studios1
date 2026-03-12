@@ -104,7 +104,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
-          className="text-xs sm:text-sm md:text-base text-white/70 max-w-xl mb-6 sm:mb-8 md:mb-10 leading-relaxed font-light tracking-normal font-cormorant-garamond-v2"
+          className="text-xs sm:text-sm text-white/70 max-w-xl mb-6 sm:mb-8 md:mb-10 leading-relaxed font-light tracking-normal font-mono md:text-xs"
         >
           Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.
         </motion.p>
