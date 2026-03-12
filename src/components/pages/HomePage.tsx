@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
@@ -7,7 +7,6 @@ import Interactive3DGallerySection from '@/components/sections/Interactive3DGall
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
-import SplashScreen from '@/components/SplashScreen';
 import CinematicPreloader from '@/components/CinematicPreloader';
 import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
 import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
@@ -21,17 +20,6 @@ import {
 
 export default function HomePage() {
   const { isLoading, showPreloader, handlePreloaderComplete } = usePreloader();
-  const [showSplash, setShowSplash] = useState(() => {
-    // Splash screen is disabled - set to false to prevent it from showing
-    return false;
-  });
-
-  const handleSplashComplete = useCallback(() => {
-    setShowSplash(false);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('splashScreenShown', 'true');
-    }
-  }, []);
 
   // Initialize security systems on component mount
   useEffect(() => {
@@ -57,12 +45,9 @@ export default function HomePage() {
     });
   }, []);
 
-  {/* ... keep existing code (scroll parameter handling removed - now handled in Header) ... */}
-
   return (
     <>
       {showPreloader && <CinematicPreloader isLoading={isLoading} onComplete={handlePreloaderComplete} />}
-      {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       <div className="min-h-screen bg-black text-white">
         <Header />
 

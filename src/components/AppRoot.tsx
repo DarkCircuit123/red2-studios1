@@ -1,5 +1,6 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import RouterFallback from '@/components/RouterFallback';
+import SplashScreen from '@/components/SplashScreen';
 
 // Lazy load Router with error handling
 const AppRouter = lazy(() => 
@@ -34,11 +35,19 @@ class RouterErrorBoundary extends React.Component<
 }
 
 export default function AppRoot() {
+  const [splashComplete, setSplashComplete] = useState(false);
+
   return (
-    <RouterErrorBoundary>
-      <Suspense fallback={<RouterFallback />}>
-        <AppRouter />
-      </Suspense>
-    </RouterErrorBoundary>
+    <>
+      {/* Top-level splash screen - shown once per session */}
+      <SplashScreen onComplete={() => setSplashComplete(true)} />
+      
+      {/* Main app router */}
+      <RouterErrorBoundary>
+        <Suspense fallback={<RouterFallback />}>
+          <AppRouter />
+        </Suspense>
+      </RouterErrorBoundary>
+    </>
   );
 }

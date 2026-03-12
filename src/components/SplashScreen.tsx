@@ -28,12 +28,25 @@ const playStaticSound = () => {
   source.start(audioContext.currentTime);
 };
 
+// Check if splash has already been shown in this session
+const hasSplashBeenShown = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return sessionStorage.getItem('splashScreenShown') === 'true';
+};
+
+// Mark splash as shown in session
+const markSplashAsShown = (): void => {
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('splashScreenShown', 'true');
+  }
+};
+
 interface SplashScreenProps {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(() => !hasSplashBeenShown());
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [glitchActive, setGlitchActive] = useState(false);
   const logoImage = 'https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png';
@@ -57,10 +70,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       }
     };
 
-    loadSplashContent();
-  }, []);
+    if (isVisible) {
+      loadSplashContent();
+    }
+  }, [isVisible]);
 
   useEffect(() => {
+    if (!isVisible) return;
+
     // Logo visible for 1.5 seconds, then glitch for 1 second (intensified), then fade out
     const glitchTimer = setTimeout(() => {
       setGlitchActive(true);
@@ -69,14 +86,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
     const completeTimer = setTimeout(() => {
       setIsVisible(false);
-      onComplete();
+      markSplashAsShown();
+      onComplete?.();
     }, 2500);
 
     return () => {
       clearTimeout(glitchTimer);
       clearTimeout(completeTimer);
     };
-  }, [onComplete]);
+  }, [isVisible, onComplete]);
 
   if (!isVisible) return null;
 
