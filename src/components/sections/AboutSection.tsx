@@ -133,7 +133,7 @@ export default function AboutSection() {
               {[
                 { value: '500+', label: 'Projects' },
                 { value: '50+', label: 'Collaborations' },
-                { value: '12+', label: 'Years' },
+                { value: '25+', label: 'Years' },
               ].map((stat, i) => (
                 <motion.div
                   key={i}

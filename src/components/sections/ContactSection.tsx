@@ -220,9 +220,9 @@ export default function ContactSection() {
             {/* Contact Methods - Enhanced with animations */}
             <div className="space-y-12">
               {[
-                { icon: Mail, label: 'Email', value: 'hello@studio.com', href: 'mailto:hello@studio.com' },
-                { icon: Phone, label: 'Phone', value: '+1 (234) 567-890', href: 'tel:+1234567890' },
-                { icon: MapPin, label: 'Location', value: 'New York, NY', href: '#' },
+                { icon: Mail, label: 'Email', value: 'hello@red2studios.com', href: 'mailto:hello@red2studios.com' },
+                { icon: Phone, label: 'Phone', value: '+1 (310) 386-0405', href: 'tel:+13103860405' },
+                { icon: MapPin, label: 'Location', value: 'Los Angeles, CA & Worldwide', href: '#' },
               ].map((contact, i) => {
                 const Icon = contact.icon;
                 return (
