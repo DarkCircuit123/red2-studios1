@@ -22,9 +22,23 @@ export default {
                 '9xl': ['6rem', { lineHeight: '1', letterSpacing: '-0.01em', fontWeight: 'bold' }],
             },
             fontFamily: {
-                heading: ['Montserrat', 'Inter', 'sans-serif'],
-                paragraph: ['Inter', 'system-ui', 'sans-serif'],
-                mono: ['Space Mono', 'monospace'],
+                heading: ["Montserrat", "Inter", "sans-serif"],
+                paragraph: ["Inter", "system-ui", "sans-serif"],
+                mono: ["Space Mono", "monospace"],
+                roboto: ["roboto", "sans-serif"],
+                montserrat: ["montserrat", "sans-serif"],
+                "azeret-mono-black": ["azeret-mono-black", "azeret mono", "monospace"],
+                "barlow-extralight": ["barlow-extralight", "barlow", "sans-serif"],
+                "helvetica-neue-bold": ["helvetica neue bold", "sans-serif"],
+                cinzel: ["cinzel", "serif"],
+
+                "helveticaneuew01-thin": [
+                    "helveticaneuew01-thin",
+                    "helveticaneuew02-thin,helveticaneuew10-35thin",
+                    "sans-serif"
+                ],
+
+                "roboto-bold": ["roboto-bold", "roboto", "sans-serif"]
             },
             colors: {
                 primary: "#4A0820",

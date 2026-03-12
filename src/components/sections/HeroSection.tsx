@@ -68,7 +68,6 @@ export default function HeroSection() {
           className="absolute inset-0"
         />
       </div>
-
       {/* Parallax image with depth */}
       <motion.div
         className="absolute inset-0 z-0"
@@ -99,7 +98,6 @@ export default function HeroSection() {
         {/* Enhanced overlay with gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
       </motion.div>
-
       {/* Content with enhanced animations */}
       <div className="relative z-10 max-w-[120rem] mx-auto px-8 text-left w-full h-full flex flex-col justify-center">
         {/* Main headline with staggered animation */}
@@ -109,11 +107,11 @@ export default function HeroSection() {
           transition={{ duration: 1.2, delay: 0.1, ease: 'easeOut' }}
           className="mb-8"
         >
-          <h1 className="text-7xl md:text-8xl lg:text-9xl font-heading font-black text-white leading-none tracking-tighter uppercase">
+          <h1 className="text-7xl md:text-8xl font-black text-white leading-none tracking-tighter uppercase lg:text-9xl font-azeret-mono-black">
             Visual
             <br />
             <motion.span
-              className="font-black text-primary inline-block"
+              className="font-black inline-block text-[#4a0809ff]"
               animate={{ textShadow: ['0 0 0px rgba(73, 7, 8, 0)', '0 0 20px rgba(73, 7, 8, 0.4)', '0 0 0px rgba(73, 7, 8, 0)'] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
@@ -163,7 +161,6 @@ export default function HeroSection() {
           </motion.button>
         </motion.div>
       </div>
-
       {/* Enhanced scroll indicator */}
       <motion.div
         animate={{ y: [0, 12, 0] }}
