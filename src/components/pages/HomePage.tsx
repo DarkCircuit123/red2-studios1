@@ -57,37 +57,7 @@ export default function HomePage() {
     });
   }, []);
 
-  // Optimized scroll parameter handling with useEffectOnce
-  useEffectOnce(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const scrollTo = params.get('scroll');
-      if (scrollTo) {
-        const scrollToElement = () => {
-          const element = document.querySelector(`#${scrollTo}`);
-          if (element) {
-            const headerHeight = 80;
-            const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
-            window.scrollTo({
-              top: elementPosition,
-              behavior: respectReducedMotion() ? 'auto' : 'smooth'
-            });
-            // Clean up URL after successful scroll
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        };
-        
-        // Optimized timing for dynamic content loading
-        const timeouts = [
-          setTimeout(scrollToElement, 50),
-          setTimeout(scrollToElement, 150),
-          setTimeout(scrollToElement, 400)
-        ];
-
-        return () => timeouts.forEach(t => clearTimeout(t));
-      }
-    }
-  });
+  {/* ... keep existing code (scroll parameter handling removed - now handled in Header) ... */}
 
   return (
     <>

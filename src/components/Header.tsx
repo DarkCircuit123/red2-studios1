@@ -44,14 +44,6 @@ export default function Header() {
     e.preventDefault();
     playClickSound();
     
-    // If not on homepage, navigate to homepage first
-    const isHomePage = window.location.pathname === '/';
-    if (!isHomePage) {
-      window.location.href = `/?scroll=${hash.substring(1)}`;
-      return;
-    }
-    
-    // On homepage, scroll to element with optimized timing
     const scrollToElement = () => {
       const element = document.querySelector(hash);
       if (element) {
@@ -60,12 +52,21 @@ export default function Header() {
         const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
         window.scrollTo({
           top: elementPosition,
-          behavior: 'smooth'
+          behavior: prefersReducedMotion ? 'auto' : 'smooth'
         });
       }
     };
     
-    // Try immediately and with optimized delays
+    // If not on homepage, use history API to navigate without full page reload
+    const isHomePage = window.location.pathname === '/';
+    if (!isHomePage) {
+      window.history.pushState(null, '', '/');
+      // Wait for DOM to settle before scrolling
+      setTimeout(scrollToElement, 50);
+      return;
+    }
+    
+    // On homepage, scroll immediately with optimized timing
     scrollToElement();
     const timeout1 = setTimeout(scrollToElement, 100);
     const timeout2 = setTimeout(scrollToElement, 300);
@@ -74,7 +75,7 @@ export default function Header() {
       clearTimeout(timeout1);
       clearTimeout(timeout2);
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   return (
     <header
