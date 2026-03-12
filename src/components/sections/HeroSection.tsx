@@ -88,29 +88,27 @@ export default function HeroSection() {
           transition={{ duration: 1.2, delay: 0.1, ease: 'easeOut' }}
           className="mb-4 sm:mb-6 md:mb-8"
         >
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white leading-tight tracking-tight uppercase font-roboto-bold">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl text-white leading-tight tracking-tight uppercase font-roboto-bold lg:text-9xl xl:text-9xl font-bold text-left">
             Visual{' '}
             <motion.span
-              className="font-black inline-block text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-primary font-heading"
+              className="font-black inline-block text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-primary font-roboto-bold"
               animate={{ opacity: [1, 0.8, 1] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              Storytelling
-            </motion.span>
+            >2</motion.span>
           </h1>
         </motion.div>
 
         {/* Subheading - smaller and lighter */}
+        {/* CTA buttons - horizontally aligned with spacing and hover effects */}
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
-          className="text-xs sm:text-sm md:text-base text-white/70 max-w-xl mb-6 sm:mb-8 md:mb-10 leading-relaxed font-light tracking-normal font-mono"
+          className="text-xs sm:text-sm md:text-base text-white/70 max-w-xl mb-6 sm:mb-8 md:mb-10 leading-relaxed font-light tracking-normal font-cormorant-garamond-v2"
         >
           Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.
         </motion.p>
 
-        {/* CTA buttons - horizontally aligned with spacing and hover effects */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
