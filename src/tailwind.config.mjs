@@ -48,7 +48,10 @@ export default {
                 "gaude-expanded": ["gaude-expanded", "sans-serif"],
                 "noticia-text": ["noticia text", "serif"],
                 "poppins-extralight": ["poppins-extralight", "poppins", "sans-serif"],
-                "nunito-sans-light": ["nunito-sans-light", "sans-serif"]
+                "nunito-sans-light": ["nunito-sans-light", "sans-serif"],
+                "pinyon-script": ["pinyon-script", "pinyon script", "cursive"],
+                trirong: ["trirong", "serif"],
+                "helvetica-neue-light": ["helvetica neue light", "sans-serif"]
             },
             colors: {
                 primary: "#6F0809",
