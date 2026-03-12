@@ -121,6 +121,7 @@ export default function HeroSection() {
         </motion.div>
 
         {/* Subheading */}
+        {/* CTA buttons with ripple effect */}
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -130,7 +131,6 @@ export default function HeroSection() {
           Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.
         </motion.p>
 
-        {/* CTA buttons with ripple effect */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
