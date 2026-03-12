@@ -48,13 +48,13 @@ export default {
                 "gaude-expanded": ["gaude-expanded", "sans-serif"]
             },
             colors: {
-                primary: "#4A0820",
+                primary: "#6F0809",
                 "primary-foreground": "#ffffff",
                 secondary: "#000000",
                 "secondary-foreground": "#ffffff",
                 background: "#ffffff",
                 foreground: "#000000",
-                "color-7": "#490708ff"
+                "color-7": "#6F0809ff"
             },
         },
     },
