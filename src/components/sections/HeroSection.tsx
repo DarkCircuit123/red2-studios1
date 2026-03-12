@@ -108,8 +108,7 @@ export default function HeroSection() {
           className="mb-6 md:mb-8"
         >
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white leading-none tracking-tighter uppercase font-nunito-sans-light">
-            Visual
-            <br />
+            Visual{' '}
             <motion.span
               className="font-black inline-block text-6xl sm:text-7xl md:text-8xl text-[#6f0809ff] font-poppins-extralight lg:text-5xl"
               animate={{ textShadow: ['0 0 0px rgba(73, 7, 8, 0)', '0 0 20px rgba(73, 7, 8, 0.4)', '0 0 0px rgba(73, 7, 8, 0)'] }}
