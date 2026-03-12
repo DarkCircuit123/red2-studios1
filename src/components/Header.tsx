@@ -57,12 +57,10 @@ export default function Header() {
       }
     };
     
-    // If not on homepage, use history API to navigate without full page reload
+    // If not on homepage, navigate to homepage with hash
     const isHomePage = window.location.pathname === '/';
     if (!isHomePage) {
-      window.history.pushState(null, '', '/');
-      // Wait for DOM to settle before scrolling
-      setTimeout(scrollToElement, 50);
+      window.location.href = '/' + hash;
       return;
     }
     
