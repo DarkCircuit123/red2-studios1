@@ -107,11 +107,11 @@ export default function HeroSection() {
           transition={{ duration: 1.2, delay: 0.1, ease: 'easeOut' }}
           className="mb-6 md:mb-8"
         >
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white leading-none tracking-tighter uppercase font-nunito-sans-light">
+          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-white leading-tight tracking-tight uppercase font-heading">
             Visual{' '}
             <motion.span
-              className="font-black inline-block text-6xl sm:text-7xl md:text-8xl text-[#6f0809ff] font-poppins-extralight lg:text-5xl"
-              animate={{ textShadow: ['0 0 0px rgba(73, 7, 8, 0)', '0 0 20px rgba(73, 7, 8, 0.4)', '0 0 0px rgba(73, 7, 8, 0)'] }}
+              className="font-black inline-block text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-primary font-heading"
+              animate={{ opacity: [1, 0.8, 1] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
               Storytelling
@@ -120,16 +120,16 @@ export default function HeroSection() {
         </motion.div>
 
         {/* Subheading */}
-        {/* CTA buttons with ripple effect */}
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
-          className="text-xs sm:text-sm md:text-base text-white/80 max-w-2xl mb-8 md:mb-12 leading-relaxed font-light tracking-wide font-azeret-mono-black"
+          className="text-sm sm:text-base md:text-lg text-white/80 max-w-2xl mb-8 md:mb-12 leading-relaxed font-light tracking-normal font-paragraph"
         >
           Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.
         </motion.p>
 
+        {/* CTA buttons with ripple effect */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
