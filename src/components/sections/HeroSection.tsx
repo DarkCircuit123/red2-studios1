@@ -107,11 +107,11 @@ export default function HeroSection() {
           transition={{ duration: 1.2, delay: 0.1, ease: 'easeOut' }}
           className="mb-8"
         >
-          <h1 className="text-7xl md:text-8xl font-black text-white leading-none tracking-tighter uppercase lg:text-9xl font-azeret-mono-black">
+          <h1 className="text-7xl md:text-8xl font-black text-white leading-none tracking-tighter uppercase lg:text-9xl font-bauhaus-pro">
             Visual
             <br />
             <motion.span
-              className="font-black inline-block text-[#4a0809ff]"
+              className="font-black inline-block text-[#4a0809ff] font-gaude-expanded text-8xl"
               animate={{ textShadow: ['0 0 0px rgba(73, 7, 8, 0)', '0 0 20px rgba(73, 7, 8, 0.4)', '0 0 0px rgba(73, 7, 8, 0)'] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
