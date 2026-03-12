@@ -51,7 +51,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [glitchActive, setGlitchActive] = useState(false);
   const logoImage = 'https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png';
 
+  // Load splash content only once when component mounts
   useEffect(() => {
+    if (!isVisible) return;
+
     const loadSplashContent = async () => {
       try {
         // Try to load video from services
@@ -70,11 +73,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       }
     };
 
-    if (isVisible) {
-      loadSplashContent();
-    }
-  }, [isVisible]);
+    loadSplashContent();
+  }, []); // Empty dependency array - load only once on mount
 
+  // Handle splash animation and completion
   useEffect(() => {
     if (!isVisible) return;
 
@@ -94,7 +96,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       clearTimeout(glitchTimer);
       clearTimeout(completeTimer);
     };
-  }, [isVisible, onComplete]);
+  }, [onComplete]); // Only depend on onComplete callback
 
   if (!isVisible) return null;
 

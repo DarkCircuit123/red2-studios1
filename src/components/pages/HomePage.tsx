@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
@@ -7,20 +7,14 @@ import Interactive3DGallerySection from '@/components/sections/Interactive3DGall
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
-import CinematicPreloader from '@/components/CinematicPreloader';
-import { useEffectOnce } from '@/hooks/useAdvancedOptimization';
 import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
-import { usePreloader } from '@/hooks/usePreloader';
 import {
   preloadCriticalResources,
   monitorCoreWebVitals,
   deferNonCriticalJS,
-  respectReducedMotion,
 } from '@/lib/performance-enhancements';
 
 export default function HomePage() {
-  const { isLoading, showPreloader, handlePreloaderComplete } = usePreloader();
-
   // Initialize security systems on component mount
   useEffect(() => {
     initializeSecuritySystems();
@@ -47,7 +41,6 @@ export default function HomePage() {
 
   return (
     <>
-      {showPreloader && <CinematicPreloader isLoading={isLoading} onComplete={handlePreloaderComplete} />}
       <div className="min-h-screen bg-black text-white">
         <Header />
 
