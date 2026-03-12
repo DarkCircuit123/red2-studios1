@@ -124,8 +124,8 @@ export default function Interactive3DGallerySection() {
             ref={containerRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="relative aspect-square overflow-hidden bg-white/5 border border-white/10 cursor-grab active:cursor-grabbing"
-            style={{ perspective: '1000px' }}
+            className="relative overflow-hidden bg-white/5 border border-white/10 cursor-grab active:cursor-grabbing"
+            style={{ perspective: '1000px', aspectRatio: '9 / 16' }}
           >
             {/* 3D Carousel Effect */}
             <div className="relative w-full h-full">
