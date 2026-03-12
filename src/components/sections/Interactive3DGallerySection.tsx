@@ -135,7 +135,7 @@ export default function Interactive3DGallerySection() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{
                     opacity: idx === 0 ? 1 : 0.3,
-                    scale: idx === 0 ? 1.4 : 0.8,
+                    scale: idx === 0 ? 1.8 : 0.8,
                     zIndex: idx === 0 ? 10 : 0,
                   }}
                   transition={{ duration: 0.6 }}
