@@ -107,11 +107,11 @@ export default function HeroSection() {
           transition={{ duration: 1.2, delay: 0.1, ease: 'easeOut' }}
           className="mb-8"
         >
-          <h1 className="text-7xl md:text-8xl font-black text-white leading-none tracking-tighter uppercase lg:text-9xl font-bauhaus-pro">
+          <h1 className="text-7xl md:text-8xl font-black text-white leading-none tracking-tighter uppercase font-bauhaus-pro lg:text-9xl">
             Visual
             <br />
             <motion.span
-              className="font-black inline-block text-[#4a0809ff] font-gaude-expanded text-8xl"
+              className="font-black inline-block text-[#4a0809ff] font-heading text-9xl"
               animate={{ textShadow: ['0 0 0px rgba(73, 7, 8, 0)', '0 0 20px rgba(73, 7, 8, 0.4)', '0 0 0px rgba(73, 7, 8, 0)'] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
@@ -125,7 +125,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
-          className="text-sm md:text-base font-paragraph text-white/80 max-w-2xl mb-12 leading-relaxed font-light tracking-wide"
+          className="text-sm md:text-base text-white/80 max-w-2xl mb-12 leading-relaxed font-light tracking-wide font-azeret-mono-black"
         >
           Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.
         </motion.p>

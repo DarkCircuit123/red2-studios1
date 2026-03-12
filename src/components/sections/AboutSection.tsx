@@ -57,7 +57,6 @@ export default function AboutSection() {
           className="absolute inset-0"
         />
       </div>
-
       <div className="max-w-[120rem] mx-auto px-6 md:px-8 relative z-10">
         {/* Asymmetrical layout - image right, text left */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 xl:gap-32 items-start">
@@ -96,7 +95,7 @@ export default function AboutSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.1 }}
                 viewport={{ once: true }}
-                className="text-base md:text-lg font-paragraph text-white/75 leading-relaxed"
+                className="text-base md:text-lg text-white/75 leading-relaxed font-paragraph"
               >
                 Jordan Michael Zuniga is a visionary photographer specializing in capturing the essence of visual storytelling through bold imagery and refined aesthetics. With a passion for precision and luxury restraint, Jordan has developed a distinctive visual language that merges minimalist composition with powerful narrative.
               </motion.p>

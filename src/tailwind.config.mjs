@@ -22,7 +22,7 @@ export default {
                 '9xl': ['6rem', { lineHeight: '1', letterSpacing: '-0.01em', fontWeight: 'bold' }],
             },
             fontFamily: {
-                heading: ["Montserrat", "Inter", "sans-serif"],
+                heading: ["Inter", "system-ui", "sans-serif"],
                 paragraph: ["Inter", "system-ui", "sans-serif"],
                 mono: ["Space Mono", "monospace"],
                 roboto: ["roboto", "sans-serif"],
