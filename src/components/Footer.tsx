@@ -46,7 +46,7 @@ export default function Footer() {
                 </span>
               </Link>
             </motion.div>
-            <p className="text-sm md:text-base font-paragraph text-white/60 leading-relaxed">
+            <p className="text-sm text-white/60 leading-relaxed font-mono md:text-xs">
               High-end fashion photography & visual storytelling
             </p>
           </div>

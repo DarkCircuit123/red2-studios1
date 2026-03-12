@@ -42,7 +42,7 @@ export default function SponsorsSection() {
           <h2 className="text-4xl md:text-5xl font-heading font-bold text-white mb-6 tracking-tight">
             Sponsored By
           </h2>
-          <p className="text-sm md:text-base font-paragraph text-white/60 max-w-2xl mx-auto">
+          <p className="text-sm md:text-base text-white/60 max-w-2xl mx-auto font-mono">
             Collaborating with industry-leading partners to deliver exceptional visual experiences
           </p>
         </motion.div>
