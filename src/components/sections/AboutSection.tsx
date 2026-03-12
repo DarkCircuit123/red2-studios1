@@ -90,25 +90,6 @@ export default function AboutSection() {
             </div>
 
             <div className="space-y-4 md:space-y-6">
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.1 }}
-                viewport={{ once: true }}
-                className="text-base md:text-lg text-white/75 leading-relaxed font-paragraph"
-              >
-                Jordan Michael Zuniga is a visionary photographer specializing in capturing the essence of visual storytelling through bold imagery and refined aesthetics. With a passion for precision and luxury restraint, Jordan has developed a distinctive visual language that merges minimalist composition with powerful narrative.
-              </motion.p>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.2 }}
-                viewport={{ once: true }}
-                className="text-base md:text-lg font-paragraph text-white/75 leading-relaxed"
-              >
-                His work spans editorial, commercial, and campaign photography, collaborating with emerging and established designers. Each frame is meticulously crafted to elevate brands and create lasting impressions through thoughtful composition and technical excellence.
-              </motion.p>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -116,9 +97,27 @@ export default function AboutSection() {
                 transition={{ duration: 0.7, delay: 0.3 }}
                 viewport={{ once: true }}
                 className="text-base md:text-lg font-paragraph text-white/75 leading-relaxed"
-              >
-                Specializing in fashion and lifestyle photography, Jordan brings a unique perspective that combines technical mastery with creative vision. Every project is an opportunity to push creative boundaries and deliver something truly exceptional.
-              </motion.p>
+              >Jordan Michael Zuñiga
+              Some photographers document the world.
+              Jordan Michael Zuñiga interrogates it.
+              He was born into it. Father behind a camera. Mother behind a paintbrush. Los Angeles in his blood before he ever picked up a lens. The city did not raise him soft. It raised him sharp, gave him an eye for what is real and what is performance, and by the time he left for Amsterdam that eye was already dangerous. Europe did the rest. There is a particular kind of clarity that only comes from standing outside the culture that made you and seeing it whole for the first time. He came back with that clarity. He never lost it.
+              What followed was not a career. It was an accumulation of weight.
+              Jordan Michael Zuñiga
+              Some photographers document the world.
+              Jordan Michael Zuñiga interrogates it.
+              He started with a Pentax film camera and a father who had been shooting for over 40 years. A mother whose hands made art. He did not choose photography. It was already in the room when he was born. Los Angeles handed him his first education: the light, the grit, the contrast between what the city shows the world and what it actually is. He absorbed it early. Then he went to Amsterdam and the rest of the world cracked open. Coming home after that is never really coming home. It is arriving somewhere familiar with new eyes. Those eyes never went back.
+              He moved. He built. He found Miami and Miami found him back.
+              In Wynwood, before the galleries arrived and the murals became a tourist attraction, he was already there with Red1 Studios. He shot runway. He tested talent for Elite Model Management, Ford, Next, MC2, Irene Marie. He covered three consecutive years of Fashion Week for fashiontv when that platform was reaching over 100 million viewers across the globe. He shot for Two Mundos Magazine. Warner Brothers. Stefano Versace Holdings. Brian Long PR, the publicist who moved between Pamela Anderson and the most culturally connected rooms in Miami, brought Jordan into the conversation. He trained at Miami Ad School and learned what most photographers never bother to learn: that an image is not a record of something that happened. It is an argument about what matters.
+              Then he made one of the most talked-about photographs of 2011.
+              On August 11th, Jordan debuted Women in Cages at Cafeina in Miami's Wynwood Arts District Repeating Islands, an exhibition that hit the internet like a lit fuse. The series featured some of Miami's most prominent women, each captured as an artistic nude as part of PETA's "I'd Rather Go Naked Than Wear Fur" campaign, with 80 percent of all sales donated to PETA. Blogger The concept came from a late-night conversation with his publicist about nonprofits. Jordan grabbed a cage from his own house and built the shoot from scratch. That is how it works when the idea is right. You do not wait for a budget. You move.
+              The exhibit debuted to rave reviews. One portrait in particular stopped the internet cold: Brooke Hogan, nude, inside a cage. ContactOut Hulk Hogan, celebrating his 58th birthday that night, attended the opening with his daughter. LinkedIn He put Jordan in a choke hold for shooting Brooke nude, then stood there and looked at the image and went quiet. Jordan said later that he believed Hulk saw the beauty in it. Repeating Islands UPI ran it. HuffPost ran it. IMDB ran it. PETA ran it on their own site with the headline Brooke Hogan Gets Naked for Animals and offered signed prints at fifty dollars a piece. Getty Images photographed Jordan at the unveiling. SocialMiami The image was everywhere. It was not an accident. It was the result of a photographer who understood that the most powerful photographs are not the ones that make people comfortable.
+              He told Huffington Post: "I have always respected what PETA has done with their imagery and I wanted to do something I hadn't seen before but put my spin and style on it." Repeating Islands That is the whole sentence. That is the whole philosophy.
+              The same year, at Art Basel 2011, Jordan exhibited Haiti: Hope in Progress at the Moore Building in collaboration with Hard Hats for Haiti and the Pan American Development Foundation. Over 500 collectors, diplomats, and cultural figures came through. Reconstruction work backed by the World Bank and the American Red Cross was funded through the sales. The Pan American Development Foundation credited the work with a direct impact on hundreds of thousands of lives. Two exhibitions. One year. Both of them mattered beyond the frame.
+              That was 2011. He kept going.
+              In 2026, Jordan operates under RED2 Studios and RED2 Studios is not a building. It is not a zip code or a lease or a sign on a door. RED2 is a standard of work that travels in his hands and arrives wherever the project demands. He is fully mobile, running out of a production-ready vehicle across the United States, from coastlines to hotel corridors to desert highways to the kinds of locations that other photographers fly to, book permits for, and call their best work. He does not book. He arrives. The camera that started as a Pentax loaded with film has become a Sony A1 II with 50 megapixels of sensor and glass refined to the tolerances of surgical instruments. The eye behind it has not changed. It just sees more.
+              500 projects. 50 collaborations. 25 years of work that has appeared in People magazine, on PETA's front page, in Getty's archives, in the rooms of the Versace estate, on three years of Fashion Week coverage, and in the hands of the World Bank.
+              The record is long.
+              He is nowhere near done writing it.</motion.p>
             </div>
 
             {/* Stats - enhanced with animations */}
