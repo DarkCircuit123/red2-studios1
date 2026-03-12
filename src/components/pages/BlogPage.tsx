@@ -18,7 +18,7 @@ export default function BlogPage() {
         const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 50 });
         setPosts(result.items || []);
       } catch (error) {
-        console.error('Error loading blog posts:', error);
+        // Silently fail - show empty state
       } finally {
         setIsLoading(false);
       }

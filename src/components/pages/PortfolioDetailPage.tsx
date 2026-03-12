@@ -31,7 +31,7 @@ export default function PortfolioDetailPage() {
         const projectData = await BaseCrudService.getById<Portfolio>('portfolio', id);
         setProject(projectData);
       } catch (error) {
-        console.error('Error loading project:', error);
+        // Silently fail - show not found state
       } finally {
         setIsLoading(false);
       }

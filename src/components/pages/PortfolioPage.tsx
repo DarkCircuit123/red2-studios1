@@ -23,7 +23,7 @@ export default function PortfolioPage() {
         setProjects(data.items || []);
         setFilteredProjects(data.items || []);
       } catch (error) {
-        console.error('Error loading projects:', error);
+        // Silently fail - show empty state
       } finally {
         setIsLoading(false);
       }

@@ -84,7 +84,6 @@ export default function ContactSection() {
     try {
       // 1. Check honeypot (bot detection)
       if (formData.honeypot) {
-        console.warn('[SECURITY] Honeypot triggered - likely bot');
         setSubmitStatus('blocked');
         setBlockMessage('Submission blocked: Invalid data detected');
         setTimeout(() => setSubmitStatus('idle'), 3000);
@@ -95,7 +94,6 @@ export default function ContactSection() {
       // 2. Rate limiting check
       const clientFingerprint = `${navigator.userAgent}-${window.location.hostname}`;
       if (!contactFormLimiter.isAllowed(clientFingerprint)) {
-        console.warn('[SECURITY] Rate limit exceeded for contact form');
         setSubmitStatus('blocked');
         setBlockMessage('Too many submissions. Please try again later.');
         setTimeout(() => setSubmitStatus('idle'), 3000);

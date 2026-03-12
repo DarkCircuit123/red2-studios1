@@ -58,7 +58,6 @@ export default function ProfilePage() {
         throw new Error('Update member function not available');
       }
     } catch (err) {
-      console.error('Error updating name:', err);
       setError(err instanceof Error ? err.message : 'Failed to update name. Please try again.');
       // Revert to original name on error
       setEditedName(member?.profile?.nickname || member?.contact?.firstName || '');

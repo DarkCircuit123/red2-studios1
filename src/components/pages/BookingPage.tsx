@@ -40,7 +40,7 @@ export default function BookingPage() {
         const result = await BaseCrudService.getAll<BookingSlot>('bookingavailability', {}, { limit: 100 });
         setBookings(result.items || []);
       } catch (error) {
-        console.error('Error loading bookings:', error);
+        // Silently fail - show empty state
       } finally {
         setIsLoading(false);
       }

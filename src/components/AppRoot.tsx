@@ -4,7 +4,6 @@ import RouterFallback from '@/components/RouterFallback';
 // Lazy load Router with error handling
 const AppRouter = lazy(() => 
   import('@/components/Router').catch(err => {
-    console.error('Failed to load Router:', err);
     return { default: RouterFallback };
   })
 );
@@ -19,12 +18,10 @@ class RouterErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error) {
-    console.error('Router error boundary caught:', error);
     return { hasError: true };
   }
 
   componentDidCatch(error: Error) {
-    console.error('Router failed to load:', error);
     this.setState(prev => ({ errorCount: prev.errorCount + 1 }));
   }
 

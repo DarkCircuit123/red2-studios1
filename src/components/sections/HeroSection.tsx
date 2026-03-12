@@ -23,7 +23,7 @@ export default function HeroSection() {
           }
         }
       } catch (error) {
-        console.error('Error loading hero image:', error);
+        // Silently fail - use default image
       } finally {
         setIsLoading(false);
       }

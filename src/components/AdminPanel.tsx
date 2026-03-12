@@ -33,7 +33,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             setHomepageImages(homepageImagesResult.items[0]);
           }
         } catch (error) {
-          console.warn('Failed to load homepage images:', error);
           setHomepageImages(null);
         }
 
@@ -46,7 +45,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             setPortfolioItems([]);
           }
         } catch (error) {
-          console.warn('Failed to load portfolio items:', error);
           setPortfolioItems([]);
         }
 
@@ -59,11 +57,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             setSponsors([]);
           }
         } catch (error) {
-          console.warn('Failed to load sponsors:', error);
           setSponsors([]);
         }
       } catch (error) {
-        console.error('Error loading images:', error);
         setHomepageImages(null);
         setPortfolioItems([]);
         setSponsors([]);

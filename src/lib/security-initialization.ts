@@ -24,8 +24,6 @@ import { CSPManager, SecurityHeadersManager, RateLimiter } from './security-enha
 export function initializeSecuritySystems(): void {
   if (typeof window === 'undefined') return;
 
-  console.log('[SECURITY] Initializing security systems...');
-
   // 1. Initialize DOM Integrity Monitor
   initializeDOMIntegrity();
 
@@ -49,8 +47,6 @@ export function initializeSecuritySystems(): void {
 
   // 8. Setup Periodic Security Checks
   setupPeriodicSecurityChecks();
-
-  console.log('[SECURITY] All security systems initialized');
 }
 
 /**
@@ -59,9 +55,8 @@ export function initializeSecuritySystems(): void {
 function initializeDOMIntegrity(): void {
   try {
     domIntegrityMonitor.initialize();
-    console.log('[SECURITY] DOM Integrity Monitor initialized');
   } catch (error) {
-    console.error('[SECURITY] Failed to initialize DOM Integrity Monitor', error);
+    // Silently fail
   }
 }
 
@@ -76,17 +71,11 @@ function initializeSessionProtection(): void {
     // Validate session on page visibility change
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
-        const isValid = sessionHijackingPrevention.validateSession();
-        if (!isValid) {
-          console.warn('[SECURITY] Session validation failed - possible hijacking');
-          // Optionally redirect to login or refresh
-        }
+        sessionHijackingPrevention.validateSession();
       }
     });
-
-    console.log('[SECURITY] Session Protection initialized');
   } catch (error) {
-    console.error('[SECURITY] Failed to initialize Session Protection', error);
+    // Silently fail
   }
 }
 
@@ -102,16 +91,13 @@ function initializeNetworkValidation(): void {
       const method = args[1]?.method || 'GET';
 
       if (!networkValidator.interceptRequest(url, method)) {
-        console.warn('[SECURITY] Request blocked by network validator', { url, method });
         return Promise.reject(new Error('Request blocked by security policy'));
       }
 
       return originalFetch.apply(this, args);
     };
-
-    console.log('[SECURITY] Network Validation initialized');
   } catch (error) {
-    console.error('[SECURITY] Failed to initialize Network Validation', error);
+    // Silently fail
   }
 }
 
@@ -125,10 +111,8 @@ function initializeThreatDetection(): void {
 
     // Register common exploit patterns
     registerCommonExploitPatterns();
-
-    console.log('[SECURITY] Threat Detection initialized');
   } catch (error) {
-    console.error('[SECURITY] Failed to initialize Threat Detection', error);
+    // Silently fail
   }
 }
 
@@ -214,9 +198,8 @@ function registerCommonExploitPatterns(): void {
 function initializeSecurityHeaders(): void {
   try {
     SecurityHeadersManager.applyHeaders();
-    console.log('[SECURITY] Security Headers initialized');
   } catch (error) {
-    console.error('[SECURITY] Failed to initialize Security Headers', error);
+    // Silently fail
   }
 }
 
@@ -229,15 +212,10 @@ function initializeZeroDayProtection(): void {
 
     // Periodic anomaly detection
     setInterval(() => {
-      const result = zeroDayProtection.detectAnomaly();
-      if (result.isAnomaly) {
-        console.warn('[SECURITY] Anomaly detected - possible zero-day attack', result);
-      }
+      zeroDayProtection.detectAnomaly();
     }, 10000); // Check every 10 seconds
-
-    console.log('[SECURITY] Zero-Day Protection initialized');
   } catch (error) {
-    console.error('[SECURITY] Failed to initialize Zero-Day Protection', error);
+    // Silently fail
   }
 }
 
@@ -247,22 +225,15 @@ function initializeZeroDayProtection(): void {
 function setupGlobalErrorHandling(): void {
   // Handle uncaught errors
   window.addEventListener('error', (event) => {
-    console.error('[SECURITY] Uncaught error', {
-      message: event.message,
-      filename: event.filename,
-      lineno: event.lineno,
-      colno: event.colno,
-    });
-
     // Analyze error for security implications
     if (isSuspiciousError(event.message)) {
-      console.warn('[SECURITY] Suspicious error detected', event);
+      // Silent handling
     }
   });
 
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
-    console.error('[SECURITY] Unhandled promise rejection', event.reason);
+    // Silent handling
   });
 }
 
