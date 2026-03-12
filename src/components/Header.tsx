@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
@@ -10,6 +10,7 @@ import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
 
 export default function Header() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -57,10 +58,17 @@ export default function Header() {
       }
     };
     
-    // If not on homepage, navigate to homepage with hash
+    // If not on homepage, use React Router navigation instead of full page reload
     const isHomePage = window.location.pathname === '/';
     if (!isHomePage) {
-      window.location.href = '/' + hash;
+      // Navigate to homepage using React Router (no full page reload)
+      navigate('/');
+      // Schedule scroll after navigation completes
+      setTimeout(() => {
+        scrollToElement();
+        setTimeout(scrollToElement, 100);
+        setTimeout(scrollToElement, 300);
+      }, 100);
       return;
     }
     
@@ -73,7 +81,7 @@ export default function Header() {
       clearTimeout(timeout1);
       clearTimeout(timeout2);
     };
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, navigate]);
 
   return (
     <header
