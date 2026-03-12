@@ -27,8 +27,8 @@ export default function Footer() {
 
   return (
     <footer className="bg-black border-t border-white/10">
-      <div className="max-w-[120rem] mx-auto px-6 md:px-8 py-16 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-16 mb-16">
+      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 py-12 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mb-12 md:mb-16">
           {/* Brand */}
           <div>
             <motion.div
@@ -185,7 +185,7 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-white/10 pt-8 md:pt-12">
+        <div className="border-t border-white/10 pt-6 md:pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <p className="text-xs md:text-sm font-mono text-white/40">
               © {currentYear} Studio. All rights reserved.

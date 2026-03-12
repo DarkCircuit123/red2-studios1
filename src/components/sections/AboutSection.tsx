@@ -42,7 +42,7 @@ export default function AboutSection() {
   };
 
   return (
-    <section id="about" className="relative w-full py-24 md:py-40 lg:py-48 bg-black overflow-hidden">
+    <section id="about" className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden">
       {/* Animated background */}
       <div className="absolute inset-0 z-0">
         <motion.div
@@ -57,19 +57,19 @@ export default function AboutSection() {
           className="absolute inset-0"
         />
       </div>
-      <div className="max-w-[120rem] mx-auto px-6 md:px-8 relative z-10">
+      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
         {/* Asymmetrical layout - image right, text left */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 xl:gap-32 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 xl:gap-20 items-start">
           {/* Content - left side */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="space-y-10 md:space-y-12"
+            className="space-y-6 md:space-y-8"
           >
-            <div className="space-y-6">
-              <h2 className="text-6xl md:text-7xl lg:text-8xl font-heading font-black text-white leading-tight tracking-tighter">
+            <div className="space-y-4 md:space-y-6">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-black text-white leading-tight tracking-tighter">
                 About
                 <br />
                 <motion.span
@@ -89,7 +89,7 @@ export default function AboutSection() {
               />
             </div>
 
-            <div className="space-y-8 md:space-y-10">
+            <div className="space-y-4 md:space-y-6">
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -127,7 +127,7 @@ export default function AboutSection() {
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
               viewport={{ once: true }}
-              className="grid grid-cols-3 gap-8 md:gap-12 pt-12 md:pt-16 border-t border-primary/30"
+              className="grid grid-cols-3 gap-4 md:gap-6 pt-6 md:pt-8 border-t border-primary/30"
             >
               {[
                 { value: '500+', label: 'Projects' },

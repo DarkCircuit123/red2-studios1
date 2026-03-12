@@ -82,10 +82,10 @@ export default function RSSTickerSection() {
   const tickerItems = [...items, ...items, ...items];
 
   return (
-    <section className="relative w-full py-8 bg-black border-y border-white/10 overflow-hidden">
+    <section className="relative w-full py-4 md:py-6 bg-black border-y border-white/10 overflow-hidden">
       <div className="relative">
         {/* RSS Header */}
-        <div className="max-w-[120rem] mx-auto px-8 mb-6 flex items-center gap-3">
+        <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 mb-3 md:mb-4 flex items-center gap-3">
           <Rss className="w-4 h-4 text-red-900" />
           <span className="text-xs font-mono text-red-900 uppercase tracking-widest">
             Photography Feed

@@ -99,19 +99,19 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
       </motion.div>
       {/* Content with enhanced animations */}
-      <div className="relative z-10 max-w-[120rem] mx-auto px-8 text-left w-full h-full flex flex-col justify-center">
+      <div className="relative z-10 max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 text-left w-full h-full flex flex-col justify-center">
         {/* Main headline with staggered animation */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, delay: 0.1, ease: 'easeOut' }}
-          className="mb-8"
+          className="mb-6 md:mb-8"
         >
-          <h1 className="text-7xl md:text-8xl font-black text-white leading-none tracking-tighter uppercase font-bauhaus-pro lg:text-9xl">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white leading-none tracking-tighter uppercase font-bauhaus-pro">
             Visual
             <br />
             <motion.span
-              className="font-black inline-block font-heading text-9xl text-[#6f0809ff]"
+              className="font-black inline-block font-heading text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-[#6f0809ff]"
               animate={{ textShadow: ['0 0 0px rgba(73, 7, 8, 0)', '0 0 20px rgba(73, 7, 8, 0.4)', '0 0 0px rgba(73, 7, 8, 0)'] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
@@ -126,7 +126,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
-          className="text-sm md:text-base text-white/80 max-w-2xl mb-12 leading-relaxed font-light tracking-wide font-azeret-mono-black"
+          className="text-xs sm:text-sm md:text-base text-white/80 max-w-2xl mb-8 md:mb-12 leading-relaxed font-light tracking-wide font-azeret-mono-black"
         >
           Capturing the essence of fashion through bold imagery and refined aesthetics. A portfolio of precision and luxury restraint.
         </motion.p>
@@ -165,7 +165,7 @@ export default function HeroSection() {
       <motion.div
         animate={{ y: [0, 12, 0] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-12 left-8 z-10"
+        className="absolute bottom-6 md:bottom-12 left-4 md:left-8 z-10"
       >
         <motion.button
           onClick={scrollToGallery}

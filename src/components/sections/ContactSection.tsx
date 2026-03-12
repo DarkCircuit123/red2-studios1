@@ -176,7 +176,7 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative w-full py-24 md:py-40 lg:py-48 bg-black overflow-hidden">
+    <section id="contact" className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden">
       {/* Animated background */}
       <div className="absolute inset-0 z-0">
         <motion.div
@@ -192,8 +192,8 @@ export default function ContactSection() {
         />
       </div>
 
-      <div className="max-w-[120rem] mx-auto px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24">
+      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16">
           {/* Contact Info */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
@@ -201,7 +201,7 @@ export default function ContactSection() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-7xl md:text-8xl lg:text-9xl font-heading font-black text-white mb-12 tracking-tighter leading-none">
+            <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-heading font-black text-white mb-8 md:mb-12 tracking-tighter leading-none">
               Get in
               <br />
               <motion.span
@@ -213,12 +213,12 @@ export default function ContactSection() {
               </motion.span>
             </h2>
 
-            <p className="text-base md:text-lg font-paragraph text-white/70 mb-16 leading-relaxed">
+            <p className="text-sm md:text-base font-paragraph text-white/70 mb-12 md:mb-16 leading-relaxed">
               Ready to collaborate on your next project? I'd love to hear about your vision and discuss how we can bring it to life.
             </p>
 
             {/* Contact Methods - Enhanced with animations */}
-            <div className="space-y-12">
+            <div className="space-y-8 md:space-y-10">
               {[
                 { icon: Mail, label: 'Email', value: 'hello@red2studios.com', href: 'mailto:hello@red2studios.com' },
                 { icon: Phone, label: 'Phone', value: '+1 (310) 386-0405', href: 'tel:+13103860405' },

@@ -63,15 +63,15 @@ export default function Interactive3DGallerySection() {
   }
 
   return (
-    <section id="portfolio" className="relative w-full py-24 md:py-32 bg-black">
-      <div className="max-w-[120rem] mx-auto px-8">
+    <section id="portfolio" className="relative w-full py-16 md:py-20 lg:py-24 bg-black">
+      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="mb-16"
+          className="mb-12 md:mb-16"
         >
           <div className="flex items-center gap-3 mb-4">
             <Box className="w-6 h-6 text-primary" />

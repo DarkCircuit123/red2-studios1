@@ -29,15 +29,15 @@ export default function SponsorsSection() {
   }, []);
 
   return (
-    <section className="relative w-full py-20 md:py-28 bg-black border-t border-white/10">
-      <div className="max-w-[120rem] mx-auto px-8">
+    <section className="relative w-full py-16 md:py-20 lg:py-24 bg-black border-t border-white/10">
+      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-16 md:mb-20"
+          className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-heading font-bold text-white mb-6 tracking-tight">
             Sponsored By
@@ -48,7 +48,7 @@ export default function SponsorsSection() {
         </motion.div>
 
         {/* Sponsors Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {isLoading ? (
             <div className="col-span-full text-center py-12">
               <p className="text-white/60">Loading sponsors...</p>
