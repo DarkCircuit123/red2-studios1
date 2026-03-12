@@ -94,7 +94,7 @@ export default function HeroSection() {
               className="font-black inline-block text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-primary font-roboto-bold"
               animate={{ opacity: [1, 0.8, 1] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            >RED2</motion.span>
+            >RED</motion.span>
           </h1>
         </motion.div>
 
