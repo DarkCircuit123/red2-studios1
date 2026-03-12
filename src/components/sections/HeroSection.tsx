@@ -88,7 +88,7 @@ export default function HeroSection() {
           transition={{ duration: 1.2, delay: 0.1, ease: 'easeOut' }}
           className="mb-4 sm:mb-6 md:mb-8"
         >
-          <h1 className="text-5xl sm:text-6xl md:text-7xl text-white leading-tight tracking-tight uppercase font-roboto-bold lg:text-9xl xl:text-9xl font-bold text-left">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl text-white leading-tight tracking-tight uppercase font-roboto-bold lg:text-9xl xl:text-9xl font-normal">
             Visual{' '}
             <motion.span
               className="font-black inline-block text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-primary font-roboto-bold"
