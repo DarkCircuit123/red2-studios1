@@ -148,7 +148,7 @@ export default function AboutSection() {
             <motion.div
               whileHover={{ y: -8 }}
               transition={{ duration: 0.3 }}
-              className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group"
+              className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center"
             >
               {!isLoading && (
                 <motion.div
@@ -156,13 +156,13 @@ export default function AboutSection() {
                   whileInView={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.8 }}
                   viewport={{ once: true }}
-                  className="w-full h-full"
+                  className="w-full h-full flex items-center justify-center"
                 >
                   <Image
                     src={aboutImage}
                     alt="Jordan Michael Zuniga"
                     width={600}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
                   />
                   {/* Overlay gradient */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

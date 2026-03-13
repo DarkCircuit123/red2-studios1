@@ -98,12 +98,12 @@ export default function HorizontalProjectScroller({
               }}
               onClick={() => onImageClick(image, idx)}
             >
-              <div className="relative w-full h-full overflow-hidden bg-black/30">
+              <div className="relative w-full h-full overflow-hidden bg-black/30 flex items-center justify-center">
                 {/* Image */}
                 <Image
                   src={image}
                   alt={`Project image ${idx + 1}`}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-105"
+                  className="w-full h-full object-contain transition-transform duration-500 group-hover/item:scale-110"
                 />
 
                 {/* Subtle grain overlay */}

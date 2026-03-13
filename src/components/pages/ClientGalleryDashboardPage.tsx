@@ -135,12 +135,12 @@ export default function ClientGalleryDashboardPage() {
                   onClick={() => handleViewGallery(gallery._id)}
                   className="group cursor-pointer"
                 >
-                  <div className="relative overflow-hidden rounded-lg border border-white/10 hover:border-white/30 transition-all duration-300 h-64 bg-white/5">
+                  <div className="relative overflow-hidden rounded-lg border border-white/10 hover:border-white/30 transition-all duration-300 h-64 bg-white/5 flex items-center justify-center">
                     {gallery.galleryCoverImage ? (
                       <Image
                         src={gallery.galleryCoverImage}
                         alt={gallery.clientName}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

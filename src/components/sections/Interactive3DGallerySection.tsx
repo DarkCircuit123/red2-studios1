@@ -191,7 +191,7 @@ export default function Interactive3DGallerySection() {
                   <Image
                     src={getResponsiveImageUrl(image, containerWidth || 400)}
                     alt={`Gallery ${idx}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </motion.div>
               ))}

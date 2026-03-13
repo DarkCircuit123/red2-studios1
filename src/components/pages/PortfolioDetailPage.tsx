@@ -196,7 +196,7 @@ export default function PortfolioDetailPage() {
           <Image
             src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_fcbd4072cbd84e428547c62bbddbf23c~mv2.png?originWidth=1152&originHeight=640'}
             alt={project.projectName}
-            className="w-full h-auto object-contain max-h-[70vh]"
+            className="w-full h-auto object-contain max-h-[85vh]"
           />
         </motion.div>
 
@@ -280,7 +280,7 @@ export default function PortfolioDetailPage() {
                   <Image
                     src={image}
                     alt={`Gallery image ${index + 1}`}
-                    className="w-full h-auto object-contain max-h-[500px]"
+                    className="w-full h-auto object-contain max-h-[600px]"
                   />
                 </div>
               ))}

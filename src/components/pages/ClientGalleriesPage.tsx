@@ -138,13 +138,13 @@ export default function ClientGalleriesPage() {
                     transition={{ delay: idx * 0.1 }}
                     className="group cursor-pointer"
                   >
-                    <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5">
+                    <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5 flex items-center justify-center">
                       {gallery.galleryCoverImage && (
                         <>
                           <Image
                             src={gallery.galleryCoverImage}
                             alt={gallery.clientName}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
                           />
                           {/* Mosaic overlay for non-authenticated users */}
                           {!isAccessible && (

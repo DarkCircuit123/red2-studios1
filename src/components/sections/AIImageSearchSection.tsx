@@ -172,11 +172,11 @@ export default function AIImageSearchSection() {
                 viewport={{ once: true }}
                 className="group relative overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all duration-300"
               >
-                <div className="aspect-square overflow-hidden">
+                <div className="aspect-square overflow-hidden flex items-center justify-center">
                   <Image
                     src={item.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png'}
                     alt={item.projectName || 'Project'}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300" />
                 </div>

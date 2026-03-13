@@ -113,11 +113,11 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
                 className={`group relative overflow-hidden bg-white/5 cursor-pointer border border-white/10 hover:border-primary/50 transition-all duration-500 flex items-center justify-center ${colSpan}`}
               >
                 {/* Image Container - Photography-First with Aspect Ratio Preservation */}
-                <div className="w-full h-full flex items-center justify-center bg-black/30 min-h-[300px] md:min-h-[350px]">
+                <div className="w-full h-full flex items-center justify-center bg-black/30 min-h-[400px] md:min-h-[500px] overflow-hidden">
                   <Image
                     src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
                     alt={item?.projectName || 'Portfolio project'}
-                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
                   />
                 </div>
 
