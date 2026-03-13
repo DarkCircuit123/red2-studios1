@@ -69,81 +69,95 @@ export default function BlogPage() {
             </motion.div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {posts.map((post, idx) => (
-                <motion.article
-                  key={post._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="group cursor-pointer"
-                >
-                  {/* Featured Image */}
-                  {post.thumbnailImage && (
-                    <div className="relative overflow-hidden rounded-lg mb-6 h-96 bg-white/5 flex items-center justify-center">
-                      <Image
-                        src={post.thumbnailImage}
-                        alt={post.title || 'Blog post'}
-                        className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-                  )}
+              {posts.map((post, idx) => {
+                const href = post.externalLink || '#';
+                const isExternal = !!post.externalLink;
+                
+                const articleProps = isExternal ? {
+                  as: 'a' as const,
+                  href: href,
+                  target: '_blank' as const,
+                  rel: 'noopener noreferrer' as const
+                } : {};
 
-                  {/* Content */}
-                  <div className="space-y-3">
-                    {/* Meta Info */}
-                    <div className="flex items-center gap-4 text-xs text-white/40 uppercase tracking-wide flex-wrap">
-                      {post.publicationDate && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(post.publicationDate).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </div>
+                return (
+                  <motion.article
+                    key={post._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="group cursor-pointer"
+                    {...articleProps}
+                  >
+                    {/* Featured Image */}
+                    {post.thumbnailImage && (
+                      <div className="relative overflow-hidden rounded-lg mb-6 h-96 bg-white/5 flex items-center justify-center">
+                        <Image
+                          src={post.thumbnailImage}
+                          alt={post.title || 'Blog post'}
+                          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                    )}
+
+                    {/* Content */}
+                    <div className="space-y-3">
+                      {/* Meta Info */}
+                      <div className="flex items-center gap-4 text-xs text-white/40 uppercase tracking-wide flex-wrap">
+                        {post.publicationDate && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(post.publicationDate).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        )}
+                        {post.author && (
+                          <div className="flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {post.author}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="text-2xl font-heading font-bold text-white group-hover:text-white/80 transition-colors">
+                        {post.title}
+                      </h3>
+
+                      {/* Excerpt */}
+                      {post.excerpt && (
+                        <p className="text-base text-white/60">
+                          {post.excerpt}
+                        </p>
                       )}
-                      {post.author && (
-                        <div className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          {post.author}
-                        </div>
+
+                      {/* Full Content Preview */}
+                      {post.content && (
+                        <p className="text-sm text-white/50 line-clamp-3">
+                          {post.content}
+                        </p>
+                      )}
+
+                      {/* Video Link */}
+                      {post.videoUrl && (
+                        <a
+                          href={post.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-block mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-sm text-white transition-all duration-300"
+                        >
+                          Watch Video
+                        </a>
                       )}
                     </div>
-
-                    {/* Title */}
-                    <h3 className="text-2xl font-heading font-bold text-white group-hover:text-white/80 transition-colors">
-                      {post.title}
-                    </h3>
-
-                    {/* Excerpt */}
-                    {post.excerpt && (
-                      <p className="text-base text-white/60">
-                        {post.excerpt}
-                      </p>
-                    )}
-
-                    {/* Full Content Preview */}
-                    {post.content && (
-                      <p className="text-sm text-white/50 line-clamp-3">
-                        {post.content}
-                      </p>
-                    )}
-
-                    {/* Video Link */}
-                    {post.videoUrl && (
-                      <a
-                        href={post.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-sm text-white transition-all duration-300"
-                      >
-                        Watch Video
-                      </a>
-                    )}
-                  </div>
-                </motion.article>
-              ))}
+                  </motion.article>
+                );
+              })}
             </div>
           )}
         </div>
