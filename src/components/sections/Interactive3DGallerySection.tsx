@@ -28,7 +28,9 @@ export default function Interactive3DGallerySection() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     const loadPortfolio = async () => {
@@ -60,14 +62,25 @@ export default function Interactive3DGallerySection() {
     ? [currentItem.mainImage, currentItem.galleryImage1, currentItem.galleryImage2, currentItem.galleryImage3].filter(Boolean)
     : [];
 
+  // Handle image load to get actual dimensions for lightbox
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    setImageDimensions({
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+    });
+  };
+
   const handleNext = () => {
     setCurrentIndex((prev) => (prev + 1) % portfolioItems.length);
     setRotation((prev) => prev + 90);
+    setImageDimensions(null); // Reset dimensions for new image
   };
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev - 1 + portfolioItems.length) % portfolioItems.length);
     setRotation((prev) => prev - 90);
+    setImageDimensions(null); // Reset dimensions for new image
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -264,22 +277,33 @@ export default function Interactive3DGallerySection() {
           </p>
         </motion.div>
 
-        {/* Fullscreen Modal */}
+        {/* Fullscreen Modal - Image-First Layout */}
         <AnimatePresence>
           {isFullscreen && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 overflow-auto"
               onClick={() => setIsFullscreen(false)}
             >
               <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.8 }}
-                className="relative w-full h-full max-w-6xl max-h-[90vh] flex items-center justify-center"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="relative flex items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
+                style={{
+                  // Dynamic sizing based on image aspect ratio
+                  width: imageDimensions
+                    ? `min(95vw, ${(imageDimensions.width / imageDimensions.height) * 95}vh)`
+                    : '95vw',
+                  height: imageDimensions ? '95vh' : 'auto',
+                  aspectRatio: imageDimensions
+                    ? `${imageDimensions.width} / ${imageDimensions.height}`
+                    : 'auto',
+                }}
               >
                 {/* Close Button */}
                 <motion.button
@@ -291,13 +315,21 @@ export default function Interactive3DGallerySection() {
                   <X className="w-6 h-6 text-white" />
                 </motion.button>
 
-                {/* Fullscreen Image Container */}
+                {/* Fullscreen Image Container - Image-First */}
                 <div className="relative w-full h-full flex items-center justify-center">
                   {galleryImages[0] && (
                     <Image
-                      src={getResponsiveImageUrl(galleryImages[0], 1200)}
+                      ref={imageRef}
+                      src={galleryImages[0]}
                       alt="Fullscreen view"
+                      onLoad={handleImageLoad}
                       className="w-full h-full object-contain"
+                      style={{
+                        maxWidth: '95vw',
+                        maxHeight: '95vh',
+                        width: 'auto',
+                        height: 'auto',
+                      }}
                     />
                   )}
                 </div>
@@ -306,7 +338,7 @@ export default function Interactive3DGallerySection() {
                 <motion.button
                   onClick={handlePrev}
                   whileHover={{ scale: 1.1 }}
-                  className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 transition-colors"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 transition-colors z-40"
                   aria-label="Previous"
                 >
                   <ChevronLeft className="w-6 h-6 text-white" />
@@ -314,7 +346,7 @@ export default function Interactive3DGallerySection() {
                 <motion.button
                   onClick={handleNext}
                   whileHover={{ scale: 1.1 }}
-                  className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 transition-colors z-40"
                   aria-label="Next"
                 >
                   <ChevronRight className="w-6 h-6 text-white" />
