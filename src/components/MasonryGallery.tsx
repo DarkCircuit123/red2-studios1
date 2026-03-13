@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 
@@ -15,6 +15,18 @@ interface MasonryGalleryProps {
   isLoading?: boolean;
 }
 
+// Preload image dimensions with Promise
+const preloadImageDimensions = (src: string): Promise<{ width: number; height: number }> => {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+};
+
 export default function MasonryGallery({
   items,
   onImageClick,
@@ -25,26 +37,31 @@ export default function MasonryGallery({
   >({});
   const [scrollY, setScrollY] = useState(0);
 
-  // Load image dimensions for masonry calculation
+  // Optimized image dimension loading with batching
   useEffect(() => {
-    items.forEach((item) => {
-      if (!imageDimensions[item.id]) {
-        const img = new window.Image();
-        img.onload = () => {
+    const itemsToLoad = items.filter((item) => !imageDimensions[item.id]);
+    
+    if (itemsToLoad.length === 0) return;
+
+    // Batch load with staggering for performance
+    const loadBatch = async () => {
+      for (const item of itemsToLoad) {
+        try {
+          const dims = await preloadImageDimensions(item.image);
           setImageDimensions((prev) => ({
             ...prev,
-            [item.id]: {
-              width: img.naturalWidth,
-              height: img.naturalHeight,
-            },
+            [item.id]: dims,
           }));
-        };
-        img.src = item.image;
+        } catch {
+          // Silently fail - use default aspect ratio
+        }
       }
-    });
+    };
+
+    loadBatch();
   }, [items, imageDimensions]);
 
-  // Track scroll for subtle parallax
+  // Track scroll for subtle parallax with passive listener
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -54,14 +71,14 @@ export default function MasonryGallery({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Calculate optimal column layout based on aspect ratios
-  const getColumnCount = () => {
+  // Calculate optimal column layout
+  const getColumnCount = useCallback(() => {
     if (typeof window === 'undefined') return 3;
     const width = window.innerWidth;
     if (width < 640) return 1;
     if (width < 1024) return 2;
     return 3;
-  };
+  }, []);
 
   const [columnCount, setColumnCount] = useState(getColumnCount());
 
@@ -70,29 +87,26 @@ export default function MasonryGallery({
       setColumnCount(getColumnCount());
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [getColumnCount]);
 
-  // Distribute items into columns based on aspect ratios
-  const distributeItems = () => {
-    const columns: MasonryItem[][] = Array.from({ length: columnCount }, () => []);
+  // Memoized column distribution
+  const columns = useMemo(() => {
+    const cols: MasonryItem[][] = Array.from({ length: columnCount }, () => []);
     const columnHeights = Array(columnCount).fill(0);
 
     items.forEach((item) => {
       const dims = imageDimensions[item.id];
       const height = dims ? 1 / (dims.width / dims.height) : 1;
 
-      // Find column with smallest height
       const minColumn = columnHeights.indexOf(Math.min(...columnHeights));
-      columns[minColumn].push(item);
+      cols[minColumn].push(item);
       columnHeights[minColumn] += height;
     });
 
-    return columns;
-  };
-
-  const columns = distributeItems();
+    return cols;
+  }, [items, imageDimensions, columnCount]);
 
   if (isLoading) {
     return (
@@ -120,7 +134,7 @@ export default function MasonryGallery({
               ? `${dims.width} / ${dims.height}`
               : '1 / 1';
             
-            // Subtle parallax offset - minimal movement for premium feel
+            // Subtle parallax offset
             const parallaxOffset = (scrollY * 0.02 * (colIdx % 2 === 0 ? 1 : -1)) / (itemIdx + 1);
 
             return (
@@ -141,20 +155,20 @@ export default function MasonryGallery({
                   willChange: 'transform',
                 }}
               >
-                {/* Background glass effect - subtle glow */}
+                {/* Background glass effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-                {/* Image - Preserves Aspect Ratio */}
+                {/* Image */}
                 <Image
                   src={item.image}
                   alt={item.title || 'Gallery image'}
                   className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
                 />
 
-                {/* Subtle grain overlay */}
+                {/* Grain overlay */}
                 <div className="absolute inset-0 bg-grain opacity-3 pointer-events-none" />
 
-                {/* Smooth overlay on hover */}
+                {/* Overlay on hover */}
                 <motion.div 
                   initial={{ opacity: 0 }}
                   whileHover={{ opacity: 1 }}
@@ -162,7 +176,7 @@ export default function MasonryGallery({
                   className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" 
                 />
 
-                {/* Title on hover (optional) */}
+                {/* Title on hover */}
                 {item.title && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}

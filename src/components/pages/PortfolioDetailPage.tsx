@@ -31,8 +31,18 @@ export default function PortfolioDetailPage() {
         // Load specific project
         const projectData = await BaseCrudService.getById<Portfolio>('portfolio', id);
         setProject(projectData);
+        
+        // Preload gallery images
+        if (projectData?.mainImage) {
+          const img = new window.Image();
+          img.src = projectData.mainImage;
+        }
+        if (projectData?.galleryImage1) {
+          const img = new window.Image();
+          img.src = projectData.galleryImage1;
+        }
       } catch (error) {
-        // Silently fail - show not found state
+        // Silently fail
       } finally {
         setIsLoading(false);
       }

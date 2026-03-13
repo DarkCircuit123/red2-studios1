@@ -10,6 +10,18 @@ interface GalleryViewerProps {
   initialIndex?: number;
 }
 
+// Preload image with optimized dimensions
+const preloadImageOptimized = (src: string): Promise<{ width: number; height: number }> => {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+};
+
 export default function GalleryViewer({
   images,
   isOpen,
@@ -29,8 +41,9 @@ export default function GalleryViewer({
     height: number;
   }>({ width: typeof window !== 'undefined' ? window.innerWidth : 1024, height: typeof window !== 'undefined' ? window.innerHeight : 768 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const preloadTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Track screen resize
+  // Track screen resize with passive listener
   useEffect(() => {
     const handleResize = () => {
       setScreenDimensions({
@@ -39,30 +52,46 @@ export default function GalleryViewer({
       });
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Preload next and previous images
+  // Optimized preload with debouncing
   useEffect(() => {
-    const preloadImage = (index: number) => {
-      if (preloadedDimensions[index]) return;
+    if (!isOpen) return;
 
-      const img = new window.Image();
-      img.onload = () => {
-        setPreloadedDimensions((prev) => ({
-          ...prev,
-          [index]: { width: img.naturalWidth, height: img.naturalHeight },
-        }));
-      };
-      img.src = images[index];
-    };
-
-    if (isOpen) {
-      preloadImage(currentIndex);
-      if (currentIndex > 0) preloadImage(currentIndex - 1);
-      if (currentIndex < images.length - 1) preloadImage(currentIndex + 1);
+    if (preloadTimeoutRef.current) {
+      clearTimeout(preloadTimeoutRef.current);
     }
+
+    preloadTimeoutRef.current = setTimeout(() => {
+      const indicesToPreload = [
+        currentIndex,
+        (currentIndex + 1) % images.length,
+        (currentIndex - 1 + images.length) % images.length,
+      ];
+
+      indicesToPreload.forEach((idx) => {
+        if (!preloadedDimensions[idx]) {
+          preloadImageOptimized(images[idx])
+            .then((dims) => {
+              setPreloadedDimensions((prev) => ({
+                ...prev,
+                [idx]: dims,
+              }));
+            })
+            .catch(() => {
+              // Silently fail
+            });
+        }
+      });
+    }, 100);
+
+    return () => {
+      if (preloadTimeoutRef.current) {
+        clearTimeout(preloadTimeoutRef.current);
+      }
+    };
   }, [currentIndex, isOpen, images, preloadedDimensions]);
 
   // Get current image dimensions
@@ -70,14 +99,17 @@ export default function GalleryViewer({
     if (preloadedDimensions[currentIndex]) {
       setImageDimensions(preloadedDimensions[currentIndex]);
     } else {
-      const img = new window.Image();
-      img.onload = () => {
-        setImageDimensions({
-          width: img.naturalWidth,
-          height: img.naturalHeight,
+      preloadImageOptimized(images[currentIndex])
+        .then((dims) => {
+          setImageDimensions(dims);
+          setPreloadedDimensions((prev) => ({
+            ...prev,
+            [currentIndex]: dims,
+          }));
+        })
+        .catch(() => {
+          // Silently fail
         });
-      };
-      img.src = images[currentIndex];
     }
   }, [currentIndex, images, preloadedDimensions]);
 
@@ -153,10 +185,6 @@ export default function GalleryViewer({
 
   if (!isOpen) return null;
 
-  const aspectRatio = imageDimensions
-    ? `${imageDimensions.width} / ${imageDimensions.height}`
-    : 'auto';
-
   // Calculate optimal image dimensions to maximize screen usage
   const calculateImageDimensions = () => {
     if (!imageDimensions) return { width: '95vw', height: '90vh' };
@@ -164,18 +192,15 @@ export default function GalleryViewer({
     const imageAspect = imageDimensions.width / imageDimensions.height;
     const screenAspect = screenDimensions.width / screenDimensions.height;
     
-    // Account for padding and UI elements
     const maxWidth = screenDimensions.width * 0.95;
-    const maxHeight = screenDimensions.height * 0.85; // Leave room for thumbnails and controls
+    const maxHeight = screenDimensions.height * 0.85;
 
     let width, height;
 
     if (imageAspect > screenAspect) {
-      // Image is wider - constrain by width
       width = maxWidth;
       height = maxWidth / imageAspect;
     } else {
-      // Image is taller - constrain by height
       height = maxHeight;
       width = maxHeight * imageAspect;
     }
@@ -199,7 +224,7 @@ export default function GalleryViewer({
         onClick={onClose}
         ref={containerRef}
       >
-        {/* Subtle background drift animation */}
+        {/* Subtle background pattern */}
         <motion.div
           animate={{
             backgroundPosition: ['0% 0%', '1% 1%', '0% 0%'],
@@ -227,7 +252,7 @@ export default function GalleryViewer({
           <X className="w-6 h-6" />
         </motion.button>
 
-        {/* Main Image Container - Proportional Scaling */}
+        {/* Main Image Container */}
         <motion.div
           key={currentIndex}
           initial={{ opacity: 0 }}
@@ -237,7 +262,7 @@ export default function GalleryViewer({
           className="flex items-center justify-center flex-1 w-full relative z-10"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Glass panel glow effect - subtle */}
+          {/* Glow effect */}
           <motion.div
             animate={{
               boxShadow: [
@@ -266,7 +291,7 @@ export default function GalleryViewer({
           </motion.div>
         </motion.div>
 
-        {/* Navigation Arrows - Subtle and Minimal */}
+        {/* Navigation Arrows */}
         <motion.button
           onClick={(e) => {
             e.stopPropagation();
@@ -293,7 +318,7 @@ export default function GalleryViewer({
           <ChevronRight className="w-8 h-8" />
         </motion.button>
 
-        {/* Thumbnail Filmstrip - Larger and Full Width */}
+        {/* Thumbnail Filmstrip */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -322,7 +347,7 @@ export default function GalleryViewer({
           ))}
         </motion.div>
 
-        {/* Image Counter - Minimal */}
+        {/* Image Counter */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

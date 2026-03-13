@@ -20,10 +20,19 @@ export default function PortfolioPage() {
     const loadProjects = async () => {
       try {
         const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
-        setProjects(data.items || []);
-        setFilteredProjects(data.items || []);
+        const projects = data.items || [];
+        setProjects(projects);
+        setFilteredProjects(projects);
+        
+        // Preload first 3 images for faster initial display
+        projects.slice(0, 3).forEach((project) => {
+          if (project.mainImage) {
+            const img = new window.Image();
+            img.src = project.mainImage;
+          }
+        });
       } catch (error) {
-        // Silently fail - show empty state
+        // Silently fail
       } finally {
         setIsLoading(false);
       }

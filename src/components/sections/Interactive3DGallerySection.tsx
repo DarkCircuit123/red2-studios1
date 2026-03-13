@@ -42,8 +42,10 @@ export default function Interactive3DGallerySection() {
     loadPortfolio();
   }, []);
 
-  // Track container width for responsive image sizing
+  // Track container width for responsive image sizing with debouncing
   useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout;
+    
     const updateWidth = () => {
       if (containerRef.current) {
         setContainerWidth(containerRef.current.offsetWidth);
@@ -51,8 +53,17 @@ export default function Interactive3DGallerySection() {
     };
     
     updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateWidth, 150);
+    };
+    
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
   }, []);
 
   const currentItem = portfolioItems[currentIndex];
