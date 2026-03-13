@@ -5,11 +5,29 @@ import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 
+// Utility function to generate responsive image URL with 4:5 aspect ratio
+const getResponsiveImageUrl = (url: string, width: number): string => {
+  if (!url) return url;
+  
+  // Calculate height based on 4:5 aspect ratio
+  const height = Math.round((width * 5) / 4);
+  
+  // For Wix static images, append resize parameters
+  if (url.includes('wixstatic.com')) {
+    // Remove existing parameters if any
+    const baseUrl = url.split('~')[0];
+    return `${baseUrl}~c_crop,w_${width},h_${height},x_0,y_0/~c_scale,w_${width},h_${height}`;
+  }
+  
+  return url;
+};
+
 export default function Interactive3DGallerySection() {
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,6 +40,19 @@ export default function Interactive3DGallerySection() {
       }
     };
     loadPortfolio();
+  }, []);
+
+  // Track container width for responsive image sizing
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+    
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
   const currentItem = portfolioItems[currentIndex];
@@ -125,7 +156,7 @@ export default function Interactive3DGallerySection() {
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             className="relative overflow-hidden bg-white/5 border border-white/10 cursor-grab active:cursor-grabbing"
-            style={{ perspective: '1000px', aspectRatio: '9 / 16' }}
+            style={{ perspective: '1000px', aspectRatio: '4 / 5' }}
           >
             {/* 3D Carousel Effect */}
             <div className="relative w-full h-full">
@@ -145,7 +176,7 @@ export default function Interactive3DGallerySection() {
                   }}
                 >
                   <Image
-                    src={image}
+                    src={getResponsiveImageUrl(image, containerWidth || 400)}
                     alt={`Gallery ${idx}`}
                     className="w-full h-full object-cover"
                   />
@@ -264,7 +295,7 @@ export default function Interactive3DGallerySection() {
                 <div className="relative w-full h-full flex items-center justify-center">
                   {galleryImages[0] && (
                     <Image
-                      src={galleryImages[0]}
+                      src={getResponsiveImageUrl(galleryImages[0], 1200)}
                       alt="Fullscreen view"
                       className="w-full h-full object-contain"
                     />
