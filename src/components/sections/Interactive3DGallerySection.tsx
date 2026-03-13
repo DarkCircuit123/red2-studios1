@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
+import GalleryViewer from '@/components/GalleryViewer';
 
 export default function Interactive3DGallerySection() {
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerImages, setViewerImages] = useState<string[]>([]);
+  const [viewerStartIndex, setViewerStartIndex] = useState(0);
   const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -30,23 +32,12 @@ export default function Interactive3DGallerySection() {
     : [];
   const currentImage = galleryImages[0];
 
-  // Handle image load to get actual dimensions for lightbox
-  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    setImageDimensions({
-      width: img.naturalWidth,
-      height: img.naturalHeight,
-    });
-  };
-
   const handleNext = () => {
     setCurrentIndex((prev) => (prev + 1) % portfolioItems.length);
-    setImageDimensions(null);
   };
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev - 1 + portfolioItems.length) % portfolioItems.length);
-    setImageDimensions(null);
   };
 
   if (portfolioItems.length === 0) {
@@ -92,25 +83,20 @@ export default function Interactive3DGallerySection() {
               className="relative w-full flex items-center justify-center"
             >
               {currentImage && (
-                <div className="relative inline-flex items-center justify-center max-w-full">
+                <div
+                  className="relative inline-flex items-center justify-center max-w-full cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => {
+                    setViewerImages(galleryImages as string[]);
+                    setViewerStartIndex(0);
+                    setViewerOpen(true);
+                  }}
+                >
                   <Image
                     ref={imageRef}
                     src={currentImage}
                     alt={currentItem?.projectName || 'Portfolio image'}
-                    onLoad={handleImageLoad}
                     className="w-auto h-auto max-w-full max-h-[70vh] object-contain"
                   />
-                  
-                  {/* Fullscreen Button - Subtle */}
-                  <motion.button
-                    onClick={() => setIsFullscreen(true)}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 transition-colors rounded-full opacity-0 hover:opacity-100"
-                    aria-label="View fullscreen"
-                  >
-                    <X className="w-5 h-5 text-white" />
-                  </motion.button>
                 </div>
               )}
             </motion.div>
@@ -171,7 +157,6 @@ export default function Interactive3DGallerySection() {
               key={item._id}
               onClick={() => {
                 setCurrentIndex(idx);
-                setImageDimensions(null);
               }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -191,75 +176,13 @@ export default function Interactive3DGallerySection() {
         </motion.div>
       </div>
 
-      {/* Fullscreen Modal - Proportional Scaling */}
-      <AnimatePresence>
-        {isFullscreen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/98 z-50 flex items-center justify-center p-4"
-            onClick={() => setIsFullscreen(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.3 }}
-              className="relative flex items-center justify-center h-full w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Close Button */}
-              <motion.button
-                onClick={() => setIsFullscreen(false)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 transition-colors rounded-full z-50"
-                aria-label="Close fullscreen"
-              >
-                <X className="w-6 h-6 text-white" />
-              </motion.button>
-
-              {/* Fullscreen Image - Proportional Scaling */}
-              {currentImage && (
-                <div className="relative flex items-center justify-center" style={{
-                  maxWidth: '95vw',
-                  maxHeight: '95vh',
-                  width: 'auto',
-                  height: 'auto',
-                }}>
-                  <Image
-                    src={currentImage}
-                    alt="Fullscreen view"
-                    className="w-auto h-auto max-w-[95vw] max-h-[95vh] object-contain"
-                  />
-                </div>
-              )}
-
-              {/* Navigation Arrows - Subtle */}
-              <motion.button
-                onClick={handlePrev}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 transition-colors rounded-full z-40"
-                aria-label="Previous"
-              >
-                <ChevronLeft className="w-6 h-6 text-white" />
-              </motion.button>
-              <motion.button
-                onClick={handleNext}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 transition-colors rounded-full z-40"
-                aria-label="Next"
-              >
-                <ChevronRight className="w-6 h-6 text-white" />
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Gallery Viewer */}
+      <GalleryViewer
+        images={viewerImages}
+        isOpen={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        initialIndex={viewerStartIndex}
+      />
     </section>
   );
 }

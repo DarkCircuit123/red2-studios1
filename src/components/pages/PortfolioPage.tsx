@@ -7,6 +7,8 @@ import { Portfolio } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import MasonryGallery from '@/components/MasonryGallery';
+import GalleryViewer from '@/components/GalleryViewer';
 import { playClickSound } from '@/lib/click-sound';
 
 export default function PortfolioPage() {
@@ -14,6 +16,9 @@ export default function PortfolioPage() {
   const [filteredProjects, setFilteredProjects] = useState<Portfolio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerImages, setViewerImages] = useState<string[]>([]);
+  const [viewerStartIndex, setViewerStartIndex] = useState(0);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,6 +47,17 @@ export default function PortfolioPage() {
     } else {
       setFilteredProjects(projects);
     }
+  };
+
+  const handleImageClick = (image: string, index: number) => {
+    // Get all images from filtered projects
+    const allImages = filteredProjects
+      .flatMap((p) => [p.mainImage, p.galleryImage1, p.galleryImage2, p.galleryImage3])
+      .filter(Boolean) as string[];
+    
+    setViewerImages(allImages);
+    setViewerStartIndex(allImages.indexOf(image));
+    setViewerOpen(true);
   };
 
   const containerVariants = {
@@ -104,7 +120,7 @@ export default function PortfolioPage() {
           >
             All
           </button>
-          {categories.map((category) => (
+          {Array.from(new Set(projects.map((p) => p.category).filter(Boolean))).map((category) => (
             <button
               key={category}
               onClick={() => {
@@ -122,9 +138,9 @@ export default function PortfolioPage() {
           ))}
         </motion.div>
 
-        {/* Projects Grid - Photography-First with Mixed Aspect Ratios */}
+        {/* Masonry Gallery - Image-First and Adaptive */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {Array(6)
               .fill(null)
               .map((_, i) => (
@@ -136,67 +152,32 @@ export default function PortfolioPage() {
           </div>
         ) : (
           <motion.div
-            variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max"
+            variants={containerVariants}
           >
-            {filteredProjects.map((project, index) => (
-              <motion.div
-                key={project._id}
-                variants={itemVariants}
-                onMouseEnter={() => setHoveredId(project._id)}
-                onMouseLeave={() => setHoveredId(null)}
-                className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
-                  index === 0 ? 'md:col-span-2' : ''
-                }`}
-              >
-                {/* Photography-First Container - Preserves Aspect Ratio */}
-                <div className="relative w-full flex items-center justify-center bg-black/30 min-h-[300px]">
-                  {/* Image */}
-                  <Image
-                    src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
-                    alt={project.projectName}
-                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                  />
-
-                  {/* Subtle grain overlay */}
-                  <div className="absolute inset-0 bg-grain opacity-5" />
-
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
-
-                  {/* Content - appears on hover */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={hoveredId === project._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute inset-0 flex flex-col items-end justify-end p-8"
-                  >
-                    <div className="text-right">
-                      <p className="text-xs font-mono text-white/60 mb-3 uppercase tracking-widest">
-                        {project.category}
-                      </p>
-                      <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
-                        {project.projectName}
-                      </h3>
-                      <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
-                        <span className="text-sm font-paragraph">View</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Link */}
-                  <Link
-                    to={`/portfolio/${project._id}`}
-                    onClick={playClickSound}
-                    className="absolute inset-0"
-                    aria-label={`View ${project.projectName}`}
-                  />
-                </div>
-              </motion.div>
-            ))}
+            <MasonryGallery
+              items={filteredProjects.map((project) => ({
+                id: project._id,
+                image: project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384',
+                aspectRatio: 1,
+                title: project.projectName,
+              }))}
+              onImageClick={(image, index) => {
+                const project = filteredProjects[index];
+                const projectImages = [
+                  project.mainImage,
+                  project.galleryImage1,
+                  project.galleryImage2,
+                  project.galleryImage3,
+                ].filter(Boolean) as string[];
+                
+                setViewerImages(projectImages);
+                setViewerStartIndex(0);
+                setViewerOpen(true);
+              }}
+              isLoading={isLoading}
+            />
           </motion.div>
         )}
 
@@ -220,6 +201,14 @@ export default function PortfolioPage() {
           </motion.div>
         )}
       </main>
+
+      {/* Gallery Viewer */}
+      <GalleryViewer
+        images={viewerImages}
+        isOpen={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        initialIndex={viewerStartIndex}
+      />
 
       <Footer />
     </div>
