@@ -27,7 +27,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
   // Continuous smooth scrolling
   useEffect(() => {
     let lastTime = Date.now();
-    const scrollSpeed = 0.08; // Pixels per millisecond (much slower)
+    const scrollSpeed = 0.05; // Pixels per millisecond (slower)
 
     const animate = () => {
       const now = Date.now();

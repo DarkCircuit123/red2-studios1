@@ -12,13 +12,13 @@ export function ScrollToTop() {
 
     // Check if the URL has a hash
     if (location.hash) {
-      // URL with hash: Wait 100ms and then call scrollIntoView() to the target element
+      // URL with hash: Wait 150ms and then call scrollIntoView() to the target element
       setTimeout(() => {
         const element = document.getElementById(location.hash.slice(1));
         if (element) {
           element.scrollIntoView({ behavior: 'smooth' });
         }
-      }, 100);
+      }, 150);
     } else {
       // URL without hash: Scroll to the top of the page
       // Use smooth animation if same page, auto if different page
