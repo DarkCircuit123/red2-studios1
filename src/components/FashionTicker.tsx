@@ -6,33 +6,31 @@ interface FashionNews {
   title: string;
   link: string;
   pubDate: string;
-  source: string;
 }
 
 export default function FashionTicker() {
   const [news, setNews] = useState<FashionNews[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFashionNews = async () => {
       try {
         setIsLoading(true);
-        const allNews: FashionNews[] = [];
+        setError(null);
 
-        // Try multiple reliable fashion news sources
+        // Using multiple fashion RSS feeds
         const feedUrls = [
-          { url: 'https://feeds.vogue.com/vogue_en', source: 'Vogue' },
-          { url: 'https://www.voguebusiness.com/feed', source: 'Vogue Business' },
-          { url: 'https://www.businessoffashion.com/feed', source: 'BoF' },
-          { url: 'https://wwd.com/feed', source: 'WWD' },
+          'https://feeds.vogue.com/vogue_en',
+          'https://www.voguebusiness.com/feed',
+          'https://feeds.bloomberg.com/markets/news.rss',
         ];
 
-        for (const { url, source } of feedUrls) {
+        const allNews: FashionNews[] = [];
+
+        for (const url of feedUrls) {
           try {
-            // Using cors-anywhere or similar proxy for RSS feeds
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-            const response = await fetch(proxyUrl);
-            
+            const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
             if (!response.ok) continue;
 
             const data = await response.json();
@@ -44,19 +42,18 @@ export default function FashionTicker() {
             }
 
             const items = xmlDoc.getElementsByTagName('item');
-            for (let i = 0; i < Math.min(items.length, 3); i++) {
+            for (let i = 0; i < Math.min(items.length, 5); i++) {
               const item = items[i];
               const title = item.getElementsByTagName('title')[0]?.textContent || '';
               const link = item.getElementsByTagName('link')[0]?.textContent || '';
-              const pubDate = item.getElementsByTagName('pubDate')[0]?.textContent || new Date().toISOString();
+              const pubDate = item.getElementsByTagName('pubDate')[0]?.textContent || '';
 
               if (title && link) {
                 allNews.push({
-                  id: `${source}-${i}-${Date.now()}`,
-                  title: title.substring(0, 120),
+                  id: `${url}-${i}`,
+                  title: title.substring(0, 100),
                   link,
                   pubDate,
-                  source,
                 });
               }
             }
@@ -66,100 +63,76 @@ export default function FashionTicker() {
           }
         }
 
-        // If we got real news, use it; otherwise use informative fallback
-        if (allNews.length > 0) {
-          setNews(allNews.slice(0, 15));
-        } else {
-          // Informative fallback data
+        if (allNews.length === 0) {
+          // Fallback data if feeds fail
           setNews([
             {
               id: '1',
-              title: 'Fashion Week 2026: Designers Showcase Sustainable Collections',
+              title: 'Fashion Week Highlights: Spring/Summer 2026 Collections Unveiled',
               link: '#',
               pubDate: new Date().toISOString(),
-              source: 'Fashion News',
             },
             {
               id: '2',
-              title: 'Luxury Market Trends: Digital Innovation Reshapes Retail',
+              title: 'Sustainable Fashion Trends Dominate Global Market',
               link: '#',
               pubDate: new Date().toISOString(),
-              source: 'Fashion News',
             },
             {
               id: '3',
-              title: 'Street Style Report: Spring Trends from Global Fashion Capitals',
+              title: 'Luxury Brands Embrace Digital Innovation',
               link: '#',
               pubDate: new Date().toISOString(),
-              source: 'Fashion News',
             },
             {
               id: '4',
-              title: 'Emerging Designers Break Through with Bold New Aesthetics',
+              title: 'Street Style Evolution: What Designers Are Watching',
               link: '#',
               pubDate: new Date().toISOString(),
-              source: 'Fashion News',
             },
             {
               id: '5',
-              title: 'Sustainable Fashion: Industry Leaders Commit to Carbon Neutrality',
+              title: 'Emerging Designers Challenge Industry Standards',
               link: '#',
               pubDate: new Date().toISOString(),
-              source: 'Fashion News',
-            },
-            {
-              id: '6',
-              title: 'Tech Meets Fashion: AI-Driven Design Tools Transform Creation',
-              link: '#',
-              pubDate: new Date().toISOString(),
-              source: 'Fashion News',
             },
           ]);
+        } else {
+          setNews(allNews.slice(0, 10));
         }
       } catch (err) {
-        // Set informative fallback data on error
+        setError('Unable to load fashion news');
+        // Set fallback data
         setNews([
           {
             id: '1',
-            title: 'Fashion Week 2026: Designers Showcase Sustainable Collections',
+            title: 'Fashion Week Highlights: Spring/Summer 2026 Collections Unveiled',
             link: '#',
             pubDate: new Date().toISOString(),
-            source: 'Fashion News',
           },
           {
             id: '2',
-            title: 'Luxury Market Trends: Digital Innovation Reshapes Retail',
+            title: 'Sustainable Fashion Trends Dominate Global Market',
             link: '#',
             pubDate: new Date().toISOString(),
-            source: 'Fashion News',
           },
           {
             id: '3',
-            title: 'Street Style Report: Spring Trends from Global Fashion Capitals',
+            title: 'Luxury Brands Embrace Digital Innovation',
             link: '#',
             pubDate: new Date().toISOString(),
-            source: 'Fashion News',
           },
           {
             id: '4',
-            title: 'Emerging Designers Break Through with Bold New Aesthetics',
+            title: 'Street Style Evolution: What Designers Are Watching',
             link: '#',
             pubDate: new Date().toISOString(),
-            source: 'Fashion News',
           },
           {
             id: '5',
-            title: 'Sustainable Fashion: Industry Leaders Commit to Carbon Neutrality',
+            title: 'Emerging Designers Challenge Industry Standards',
             link: '#',
             pubDate: new Date().toISOString(),
-            source: 'Fashion News',
-          },
-          {
-            id: '6',
-            title: 'Tech Meets Fashion: AI-Driven Design Tools Transform Creation',
-            link: '#',
-            pubDate: new Date().toISOString(),
-            source: 'Fashion News',
           },
         ]);
       } finally {
@@ -169,8 +142,8 @@ export default function FashionTicker() {
 
     fetchFashionNews();
 
-    // Refresh every 20 minutes for live updates
-    const interval = setInterval(fetchFashionNews, 20 * 60 * 1000);
+    // Refresh every 30 minutes
+    const interval = setInterval(fetchFashionNews, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -181,12 +154,12 @@ export default function FashionTicker() {
   const duplicatedNews = [...news, ...news]; // Duplicate for seamless loop
 
   return (
-    <div className="w-full bg-gradient-to-r from-black via-black/95 to-black border-t border-gray-800 py-3 overflow-hidden backdrop-blur-sm">
-      <div className="flex items-center gap-4 px-4 md:px-6">
+    <div className="w-full bg-black border-t border-b border-gray-800 py-2 overflow-hidden">
+      <div className="flex items-center gap-4 px-4">
         {/* Label */}
         <div className="flex-shrink-0">
           <span className="text-xs font-heading font-bold text-primary tracking-widest uppercase whitespace-nowrap">
-            Live News
+            Fashion News
           </span>
         </div>
 
@@ -196,7 +169,7 @@ export default function FashionTicker() {
             className="flex gap-8"
             animate={{ x: ['0%', '-50%'] }}
             transition={{
-              duration: 70,
+              duration: 60,
               repeat: Infinity,
               ease: 'linear',
             }}
@@ -207,10 +180,9 @@ export default function FashionTicker() {
                 href={item.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-shrink-0 text-xs text-gray-200 hover:text-primary transition-colors duration-300 whitespace-nowrap group"
+                className="flex-shrink-0 text-xs text-gray-300 hover:text-primary transition-colors duration-300 whitespace-nowrap"
               >
-                <span className="text-primary/60 mr-2 group-hover:text-primary">•</span>
-                <span className="text-gray-400 mr-2 text-xs">[{item.source}]</span>
+                <span className="text-gray-600 mr-2">•</span>
                 {item.title}
               </a>
             ))}

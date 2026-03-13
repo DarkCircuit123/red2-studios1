@@ -4,7 +4,6 @@ import { Image } from '@/components/ui/image';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { BaseCrudService } from '@/integrations';
 import { playClickSound } from '@/lib/click-sound';
-import FashionTicker from '@/components/FashionTicker';
 
 export default function HeroSection() {
   const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_c01a98369e0e46449c4db84b41fdb2dc~mv2.jpg');
@@ -53,7 +52,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black flex-col">
+    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
       {/* Parallax image with depth */}
       <motion.div
         className="absolute inset-0 z-0"
@@ -143,7 +142,7 @@ export default function HeroSection() {
       <motion.div
         animate={{ y: [0, 12, 0] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-24 md:bottom-32 left-4 md:left-8 z-10"
+        className="absolute bottom-6 md:bottom-12 left-4 md:left-8 z-10"
       >
         <motion.button
           onClick={scrollToGallery}
@@ -156,11 +155,6 @@ export default function HeroSection() {
           </motion.div>
         </motion.button>
       </motion.div>
-      
-      {/* Fashion Ticker at bottom of hero */}
-      <div className="relative z-20 w-full mt-auto">
-        <FashionTicker />
-      </div>
     </section>
   );
 }
