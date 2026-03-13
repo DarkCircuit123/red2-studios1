@@ -22,11 +22,13 @@ export default function ImmersiveViewer({
 }: ImmersiveViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [showControls, setShowControls] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const touchStartRef = useRef<number>(0);
 
   useEffect(() => {
     setCurrentIndex(initialIndex);
+    setImageLoaded(false);
   }, [initialIndex, isOpen]);
 
   useEffect(() => {
@@ -44,10 +46,12 @@ export default function ImmersiveViewer({
 
   const goToNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
+    setImageLoaded(false);
   }, [images.length]);
 
   const goToPrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    setImageLoaded(false);
   }, [images.length]);
 
   const handleMouseMove = () => {
@@ -71,6 +75,10 @@ export default function ImmersiveViewer({
         goToPrevious();
       }
     }
+  };
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
   };
 
   if (!isOpen) return null;
@@ -115,10 +123,29 @@ export default function ImmersiveViewer({
                 src={images[currentIndex]}
                 alt={titles[currentIndex] || `Image ${currentIndex + 1}`}
                 className="w-full h-full object-contain"
+                onLoad={handleImageLoad}
               />
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Loading Indicator */}
+        {!imageLoaded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center z-20"
+          >
+            <motion.div
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-white/30 text-xs tracking-widest uppercase"
+            >
+              Loading...
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* Metadata */}
         <motion.div

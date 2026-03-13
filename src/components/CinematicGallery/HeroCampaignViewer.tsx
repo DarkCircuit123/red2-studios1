@@ -15,6 +15,7 @@ export default function HeroCampaignViewer({
 }: HeroCampaignViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const autoPlayRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -22,7 +23,8 @@ export default function HeroCampaignViewer({
 
     autoPlayRef.current = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 6000);
+      setImageLoaded(false);
+    }, 7000);
 
     return () => {
       if (autoPlayRef.current) clearInterval(autoPlayRef.current);
@@ -31,6 +33,10 @@ export default function HeroCampaignViewer({
 
   const handleMouseEnter = () => setIsAutoPlay(false);
   const handleMouseLeave = () => setIsAutoPlay(true);
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
 
   if (images.length === 0) return null;
 
@@ -65,6 +71,7 @@ export default function HeroCampaignViewer({
               alt={titles[currentIndex] || `Campaign image ${currentIndex + 1}`}
               className="w-full h-full object-contain cursor-pointer"
               onClick={() => onImageClick?.(currentIndex)}
+              onLoad={handleImageLoad}
             />
           </div>
         </motion.div>
@@ -93,6 +100,7 @@ export default function HeroCampaignViewer({
             onClick={() => {
               setCurrentIndex(index);
               setIsAutoPlay(false);
+              setImageLoaded(false);
             }}
             className={`transition-all duration-300 ${
               index === currentIndex

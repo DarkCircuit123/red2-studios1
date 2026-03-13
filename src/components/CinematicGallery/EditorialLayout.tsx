@@ -21,6 +21,7 @@ export default function EditorialLayout({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +31,10 @@ export default function EditorialLayout({
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleImageLoad = (id: string) => {
+    setLoadedImages((prev) => new Set([...prev, id]));
+  };
 
   // Distribute span sizes dynamically for editorial layout
   const getSpanClass = (index: number): string => {
@@ -66,6 +71,7 @@ export default function EditorialLayout({
         {items.map((item, index) => {
           const spanClass = getSpanClass(index);
           const parallaxOffset = getParallaxOffset(index);
+          const isLoaded = loadedImages.has(item.id);
 
           return (
             <motion.div
@@ -94,8 +100,14 @@ export default function EditorialLayout({
                   src={item.image}
                   alt={item.title || 'Gallery image'}
                   className="w-full h-full object-cover"
+                  onLoad={() => handleImageLoad(item.id)}
                 />
               </motion.div>
+
+              {/* Loading Skeleton */}
+              {!isLoaded && (
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black animate-pulse" />
+              )}
 
               {/* Subtle Overlay Gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
