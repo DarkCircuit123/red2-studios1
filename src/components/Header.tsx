@@ -113,7 +113,7 @@ export default function Header() {
           {[
             { href: '#portfolio', label: 'Gallery' },
             { href: '#about', label: 'About' },
-            { href: '/portfolio', label: 'Work', isLink: true },
+            { href: '/work', label: 'Work', isLink: true },
             { href: '/booking', label: 'Booking', isLink: true },
             { href: '/galleries', label: 'Galleries', isLink: true },
             { href: '#contact', label: 'Contact' },
@@ -232,7 +232,7 @@ export default function Header() {
             {[
               { href: '#portfolio', label: 'Gallery' },
               { href: '#about', label: 'About' },
-              { href: '/portfolio', label: 'Work', isLink: true },
+              { href: '/work', label: 'Work', isLink: true },
               { href: '/booking', label: 'Booking', isLink: true },
               { href: '/galleries', label: 'Galleries', isLink: true },
               { href: '#contact', label: 'Contact' },
