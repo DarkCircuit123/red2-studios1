@@ -186,17 +186,13 @@ export default function PortfolioDetailPage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="mb-20 w-full bg-black/50 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
+          className="mb-20 w-full bg-black/50 cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
           onClick={() => project.mainImage && setSelectedImage(project.mainImage)}
-          style={{
-            maxWidth: '100%',
-            aspectRatio: 'auto',
-          }}
         >
           <Image
             src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_fcbd4072cbd84e428547c62bbddbf23c~mv2.png?originWidth=1152&originHeight=640'}
             alt={project.projectName}
-            className="w-full h-auto object-contain max-h-[85vh]"
+            className="w-full h-auto object-cover"
           />
         </motion.div>
 
@@ -274,13 +270,13 @@ export default function PortfolioDetailPage() {
               {galleryImages.map((image, index) => (
                 <div
                   key={index}
-                  className="overflow-hidden bg-black/50 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
+                  className="overflow-hidden bg-black/50 cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => setSelectedImage(image)}
                 >
                   <Image
                     src={image}
                     alt={`Gallery image ${index + 1}`}
-                    className="w-full h-auto object-contain max-h-[600px]"
+                    className="w-full h-auto object-cover"
                   />
                 </div>
               ))}

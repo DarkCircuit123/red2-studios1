@@ -152,12 +152,12 @@ export default function PortfolioPage() {
                 }`}
               >
                 {/* Photography-First Container - Preserves Aspect Ratio */}
-                <div className="relative w-full flex items-center justify-center bg-black/30 min-h-[400px]">
+                <div className="relative w-full bg-black/30 overflow-hidden">
                   {/* Image */}
                   <Image
                     src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
                     alt={project.projectName}
-                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-110"
                   />
 
                   {/* Subtle grain overlay */}
