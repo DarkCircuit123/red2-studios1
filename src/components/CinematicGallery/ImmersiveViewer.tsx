@@ -115,10 +115,24 @@ export default function ImmersiveViewer({
     resetTransforms();
   }, [images.length, resetTransforms]);
 
-  const handleMouseMove = () => {
+  const handleMouseMove = (e: React.MouseEvent) => {
+    // Show controls on mouse move
     setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
+
+    // Handle panning when dragging
+    if (!isDragging || zoom <= 1) return;
+
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+
+    // Constrain pan to image bounds
+    const maxPan = (zoom - 1) * 100;
+    setPan({
+      x: Math.max(-maxPan, Math.min(maxPan, newX)),
+      y: Math.max(-maxPan, Math.min(maxPan, newY)),
+    });
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -167,20 +181,6 @@ export default function ImmersiveViewer({
     }
   };
 
-  const handleMouseMove2 = (e: React.MouseEvent) => {
-    if (!isDragging || zoom <= 1) return;
-
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
-
-    // Constrain pan to image bounds
-    const maxPan = (zoom - 1) * 100;
-    setPan({
-      x: Math.max(-maxPan, Math.min(maxPan, newX)),
-      y: Math.max(-maxPan, Math.min(maxPan, newY)),
-    });
-  };
-
   const handleMouseUp = () => {
     setIsDragging(false);
   };
@@ -219,7 +219,6 @@ export default function ImmersiveViewer({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove2}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
