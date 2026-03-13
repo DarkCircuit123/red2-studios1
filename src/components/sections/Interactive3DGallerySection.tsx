@@ -54,7 +54,7 @@ export default function Interactive3DGallerySection() {
   }
 
   return (
-    <section id="portfolio" className="relative w-full py-16 md:py-24 lg:py-32 bg-white">
+    <section id="portfolio" className="relative w-full py-16 md:py-24 lg:py-32 bg-black">
       <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8">
         {/* Section Header */}
         <motion.div
@@ -64,10 +64,10 @@ export default function Interactive3DGallerySection() {
           viewport={{ once: true }}
           className="mb-16 md:mb-20 text-center"
         >
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-black mb-6 tracking-tight">
+          <h2 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-6 tracking-tight">
             Portfolio
           </h2>
-          <p className="text-base md:text-lg text-black/60 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
             A curated collection of professional photography showcasing our finest work.
           </p>
         </motion.div>
@@ -122,13 +122,13 @@ export default function Interactive3DGallerySection() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-12 text-center max-w-2xl"
             >
-              <p className="text-sm font-mono text-black/50 uppercase tracking-widest mb-3">
+              <p className="text-sm font-mono text-white/50 uppercase tracking-widest mb-3">
                 {currentIndex + 1} / {portfolioItems.length}
               </p>
-              <h3 className="text-3xl md:text-4xl font-heading font-bold text-black mb-4">
+              <h3 className="text-3xl md:text-4xl font-heading font-bold text-white mb-4">
                 {currentItem?.projectName}
               </h3>
-              <p className="text-base text-black/70 leading-relaxed">
+              <p className="text-base text-white/70 leading-relaxed">
                 {currentItem?.shortDescription}
               </p>
             </motion.div>
@@ -140,20 +140,20 @@ export default function Interactive3DGallerySection() {
               onClick={handlePrev}
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
-              className="p-3 rounded-full bg-black/5 hover:bg-black/10 transition-colors"
+              className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
               aria-label="Previous project"
             >
-              <ChevronLeft className="w-6 h-6 text-black" />
+              <ChevronLeft className="w-6 h-6 text-white" />
             </motion.button>
 
             <motion.button
               onClick={handleNext}
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
-              className="p-3 rounded-full bg-black/5 hover:bg-black/10 transition-colors"
+              className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
               aria-label="Next project"
             >
-              <ChevronRight className="w-6 h-6 text-black" />
+              <ChevronRight className="w-6 h-6 text-white" />
             </motion.button>
           </div>
         </motion.div>
@@ -177,7 +177,7 @@ export default function Interactive3DGallerySection() {
               whileTap={{ scale: 0.95 }}
               className={`flex-shrink-0 w-24 h-24 overflow-hidden rounded-lg transition-all duration-300 ${
                 idx === currentIndex
-                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-white'
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-black'
                   : 'opacity-60 hover:opacity-100'
               }`}
             >
