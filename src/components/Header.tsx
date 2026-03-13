@@ -4,6 +4,7 @@ import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
+import FashionTicker from './FashionTicker';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
@@ -84,14 +85,16 @@ export default function Header() {
   }, [prefersReducedMotion, navigate]);
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-black/95 backdrop-blur-md border-b border-primary/30'
-          : 'bg-transparent'
-      }`}
-    >
-      <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between">
+    <>
+      <FashionTicker />
+      <header
+        className={`fixed top-[42px] left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'bg-black/95 backdrop-blur-md border-b border-primary/30'
+            : 'bg-transparent'
+        }`}
+      >
+        <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between">
         {/* Logo - Text-based RED² with shimmer effect */}
         <motion.div
           whileHover={{ scale: 1.05 }}
@@ -318,6 +321,7 @@ export default function Header() {
           </div>
         </motion.div>
       )}
-    </header>
+      </header>
+    </>
   );
 }
