@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { Portfolio } from '@/entities/index';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Pause, Play } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
 
 interface DraggableCarouselProps {
@@ -12,106 +12,61 @@ interface DraggableCarouselProps {
 }
 
 export default function DraggableCarousel({ items, isLoading }: DraggableCarouselProps) {
-  const [dragStart, setDragStart] = useState(0);
-  const [dragEnd, setDragEnd] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [velocity, setVelocity] = useState(0);
-  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
-  const [isHovering, setIsHovering] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<Portfolio | null>(null);
+  const [mouseY, setMouseY] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef({ start: 0, end: 0, time: 0 });
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const autoScrollRef = useRef<NodeJS.Timeout | null>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number | null>(null);
 
   const displayItems = items.length > 0 ? items : Array(6).fill(null);
-  const itemWidth = 320; // Reduced width for closer items
-  const gap = 12; // Reduced gap for tighter spacing
+  const itemWidth = 320;
+  const gap = 12;
   const totalWidth = displayItems.length * (itemWidth + gap);
 
-  // Auto-scroll effect
+  // Continuous smooth scrolling
   useEffect(() => {
-    if (!isAutoScrolling || isDragging || isHovering) {
-      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
-      return;
-    }
+    let lastTime = Date.now();
+    const scrollSpeed = 0.5; // Pixels per millisecond (very slow)
 
-    autoScrollRef.current = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % displayItems.length);
-    }, 4000); // Auto-scroll every 4 seconds
+    const animate = () => {
+      const now = Date.now();
+      const deltaTime = now - lastTime;
+      lastTime = now;
+
+      setScrollPosition(prev => {
+        let newPos = prev + scrollSpeed * deltaTime;
+        // Loop infinitely
+        if (newPos > totalWidth) {
+          newPos = 0;
+        }
+        return newPos;
+      });
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
-    };
-  }, [isAutoScrolling, isDragging, isHovering, displayItems.length]);
-
-  // Calculate position with rubber banding
-  const calculatePosition = (index: number, offset: number = 0) => {
-    const basePosition = -(index * (itemWidth + gap)) + offset;
-    
-    // Rubber banding effect at boundaries
-    if (basePosition > 0) {
-      return basePosition * 0.3; // Reduce movement at start
-    }
-    if (basePosition < -(totalWidth - itemWidth - gap)) {
-      const overflow = Math.abs(basePosition) - (totalWidth - itemWidth - gap);
-      return basePosition + overflow * 0.7; // Reduce movement at end
-    }
-    
-    return basePosition;
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart(e.clientX);
-    dragRef.current = { start: e.clientX, end: e.clientX, time: Date.now() };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    
-    setDragEnd(e.clientX);
-    dragRef.current.end = e.clientX;
-  };
-
-  const handleMouseUp = () => {
-    if (!isDragging) return;
-    
-    setIsDragging(false);
-    
-    const distance = dragRef.current.end - dragRef.current.start;
-    const time = Date.now() - dragRef.current.time;
-    const calculatedVelocity = distance / time;
-    
-    setVelocity(calculatedVelocity);
-    
-    // Determine next index based on drag distance and velocity
-    const threshold = itemWidth * 0.15;
-    const velocityThreshold = 0.3;
-    
-    if (Math.abs(distance) > threshold || Math.abs(calculatedVelocity) > velocityThreshold) {
-      if (distance > 0) {
-        // Dragged right - go to previous item
-        setCurrentIndex(prev => Math.max(0, prev - 1));
-      } else {
-        // Dragged left - go to next item
-        setCurrentIndex(prev => Math.min(displayItems.length - 1, prev + 1));
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
-    }
-    
-    setDragStart(0);
-    setDragEnd(0);
-  };
+    };
+  }, [totalWidth]);
 
-  const handleMouseLeave = () => {
-    setIsHovering(false);
-    if (isDragging) {
-      handleMouseUp();
-    }
-  };
+  // Track mouse position for parallax
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setMouseY((e.clientY - rect.top) / rect.height);
+      }
+    };
 
-  const dragOffset = isDragging ? dragEnd - dragStart : 0;
-  const position = calculatePosition(currentIndex, dragOffset);
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   return (
     <section className="relative w-full py-24 md:py-40 lg:py-48 bg-black overflow-hidden">
@@ -152,169 +107,107 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
           </h2>
           <div className="w-20 h-1 bg-gradient-to-r from-primary to-primary/40 mb-8" />
           <p className="text-base md:text-lg font-paragraph text-white/70 max-w-2xl leading-relaxed">
-            Drag to explore. A selection of recent projects showcasing diverse aesthetics and creative directions.
+            Click any image to view in full size. A selection of recent projects showcasing diverse aesthetics and creative directions.
           </p>
         </motion.div>
 
         {/* Carousel Container */}
         <div
           ref={containerRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onMouseEnter={() => setIsHovering(true)}
-          className="relative overflow-hidden cursor-grab active:cursor-grabbing group"
+          className="relative overflow-hidden group"
         >
           {/* Carousel Track */}
-          <motion.div
+          <div
+            ref={trackRef}
             className="flex gap-3"
-            animate={{ x: position }}
-            transition={
-              isDragging
-                ? { type: 'tween', duration: 0 }
-                : { type: 'spring', damping: 25, stiffness: 120, mass: 0.8 }
-            }
+            style={{
+              transform: `translateX(-${scrollPosition}px)`,
+              transition: 'none',
+            }}
           >
-            {displayItems.map((item, index) => (
-              <motion.div
-                key={item?._id || index}
-                onMouseEnter={() => item && setHoveredId(item._id)}
-                onMouseLeave={() => setHoveredId(null)}
-                className="group relative overflow-hidden bg-white/5 border border-white/10 hover:border-primary/50 transition-all duration-500 flex-shrink-0 w-[320px] h-[400px] cursor-pointer"
-              >
-                {/* Image Container */}
-                <div className="w-full h-full flex items-center justify-center bg-black/30 overflow-hidden">
-                  <Image
-                    src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
-                    alt={item?.projectName || 'Portfolio project'}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    width={320}
-                  />
-                </div>
+            {displayItems.map((item, index) => {
+              // Parallax offset based on mouse position
+              const parallaxOffset = (mouseY - 0.5) * 10;
 
-                {/* Grain overlay */}
-                <div className="absolute inset-0 bg-grain opacity-5" />
-
-                {/* Enhanced overlay with gradient */}
+              return (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={hoveredId === item?._id ? { opacity: 1 } : { opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
-                />
-
-                {/* Content - appears on hover */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={hoveredId === item?._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
-                  className="absolute inset-0 flex flex-col items-end justify-end p-6 md:p-8 pointer-events-none"
+                  key={item?._id || index}
+                  onClick={() => {
+                    if (item) {
+                      playClickSound();
+                      setSelectedImage(item);
+                    }
+                  }}
+                  className="group relative overflow-hidden bg-white/5 border border-white/10 hover:border-primary/50 transition-all duration-500 flex-shrink-0 w-[320px] h-[400px] cursor-pointer"
+                  whileHover={{ scale: 1.02 }}
                 >
-                  <div className="text-right w-full">
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={hoveredId === item?._id ? { opacity: 1 } : { opacity: 0 }}
-                      transition={{ delay: 0.1 }}
-                      className="text-xs font-mono text-primary mb-4 uppercase tracking-widest line-clamp-2 break-words"
-                    >
-                      {item?.category || 'Fashion'}
-                    </motion.p>
-                    <motion.h3
-                      initial={{ opacity: 0 }}
-                      animate={hoveredId === item?._id ? { opacity: 1 } : { opacity: 0 }}
-                      transition={{ delay: 0.15 }}
-                      className="text-xl md:text-2xl lg:text-3xl font-heading font-bold text-white mb-4 tracking-tight line-clamp-3"
-                    >
-                      {item?.projectName || 'Untitled Project'}
-                    </motion.h3>
-                    <motion.div
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={hoveredId === item?._id ? { opacity: 1, x: 0 } : { opacity: 0, x: 10 }}
-                      transition={{ delay: 0.2 }}
-                      className="flex items-center justify-end gap-2 text-white group-hover:text-primary transition-colors"
-                    >
-                      <span className="text-sm font-paragraph">View</span>
-                      <motion.div animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
-                        <ArrowRight className="w-4 h-4" />
-                      </motion.div>
-                    </motion.div>
-                  </div>
-                </motion.div>
+                  {/* Image Container with Parallax */}
+                  <motion.div
+                    className="w-full h-full flex items-center justify-center bg-black/30 overflow-hidden"
+                    animate={{ y: parallaxOffset }}
+                    transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+                  >
+                    <Image
+                      src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
+                      alt={item?.projectName || 'Portfolio project'}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      width={320}
+                    />
+                  </motion.div>
 
-                {/* Link */}
-                {item && (
-                  <Link
-                    to={`/portfolio/${item._id}`}
-                    onClick={playClickSound}
-                    className="absolute inset-0 pointer-events-auto"
-                    aria-label={`View ${item.projectName}`}
+                  {/* Grain overlay */}
+                  <div className="absolute inset-0 bg-grain opacity-5" />
+
+                  {/* Enhanced overlay with gradient */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    whileHover={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
                   />
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
 
-        {/* Navigation Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="mt-12 flex items-center justify-center gap-6"
-        >
-          {/* Indicators */}
-          <div className="flex items-center justify-center gap-3">
-            {displayItems.map((_, index) => (
-              <motion.button
-                key={index}
-                onClick={() => {
-                  setCurrentIndex(index);
-                  setIsAutoScrolling(false);
-                  setTimeout(() => setIsAutoScrolling(true), 8000);
-                }}
-                className={`transition-all duration-300 ${
-                  index === currentIndex
-                    ? 'bg-primary w-8 h-2'
-                    : 'bg-white/30 hover:bg-white/50 w-2 h-2'
-                } rounded-full`}
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.95 }}
-              />
-            ))}
+                  {/* Content - appears on hover */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileHover={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className="absolute inset-0 flex flex-col items-end justify-end p-6 md:p-8 pointer-events-none"
+                  >
+                    <div className="text-right w-full">
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        whileHover={{ opacity: 1 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-xs font-mono text-primary mb-4 uppercase tracking-widest line-clamp-2 break-words"
+                      >
+                        {item?.category || 'Fashion'}
+                      </motion.p>
+                      <motion.h3
+                        initial={{ opacity: 0 }}
+                        whileHover={{ opacity: 1 }}
+                        transition={{ delay: 0.15 }}
+                        className="text-xl md:text-2xl lg:text-3xl font-heading font-bold text-white mb-4 tracking-tight line-clamp-3"
+                      >
+                        {item?.projectName || 'Untitled Project'}
+                      </motion.h3>
+                      <motion.div
+                        initial={{ opacity: 0, x: 10 }}
+                        whileHover={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="flex items-center justify-end gap-2 text-white group-hover:text-primary transition-colors"
+                      >
+                        <span className="text-sm font-paragraph">Click to expand</span>
+                        <motion.div animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
+                          <ArrowRight className="w-4 h-4" />
+                        </motion.div>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              );
+            })}
           </div>
-
-          {/* Auto-scroll toggle */}
-          <motion.button
-            onClick={() => setIsAutoScrolling(!isAutoScrolling)}
-            className="ml-4 p-2 rounded-full border border-white/20 hover:border-primary/50 text-white/60 hover:text-primary transition-all duration-300"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            title={isAutoScrolling ? 'Pause auto-scroll' : 'Resume auto-scroll'}
-          >
-            {isAutoScrolling ? (
-              <Pause className="w-4 h-4" />
-            ) : (
-              <Play className="w-4 h-4" />
-            )}
-          </motion.button>
-        </motion.div>
-
-        {/* Drag Hint */}
-        {!isDragging && currentIndex === 0 && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.6, delay: 1 }}
-            className="mt-8 flex items-center gap-2 text-white/60 text-sm font-paragraph"
-          >
-            <motion.div animate={{ x: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-              ← Drag to explore
-            </motion.div>
-          </motion.div>
-        )}
+        </div>
 
         {/* View All Button */}
         <motion.div
@@ -344,6 +237,94 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Full Size Image Modal */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 md:p-8"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+              className="relative w-full h-full max-w-6xl max-h-[90vh] flex flex-col"
+            >
+              {/* Close Button */}
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-300"
+                aria-label="Close image"
+              >
+                <X className="w-6 h-6" />
+              </motion.button>
+
+              {/* Image */}
+              <motion.div
+                className="flex-1 flex items-center justify-center overflow-hidden rounded-lg"
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              >
+                <Image
+                  src={selectedImage.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
+                  alt={selectedImage.projectName || 'Portfolio project'}
+                  className="w-full h-full object-contain"
+                  width={1200}
+                />
+              </motion.div>
+
+              {/* Image Info */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mt-6 text-center"
+              >
+                <p className="text-primary text-sm font-mono uppercase tracking-widest mb-2">
+                  {selectedImage.category || 'Fashion'}
+                </p>
+                <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4">
+                  {selectedImage.projectName || 'Untitled Project'}
+                </h3>
+                <p className="text-white/70 font-paragraph max-w-2xl mx-auto">
+                  {selectedImage.shortDescription || selectedImage.fullDescription || 'A beautiful project from our portfolio.'}
+                </p>
+
+                {/* Navigation Links */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="mt-6 flex items-center justify-center gap-4"
+                >
+                  <Link
+                    to={`/portfolio/${selectedImage._id}`}
+                    onClick={playClickSound}
+                    className="px-6 py-2 border border-primary text-primary hover:bg-primary/10 transition-all duration-300 font-heading text-sm uppercase tracking-wider"
+                  >
+                    View Details
+                  </Link>
+                  <button
+                    onClick={() => setSelectedImage(null)}
+                    className="px-6 py-2 border border-white/30 text-white hover:border-white/60 transition-all duration-300 font-heading text-sm uppercase tracking-wider"
+                  >
+                    Close
+                  </button>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
