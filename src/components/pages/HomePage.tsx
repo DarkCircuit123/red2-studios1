@@ -6,7 +6,6 @@ import AboutSection from '@/components/sections/AboutSection';
 import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
-import RSSTickerSection from '@/components/sections/RSSTickerSection';
 import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
 import {
   preloadCriticalResources,
@@ -52,9 +51,6 @@ export default function HomePage() {
 
         {/* Rubber Band Carousel */}
         <RubberBandCarouselSection />
-
-        {/* RSS Ticker */}
-        <RSSTickerSection />
 
         {/* Sponsored By */}
         <SponsorsSection />
