@@ -60,7 +60,7 @@ export default function BlogSection() {
             >
               {/* Featured Image */}
               {post.thumbnailImage && (
-                <div className="relative overflow-hidden rounded-lg mb-6 aspect-video bg-white/5 flex items-center justify-center">
+                <div className="relative overflow-hidden rounded-lg mb-6 h-96 bg-white/5 flex items-center justify-center">
                   <Image
                     src={post.thumbnailImage}
                     alt={post.title || 'Blog post'}
