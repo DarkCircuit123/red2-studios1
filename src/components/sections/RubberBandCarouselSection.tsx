@@ -11,11 +11,14 @@ interface CarouselImage {
 const RubberBandCarouselSection: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
-  const [mouseOffset, setMouseOffset] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
   const animationFrameRef = useRef<number>();
   const baseScrollRef = useRef(0);
-  const velocityRef = useRef(0);
+  
+  // Mouse tracking refs
+  const mousePercentRef = useRef(0);
+  const curvedPullRef = useRef(0);
+  const isHoveringRef = useRef(false);
+  const snapBackAnimationRef = useRef<number>();
 
   // Sample images - replace with actual portfolio images
   const images: CarouselImage[] = [
@@ -55,27 +58,93 @@ const RubberBandCarouselSection: React.FC = () => {
   const duplicatedImages = [...images, ...images, ...images];
   const totalWidth = duplicatedImages.length * 100; // Each image is 100vw
 
+  // Step 1 & 2: Track mouse position and calculate pull offset
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current || !isHoveringRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const sectionWidth = rect.width;
+    const mouseXInSection = e.clientX - rect.left;
+
+    // Step 1: Calculate mousePercent (0 to 100)
+    mousePercentRef.current = (mouseXInSection / sectionWidth) * 100;
+
+    // Step 2: Calculate pullStrength (-50 to +50)
+    const pullStrength = mousePercentRef.current - 50;
+
+    // Step 3: Apply non-linear curve
+    const curvedPull =
+      Math.sign(pullStrength) *
+      Math.pow(Math.abs(pullStrength) / 50, 2) *
+      50;
+
+    curvedPullRef.current = curvedPull;
+  };
+
+  const handleMouseEnter = () => {
+    isHoveringRef.current = true;
+    mousePercentRef.current = 0;
+    curvedPullRef.current = 0;
+    
+    // Cancel any ongoing snap-back animation
+    if (snapBackAnimationRef.current) {
+      cancelAnimationFrame(snapBackAnimationRef.current);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    isHoveringRef.current = false;
+
+    // Step 5: Animate snap-back with overshoot
+    const startTime = Date.now();
+    const duration = 600; // 0.6s in milliseconds
+    const startPull = curvedPullRef.current;
+
+    const animateSnapBack = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Cubic-bezier(0.34, 1.56, 0.64, 1) approximation for overshoot
+      const easeValue = easeOutElastic(progress);
+      curvedPullRef.current = startPull * (1 - easeValue);
+
+      if (progress < 1) {
+        snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
+      } else {
+        curvedPullRef.current = 0;
+        mousePercentRef.current = 0;
+      }
+    };
+
+    snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
+  };
+
+  // Elastic easing function for overshoot snap-back
+  const easeOutElastic = (t: number): number => {
+    const c5 = (2 * Math.PI) / 4.5;
+    return t === 0
+      ? 0
+      : t === 1
+      ? 1
+      : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c5) + 1;
+  };
+
+  // Step 4: Main animation loop
   useEffect(() => {
     const animate = () => {
-      // Auto-scroll speed (pixels per frame)
-      const autoScrollSpeed = 0.5;
-      baseScrollRef.current += autoScrollSpeed;
+      // Base auto-scroll speed (pixels per frame)
+      const baseSpeed = 0.5;
 
-      // Calculate rubber band offset based on mouse position
-      let rubberBandOffset = 0;
-      if (isHovering && containerRef.current) {
-        // Normalize mouse offset to -1 to 1 range
-        const normalizedOffset = mouseOffset / (window.innerWidth / 2);
-        // Use power curve for non-linear tension
-        const tensionCurve = Math.pow(Math.abs(normalizedOffset), 1.5);
-        rubberBandOffset = normalizedOffset * tensionCurve * 100; // Max 100px pull
-      }
+      // Step 4: Apply pull to scroll speed
+      // curvedPull modifies speed, not position
+      const multiplier = 0.8; // Adjust sensitivity
+      const activeScrollSpeed = baseSpeed + (curvedPullRef.current * multiplier) / 50;
 
-      // Combine base scroll with rubber band offset
-      const totalOffset = baseScrollRef.current + rubberBandOffset;
+      // Update base scroll with modified speed
+      baseScrollRef.current += activeScrollSpeed;
 
       // Loop the scroll position
-      const loopedPosition = totalOffset % totalWidth;
+      const loopedPosition = baseScrollRef.current % totalWidth;
       setScrollPosition(loopedPosition);
 
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -88,28 +157,7 @@ const RubberBandCarouselSection: React.FC = () => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isHovering, mouseOffset, totalWidth]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const centerX = window.innerWidth / 2;
-    const mouseX = e.clientX;
-
-    // Calculate offset from center (-1 to 1)
-    const offset = (mouseX - centerX) / (window.innerWidth / 2);
-    setMouseOffset(offset * (window.innerWidth / 2));
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovering(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovering(false);
-    setMouseOffset(0);
-  };
+  }, [totalWidth]);
 
   return (
     <section
@@ -145,14 +193,6 @@ const RubberBandCarouselSection: React.FC = () => {
 
       {/* Bottom divider */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-[#2a2a2a]" />
-
-      {/* View all work link */}
-      <a
-        href="/work"
-        className="absolute bottom-6 right-8 font-montserrat text-sm tracking-widest text-white hover:opacity-70 transition-opacity duration-300"
-      >
-        VIEW ALL WORK
-      </a>
     </section>
   );
 };
