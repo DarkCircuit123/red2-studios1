@@ -5,18 +5,16 @@ import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 
-// Utility function to generate responsive image URL with 4:5 aspect ratio
+// Utility function to generate responsive image URL without cropping
 const getResponsiveImageUrl = (url: string, width: number): string => {
   if (!url) return url;
   
-  // Calculate height based on 4:5 aspect ratio
-  const height = Math.round((width * 5) / 4);
-  
-  // For Wix static images, append resize parameters
+  // For Wix static images, scale without cropping to preserve aspect ratio
   if (url.includes('wixstatic.com')) {
     // Remove existing parameters if any
     const baseUrl = url.split('~')[0];
-    return `${baseUrl}~c_crop,w_${width},h_${height},x_0,y_0/~c_scale,w_${width},h_${height}`;
+    // Use c_fit to scale without cropping, preserving full image
+    return `${baseUrl}~c_fit,w_${width},h_${width}`;
   }
   
   return url;
@@ -258,7 +256,7 @@ export default function Interactive3DGallerySection() {
               <Image
                 src={item.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png'}
                 alt={item.projectName || 'Thumbnail'}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </motion.button>
           ))}

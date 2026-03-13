@@ -148,7 +148,7 @@ export default function MasonryGallery({
                 <Image
                   src={item.image}
                   alt={item.title || 'Gallery image'}
-                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                 />
 
                 {/* Subtle grain overlay */}
