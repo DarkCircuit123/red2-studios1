@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
 import AboutSection from '@/components/sections/AboutSection';
-import Interactive3DGallerySection from '@/components/sections/Interactive3DGallerySection';
+import DraggableCarousel from '@/components/DraggableCarousel';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
@@ -13,8 +13,13 @@ import {
   monitorCoreWebVitals,
   deferNonCriticalJS,
 } from '@/lib/performance-enhancements';
+import { BaseCrudService } from '@/integrations';
+import { Portfolio } from '@/entities/index';
 
 export default function HomePage() {
+  const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
+  const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(true);
+
   // Initialize security systems on component mount
   useEffect(() => {
     initializeSecuritySystems();
@@ -39,6 +44,22 @@ export default function HomePage() {
     });
   }, []);
 
+  // Load portfolio items for carousel
+  useEffect(() => {
+    const loadPortfolio = async () => {
+      try {
+        const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 12 });
+        setPortfolioItems(data.items || []);
+      } catch (error) {
+        // Silently fail
+      } finally {
+        setIsLoadingPortfolio(false);
+      }
+    };
+
+    loadPortfolio();
+  }, []);
+
   return (
     <>
       <div className="min-h-screen bg-black text-white">
@@ -50,8 +71,8 @@ export default function HomePage() {
         {/* About / Vision */}
         <AboutSection />
 
-        {/* Interactive 3D Gallery */}
-        <Interactive3DGallerySection />
+        {/* Draggable Carousel Gallery */}
+        <DraggableCarousel items={portfolioItems} isLoading={isLoadingPortfolio} />
 
         {/* RSS Ticker */}
         <RSSTickerSection />
