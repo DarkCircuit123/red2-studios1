@@ -206,7 +206,7 @@ export default function GalleryViewer({
             className="flex items-center justify-center rounded-lg"
             style={{
               maxWidth: '95vw',
-              maxHeight: '85vh',
+              maxHeight: '90vh',
               aspectRatio: aspectRatio,
               willChange: 'box-shadow',
             }}
