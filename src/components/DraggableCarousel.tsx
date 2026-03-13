@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { Portfolio } from '@/entities/index';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Pause, Play } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
 
 interface DraggableCarouselProps {
@@ -17,14 +17,33 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
   const [isDragging, setIsDragging] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [velocity, setVelocity] = useState(0);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const [isHovering, setIsHovering] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ start: 0, end: 0, time: 0 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const autoScrollRef = useRef<NodeJS.Timeout | null>(null);
 
   const displayItems = items.length > 0 ? items : Array(6).fill(null);
-  const itemWidth = 400; // Width of each carousel item in pixels
-  const gap = 24; // Gap between items
+  const itemWidth = 320; // Reduced width for closer items
+  const gap = 12; // Reduced gap for tighter spacing
   const totalWidth = displayItems.length * (itemWidth + gap);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    if (!isAutoScrolling || isDragging || isHovering) {
+      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
+      return;
+    }
+
+    autoScrollRef.current = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % displayItems.length);
+    }, 4000); // Auto-scroll every 4 seconds
+
+    return () => {
+      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
+    };
+  }, [isAutoScrolling, isDragging, isHovering, displayItems.length]);
 
   // Calculate position with rubber banding
   const calculatePosition = (index: number, offset: number = 0) => {
@@ -67,8 +86,8 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
     setVelocity(calculatedVelocity);
     
     // Determine next index based on drag distance and velocity
-    const threshold = itemWidth * 0.2;
-    const velocityThreshold = 0.5;
+    const threshold = itemWidth * 0.15;
+    const velocityThreshold = 0.3;
     
     if (Math.abs(distance) > threshold || Math.abs(calculatedVelocity) > velocityThreshold) {
       if (distance > 0) {
@@ -85,6 +104,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
   };
 
   const handleMouseLeave = () => {
+    setIsHovering(false);
     if (isDragging) {
       handleMouseUp();
     }
@@ -143,16 +163,17 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
-          className="relative overflow-hidden cursor-grab active:cursor-grabbing"
+          onMouseEnter={() => setIsHovering(true)}
+          className="relative overflow-hidden cursor-grab active:cursor-grabbing group"
         >
           {/* Carousel Track */}
           <motion.div
-            className="flex gap-6"
+            className="flex gap-3"
             animate={{ x: position }}
             transition={
               isDragging
                 ? { type: 'tween', duration: 0 }
-                : { type: 'spring', damping: 20, stiffness: 100, mass: 1 }
+                : { type: 'spring', damping: 25, stiffness: 120, mass: 0.8 }
             }
           >
             {displayItems.map((item, index) => (
@@ -160,7 +181,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
                 key={item?._id || index}
                 onMouseEnter={() => item && setHoveredId(item._id)}
                 onMouseLeave={() => setHoveredId(null)}
-                className="group relative overflow-hidden bg-white/5 border border-white/10 hover:border-primary/50 transition-all duration-500 flex-shrink-0 w-[400px] h-[500px] cursor-pointer"
+                className="group relative overflow-hidden bg-white/5 border border-white/10 hover:border-primary/50 transition-all duration-500 flex-shrink-0 w-[320px] h-[400px] cursor-pointer"
               >
                 {/* Image Container */}
                 <div className="w-full h-full flex items-center justify-center bg-black/30 overflow-hidden">
@@ -168,7 +189,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
                     src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
                     alt={item?.projectName || 'Portfolio project'}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    width={400}
+                    width={320}
                   />
                 </div>
 
@@ -235,27 +256,49 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
           </motion.div>
         </div>
 
-        {/* Navigation Indicators */}
+        {/* Navigation Controls */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           viewport={{ once: true }}
-          className="mt-12 flex items-center justify-center gap-3"
+          className="mt-12 flex items-center justify-center gap-6"
         >
-          {displayItems.map((_, index) => (
-            <motion.button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`transition-all duration-300 ${
-                index === currentIndex
-                  ? 'bg-primary w-8 h-2'
-                  : 'bg-white/30 hover:bg-white/50 w-2 h-2'
-              } rounded-full`}
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.95 }}
-            />
-          ))}
+          {/* Indicators */}
+          <div className="flex items-center justify-center gap-3">
+            {displayItems.map((_, index) => (
+              <motion.button
+                key={index}
+                onClick={() => {
+                  setCurrentIndex(index);
+                  setIsAutoScrolling(false);
+                  setTimeout(() => setIsAutoScrolling(true), 8000);
+                }}
+                className={`transition-all duration-300 ${
+                  index === currentIndex
+                    ? 'bg-primary w-8 h-2'
+                    : 'bg-white/30 hover:bg-white/50 w-2 h-2'
+                } rounded-full`}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.95 }}
+              />
+            ))}
+          </div>
+
+          {/* Auto-scroll toggle */}
+          <motion.button
+            onClick={() => setIsAutoScrolling(!isAutoScrolling)}
+            className="ml-4 p-2 rounded-full border border-white/20 hover:border-primary/50 text-white/60 hover:text-primary transition-all duration-300"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            title={isAutoScrolling ? 'Pause auto-scroll' : 'Resume auto-scroll'}
+          >
+            {isAutoScrolling ? (
+              <Pause className="w-4 h-4" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+          </motion.button>
         </motion.div>
 
         {/* Drag Hint */}
