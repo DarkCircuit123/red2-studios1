@@ -12,6 +12,7 @@ export default function Interactive3DGallerySection() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerStartIndex, setViewerStartIndex] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
   const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -24,6 +25,16 @@ export default function Interactive3DGallerySection() {
       }
     };
     loadPortfolio();
+  }, []);
+
+  // Track scroll for subtle background drift
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const currentItem = portfolioItems[currentIndex];
@@ -44,9 +55,30 @@ export default function Interactive3DGallerySection() {
     return null;
   }
 
+  // Subtle parallax for background drift
+  const parallaxOffset = scrollY * 0.015;
+
   return (
-    <section id="portfolio" className="relative w-full py-16 md:py-24 lg:py-32 bg-black">
-      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8">
+    <section id="portfolio" className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden">
+      {/* Subtle animated background drift */}
+      <motion.div
+        animate={{
+          backgroundPosition: ['0% 0%', '1% 1%', '0% 0%'],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: 'linear',
+        }}
+        className="absolute inset-0 opacity-3 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          backgroundSize: '80px 80px',
+          willChange: 'background-position',
+        }}
+      />
+
+      <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -73,7 +105,7 @@ export default function Interactive3DGallerySection() {
         >
           {/* Main Image Container - Centered with Adaptive Layout */}
           <div className="w-full flex flex-col items-center">
-            {/* Image Viewer */}
+            {/* Image Viewer with glass glow effect */}
             <motion.div
               key={currentIndex}
               initial={{ opacity: 0 }}
@@ -81,14 +113,33 @@ export default function Interactive3DGallerySection() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.6 }}
               className="relative w-full flex items-center justify-center"
+              style={{
+                transform: `translateY(${parallaxOffset * 0.5}px)`,
+                willChange: 'transform',
+              }}
             >
               {currentImage && (
-                <div
-                  className="relative inline-flex items-center justify-center max-w-full cursor-pointer hover:opacity-90 transition-opacity"
+                <motion.div
+                  animate={{
+                    boxShadow: [
+                      '0 0 30px rgba(255, 255, 255, 0.03)',
+                      '0 0 50px rgba(255, 255, 255, 0.06)',
+                      '0 0 30px rgba(255, 255, 255, 0.03)',
+                    ],
+                  }}
+                  transition={{
+                    duration: 5,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                  className="relative inline-flex items-center justify-center max-w-full cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
                   onClick={() => {
                     setViewerImages(galleryImages as string[]);
                     setViewerStartIndex(0);
                     setViewerOpen(true);
+                  }}
+                  style={{
+                    willChange: 'box-shadow',
                   }}
                 >
                   <Image
@@ -97,7 +148,7 @@ export default function Interactive3DGallerySection() {
                     alt={currentItem?.projectName || 'Portfolio image'}
                     className="w-auto h-auto max-w-full max-h-[70vh] object-contain"
                   />
-                </div>
+                </motion.div>
               )}
             </motion.div>
 
@@ -124,7 +175,7 @@ export default function Interactive3DGallerySection() {
           <div className="flex items-center justify-center gap-8 mt-8">
             <motion.button
               onClick={handlePrev}
-              whileHover={{ scale: 1.15 }}
+              whileHover={{ scale: 1.15, x: -2 }}
               whileTap={{ scale: 0.9 }}
               className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
               aria-label="Previous project"
@@ -134,7 +185,7 @@ export default function Interactive3DGallerySection() {
 
             <motion.button
               onClick={handleNext}
-              whileHover={{ scale: 1.15 }}
+              whileHover={{ scale: 1.15, x: 2 }}
               whileTap={{ scale: 0.9 }}
               className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
               aria-label="Next project"

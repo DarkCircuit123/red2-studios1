@@ -151,6 +151,23 @@ export default function GalleryViewer({
         onClick={onClose}
         ref={containerRef}
       >
+        {/* Subtle background drift animation */}
+        <motion.div
+          animate={{
+            backgroundPosition: ['0% 0%', '1% 1%', '0% 0%'],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+          className="absolute inset-0 opacity-5 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
+            backgroundSize: '50px 50px',
+          }}
+        />
+
         {/* Close Button */}
         <motion.button
           onClick={onClose}
@@ -169,23 +186,37 @@ export default function GalleryViewer({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className="flex items-center justify-center flex-1 w-full"
+          className="flex items-center justify-center flex-1 w-full relative z-10"
           onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="flex items-center justify-center"
+          {/* Glass panel glow effect - subtle */}
+          <motion.div
+            animate={{
+              boxShadow: [
+                '0 0 40px rgba(255, 255, 255, 0.05)',
+                '0 0 60px rgba(255, 255, 255, 0.08)',
+                '0 0 40px rgba(255, 255, 255, 0.05)',
+              ],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="flex items-center justify-center rounded-lg"
             style={{
               maxWidth: '95vw',
               maxHeight: '85vh',
               aspectRatio: aspectRatio,
+              willChange: 'box-shadow',
             }}
           >
             <Image
               src={images[currentIndex]}
               alt={`Image ${currentIndex + 1}`}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain rounded-lg"
             />
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Navigation Arrows - Subtle and Minimal */}
@@ -194,9 +225,9 @@ export default function GalleryViewer({
             e.stopPropagation();
             handlePrev();
           }}
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.1, x: -2 }}
           whileTap={{ scale: 0.95 }}
-          className="absolute left-6 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white transition-colors"
+          className="absolute left-6 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white transition-colors z-10"
           aria-label="Previous image"
         >
           <ChevronLeft className="w-8 h-8" />
@@ -207,9 +238,9 @@ export default function GalleryViewer({
             e.stopPropagation();
             handleNext();
           }}
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.1, x: 2 }}
           whileTap={{ scale: 0.95 }}
-          className="absolute right-6 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white transition-colors"
+          className="absolute right-6 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white transition-colors z-10"
           aria-label="Next image"
         >
           <ChevronRight className="w-8 h-8" />
@@ -220,7 +251,7 @@ export default function GalleryViewer({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="mt-8 flex gap-2 overflow-x-auto pb-2 max-w-full"
+          className="mt-8 flex gap-2 overflow-x-auto pb-2 max-w-full z-10"
           onClick={(e) => e.stopPropagation()}
         >
           {images.map((image, idx) => (
@@ -229,7 +260,7 @@ export default function GalleryViewer({
               onClick={() => setCurrentIndex(idx)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`flex-shrink-0 h-16 w-auto transition-all duration-300 ${
+              className={`flex-shrink-0 h-16 w-auto transition-all duration-300 rounded-md overflow-hidden ${
                 idx === currentIndex
                   ? 'ring-2 ring-white'
                   : 'opacity-50 hover:opacity-75'
@@ -249,7 +280,7 @@ export default function GalleryViewer({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="mt-6 text-white/50 text-sm font-mono"
+          className="mt-6 text-white/50 text-sm font-mono z-10"
           onClick={(e) => e.stopPropagation()}
         >
           {currentIndex + 1} / {images.length}

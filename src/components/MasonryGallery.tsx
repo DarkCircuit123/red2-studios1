@@ -23,6 +23,7 @@ export default function MasonryGallery({
   const [imageDimensions, setImageDimensions] = useState<
     Record<string, { width: number; height: number }>
   >({});
+  const [scrollY, setScrollY] = useState(0);
 
   // Load image dimensions for masonry calculation
   useEffect(() => {
@@ -42,6 +43,16 @@ export default function MasonryGallery({
       }
     });
   }, [items, imageDimensions]);
+
+  // Track scroll for subtle parallax
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Calculate optimal column layout based on aspect ratios
   const getColumnCount = () => {
@@ -89,7 +100,7 @@ export default function MasonryGallery({
         {Array(6)
           .fill(null)
           .map((_, i) => (
-            <div key={i} className="bg-white/5 animate-pulse aspect-square" />
+            <div key={i} className="bg-white/5 animate-pulse aspect-square rounded-lg" />
           ))}
       </div>
     );
@@ -108,6 +119,9 @@ export default function MasonryGallery({
             const aspectRatio = dims
               ? `${dims.width} / ${dims.height}`
               : '1 / 1';
+            
+            // Subtle parallax offset - minimal movement for premium feel
+            const parallaxOffset = (scrollY * 0.02 * (colIdx % 2 === 0 ? 1 : -1)) / (itemIdx + 1);
 
             return (
               <motion.div
@@ -117,34 +131,44 @@ export default function MasonryGallery({
                 transition={{
                   duration: 0.6,
                   delay: (colIdx * column.length + itemIdx) * 0.05,
+                  ease: 'easeOut',
                 }}
-                className="group relative overflow-hidden bg-black/30 cursor-pointer"
+                className="group relative overflow-hidden rounded-lg cursor-pointer"
                 onClick={() => onImageClick(item.image, items.indexOf(item))}
-                style={{ aspectRatio }}
+                style={{ 
+                  aspectRatio,
+                  transform: `translateY(${parallaxOffset}px)`,
+                  willChange: 'transform',
+                }}
               >
+                {/* Background glass effect - subtle glow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
                 {/* Image - Preserves Aspect Ratio */}
                 <Image
                   src={item.image}
                   alt={item.title || 'Gallery image'}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102"
                 />
 
                 {/* Subtle grain overlay */}
-                <div className="absolute inset-0 bg-grain opacity-5" />
+                <div className="absolute inset-0 bg-grain opacity-3 pointer-events-none" />
 
-                {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300" />
+                {/* Smooth overlay on hover */}
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  whileHover={{ opacity: 1 }}
+                  transition={{ duration: 0.4 }}
+                  className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" 
+                />
 
                 {/* Title on hover (optional) */}
                 {item.title && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
-                    animate={
-                      true
-                        ? { opacity: 0, y: 10 }
-                        : { opacity: 1, y: 0 }
-                    }
-                    className="absolute inset-0 flex items-end justify-end p-6 group-hover:opacity-100"
+                    whileHover={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute inset-0 flex items-end justify-start p-6 pointer-events-none"
                   >
                     <p className="text-white font-heading font-semibold text-sm">
                       {item.title}
