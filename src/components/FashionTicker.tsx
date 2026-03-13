@@ -28,7 +28,7 @@ export default function FashionTicker() {
           const blogNews: FashionNews[] = result.items.map((post) => ({
             id: post._id,
             title: post.title || 'Untitled Article',
-            link: `/blog#${post._id}`,
+            link: post.externalLink || `/blog#${post._id}`,
             pubDate: post.publicationDate ? new Date(post.publicationDate).toISOString() : new Date().toISOString(),
           }));
           
@@ -100,6 +100,8 @@ export default function FashionTicker() {
               <a
                 key={`${item.id}-${idx}`}
                 href={item.link}
+                target={item.link.startsWith('http') ? '_blank' : undefined}
+                rel={item.link.startsWith('http') ? 'noopener noreferrer' : undefined}
                 className="flex-shrink-0 text-xs text-gray-300 hover:text-primary transition-colors duration-300 whitespace-nowrap cursor-pointer"
               >
                 <span className="text-gray-600 mr-2">•</span>

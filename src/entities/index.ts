@@ -11,6 +11,8 @@ export interface BlogPosts {
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;
+  /** @wixFieldType url */
+  externalLink?: string;
   /** @wixFieldType text */
   title?: string;
   /** @wixFieldType text */
