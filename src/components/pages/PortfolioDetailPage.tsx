@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import GalleryViewer from '@/components/GalleryViewer';
-import HorizontalProjectScroller from '@/components/HorizontalProjectScroller';
 import { playClickSound } from '@/lib/click-sound';
 
 export default function PortfolioDetailPage() {
@@ -18,9 +16,8 @@ export default function PortfolioDetailPage() {
   const [project, setProject] = useState<Portfolio | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [allProjects, setAllProjects] = useState<Portfolio[]>([]);
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerImages, setViewerImages] = useState<string[]>([]);
-  const [viewerStartIndex, setViewerStartIndex] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -46,10 +43,17 @@ export default function PortfolioDetailPage() {
 
   // Load image dimensions when selected image changes
   useEffect(() => {
-    if (!viewerOpen) {
+    if (!selectedImage) {
+      setImageDimensions(null);
       return;
     }
-  }, [viewerOpen]);
+
+    const img = new window.Image();
+    img.onload = () => {
+      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = selectedImage;
+  }, [selectedImage]);
 
   if (isLoading) {
     return (
@@ -95,6 +99,45 @@ export default function PortfolioDetailPage() {
   return (
     <div className="min-h-screen bg-black">
       <Header />
+
+      {/* Immersive Viewer - Photography-First */}
+      {selectedImage && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-black/98 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-8 right-8 p-2 text-white/60 hover:text-white transition-colors z-10"
+            aria-label="Close lightbox"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          {/* Dynamic container that scales to image aspect ratio */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center justify-center"
+            style={{
+              maxWidth: '95vw',
+              maxHeight: '95vh',
+              aspectRatio: imageDimensions ? `${imageDimensions.width} / ${imageDimensions.height}` : 'auto',
+            }}
+          >
+            <Image
+              src={selectedImage}
+              alt="Full resolution image"
+              className="w-full h-full object-contain"
+            />
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-[120rem] mx-auto px-8 py-24 md:py-32">
@@ -216,7 +259,7 @@ export default function PortfolioDetailPage() {
           </motion.div>
         </div>
 
-        {/* Horizontal Project Scroller - Story Scrolling */}
+        {/* Gallery - Photography-First with Mixed Aspect Ratios */}
         {galleryImages.length > 1 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -225,16 +268,23 @@ export default function PortfolioDetailPage() {
             className="mb-20"
           >
             <h2 className="text-3xl font-heading font-bold text-white mb-12 tracking-tight">
-              Project Gallery
+              Gallery
             </h2>
-            <HorizontalProjectScroller
-              images={galleryImages}
-              onImageClick={(image, index) => {
-                setViewerImages(galleryImages);
-                setViewerStartIndex(index);
-                setViewerOpen(true);
-              }}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 auto-rows-max">
+              {galleryImages.map((image, index) => (
+                <div
+                  key={index}
+                  className="overflow-hidden bg-black/50 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
+                  onClick={() => setSelectedImage(image)}
+                >
+                  <Image
+                    src={image}
+                    alt={`Gallery image ${index + 1}`}
+                    className="w-full h-auto object-contain max-h-[500px]"
+                  />
+                </div>
+              ))}
+            </div>
           </motion.div>
         )}
 
@@ -284,14 +334,6 @@ export default function PortfolioDetailPage() {
           )}
         </motion.div>
       </main>
-
-      {/* Gallery Viewer */}
-      <GalleryViewer
-        images={viewerImages}
-        isOpen={viewerOpen}
-        onClose={() => setViewerOpen(false)}
-        initialIndex={viewerStartIndex}
-      />
 
       <Footer />
     </div>
