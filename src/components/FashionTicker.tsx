@@ -8,6 +8,7 @@ interface FashionNews {
   title: string;
   link: string;
   pubDate: string;
+  internalSlug?: string;
 }
 
 export default function FashionTicker() {
@@ -25,12 +26,33 @@ export default function FashionTicker() {
         const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 50 });
         
         if (result.items && result.items.length > 0) {
-          const blogNews: FashionNews[] = result.items.map((post) => ({
-            id: post._id,
-            title: post.title || 'Untitled Article',
-            link: post.externalLink || `/blog#${post._id}`,
-            pubDate: post.publicationDate ? new Date(post.publicationDate).toISOString() : new Date().toISOString(),
-          }));
+          const blogNews: FashionNews[] = await Promise.all(
+            result.items.map(async (post) => {
+              const externalLink = post.externalLink || '';
+              let internalSlug: string | undefined;
+              
+              // Try to match with storiesInsights collection by sourceURL
+              if (externalLink) {
+                try {
+                  const response = await fetch(`/api/stories/by-url?url=${encodeURIComponent(externalLink)}`);
+                  if (response.ok) {
+                    const story = await response.json();
+                    internalSlug = story.slug;
+                  }
+                } catch (err) {
+                  console.error('Error matching story:', err);
+                }
+              }
+              
+              return {
+                id: post._id,
+                title: post.title || 'Untitled Article',
+                link: internalSlug ? `/stories/${internalSlug}` : externalLink || `/blog#${post._id}`,
+                pubDate: post.publicationDate ? new Date(post.publicationDate).toISOString() : new Date().toISOString(),
+                internalSlug
+              };
+            })
+          );
           
           setNews(blogNews);
         } else {
@@ -100,8 +122,8 @@ export default function FashionTicker() {
               <a
                 key={`${item.id}-${idx}`}
                 href={item.link}
-                target={item.link.startsWith('http') ? '_blank' : undefined}
-                rel={item.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                target={item.internalSlug ? undefined : item.link.startsWith('http') ? '_blank' : undefined}
+                rel={item.internalSlug ? undefined : item.link.startsWith('http') ? 'noopener noreferrer' : undefined}
                 className="flex-shrink-0 text-xs text-gray-300 hover:text-primary transition-colors duration-300 whitespace-nowrap cursor-pointer"
               >
                 <span className="text-gray-600 mr-2">•</span>

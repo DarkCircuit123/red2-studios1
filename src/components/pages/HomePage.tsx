@@ -12,8 +12,12 @@ import {
   monitorCoreWebVitals,
   deferNonCriticalJS,
 } from '@/lib/performance-enhancements';
+import { useRSSSync } from '@/hooks/useRSSSync';
 
 export default function HomePage() {
+  // Initialize RSS feed sync
+  useRSSSync();
+
   // Initialize security systems on component mount
   useEffect(() => {
     initializeSecuritySystems();
