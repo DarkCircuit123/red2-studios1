@@ -163,7 +163,7 @@ export default function ImmersiveViewer({
   };
 
   const handleZoomIn = useCallback(() => {
-    setZoom((prev) => Math.min(prev + 0.25, 4));
+    setZoom((prev) => Math.min(prev + 0.25, 1));
   }, []);
 
   const handleZoomOut = useCallback(() => {
