@@ -92,7 +92,7 @@ export default function Header() {
             : 'bg-transparent'
         }`}
       >
-        <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between">
+        <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between w-full relative">
         {/* Logo - Text-based RED² with shimmer effect */}
         <motion.div
           whileHover={{ scale: 1.05 }}
@@ -109,8 +109,8 @@ export default function Header() {
           </Link>
         </motion.div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-12">
+        {/* Desktop Navigation - Centered */}
+        <div className="hidden md:flex items-center justify-center gap-12 absolute left-1/2 transform -translate-x-1/2">
           {[
             { href: '#about', label: 'About' },
             { href: '/portfolio', label: 'Work', isLink: true },
@@ -148,8 +148,8 @@ export default function Header() {
           ))}
         </div>
 
-        {/* Admin & Mobile Menu */}
-        <div className="flex items-center gap-6">
+        {/* Admin & Mobile Menu - Right aligned */}
+        <div className="flex items-center gap-6 ml-auto">
           {/* Auth Links */}
           {!isLoading && (
             <>
