@@ -15,9 +15,13 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
   const [scrollPosition, setScrollPosition] = useState(0);
   const [selectedImage, setSelectedImage] = useState<Portfolio | null>(null);
   const [mouseY, setMouseY] = useState(0);
+  const [mouseX, setMouseX] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const [rubberBandOffset, setRubberBandOffset] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
+  const rubberBandRef = useRef(0);
 
   const displayItems = items.length > 0 ? items : Array(6).fill(null);
   const itemWidth = 320;
@@ -55,18 +59,49 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
     };
   }, [totalWidth]);
 
-  // Track mouse position for parallax
+  // Track mouse position for parallax and rubber band effect
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         setMouseY((e.clientY - rect.top) / rect.height);
+        
+        // Calculate horizontal rubber band effect
+        if (isHovering) {
+          const relativeX = (e.clientX - rect.left) / rect.width;
+          // Range from -1 (left) to 1 (right)
+          const normalizedX = (relativeX - 0.5) * 2;
+          // Apply rubber band effect: stronger pull at edges
+          const rubberBandPull = Math.sign(normalizedX) * Math.pow(Math.abs(normalizedX), 1.5) * 40;
+          rubberBandRef.current = rubberBandPull;
+          setRubberBandOffset(rubberBandPull);
+        }
       }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [isHovering]);
+
+  // Handle hover state
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    // Smoothly return to zero
+    const interval = setInterval(() => {
+      setRubberBandOffset(prev => {
+        const newVal = prev * 0.85;
+        if (Math.abs(newVal) < 0.5) {
+          clearInterval(interval);
+          return 0;
+        }
+        return newVal;
+      });
+    }, 16);
+  };
 
   return (
     <section className="relative w-full py-24 md:py-40 lg:py-48 bg-black overflow-hidden">
@@ -115,14 +150,16 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
         <div
           ref={containerRef}
           className="relative overflow-hidden group"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           {/* Carousel Track */}
           <div
             ref={trackRef}
             className="flex gap-3"
             style={{
-              transform: `translateX(-${scrollPosition}px)`,
-              transition: 'none',
+              transform: `translateX(calc(-${scrollPosition}px + ${rubberBandOffset}px))`,
+              transition: isHovering ? 'none' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
           >
             {displayItems.map((item, index) => {
