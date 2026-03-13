@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
 import AboutSection from '@/components/sections/AboutSection';
 import DraggableCarousel from '@/components/DraggableCarousel';
+import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import RSSTickerSection from '@/components/sections/RSSTickerSection';
@@ -70,6 +71,9 @@ export default function HomePage() {
 
         {/* About / Vision */}
         <AboutSection />
+
+        {/* Rubber Band Carousel */}
+        <RubberBandCarouselSection />
 
         {/* Draggable Carousel Gallery */}
         <DraggableCarousel items={portfolioItems} isLoading={isLoadingPortfolio} />
