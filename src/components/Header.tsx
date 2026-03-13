@@ -4,7 +4,6 @@ import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
-import FashionTicker from './FashionTicker';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
@@ -86,9 +85,8 @@ export default function Header() {
 
   return (
     <>
-      <FashionTicker />
       <header
-        className={`fixed top-[42px] left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
             ? 'bg-black/95 backdrop-blur-md border-b border-primary/30'
             : 'bg-transparent'

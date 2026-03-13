@@ -40,7 +40,7 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="min-h-screen bg-black text-white pt-[42px]">
+      <div className="min-h-screen bg-black text-white">
         <Header />
 
         {/* Hero Section */}
