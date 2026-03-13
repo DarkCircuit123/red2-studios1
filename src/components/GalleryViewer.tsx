@@ -24,7 +24,24 @@ export default function GalleryViewer({
   const [preloadedDimensions, setPreloadedDimensions] = useState<
     Record<number, { width: number; height: number }>
   >({});
+  const [screenDimensions, setScreenDimensions] = useState<{
+    width: number;
+    height: number;
+  }>({ width: typeof window !== 'undefined' ? window.innerWidth : 1024, height: typeof window !== 'undefined' ? window.innerHeight : 768 });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Track screen resize
+  useEffect(() => {
+    const handleResize = () => {
+      setScreenDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Preload next and previous images
   useEffect(() => {
@@ -140,6 +157,37 @@ export default function GalleryViewer({
     ? `${imageDimensions.width} / ${imageDimensions.height}`
     : 'auto';
 
+  // Calculate optimal image dimensions to maximize screen usage
+  const calculateImageDimensions = () => {
+    if (!imageDimensions) return { width: '95vw', height: '90vh' };
+
+    const imageAspect = imageDimensions.width / imageDimensions.height;
+    const screenAspect = screenDimensions.width / screenDimensions.height;
+    
+    // Account for padding and UI elements
+    const maxWidth = screenDimensions.width * 0.95;
+    const maxHeight = screenDimensions.height * 0.85; // Leave room for thumbnails and controls
+
+    let width, height;
+
+    if (imageAspect > screenAspect) {
+      // Image is wider - constrain by width
+      width = maxWidth;
+      height = maxWidth / imageAspect;
+    } else {
+      // Image is taller - constrain by height
+      height = maxHeight;
+      width = maxHeight * imageAspect;
+    }
+
+    return {
+      width: `${width}px`,
+      height: `${height}px`,
+    };
+  };
+
+  const imageDims = calculateImageDimensions();
+
   return (
     <AnimatePresence>
       <motion.div
@@ -205,9 +253,8 @@ export default function GalleryViewer({
             }}
             className="flex items-center justify-center rounded-lg"
             style={{
-              maxWidth: '95vw',
-              maxHeight: '90vh',
-              aspectRatio: aspectRatio,
+              width: imageDims.width,
+              height: imageDims.height,
               willChange: 'box-shadow',
             }}
           >
