@@ -139,7 +139,6 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
                     }
                   }}
                   className="group relative overflow-hidden bg-white/5 border border-white/10 hover:border-primary/50 transition-all duration-500 flex-shrink-0 w-[320px] h-[400px] cursor-pointer"
-                  whileHover={{ scale: 1.02 }}
                 >
                   {/* Image Container with Parallax */}
                   <motion.div
@@ -150,59 +149,13 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
                     <Image
                       src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
                       alt={item?.projectName || 'Portfolio project'}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="w-full h-full object-contain"
                       width={320}
                     />
                   </motion.div>
 
                   {/* Grain overlay */}
                   <div className="absolute inset-0 bg-grain opacity-5" />
-
-                  {/* Enhanced overlay with gradient */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    whileHover={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
-                  />
-
-                  {/* Content - appears on hover */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileHover={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                    className="absolute inset-0 flex flex-col items-end justify-end p-6 md:p-8 pointer-events-none"
-                  >
-                    <div className="text-right w-full">
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                        transition={{ delay: 0.1 }}
-                        className="text-xs font-mono text-primary mb-4 uppercase tracking-widest line-clamp-2 break-words"
-                      >
-                        {item?.category || 'Fashion'}
-                      </motion.p>
-                      <motion.h3
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                        transition={{ delay: 0.15 }}
-                        className="text-xl md:text-2xl lg:text-3xl font-heading font-bold text-white mb-4 tracking-tight line-clamp-3"
-                      >
-                        {item?.projectName || 'Untitled Project'}
-                      </motion.h3>
-                      <motion.div
-                        initial={{ opacity: 0, x: 10 }}
-                        whileHover={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="flex items-center justify-end gap-2 text-white group-hover:text-primary transition-colors"
-                      >
-                        <span className="text-sm font-paragraph">Click to expand</span>
-                        <motion.div animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
-                          <ArrowRight className="w-4 h-4" />
-                        </motion.div>
-                      </motion.div>
-                    </div>
-                  </motion.div>
                 </motion.div>
               );
             })}
@@ -238,7 +191,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
         </motion.div>
       </div>
 
-      {/* Full Size Image Modal */}
+      {/* Full Size Image Modal - Image Only, No Text */}
       <AnimatePresence>
         {selectedImage && (
           <motion.div
@@ -246,7 +199,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedImage(null)}
-            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 md:p-8"
+            className="fixed inset-0 z-50 bg-black/98 flex items-center justify-center p-4 md:p-8"
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -254,7 +207,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={e => e.stopPropagation()}
-              className="relative w-full h-full max-w-6xl max-h-[90vh] flex flex-col"
+              className="relative w-full h-full max-w-6xl max-h-[90vh] flex items-center justify-center"
             >
               {/* Close Button */}
               <motion.button
@@ -267,9 +220,9 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
                 <X className="w-6 h-6" />
               </motion.button>
 
-              {/* Image */}
+              {/* Image Only */}
               <motion.div
-                className="flex-1 flex items-center justify-center overflow-auto rounded-lg"
+                className="flex items-center justify-center w-full h-full"
                 initial={{ scale: 0.95 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', damping: 20, stiffness: 300 }}
@@ -280,46 +233,6 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
                   className="w-auto h-auto max-w-full max-h-full object-contain"
                   width={2000}
                 />
-              </motion.div>
-
-              {/* Image Info */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mt-6 text-center"
-              >
-                <p className="text-primary text-sm font-mono uppercase tracking-widest mb-2">
-                  {selectedImage.category || 'Fashion'}
-                </p>
-                <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4">
-                  {selectedImage.projectName || 'Untitled Project'}
-                </h3>
-                <p className="text-white/70 font-paragraph max-w-2xl mx-auto">
-                  {selectedImage.shortDescription || selectedImage.fullDescription || 'A beautiful project from our portfolio.'}
-                </p>
-
-                {/* Navigation Links */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="mt-6 flex items-center justify-center gap-4"
-                >
-                  <Link
-                    to={`/portfolio/${selectedImage._id}`}
-                    onClick={playClickSound}
-                    className="px-6 py-2 border border-primary text-primary hover:bg-primary/10 transition-all duration-300 font-heading text-sm uppercase tracking-wider"
-                  >
-                    View Details
-                  </Link>
-                  <button
-                    onClick={() => setSelectedImage(null)}
-                    className="px-6 py-2 border border-white/30 text-white hover:border-white/60 transition-all duration-300 font-heading text-sm uppercase tracking-wider"
-                  >
-                    Close
-                  </button>
-                </motion.div>
               </motion.div>
             </motion.div>
           </motion.div>

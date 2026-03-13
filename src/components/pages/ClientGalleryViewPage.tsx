@@ -109,7 +109,7 @@ export default function ClientGalleryViewPage() {
       <Header />
 
       <section className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden pt-32 pb-20">
-        {/* Immersive Viewer - Photography-First */}
+        {/* Immersive Viewer - Photography-First, Image Only */}
         {selectedImage && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -132,17 +132,16 @@ export default function ClientGalleryViewPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex items-center justify-center"
+              className="flex items-center justify-center w-full h-full"
               style={{
                 maxWidth: '95vw',
                 maxHeight: '95vh',
-                aspectRatio: imageDimensions ? `${imageDimensions.width} / ${imageDimensions.height}` : 'auto',
               }}
             >
               <Image
                 src={selectedImage}
                 alt="Full resolution image"
-                className="w-full h-full object-contain"
+                className="w-auto h-auto max-w-full max-h-full object-contain"
               />
             </motion.div>
           </motion.div>
@@ -185,7 +184,7 @@ export default function ClientGalleryViewPage() {
                 <Image
                   src={images[selectedImageIndex]}
                   alt={`${gallery.clientName} gallery image ${selectedImageIndex + 1}`}
-                  className="w-full h-full object-contain"
+                  className="w-auto h-auto max-w-full max-h-full object-contain"
                 />
 
                 {/* Navigation Arrows */}
