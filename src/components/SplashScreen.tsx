@@ -57,10 +57,19 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
     const loadSplashContent = async () => {
       try {
-        // Try to load video from services
-        const services = await BaseCrudService.getAll('services', {}, { limit: 1 });
+        // Create a timeout promise that rejects after 1 second
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 1000)
+        );
+
+        // Race between the fetch and timeout
+        const services = await Promise.race([
+          BaseCrudService.getAll('services', {}, { limit: 1 }),
+          timeoutPromise
+        ]) as any;
+
         if (services.items && services.items.length > 0) {
-          const service = services.items[0] as any;
+          const service = services.items[0];
           if (service.fullDescription && service.fullDescription.includes('http')) {
             const urlMatch = service.fullDescription.match(/(https?:\/\/[^\s]+\.mp4)/);
             if (urlMatch) {
@@ -69,7 +78,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           }
         }
       } catch (error) {
-        console.error('Error loading splash content:', error);
+        // Silently fail - splash will still complete
       }
     };
 
