@@ -27,7 +27,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
   // Continuous smooth scrolling
   useEffect(() => {
     let lastTime = Date.now();
-    const scrollSpeed = 0.5; // Pixels per millisecond (very slow)
+    const scrollSpeed = 0.08; // Pixels per millisecond (much slower)
 
     const animate = () => {
       const now = Date.now();
@@ -269,7 +269,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
 
               {/* Image */}
               <motion.div
-                className="flex-1 flex items-center justify-center overflow-hidden rounded-lg"
+                className="flex-1 flex items-center justify-center overflow-auto rounded-lg"
                 initial={{ scale: 0.95 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', damping: 20, stiffness: 300 }}
@@ -277,8 +277,8 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
                 <Image
                   src={selectedImage.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
                   alt={selectedImage.projectName || 'Portfolio project'}
-                  className="w-full h-full object-contain"
-                  width={1200}
+                  className="w-auto h-auto max-w-full max-h-full object-contain"
+                  width={2000}
                 />
               </motion.div>
 
