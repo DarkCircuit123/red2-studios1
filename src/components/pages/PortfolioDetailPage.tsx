@@ -17,6 +17,7 @@ export default function PortfolioDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [allProjects, setAllProjects] = useState<Portfolio[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -39,6 +40,20 @@ export default function PortfolioDetailPage() {
 
     loadData();
   }, [id]);
+
+  // Load image dimensions when selected image changes
+  useEffect(() => {
+    if (!selectedImage) {
+      setImageDimensions(null);
+      return;
+    }
+
+    const img = new window.Image();
+    img.onload = () => {
+      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = selectedImage;
+  }, [selectedImage]);
 
   if (isLoading) {
     return (
@@ -85,27 +100,42 @@ export default function PortfolioDetailPage() {
     <div className="min-h-screen bg-black">
       <Header />
 
-      {/* Lightbox */}
+      {/* Immersive Viewer - Photography-First */}
       {selectedImage && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/98 flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
           <button
             onClick={() => setSelectedImage(null)}
-            className="absolute top-8 right-8 p-2 text-white/60 hover:text-white transition-colors"
+            className="absolute top-8 right-8 p-2 text-white/60 hover:text-white transition-colors z-10"
             aria-label="Close lightbox"
           >
             <X className="w-6 h-6" />
           </button>
-          <Image
-            src={selectedImage}
-            alt="Full size"
-            className="max-w-4xl max-h-[90vh] object-contain"
-          />
+          
+          {/* Dynamic container that scales to image aspect ratio */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center justify-center"
+            style={{
+              maxWidth: '95vw',
+              maxHeight: '95vh',
+              aspectRatio: imageDimensions ? `${imageDimensions.width} / ${imageDimensions.height}` : 'auto',
+            }}
+          >
+            <Image
+              src={selectedImage}
+              alt="Full resolution image"
+              className="w-full h-full object-contain"
+            />
+          </motion.div>
         </motion.div>
       )}
 
@@ -151,18 +181,22 @@ export default function PortfolioDetailPage() {
           </div>
         </motion.div>
 
-        {/* Main Image - Full-bleed */}
+        {/* Main Image - Photography-First with Aspect Ratio Preservation */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="mb-20 w-screen left-1/2 right-1/2 -mx-[50vw] aspect-video overflow-hidden bg-slate-900 cursor-pointer hover:opacity-90 transition-opacity"
+          className="mb-20 w-full bg-black/50 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
           onClick={() => project.mainImage && setSelectedImage(project.mainImage)}
+          style={{
+            maxWidth: '100%',
+            aspectRatio: 'auto',
+          }}
         >
           <Image
             src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_fcbd4072cbd84e428547c62bbddbf23c~mv2.png?originWidth=1152&originHeight=640'}
             alt={project.projectName}
-            className="w-full h-full object-cover"
+            className="w-full h-auto object-contain max-h-[70vh]"
           />
         </motion.div>
 
@@ -225,7 +259,7 @@ export default function PortfolioDetailPage() {
           </motion.div>
         </div>
 
-        {/* Gallery */}
+        {/* Gallery - Photography-First with Mixed Aspect Ratios */}
         {galleryImages.length > 1 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -236,17 +270,17 @@ export default function PortfolioDetailPage() {
             <h2 className="text-3xl font-heading font-bold text-white mb-12 tracking-tight">
               Gallery
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 auto-rows-max">
               {galleryImages.map((image, index) => (
                 <div
                   key={index}
-                  className="overflow-hidden bg-slate-900 aspect-square cursor-pointer hover:opacity-90 transition-opacity"
+                  className="overflow-hidden bg-black/50 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
                   onClick={() => setSelectedImage(image)}
                 >
                   <Image
                     src={image}
                     alt={`Gallery image ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto object-contain max-h-[500px]"
                   />
                 </div>
               ))}

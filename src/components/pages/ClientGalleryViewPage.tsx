@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, Download, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { useAuthStore } from '@/lib/clientAuthStore';
 import Header from '@/components/Header';
@@ -25,6 +25,8 @@ export default function ClientGalleryViewPage() {
   const [gallery, setGallery] = useState<ClientGallery | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -48,6 +50,20 @@ export default function ClientGalleryViewPage() {
 
     loadGallery();
   }, [id]);
+
+  // Load image dimensions when selected image changes
+  useEffect(() => {
+    if (!selectedImage) {
+      setImageDimensions(null);
+      return;
+    }
+
+    const img = new window.Image();
+    img.onload = () => {
+      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = selectedImage;
+  }, [selectedImage]);
 
   const handleLogout = () => {
     logout();
@@ -93,6 +109,45 @@ export default function ClientGalleryViewPage() {
       <Header />
 
       <section className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden pt-32 pb-20">
+        {/* Immersive Viewer - Photography-First */}
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/98 flex items-center justify-center p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-8 right-8 p-2 text-white/60 hover:text-white transition-colors z-10"
+              aria-label="Close lightbox"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            {/* Dynamic container that scales to image aspect ratio */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center justify-center"
+              style={{
+                maxWidth: '95vw',
+                maxHeight: '95vh',
+                aspectRatio: imageDimensions ? `${imageDimensions.width} / ${imageDimensions.height}` : 'auto',
+              }}
+            >
+              <Image
+                src={selectedImage}
+                alt="Full resolution image"
+                className="w-full h-full object-contain"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+
         <div className="max-w-[100rem] mx-auto px-8 w-full">
           {/* Header with Client Info */}
           <motion.div
@@ -125,12 +180,12 @@ export default function ClientGalleryViewPage() {
               transition={{ delay: 0.1 }}
               className="space-y-8"
             >
-              {/* Main Image */}
-              <div className="relative aspect-video bg-white/5 rounded-lg overflow-hidden border border-white/10">
+              {/* Main Image - Photography-First with Aspect Ratio Preservation */}
+              <div className="relative w-full bg-black/50 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center min-h-[400px] md:min-h-[600px] cursor-pointer hover:opacity-90 transition-opacity" onClick={() => images[selectedImageIndex] && setSelectedImage(images[selectedImageIndex])}>
                 <Image
                   src={images[selectedImageIndex]}
                   alt={`${gallery.clientName} gallery image ${selectedImageIndex + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
 
                 {/* Navigation Arrows */}

@@ -81,31 +81,26 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
           </p>
         </motion.div>
 
-        {/* Grid - Enhanced asymmetrical layout with varied sizes */}
+        {/* Grid - Photography-First with Mixed Aspect Ratios */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-100px' }}
-          className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 auto-rows-[300px] md:auto-rows-[350px]"
+          className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 auto-rows-max"
         >
           {displayItems.map((item, index) => {
             // Varied grid positioning for dynamic layout
             let colSpan = 'md:col-span-1';
-            let rowSpan = 'md:row-span-1';
             
             if (index === 0) {
               colSpan = 'md:col-span-2';
-              rowSpan = 'md:row-span-2';
             } else if (index === 1) {
               colSpan = 'md:col-span-2';
-              rowSpan = 'md:row-span-1';
             } else if (index === 2) {
               colSpan = 'md:col-span-2';
-              rowSpan = 'md:row-span-2';
             } else if (index === 3) {
               colSpan = 'md:col-span-2';
-              rowSpan = 'md:row-span-1';
             }
 
             return (
@@ -115,14 +110,16 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
                 onMouseEnter={() => item && setHoveredId(item._id)}
                 onMouseLeave={() => setHoveredId(null)}
                 whileHover={{ y: -8 }}
-                className={`group relative overflow-hidden bg-white/5 cursor-pointer border border-white/10 hover:border-primary/50 transition-all duration-500 ${colSpan} ${rowSpan}`}
+                className={`group relative overflow-hidden bg-white/5 cursor-pointer border border-white/10 hover:border-primary/50 transition-all duration-500 flex items-center justify-center ${colSpan}`}
               >
-                {/* Image with enhanced zoom */}
-                <Image
-                  src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
-                  alt={item?.projectName || 'Portfolio project'}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
+                {/* Image Container - Photography-First with Aspect Ratio Preservation */}
+                <div className="w-full h-full flex items-center justify-center bg-black/30 min-h-[300px] md:min-h-[350px]">
+                  <Image
+                    src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
+                    alt={item?.projectName || 'Portfolio project'}
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                  />
+                </div>
 
                 {/* Grain overlay */}
                 <div className="absolute inset-0 bg-grain opacity-5" />

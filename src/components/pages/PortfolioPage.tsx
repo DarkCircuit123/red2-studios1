@@ -122,7 +122,7 @@ export default function PortfolioPage() {
           ))}
         </motion.div>
 
-        {/* Projects Grid */}
+        {/* Projects Grid - Photography-First with Mixed Aspect Ratios */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max">
             {Array(6)
@@ -130,7 +130,7 @@ export default function PortfolioPage() {
               .map((_, i) => (
                 <div
                   key={i}
-                  className="aspect-square bg-white/5 animate-pulse"
+                  className="bg-white/5 animate-pulse min-h-[300px]"
                 />
               ))}
           </div>
@@ -148,16 +148,16 @@ export default function PortfolioPage() {
                 onMouseEnter={() => setHoveredId(project._id)}
                 onMouseLeave={() => setHoveredId(null)}
                 className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
-                  index === 0 ? 'md:col-span-2 md:row-span-2' : ''
-                } ${index === 1 ? 'md:row-span-2' : ''}`}
+                  index === 0 ? 'md:col-span-2' : ''
+                }`}
               >
-                {/* Aspect ratio container */}
-                <div className="relative w-full aspect-square">
+                {/* Photography-First Container - Preserves Aspect Ratio */}
+                <div className="relative w-full flex items-center justify-center bg-black/30 min-h-[300px]">
                   {/* Image */}
                   <Image
                     src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
                     alt={project.projectName}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                   />
 
                   {/* Subtle grain overlay */}
