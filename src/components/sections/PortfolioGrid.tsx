@@ -39,7 +39,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
   };
 
   return (
-    <section id="portfolio" className="relative w-full py-24 md:py-40 lg:py-48 bg-black overflow-hidden">
+    <section id="portfolio" className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden">
       {/* Animated background gradient */}
       <div className="absolute inset-0 z-0">
         <motion.div

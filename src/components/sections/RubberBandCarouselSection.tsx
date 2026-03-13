@@ -162,7 +162,7 @@ const RubberBandCarouselSection: React.FC = () => {
   return (
     <section
       ref={containerRef}
-      className="relative w-screen h-[65vh] bg-[#0a0a0a] overflow-hidden"
+      className="relative w-screen h-[55vh] bg-[#0a0a0a] overflow-hidden"
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

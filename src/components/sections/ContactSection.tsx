@@ -193,7 +193,7 @@ export default function ContactSection() {
       </div>
 
       <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
           {/* Contact Info */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
@@ -201,7 +201,7 @@ export default function ContactSection() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-heading font-black text-white mb-8 md:mb-12 tracking-tighter leading-none">
+            <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-heading font-black text-white mb-6 md:mb-8 tracking-tighter leading-none">
               Get in
               <br />
               <motion.span
@@ -213,12 +213,12 @@ export default function ContactSection() {
               </motion.span>
             </h2>
 
-            <p className="text-sm md:text-base font-paragraph text-white/70 mb-12 md:mb-16 leading-relaxed">
+            <p className="text-sm md:text-base font-paragraph text-white/70 mb-8 md:mb-10 leading-relaxed">
               Ready to collaborate on your next project? I'd love to hear about your vision and discuss how we can bring it to life.
             </p>
 
             {/* Contact Methods - Enhanced with animations */}
-            <div className="space-y-8 md:space-y-10">
+            <div className="space-y-6 md:space-y-8">
               {[
                 { icon: Mail, label: 'Email', value: 'hello@red2studios.com', href: 'mailto:hello@red2studios.com' },
                 { icon: Phone, label: 'Phone', value: '+1 (310) 386-0405', href: 'tel:+13103860405' },
@@ -263,7 +263,7 @@ export default function ContactSection() {
               whileInView={{ opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.6 }}
               viewport={{ once: true }}
-              className="mt-16 pt-12 border-t border-primary/30"
+              className="mt-12 pt-8 border-t border-primary/30"
             >
               <p className="text-xs font-mono uppercase tracking-widest text-white/40 mb-6">
                 Follow for daily inspiration
