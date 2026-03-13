@@ -102,11 +102,11 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden pointer-events-none"
       initial={{ opacity: 1 }}
-      animate={{ opacity: 1 }}
+      animate={{ opacity: isVisible ? 1 : 0 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.5, delay: 3 }}
+      transition={{ duration: 0.5 }}
     >
       {/* Background video loop - optional */}
       {videoUrl && (
