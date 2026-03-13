@@ -246,21 +246,21 @@ export default function GalleryViewer({
           <ChevronRight className="w-8 h-8" />
         </motion.button>
 
-        {/* Thumbnail Filmstrip - Horizontal Below Image */}
+        {/* Thumbnail Filmstrip - Larger and Full Width */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="mt-8 flex gap-2 overflow-x-auto pb-2 max-w-full z-10"
+          className="mt-8 flex gap-3 overflow-x-auto pb-2 max-w-full z-10 px-4 justify-center"
           onClick={(e) => e.stopPropagation()}
         >
           {images.map((image, idx) => (
             <motion.button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
-              className={`flex-shrink-0 h-16 w-auto transition-all duration-300 rounded-md overflow-hidden ${
+              className={`flex-shrink-0 h-24 w-auto transition-all duration-300 rounded-md overflow-hidden ${
                 idx === currentIndex
                   ? 'ring-2 ring-white'
                   : 'opacity-50 hover:opacity-75'
