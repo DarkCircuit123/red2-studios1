@@ -3,7 +3,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
 import AboutSection from '@/components/sections/AboutSection';
-import LiveFashionTVFeed from '@/components/LiveFashionTVFeed';
 import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
@@ -13,12 +12,8 @@ import {
   monitorCoreWebVitals,
   deferNonCriticalJS,
 } from '@/lib/performance-enhancements';
-import { useRSSSync } from '@/hooks/useRSSSync';
 
 export default function HomePage() {
-  // Initialize RSS feed sync
-  useRSSSync();
-
   // Initialize security systems on component mount
   useEffect(() => {
     initializeSecuritySystems();
@@ -50,9 +45,6 @@ export default function HomePage() {
 
         {/* Hero Section */}
         <HeroSection />
-
-        {/* Live Fashion TV Feed */}
-        <LiveFashionTVFeed />
 
         {/* About / Vision */}
         <AboutSection />

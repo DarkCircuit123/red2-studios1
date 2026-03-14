@@ -1,187 +1,198 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Image } from '@/components/ui/image';
 
-interface FashionFeed {
+interface CarouselImage {
   id: string;
-  title: string;
-  description: string;
-  gradient: string;
-  icon: string;
+  url: string;
+  alt: string;
 }
 
 const RubberBandCarouselSection: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [currentFeed, setCurrentFeed] = useState(0);
-  const [isLive, setIsLive] = useState(true);
-  const feedIntervalRef = useRef<NodeJS.Timeout>();
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const animationFrameRef = useRef<number>();
+  const baseScrollRef = useRef(0);
+  
+  // Mouse tracking refs
+  const mousePercentRef = useRef(0);
+  const curvedPullRef = useRef(0);
+  const isHoveringRef = useRef(false);
+  const snapBackAnimationRef = useRef<number>();
 
-  // Fashion TV feed data
-  const fashionFeeds: FashionFeed[] = [
+  // Sample images - replace with actual portfolio images
+  const images: CarouselImage[] = [
     {
       id: '1',
-      title: 'RUNWAY LIVE',
-      description: 'Spring/Summer 2025 Collection',
-      gradient: 'from-purple-600 to-pink-600',
-      icon: '👗',
+      url: 'https://static.wixstatic.com/media/e9d727_dc338c865879444cab6ecb545a8e8d0b~mv2.png?originWidth=1920&originHeight=1024',
+      alt: 'Portfolio work 1',
     },
     {
       id: '2',
-      title: 'STYLE TRENDS',
-      description: 'This Season\'s Must-Have Pieces',
-      gradient: 'from-blue-600 to-cyan-600',
-      icon: '✨',
+      url: 'https://static.wixstatic.com/media/e9d727_caf9a0b8c25a48e498e615968b84cfc5~mv2.png?originWidth=1920&originHeight=1024',
+      alt: 'Portfolio work 2',
     },
     {
       id: '3',
-      title: 'DESIGNER SPOTLIGHT',
-      description: 'Emerging Fashion Designers',
-      gradient: 'from-orange-600 to-red-600',
-      icon: '🎨',
+      url: 'https://static.wixstatic.com/media/e9d727_af58458647a24198895103de7f52ee34~mv2.png?originWidth=1920&originHeight=1024',
+      alt: 'Portfolio work 3',
     },
     {
       id: '4',
-      title: 'STREET STYLE',
-      description: 'Fashion Week Street Photography',
-      gradient: 'from-green-600 to-emerald-600',
-      icon: '📸',
+      url: 'https://static.wixstatic.com/media/e9d727_7398b229af7349179713a070e2ba3045~mv2.png?originWidth=1920&originHeight=1024',
+      alt: 'Portfolio work 4',
     },
     {
       id: '5',
-      title: 'LUXURY SHOWCASE',
-      description: 'High Fashion Collections',
-      gradient: 'from-yellow-600 to-amber-600',
-      icon: '💎',
+      url: 'https://static.wixstatic.com/media/e9d727_df5b596912a946fa8801c5a797d9fab5~mv2.png?originWidth=1920&originHeight=1024',
+      alt: 'Portfolio work 5',
     },
     {
       id: '6',
-      title: 'FASHION FORECAST',
-      description: 'Next Season\'s Predictions',
-      gradient: 'from-indigo-600 to-purple-600',
-      icon: '🔮',
+      url: 'https://static.wixstatic.com/media/e9d727_9ddd1fbce8c04f54a8ae54df6c169f95~mv2.png?originWidth=1920&originHeight=1024',
+      alt: 'Portfolio work 6',
     },
   ];
 
-  // Auto-advance feed every 5 seconds
-  useEffect(() => {
-    if (!isLive) return;
+  // Duplicate images for seamless loop
+  const duplicatedImages = [...images, ...images, ...images];
+  const totalWidth = duplicatedImages.length * 100; // Each image is 100vw
 
-    feedIntervalRef.current = setInterval(() => {
-      setCurrentFeed((prev) => (prev + 1) % fashionFeeds.length);
-    }, 5000);
+  // Step 1 & 2: Track mouse position and calculate pull offset
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current || !isHoveringRef.current) return;
 
-    return () => {
-      if (feedIntervalRef.current) {
-        clearInterval(feedIntervalRef.current);
+    const rect = containerRef.current.getBoundingClientRect();
+    const sectionWidth = rect.width;
+    const mouseXInSection = e.clientX - rect.left;
+
+    // Step 1: Calculate mousePercent (0 to 100)
+    mousePercentRef.current = (mouseXInSection / sectionWidth) * 100;
+
+    // Step 2: Calculate pullStrength (-50 to +50)
+    const pullStrength = mousePercentRef.current - 50;
+
+    // Step 3: Apply non-linear curve
+    const curvedPull =
+      Math.sign(pullStrength) *
+      Math.pow(Math.abs(pullStrength) / 50, 2) *
+      50;
+
+    curvedPullRef.current = curvedPull;
+  };
+
+  const handleMouseEnter = () => {
+    isHoveringRef.current = true;
+    mousePercentRef.current = 0;
+    curvedPullRef.current = 0;
+    
+    // Cancel any ongoing snap-back animation
+    if (snapBackAnimationRef.current) {
+      cancelAnimationFrame(snapBackAnimationRef.current);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    isHoveringRef.current = false;
+
+    // Step 5: Animate snap-back with overshoot
+    const startTime = Date.now();
+    const duration = 600; // 0.6s in milliseconds
+    const startPull = curvedPullRef.current;
+
+    const animateSnapBack = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Cubic-bezier(0.34, 1.56, 0.64, 1) approximation for overshoot
+      const easeValue = easeOutElastic(progress);
+      curvedPullRef.current = startPull * (1 - easeValue);
+
+      if (progress < 1) {
+        snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
+      } else {
+        curvedPullRef.current = 0;
+        mousePercentRef.current = 0;
       }
     };
-  }, [isLive, fashionFeeds.length]);
 
-  const handlePrevious = () => {
-    setCurrentFeed((prev) => (prev - 1 + fashionFeeds.length) % fashionFeeds.length);
+    snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
   };
 
-  const handleNext = () => {
-    setCurrentFeed((prev) => (prev + 1) % fashionFeeds.length);
+  // Elastic easing function for overshoot snap-back
+  const easeOutElastic = (t: number): number => {
+    const c5 = (2 * Math.PI) / 4.5;
+    return t === 0
+      ? 0
+      : t === 1
+      ? 1
+      : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c5) + 1;
   };
 
-  const currentFeedData = fashionFeeds[currentFeed];
+  // Step 4: Main animation loop
+  useEffect(() => {
+    const animate = () => {
+      // Base auto-scroll speed (pixels per frame)
+      const baseSpeed = 0.5;
+
+      // Step 4: Apply pull to scroll speed
+      // curvedPull modifies speed, not position
+      const multiplier = 0.8; // Adjust sensitivity
+      const activeScrollSpeed = baseSpeed + (curvedPullRef.current * multiplier) / 50;
+
+      // Update base scroll with modified speed
+      baseScrollRef.current += activeScrollSpeed;
+
+      // Loop the scroll position
+      const loopedPosition = baseScrollRef.current % totalWidth;
+      setScrollPosition(loopedPosition);
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [totalWidth]);
 
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-[55vh] bg-black overflow-hidden"
+      className="relative w-screen h-[55vh] bg-[#0a0a0a] overflow-hidden"
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      {/* Live Fashion TV Feed */}
+      {/* Carousel container */}
       <motion.div
-        key={currentFeed}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.8 }}
-        className={`absolute inset-0 bg-gradient-to-br ${currentFeedData.gradient} flex items-center justify-center`}
+        className="flex h-full"
+        style={{
+          x: -scrollPosition,
+          gap: '8px',
+        }}
       >
-        {/* Animated background pattern */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,.1)_25%,rgba(255,255,255,.1)_50%,transparent_50%,transparent_75%,rgba(255,255,255,.1)_75%,rgba(255,255,255,.1))] bg-[length:40px_40px] animate-pulse" />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 text-center text-white px-8">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="text-7xl mb-6"
+        {duplicatedImages.map((image, index) => (
+          <div
+            key={`${image.id}-${index}`}
+            className="flex-shrink-0 w-screen h-full"
           >
-            {currentFeedData.icon}
-          </motion.div>
-
-          <motion.h2
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-5xl font-bold mb-4 tracking-wider"
-          >
-            {currentFeedData.title}
-          </motion.h2>
-
-          <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-2xl font-light mb-8 opacity-90"
-          >
-            {currentFeedData.description}
-          </motion.p>
-
-          {/* Live indicator */}
-          <motion.div
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="inline-flex items-center gap-2 bg-red-600 px-6 py-3 rounded-full font-semibold"
-          >
-            <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-            LIVE NOW
-          </motion.div>
-        </div>
+            <Image
+              src={image.url}
+              alt={image.alt}
+              width={1920}
+              height={1080}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ))}
       </motion.div>
 
-      {/* Navigation Controls */}
-      <div className="absolute bottom-8 left-0 right-0 z-20 flex items-center justify-center gap-8">
-        <button
-          onClick={handlePrevious}
-          className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all duration-300 backdrop-blur-sm border border-white/30"
-        >
-          ←
-        </button>
-
-        {/* Feed indicators */}
-        <div className="flex gap-2">
-          {fashionFeeds.map((_, index) => (
-            <motion.button
-              key={index}
-              onClick={() => setCurrentFeed(index)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentFeed ? 'bg-white w-8' : 'bg-white/50 w-2'
-              }`}
-              whileHover={{ scale: 1.2 }}
-            />
-          ))}
-        </div>
-
-        <button
-          onClick={handleNext}
-          className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all duration-300 backdrop-blur-sm border border-white/30"
-        >
-          →
-        </button>
-      </div>
-
-      {/* Live status bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-pink-600 to-red-600 animate-pulse" />
-
       {/* Bottom divider */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-white/20" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-[#2a2a2a]" />
     </section>
   );
 };
