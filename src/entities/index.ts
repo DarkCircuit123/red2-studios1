@@ -206,6 +206,33 @@ export interface Services {
 
 
 /**
+ * Collection ID: storiesinsights
+ * Interface for StoriesInsights
+ */
+export interface StoriesInsights {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  title?: string;
+  /** @wixFieldType text */
+  slug?: string;
+  /** @wixFieldType url */
+  sourceURL?: string;
+  /** @wixFieldType text */
+  sourceName?: string;
+  /** @wixFieldType date */
+  publicationDate?: Date | string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  featuredImage?: string;
+  /** @wixFieldType text */
+  excerpt?: string;
+  /** @wixFieldType text */
+  fullSummary?: string;
+}
+
+
+/**
  * Collection ID: teammembers
  * Interface for TeamMembers
  */

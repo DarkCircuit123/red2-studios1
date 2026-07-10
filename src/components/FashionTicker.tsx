@@ -24,19 +24,22 @@ export default function FashionTicker() {
         // Fetch blog posts from CMS
         const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 50 });
         
-        if (result.items && result.items.length > 0) {
-          const blogNews: FashionNews[] = result.items.map((post) => ({
-            id: post._id,
-            title: post.title || 'Untitled Article',
-            link: post.externalLink || `/blog#${post._id}`,
-            pubDate: post.publicationDate ? new Date(post.publicationDate).toISOString() : new Date().toISOString(),
-          }));
+        if (result?.items && result.items.length > 0) {
+          const blogNews: FashionNews[] = result.items
+            .filter(post => post.title) // Filter out posts without titles
+            .map((post) => ({
+              id: post._id,
+              title: post.title || 'Untitled Article',
+              link: post.externalLink || `/blog#${post._id}`,
+              pubDate: post.publicationDate ? new Date(post.publicationDate).toISOString() : new Date().toISOString(),
+            }));
           
           setNews(blogNews);
         } else {
           setNews([]);
         }
       } catch (err) {
+        console.error('Error fetching fashion news:', err);
         setError('Unable to load articles');
         setNews([]);
       } finally {

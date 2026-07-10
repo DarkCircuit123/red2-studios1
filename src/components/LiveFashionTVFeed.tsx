@@ -31,17 +31,19 @@ export default function LiveFashionTVFeed() {
         // Fetch blog posts from CMS
         const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 12 });
 
-        if (result.items && result.items.length > 0) {
-          const fashionContent: FashionContent[] = result.items.map((post) => ({
-            id: post._id,
-            title: post.title || 'Untitled Article',
-            excerpt: post.excerpt || post.content?.substring(0, 150) || 'Fashion news update',
-            thumbnail: post.thumbnailImage || 'https://static.wixstatic.com/media/e9d727_b4d85ec0ac304b28a432ac757394304a~mv2.png?originWidth=1152&originHeight=576',
-            videoUrl: post.videoUrl,
-            link: post.externalLink || `/blog#${post._id}`,
-            pubDate: post.publicationDate ? new Date(post.publicationDate).toLocaleDateString() : new Date().toLocaleDateString(),
-            author: post.author || 'Fashion Editor',
-          }));
+        if (result?.items && result.items.length > 0) {
+          const fashionContent: FashionContent[] = result.items
+            .filter(post => post.title && post.thumbnailImage) // Ensure required fields exist
+            .map((post) => ({
+              id: post._id,
+              title: post.title || 'Untitled Article',
+              excerpt: post.excerpt || post.content?.substring(0, 150) || 'Fashion news update',
+              thumbnail: post.thumbnailImage || 'https://static.wixstatic.com/media/e9d727_b4d85ec0ac304b28a432ac757394304a~mv2.png?originWidth=1152&originHeight=576',
+              videoUrl: post.videoUrl,
+              link: post.externalLink || `/blog#${post._id}`,
+              pubDate: post.publicationDate ? new Date(post.publicationDate).toLocaleDateString() : new Date().toLocaleDateString(),
+              author: post.author || 'Fashion Editor',
+            }));
 
           setContent(fashionContent);
         } else {
