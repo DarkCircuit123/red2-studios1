@@ -16,8 +16,6 @@ import ClientLoginPage from './pages/ClientLoginPage';
 import ClientRegisterPage from './pages/ClientRegisterPage';
 import ClientGalleryViewPage from './pages/ClientGalleryViewPage';
 import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
-import AdminLoginPage from './pages/AdminLoginPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
 import WorkPage from './pages/WorkPage';
 
 // Layout component that includes ScrollToTop
@@ -91,14 +89,6 @@ const router = createBrowserRouter([
       {
         path: "client-gallery/:id",
         element: <ClientGalleryViewPage />,
-      },
-      {
-        path: "admin-login",
-        element: <AdminLoginPage />,
-      },
-      {
-        path: "admin-dashboard",
-        element: <AdminDashboardPage />,
       },
       {
         path: "work",
