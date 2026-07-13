@@ -72,7 +72,7 @@ export default function BackgroundMusicPlayer() {
         loop
         muted={isMuted}
         crossOrigin="anonymous"
-        src="https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3"
+        src="https://soundcloud.com/markd54321/198-blue-in-green-miles-davis"
       />
 
       {/* Music control button - fixed position */}
