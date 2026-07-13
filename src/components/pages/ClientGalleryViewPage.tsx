@@ -140,10 +140,17 @@ export default function ClientGalleryViewPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/98 flex items-center justify-center p-4"
-            onClick={() => setSelectedImage(null)}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedImage(null);
+              }
+            }}
           >
             <button
-              onClick={() => setSelectedImage(null)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedImage(null);
+              }}
               className="absolute top-8 right-8 p-2 text-white/60 hover:text-white transition-colors z-10"
               aria-label="Close lightbox"
             >
@@ -161,6 +168,7 @@ export default function ClientGalleryViewPage() {
                 maxWidth: '95vw',
                 maxHeight: '95vh',
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               <Image
                 src={selectedImage}
