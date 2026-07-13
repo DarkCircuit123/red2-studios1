@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, Check, X, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, Check, X, AlertCircle, Copy } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -36,10 +36,42 @@ interface SubmissionState {
   confirmationNumber: string | null;
 }
 
+// Robust UUID fallback for non-HTTPS/older browsers
+function generateSessionId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    try {
+      return crypto.randomUUID();
+    } catch (e) {
+      // Fallback if randomUUID fails
+    }
+  }
+  // Fallback UUID v4 implementation
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+// Format time in America/Los_Angeles timezone
+function formatTimeInPT(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  return formatter.format(dateObj);
+}
+
 export default function BookingPage() {
   const [bookings, setBookings] = useState<BookingSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [copiedConfirmation, setCopiedConfirmation] = useState(false);
   const [formData, setFormData] = useState<BookingRequest>({
     name: '',
     email: '',
@@ -55,9 +87,11 @@ export default function BookingPage() {
     confirmationNumber: null
   });
   const [pollingActive, setPollingActive] = useState(false);
-  const sessionIdRef = useRef<string>(crypto.randomUUID());
+  const sessionIdRef = useRef<string>(generateSessionId());
   const focusTrapRef = useRef<HTMLDivElement>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // Initialize EmailJS and setup cleanup on mount
   useEffect(() => {
@@ -69,28 +103,44 @@ export default function BookingPage() {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
       }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, []);
 
-  // Load bookings with 60-second polling
+  // Load bookings with 60-second polling and AbortController
   useEffect(() => {
     const loadBookings = async () => {
       try {
+        setIsLoading(true);
         const result = await BaseCrudService.getAll<BookingSlot>('bookingavailability', {}, { limit: 100 });
-        setBookings(result.items || []);
+        
+        // Filter out past dates and sort chronologically
+        const now = new Date();
+        const futureBookings = (result.items || []).filter(booking => {
+          const bookingDate = new Date(booking.bookingDate);
+          return bookingDate >= now;
+        }).sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
+        
+        setBookings(futureBookings);
+        setLastUpdated(new Date());
       } catch (error) {
-        console.error('Error loading bookings:', error);
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error loading bookings:', error);
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
+    // Initial load
     loadBookings();
 
-    // Setup 60-second polling
+    // Setup 60-second polling that runs continuously
     if (!pollingIntervalRef.current) {
       pollingIntervalRef.current = setInterval(() => {
-        if (pollingActive) {
-          loadBookings();
-        }
+        loadBookings();
       }, 60000);
     }
 
@@ -100,7 +150,53 @@ export default function BookingPage() {
         pollingIntervalRef.current = null;
       }
     };
+  }, []);
+
+  // Visibility change refetch logic
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && pollingActive) {
+        // Page became visible, refetch immediately
+        const loadBookings = async () => {
+          try {
+            const result = await BaseCrudService.getAll<BookingSlot>('bookingavailability', {}, { limit: 100 });
+            const now = new Date();
+            const futureBookings = (result.items || []).filter(booking => {
+              const bookingDate = new Date(booking.bookingDate);
+              return bookingDate >= now;
+            }).sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
+            setBookings(futureBookings);
+            setLastUpdated(new Date());
+          } catch (error) {
+            console.error('Error refetching bookings:', error);
+          }
+        };
+        loadBookings();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [pollingActive]);
+
+  // Lock body scroll on modal open and return focus on close
+  useEffect(() => {
+    if (selectedSlot) {
+      document.body.style.overflow = 'hidden';
+      // Store the trigger button for focus restoration
+      triggerButtonRef.current = document.activeElement as HTMLButtonElement;
+    } else {
+      document.body.style.overflow = 'unset';
+      // Return focus to trigger button
+      if (triggerButtonRef.current) {
+        triggerButtonRef.current.focus();
+      }
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedSlot]);
 
   // Focus trap for modal
   useEffect(() => {
@@ -147,6 +243,11 @@ export default function BookingPage() {
     return acc;
   }, {} as Record<string, BookingSlot[]>);
 
+  // Sort grouped dates chronologically
+  const sortedDates = Object.keys(groupedByDate).sort((a, b) => 
+    new Date(a).getTime() - new Date(b).getTime()
+  );
+
   const closeModal = useCallback(() => {
     setSelectedSlot(null);
     setSubmissionState({ success: false, error: null, confirmationNumber: null });
@@ -158,6 +259,7 @@ export default function BookingPage() {
       honeypot: '',
       agreedToPolicy: false
     });
+    setPollingActive(false);
   }, []);
 
   const handleSlotClick = (slot: BookingSlot) => {
@@ -189,6 +291,14 @@ export default function BookingPage() {
       setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleCopyConfirmation = () => {
+    if (submissionState.confirmationNumber) {
+      navigator.clipboard.writeText(submissionState.confirmationNumber);
+      setCopiedConfirmation(true);
+      setTimeout(() => setCopiedConfirmation(false), 2000);
     }
   };
 
@@ -242,7 +352,6 @@ export default function BookingPage() {
         // Close modal after 3 seconds
         setTimeout(() => {
           closeModal();
-          setPollingActive(false);
         }, 3000);
       } else {
         setSubmissionState({
@@ -281,6 +390,11 @@ export default function BookingPage() {
             <p className="text-lg text-white/60 max-w-2xl">
               Select your preferred date and time for your photography session. All times are in Pacific Time (PT).
             </p>
+            {lastUpdated && (
+              <p className="text-xs text-white/40 mt-4">
+                Last updated: {lastUpdated.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles' })}
+              </p>
+            )}
           </motion.div>
 
           {/* Booking Modal with Focus Trap */}
@@ -337,10 +451,22 @@ export default function BookingPage() {
                       className="mb-6 p-4 bg-green-500/20 border border-green-500/50 text-green-400 rounded flex items-start gap-3"
                     >
                       <Check className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                      <div>
+                      <div className="flex-1">
                         <p className="font-bold mb-1">Booking Confirmed!</p>
                         {submissionState.confirmationNumber && (
-                          <p className="text-sm">Confirmation #: {submissionState.confirmationNumber}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <p className="text-sm">Confirmation #: {submissionState.confirmationNumber}</p>
+                            <button
+                              onClick={handleCopyConfirmation}
+                              className="p-1 hover:bg-green-500/20 rounded transition-colors"
+                              title="Copy confirmation number"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                            {copiedConfirmation && (
+                              <span className="text-xs text-green-300">Copied!</span>
+                            )}
+                          </div>
                         )}
                         <p className="text-sm mt-1">Check your email for details.</p>
                       </div>
@@ -353,11 +479,7 @@ export default function BookingPage() {
                       <div className="mb-6 p-4 bg-white/5 border border-primary/20 rounded">
                         <p className="text-sm text-white/60 mb-2">Selected Time Slot</p>
                         <p className="font-heading font-bold text-lg">
-                          {new Date(selectedSlot.bookingDate).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
+                          {formatTimeInPT(selectedSlot.bookingDate)}
                         </p>
                         <p className="text-white/80 font-mono">
                           {selectedSlot.startTime} - {selectedSlot.endTime} PT
@@ -493,56 +615,58 @@ export default function BookingPage() {
             </motion.div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Object.entries(groupedByDate).map(([date, slots], idx) => (
-                <motion.div
-                  key={date}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="border border-white/10 rounded-lg p-6 hover:border-primary/30 transition-colors"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <Calendar className="w-5 h-5 text-white/60" />
-                    <h3 className="text-lg font-heading font-bold">
-                      {new Date(date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </h3>
-                  </div>
+              {sortedDates.map((date, idx) => {
+                const slots = groupedByDate[date];
+                // Cap stagger animations to 0.5s max
+                const staggerDelay = Math.min(idx * 0.08, 0.5);
+                return (
+                  <motion.div
+                    key={date}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: staggerDelay }}
+                    className="border border-white/10 rounded-lg p-6 hover:border-primary/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <Calendar className="w-5 h-5 text-white/60" />
+                      <h3 className="text-lg font-heading font-bold">
+                        {formatTimeInPT(date)}
+                      </h3>
+                    </div>
 
-                  <div className="space-y-3">
-                    {slots.map((slot) => {
-                      const isLocked = isSlotLocked(slot._id);
-                      return (
-                        <button
-                          key={slot._id}
-                          onClick={() => handleSlotClick(slot)}
-                          disabled={isLocked}
-                          className={`w-full p-3 bg-white/5 border border-white/10 rounded transition-all duration-300 text-left ${
-                            isLocked
-                              ? 'opacity-50 cursor-not-allowed'
-                              : 'hover:bg-white/10 hover:border-primary/30'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-white/40" />
-                              <span className="text-sm font-mono">
-                                {slot.startTime} - {slot.endTime} PT
+                    <div className="space-y-3">
+                      {slots.map((slot) => {
+                        const isLocked = isSlotLocked(slot._id);
+                        return (
+                          <button
+                            key={slot._id}
+                            ref={triggerButtonRef}
+                            onClick={() => handleSlotClick(slot)}
+                            disabled={isLocked}
+                            className={`w-full p-3 bg-white/5 border border-white/10 rounded transition-all duration-300 text-left ${
+                              isLocked
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'hover:bg-white/10 hover:border-primary/30'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-white/40" />
+                                <span className="text-sm font-mono">
+                                  {slot.startTime} - {slot.endTime} PT
+                                </span>
+                              </div>
+                              <span className="text-xs text-white/50 uppercase tracking-wide">
+                                {isLocked ? 'Locked' : slot.sessionType}
                               </span>
                             </div>
-                            <span className="text-xs text-white/50 uppercase tracking-wide">
-                              {isLocked ? 'Locked' : slot.sessionType}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              ))}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
 
