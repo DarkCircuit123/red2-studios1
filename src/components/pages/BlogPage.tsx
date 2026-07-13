@@ -72,23 +72,23 @@ export default function BlogPage() {
               {posts.map((post, idx) => {
                 const href = post.externalLink || '#';
                 const isExternal = !!post.externalLink;
-                
-                const articleProps = isExternal ? {
-                  as: 'a' as const,
-                  href: href,
-                  target: '_blank' as const,
-                  rel: 'noopener noreferrer' as const
-                } : {};
 
                 return (
-                  <motion.article
+                  <motion.div
                     key={post._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.1 }}
-                    className="group cursor-pointer"
-                    {...articleProps}
+                    className="group"
                   >
+                    <article
+                      className={isExternal ? "cursor-pointer" : ""}
+                      onClick={() => {
+                        if (isExternal) {
+                          window.open(href, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
+                    >
                     {/* Featured Image */}
                     {post.thumbnailImage && (
                       <div className="relative overflow-hidden rounded-lg mb-6 h-96 bg-white/5 flex items-center justify-center">
@@ -142,20 +142,21 @@ export default function BlogPage() {
                         </p>
                       )}
 
-                      {/* Video Link */}
+                        {/* Video Link */}
                       {post.videoUrl && (
-                        <a
-                          href={post.videoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(post.videoUrl, '_blank', 'noopener,noreferrer');
+                          }}
                           className="inline-block mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-sm text-white transition-all duration-300"
                         >
                           Watch Video
-                        </a>
+                        </button>
                       )}
                     </div>
-                  </motion.article>
+                    </article>
+                  </motion.div>
                 );
               })}
             </div>
