@@ -9,6 +9,7 @@ import PortfolioDetailPage from './pages/PortfolioDetailPage';
 import BookingPage from './pages/BookingPage';
 import ClientGalleriesPage from './pages/ClientGalleriesPage';
 import BlogPage from './pages/BlogPage';
+import BlogDetailPage from './pages/BlogDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import PrivatePage from './pages/PrivatePage';
 import HangmanGamePage from './pages/HangmanGamePage';
@@ -57,6 +58,10 @@ const router = createBrowserRouter([
       {
         path: "blog",
         element: <BlogPage />,
+      },
+      {
+        path: "blog/:id",
+        element: <BlogDetailPage />,
       },
       {
         path: "profile",

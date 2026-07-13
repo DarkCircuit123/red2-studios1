@@ -30,7 +30,7 @@ export default function FashionTicker() {
             .map((post) => ({
               id: post._id,
               title: post.title || 'Untitled Article',
-              link: post.externalLink || `/blog#${post._id}`,
+              link: `/blog/${post._id}`,
               pubDate: post.publicationDate ? new Date(post.publicationDate).toISOString() : new Date().toISOString(),
             }));
           
