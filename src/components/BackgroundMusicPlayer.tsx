@@ -3,32 +3,27 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function BackgroundMusicPlayer() {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  // Attempt to play music on first user interaction
+  // Preload and attempt to play music on first user interaction
   useEffect(() => {
     const handleUserInteraction = () => {
-      if (!hasInteracted && audioRef.current) {
+      if (!hasInteracted) {
         setHasInteracted(true);
-        // Try to play with muted state first (autoplay policy)
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-              // Unmute after successful play
-              if (audioRef.current) {
-                audioRef.current.muted = false;
-                setIsMuted(false);
-              }
-            })
-            .catch(() => {
-              // Autoplay was prevented, keep muted
-              setIsPlaying(false);
-            });
+        // Trigger play via iframe postMessage
+        if (iframeRef.current) {
+          try {
+            iframeRef.current.contentWindow?.postMessage(
+              { method: 'play' },
+              '*'
+            );
+            setIsPlaying(true);
+          } catch (e) {
+            console.log('Could not trigger SoundCloud playback');
+          }
         }
       }
     };
@@ -46,33 +41,37 @@ export default function BackgroundMusicPlayer() {
   }, [hasInteracted]);
 
   const togglePlayPause = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.play();
-        setIsPlaying(true);
+    if (iframeRef.current) {
+      try {
+        const method = isPlaying ? 'pause' : 'play';
+        iframeRef.current.contentWindow?.postMessage(
+          { method },
+          '*'
+        );
+        setIsPlaying(!isPlaying);
+      } catch (e) {
+        console.log('Could not control SoundCloud playback');
       }
     }
   };
 
   const toggleMute = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
+    setIsMuted(!isMuted);
   };
 
   return (
     <>
-      {/* Hidden audio element */}
-      <audio
-        ref={audioRef}
-        loop
-        muted={isMuted}
-        crossOrigin="anonymous"
-        src="https://soundcloud.com/markd54321/198-blue-in-green-miles-davis"
+      {/* Hidden SoundCloud iframe - preloaded */}
+      <iframe
+        ref={iframeRef}
+        title="Background Music Player"
+        width="0"
+        height="0"
+        scrolling="no"
+        frameBorder="no"
+        allow="autoplay"
+        src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1234567890&color=%236F0809&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
+        style={{ display: 'none' }}
       />
 
       {/* Music control button - fixed position */}
