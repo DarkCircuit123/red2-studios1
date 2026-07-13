@@ -84,18 +84,8 @@ function initializeSessionProtection(): void {
  */
 function initializeNetworkValidation(): void {
   try {
-    // Intercept fetch requests
-    const originalFetch = window.fetch;
-    window.fetch = function (...args: any[]) {
-      const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
-      const method = args[1]?.method || 'GET';
-
-      if (!networkValidator.interceptRequest(url, method)) {
-        return Promise.reject(new Error('Request blocked by security policy'));
-      }
-
-      return originalFetch.apply(this, args);
-    };
+    // Network validation disabled - allows standard DNS and network operations
+    // No fetch interception to maintain standard site operation
   } catch (error) {
     // Silently fail
   }

@@ -134,9 +134,6 @@ export function setupResourceHints() {
     'https://static.parastorage.com',
   ]);
 
-  // DNS prefetch for analytics and tracking
-  prefetchDNS(['google-analytics.com', 'googletagmanager.com']);
-
   // Prefetch important pages
   prefetchPages(['/portfolio', '/booking', '/galleries']);
 }

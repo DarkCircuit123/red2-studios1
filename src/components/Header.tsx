@@ -118,7 +118,6 @@ export default function Header() {
             { href: '/galleries', label: 'Galleries', isLink: true },
             { href: '#contact', label: 'Contact' },
             { href: '/play', label: 'Play', isLink: true },
-            { href: '/admin-login', label: 'Admin', isLink: true },
           ].map((item, i) => (
             <motion.div
               key={i}
@@ -195,7 +194,6 @@ export default function Header() {
               { href: '/galleries', label: 'Galleries', isLink: true },
               { href: '#contact', label: 'Contact' },
               { href: '/play', label: 'Play', isLink: true },
-              { href: '/admin-login', label: 'Admin', isLink: true },
             ].map((item, i) => (
               <motion.div
                 key={i}

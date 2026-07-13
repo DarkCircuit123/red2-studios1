@@ -76,19 +76,6 @@ export const preloadCriticalResources = () => {
     link.crossOrigin = 'anonymous';
     document.head.appendChild(link);
   });
-
-  // DNS prefetch for external resources
-  const dnsPrefetches = [
-    'https://static.wixstatic.com',
-    'https://cdn.jsdelivr.net',
-  ];
-
-  dnsPrefetches.forEach((domain) => {
-    const link = document.createElement('link');
-    link.rel = 'dns-prefetch';
-    link.href = domain;
-    document.head.appendChild(link);
-  });
 };
 
 // 5. Memory-efficient event listener management
