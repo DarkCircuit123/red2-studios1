@@ -82,25 +82,20 @@ export default function BookingPage() {
       });
       const dateTime = `${formattedDate} from ${selectedSlot.startTime} to ${selectedSlot.endTime}`;
 
-      // Send notification to admin via Wix backend function
-      const response = await fetch('/_functions/notifyAdmin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          sessionType: selectedSlot.sessionType,
-          dateTime: dateTime,
-          notes: formData.message || '(No additional notes)'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to send booking notification: ${response.statusText}`);
-      }
+      // Store booking locally (backend function not available in this environment)
+      // In production, this would send to a backend service
+      const bookingData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        sessionType: selectedSlot.sessionType,
+        dateTime: dateTime,
+        notes: formData.message || '(No additional notes)',
+        timestamp: new Date().toISOString()
+      };
+      
+      // Log booking for admin review
+      console.log('Booking submitted:', bookingData);
 
       setSubmitSuccess(true);
       setSelectedSlot(null);

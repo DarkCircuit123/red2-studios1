@@ -27,7 +27,7 @@ export default function HomePage() {
 
     // Monitor Core Web Vitals
     monitorCoreWebVitals((metric) => {
-      if (metric.rating === 'poor') {
+      if (metric.rating === 'poor' && process.env.NODE_ENV === 'development') {
         console.warn(`[Performance] ${metric.name}: ${metric.value}ms - ${metric.rating}`);
       }
     });

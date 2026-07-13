@@ -48,7 +48,9 @@ function DataExportPageContent() {
           'Team Members': team.totalCount || 0,
         });
       } catch (error) {
-        console.error('Failed to load data statistics:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to load data statistics:', error);
+        }
         // Keep empty stats on error
       } finally {
         setIsLoading(false);
@@ -75,7 +77,9 @@ function DataExportPageContent() {
       setExportStatus(`✓ ${collectionName} exported successfully!`);
       setTimeout(() => setExportStatus(null), 3000);
     } catch (error) {
-      console.error(`Failed to export ${collectionName}:`, error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`Failed to export ${collectionName}:`, error);
+      }
       setExportStatus(`✗ Failed to export ${collectionName}`);
     } finally {
       setIsExporting(false);
@@ -121,7 +125,9 @@ function DataExportPageContent() {
       setExportStatus('✓ All data exported successfully!');
       setTimeout(() => setExportStatus(null), 3000);
     } catch (error) {
-      console.error('Failed to export all data:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to export all data:', error);
+      }
       setExportStatus('✗ Failed to export all data');
     } finally {
       setIsExporting(false);

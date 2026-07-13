@@ -1,5 +1,5 @@
 import React, { ReactNode, ReactElement } from 'react';
-import { AlertCircle, RotateCcw } from 'lucide-react';
+import { AlertCircle, RotateCcw, Home } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -82,6 +82,7 @@ class ModuleErrorBoundary extends React.Component<Props, State> {
                 onClick={() => window.location.href = '/'}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
               >
+                <Home className="w-4 h-4" />
                 Go Home
               </button>
             </div>

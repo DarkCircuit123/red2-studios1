@@ -38,7 +38,9 @@ export default function StoriesDetailPage() {
           }
         }
       } catch (error) {
-        console.error('Error fetching story:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching story:', error);
+        }
         setNotFound(true);
       } finally {
         setIsLoading(false);

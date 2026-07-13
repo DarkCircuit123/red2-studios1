@@ -107,7 +107,9 @@ export default function ClientRegisterPage() {
         navigate('/client-gallery-dashboard');
       }, 1500);
     } catch (err) {
-      console.error('Registration error:', err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Registration error:', err);
+      }
       setError('An error occurred during registration. Please try again.');
     } finally {
       setIsLoading(false);

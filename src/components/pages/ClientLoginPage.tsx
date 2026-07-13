@@ -57,7 +57,9 @@ export default function ClientLoginPage() {
       // Redirect to client gallery view
       navigate(`/client-gallery/${gallery._id}`);
     } catch (err) {
-      console.error('Login error:', err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Login error:', err);
+      }
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);

@@ -43,7 +43,9 @@ export default function StoriesIndexPage() {
       setHasMore(result.hasNext);
       setSkip(skipValue + ITEMS_PER_PAGE);
     } catch (error) {
-      console.error('Error fetching stories:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching stories:', error);
+      }
     } finally {
       setIsLoading(false);
     }

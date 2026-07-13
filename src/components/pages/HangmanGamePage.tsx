@@ -234,11 +234,9 @@ export default function HangmanGamePage() {
     const isLost = newWrongGuesses >= maxWrong;
 
     if (isLost) {
-      // Play funny losing sound and redirect
+      // Play funny losing sound
       playFunnyLosingSound();
-      setTimeout(() => {
-        window.location.href = 'https://www.looser.com';
-      }, 600);
+      // Game over - user can try again
     }
 
     if (isWon) {
