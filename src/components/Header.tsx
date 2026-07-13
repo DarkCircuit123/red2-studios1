@@ -151,43 +151,27 @@ export default function Header() {
         {/* Admin & Mobile Menu - Right aligned */}
         <div className="flex items-center gap-6 ml-auto">
           {/* Auth Links */}
-          {!isLoading && (
+          {!isLoading && isAuthenticated && (
             <>
-              {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/profile"
-                    onClick={handleLinkClick}
-                    className="text-xs font-mono text-white/60 hover:text-primary transition-colors duration-300 uppercase tracking-widest hidden sm:block"
-                  >
-                    {member?.profile?.nickname || 'Profile'}
-                  </Link>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      playClickSound();
-                      actions.logout();
-                    }}
-                    className="text-xs font-mono text-white/60 hover:text-primary transition-colors duration-300 uppercase tracking-widest hidden sm:flex items-center gap-2"
-                  >
-                    <LogOut className="w-3 h-3" />
-                    Sign Out
-                  </motion.button>
-                </>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    playClickSound();
-                    actions.login();
-                  }}
-                  className="text-xs font-mono text-white/60 hover:text-primary transition-colors duration-300 uppercase tracking-widest hidden sm:block"
-                >
-                  Client Login
-                </motion.button>
-              )}
+              <Link
+                to="/profile"
+                onClick={handleLinkClick}
+                className="text-xs font-mono text-white/60 hover:text-primary transition-colors duration-300 uppercase tracking-widest hidden sm:block"
+              >
+                {member?.profile?.nickname || 'Profile'}
+              </Link>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  playClickSound();
+                  actions.logout();
+                }}
+                className="text-xs font-mono text-white/60 hover:text-primary transition-colors duration-300 uppercase tracking-widest hidden sm:flex items-center gap-2"
+              >
+                <LogOut className="w-3 h-3" />
+                Sign Out
+              </motion.button>
             </>
           )}
 
@@ -272,47 +256,30 @@ export default function Header() {
               </motion.div>
             ))}
             {/* Mobile Auth */}
-            {!isLoading && (
-              <>
-                {isAuthenticated ? (
-                  <div className="border-t border-primary/30 pt-6">
-                    <Link
-                      to="/profile"
-                      className="text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest block mb-4"
-                      onClick={() => {
-                        handleLinkClick();
-                        setIsOpen(false);
-                      }}
-                    >
-                      {member?.profile?.nickname || 'Profile'}
-                    </Link>
-                    <button
-                      onClick={() => {
-                        playClickSound();
-                        actions.logout();
-                        setIsOpen(false);
-                      }}
-                      className="text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest flex items-center gap-2"
-                    >
-                      <LogOut className="w-3 h-3" />
-                      Sign Out
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-t border-primary/30 pt-6">
-                    <button
-                      onClick={() => {
-                        playClickSound();
-                        actions.login();
-                        setIsOpen(false);
-                      }}
-                      className="text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest"
-                    >
-                      Client Login
-                    </button>
-                  </div>
-                )}
-              </>
+            {!isLoading && isAuthenticated && (
+              <div className="border-t border-primary/30 pt-6">
+                <Link
+                  to="/profile"
+                  className="text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest block mb-4"
+                  onClick={() => {
+                    handleLinkClick();
+                    setIsOpen(false);
+                  }}
+                >
+                  {member?.profile?.nickname || 'Profile'}
+                </Link>
+                <button
+                  onClick={() => {
+                    playClickSound();
+                    actions.logout();
+                    setIsOpen(false);
+                  }}
+                  className="text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest flex items-center gap-2"
+                >
+                  <LogOut className="w-3 h-3" />
+                  Sign Out
+                </button>
+              </div>
             )}
           </div>
         </motion.div>
