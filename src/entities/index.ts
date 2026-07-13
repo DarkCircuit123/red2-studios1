@@ -256,6 +256,31 @@ export interface TeamMembers {
 
 
 /**
+ * Collection ID: tickerstories
+ * Interface for TickerStories
+ */
+export interface TickerStories {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  headline?: string;
+  /** @wixFieldType text */
+  slug?: string;
+  /** @wixFieldType url */
+  storyURL?: string;
+  /** @wixFieldType text */
+  category?: string;
+  /** @wixFieldType date */
+  publishDate?: Date | string;
+  /** @wixFieldType boolean */
+  active?: boolean;
+  /** @wixFieldType number */
+  priority?: number;
+}
+
+
+/**
  * Collection ID: watermarksettings
  * Interface for WatermarkSettings
  */
