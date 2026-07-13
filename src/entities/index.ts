@@ -98,6 +98,35 @@ export interface ClientsPress {
 
 
 /**
+ * Collection ID: dataexportaudit
+ * Interface for DataExportAudit
+ */
+export interface DataExportAudit {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  exportedBy?: string;
+  /** @wixFieldType datetime */
+  exportDate?: Date | string;
+  /** @wixFieldType text */
+  collectionsExported?: string;
+  /** @wixFieldType text */
+  exportFormat?: string;
+  /** @wixFieldType boolean */
+  includedPII?: boolean;
+  /** @wixFieldType number */
+  recordCount?: number;
+  /** @wixFieldType number */
+  fileSize?: number;
+  /** @wixFieldType text */
+  status?: string;
+  /** @wixFieldType text */
+  errorMessage?: string;
+}
+
+
+/**
  * Collection ID: homepageimages
  * Interface for HomepageImages
  */
