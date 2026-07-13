@@ -40,6 +40,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
       localStorage.setItem('clientSession', JSON.stringify(session));
     } else {
       localStorage.removeItem('clientSession');
+      // Full logout cleanup: clear all session storage
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+      }
     }
     set({ clientSession: session });
   },
@@ -48,12 +52,27 @@ export const useAuthStore = create<AuthStore>((set) => ({
       localStorage.setItem('adminSession', JSON.stringify(session));
     } else {
       localStorage.removeItem('adminSession');
+      // Full logout cleanup: clear all session storage
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+      }
     }
     set({ adminSession: session });
   },
   logout: () => {
     localStorage.removeItem('clientSession');
     localStorage.removeItem('adminSession');
+    // Full logout cleanup: clear all session storage and sensitive data
+    if (typeof window !== 'undefined') {
+      sessionStorage.clear();
+      // Clear any cached gallery data
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.includes('gallery') || key.includes('client')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
     set({ clientSession: null, adminSession: null });
   },
 }));
