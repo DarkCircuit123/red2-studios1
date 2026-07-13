@@ -1,10 +1,6 @@
 import React, { Suspense } from 'react';
 import RouterFallback from '@/components/RouterFallback';
 import AppRouter from '@/components/Router';
-import '@/lib/site-diagnostics';
-import '@/lib/performance-optimizer';
-import '@/lib/accessibility-checker';
-import { diagnosticCleanup } from '@/lib/diagnostic-cleanup';
 
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
