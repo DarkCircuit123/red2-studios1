@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Volume2, VolumeX, Music } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { GlobalAudioManager } from '@/lib/audio-manager';
 
 export default function BackgroundMusicPlayer() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay policy
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const audioManagerRef = useRef(GlobalAudioManager.getInstance());
 
   // SoundCloud track URL - Blue in Green by Miles Davis
   const SOUNDCLOUD_TRACK_URL = 'https://soundcloud.com/markd54321/198-blue-in-green-miles-davis';
@@ -19,6 +21,9 @@ export default function BackgroundMusicPlayer() {
       if (!hasInteracted) {
         setHasInteracted(true);
         setIsLoading(false);
+        
+        // Resume audio context on first interaction
+        audioManagerRef.current.resumeAudioContext().catch(() => {});
         
         // Attempt to trigger SoundCloud player
         if (iframeRef.current?.contentWindow) {
@@ -64,10 +69,15 @@ export default function BackgroundMusicPlayer() {
   }, [isPlaying]);
 
   const toggleMute = useCallback(() => {
-    setIsMuted(!isMuted);
+    const newMutedState = !isMuted;
+    setIsMuted(newMutedState);
+    
+    // Update global audio manager
+    audioManagerRef.current.setAudioEnabled(!newMutedState);
+    
     if (iframeRef.current?.contentWindow) {
       try {
-        const method = isMuted ? 'unmute' : 'mute';
+        const method = newMutedState ? 'mute' : 'unmute';
         iframeRef.current.contentWindow.postMessage(
           { method },
           '*'

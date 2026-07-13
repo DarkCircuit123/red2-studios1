@@ -19,6 +19,7 @@ import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
 import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
+import AudioDiagnosticsPanel from './AudioDiagnosticsPanel';
 // ... keep existing code (other imports) ...
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
@@ -27,6 +28,7 @@ function Layout() {
     <>
       <ScrollToTop />
       <BackgroundMusicPlayer />
+      <AudioDiagnosticsPanel />
       <Outlet />
     </>
   );
