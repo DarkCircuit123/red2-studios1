@@ -15,7 +15,19 @@ interface ClientGallery {
   approvalStatus: string;
   galleryCoverImage: string;
   galleryExpirationDate: string;
+  isPublic?: boolean;
 }
+
+const SAMPLE_PUBLIC_GALLERY: ClientGallery = {
+  _id: 'sample-public-gallery',
+  clientName: 'Public Sample Gallery',
+  clientEmail: 'sample@gallery.com',
+  galleryAccessCode: 'PUBLIC',
+  approvalStatus: 'approved',
+  galleryCoverImage: 'https://static.wixstatic.com/media/e9d727_fe361c98e64f40a0b892953a9484b8b0~mv2.png?originWidth=384&originHeight=384',
+  galleryExpirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+  isPublic: true,
+};
 
 export default function ClientGalleriesPage() {
   const [galleries, setGalleries] = useState<ClientGallery[]>([]);
@@ -28,9 +40,11 @@ export default function ClientGalleriesPage() {
     const loadGalleries = async () => {
       try {
         const result = await BaseCrudService.getAll<ClientGallery>('clientgalleries', {}, { limit: 50 });
-        setGalleries(result.items || []);
+        // Add the public sample gallery at the beginning
+        setGalleries([SAMPLE_PUBLIC_GALLERY, ...(result.items || [])]);
       } catch (error) {
-        // Silently fail - show empty state
+        // Silently fail - show empty state with sample gallery
+        setGalleries([SAMPLE_PUBLIC_GALLERY]);
       } finally {
         setIsLoading(false);
       }
@@ -61,6 +75,8 @@ export default function ClientGalleriesPage() {
   };
 
   const isGalleryAccessible = (gallery: ClientGallery): boolean => {
+    // Public galleries are always accessible
+    if (gallery.isPublic) return true;
     if (!clientSession) return false;
     return clientSession.galleryId === gallery._id;
   };
@@ -185,7 +201,7 @@ export default function ClientGalleriesPage() {
                       </div>
                       {!isAccessible && (
                         <p className="text-xs text-white/40 italic pt-2">
-                          Enter your access code to view
+                          {gallery.isPublic ? 'Public sample - no code needed' : 'Enter your access code to view'}
                         </p>
                       )}
                     </div>
