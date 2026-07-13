@@ -11,12 +11,11 @@ import {
   sriEnforcer,
 } from './red-team-hardening';
 import {
-  payloadAnalyzer,
   intrusionDetectionSystem,
   exploitPreventionEngine,
   zeroDayProtection,
 } from './advanced-threat-detection';
-import { CSPManager, SecurityHeadersManager, RateLimiter } from './security-enhanced';
+import { SecurityHeadersManager } from './security-enhanced';
 
 /**
  * Initialize all security systems
