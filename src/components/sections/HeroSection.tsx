@@ -14,14 +14,15 @@ export default function HeroSection() {
     const loadHeroImage = async () => {
       try {
         const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-        if (homepageImages.items && homepageImages.items.length > 0) {
+        if (homepageImages?.items && homepageImages.items.length > 0) {
           const images = homepageImages.items[0] as any;
-          if (images.heroImage) {
+          if (images?.heroImage) {
             setHeroImage(images.heroImage);
           }
         }
       } catch (error) {
-        // Silently fail - use default image
+        console.error('[HeroSection] Failed to load hero image:', error);
+        // Use default image
       }
     };
     loadHeroImage();

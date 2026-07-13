@@ -1,29 +1,23 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense } from 'react';
 import RouterFallback from '@/components/RouterFallback';
-import SplashScreen from '@/components/SplashScreen';
-
-// Lazy load Router with error handling
-const AppRouter = lazy(() => 
-  import('@/components/Router').catch(err => {
-    return { default: RouterFallback };
-  })
-);
+import AppRouter from '@/components/Router';
 
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean; errorCount: number }
+  { hasError: boolean }
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false, errorCount: 0 };
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error) {
+    console.error('[AppRoot] Router error:', error);
     return { hasError: true };
   }
 
-  componentDidCatch(error: Error) {
-    this.setState(prev => ({ errorCount: prev.errorCount + 1 }));
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[AppRoot] Error caught:', error, errorInfo);
   }
 
   render() {
@@ -35,19 +29,11 @@ class RouterErrorBoundary extends React.Component<
 }
 
 export default function AppRoot() {
-  const [splashComplete, setSplashComplete] = useState(false);
-
   return (
-    <>
-      {/* Top-level splash screen - shown once per session */}
-      <SplashScreen onComplete={() => setSplashComplete(true)} />
-      
-      {/* Main app router */}
-      <RouterErrorBoundary>
-        <Suspense fallback={<RouterFallback />}>
-          <AppRouter />
-        </Suspense>
-      </RouterErrorBoundary>
-    </>
+    <RouterErrorBoundary>
+      <Suspense fallback={<RouterFallback />}>
+        <AppRouter />
+      </Suspense>
+    </RouterErrorBoundary>
   );
 }

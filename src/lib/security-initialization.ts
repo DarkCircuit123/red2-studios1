@@ -23,29 +23,61 @@ import { SecurityHeadersManager } from './security-enhanced';
 export function initializeSecuritySystems(): void {
   if (typeof window === 'undefined') return;
 
-  // 1. Initialize DOM Integrity Monitor
-  initializeDOMIntegrity();
+  try {
+    // 1. Initialize DOM Integrity Monitor
+    initializeDOMIntegrity();
+  } catch (error) {
+    console.error('[Security] DOM integrity init failed:', error);
+  }
 
-  // 2. Initialize Session Protection
-  initializeSessionProtection();
+  try {
+    // 2. Initialize Session Protection
+    initializeSessionProtection();
+  } catch (error) {
+    console.error('[Security] Session protection init failed:', error);
+  }
 
-  // 3. Initialize Network Validation
-  initializeNetworkValidation();
+  try {
+    // 3. Initialize Network Validation
+    initializeNetworkValidation();
+  } catch (error) {
+    console.error('[Security] Network validation init failed:', error);
+  }
 
-  // 4. Initialize Threat Detection
-  initializeThreatDetection();
+  try {
+    // 4. Initialize Threat Detection
+    initializeThreatDetection();
+  } catch (error) {
+    console.error('[Security] Threat detection init failed:', error);
+  }
 
-  // 5. Initialize Security Headers
-  initializeSecurityHeaders();
+  try {
+    // 5. Initialize Security Headers
+    initializeSecurityHeaders();
+  } catch (error) {
+    console.error('[Security] Security headers init failed:', error);
+  }
 
-  // 6. Initialize Zero-Day Protection
-  initializeZeroDayProtection();
+  try {
+    // 6. Initialize Zero-Day Protection
+    initializeZeroDayProtection();
+  } catch (error) {
+    console.error('[Security] Zero-day protection init failed:', error);
+  }
 
-  // 7. Setup Global Error Handling
-  setupGlobalErrorHandling();
+  try {
+    // 7. Setup Global Error Handling
+    setupGlobalErrorHandling();
+  } catch (error) {
+    console.error('[Security] Global error handling init failed:', error);
+  }
 
-  // 8. Setup Periodic Security Checks
-  setupPeriodicSecurityChecks();
+  try {
+    // 8. Setup Periodic Security Checks
+    setupPeriodicSecurityChecks();
+  } catch (error) {
+    console.error('[Security] Periodic checks init failed:', error);
+  }
 }
 
 /**
@@ -371,16 +403,28 @@ interface SecurityReport {
   url: string;
 }
 
-// Auto-initialize on module load
+// Auto-initialize on module load - with error handling
 if (typeof window !== 'undefined') {
-  // Initialize after DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      initializeSecuritySystems();
-      setupSecurityEventListeners();
-    });
-  } else {
-    initializeSecuritySystems();
-    setupSecurityEventListeners();
+  try {
+    // Initialize after DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        try {
+          initializeSecuritySystems();
+          setupSecurityEventListeners();
+        } catch (error) {
+          console.error('[Security] Initialization error:', error);
+        }
+      });
+    } else {
+      try {
+        initializeSecuritySystems();
+        setupSecurityEventListeners();
+      } catch (error) {
+        console.error('[Security] Initialization error:', error);
+      }
+    }
+  } catch (error) {
+    console.error('[Security] Module initialization error:', error);
   }
 }

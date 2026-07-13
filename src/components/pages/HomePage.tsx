@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
@@ -6,60 +6,43 @@ import AboutSection from '@/components/sections/AboutSection';
 import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
-import { initializeSecuritySystems, setupSecurityEventListeners } from '@/lib/security-initialization';
-import {
-  preloadCriticalResources,
-  monitorCoreWebVitals,
-  deferNonCriticalJS,
-} from '@/lib/performance-enhancements';
+
+// Fallback component for sections
+function SectionFallback() {
+  return <div className="w-full h-96 bg-black animate-pulse" />;
+}
 
 export default function HomePage() {
-  // Initialize security systems on component mount
-  useEffect(() => {
-    initializeSecuritySystems();
-    setupSecurityEventListeners();
-  }, []);
-
-  // Initialize performance optimizations
-  useEffect(() => {
-    // Preload critical resources immediately
-    preloadCriticalResources();
-
-    // Monitor Core Web Vitals
-    monitorCoreWebVitals((metric) => {
-      if (metric.rating === 'poor' && process.env.NODE_ENV === 'development') {
-        console.warn(`[Performance] ${metric.name}: ${metric.value}ms - ${metric.rating}`);
-      }
-    });
-
-    // Defer non-critical initialization
-    deferNonCriticalJS(() => {
-      // Non-critical tasks here
-    });
-  }, []);
-
   return (
-    <>
-      <div className="min-h-screen bg-black text-white">
-        <Header />
+    <div className="min-h-screen bg-black text-white">
+      <Header />
 
-        {/* Hero Section */}
+      {/* Hero Section */}
+      <Suspense fallback={<SectionFallback />}>
         <HeroSection />
+      </Suspense>
 
-        {/* About / Vision */}
+      {/* About / Vision */}
+      <Suspense fallback={<SectionFallback />}>
         <AboutSection />
+      </Suspense>
 
-        {/* Rubber Band Carousel */}
+      {/* Rubber Band Carousel */}
+      <Suspense fallback={<SectionFallback />}>
         <RubberBandCarouselSection />
+      </Suspense>
 
-        {/* Sponsored By */}
+      {/* Sponsored By */}
+      <Suspense fallback={<SectionFallback />}>
         <SponsorsSection />
+      </Suspense>
 
-        {/* Contact / Booking */}
+      {/* Contact / Booking */}
+      <Suspense fallback={<SectionFallback />}>
         <ContactSection />
+      </Suspense>
 
-        <Footer />
-      </div>
-    </>
+      <Footer />
+    </div>
   );
 }
