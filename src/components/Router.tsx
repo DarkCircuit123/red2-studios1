@@ -18,6 +18,7 @@ import ClientGalleryViewPage from './pages/ClientGalleryViewPage';
 import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
 import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
+import WatchPage from './pages/WatchPage';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
 // ... keep existing code (other imports) ...
 
@@ -101,6 +102,14 @@ const router = createBrowserRouter([
       {
         path: "contact",
         element: <ContactPage />,
+      },
+      {
+        path: "watch",
+        element: <WatchPage />,
+      },
+      {
+        path: "watch/:id",
+        element: <WatchPage />,
       },
       {
         path: "*",

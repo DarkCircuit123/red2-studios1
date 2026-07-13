@@ -144,15 +144,15 @@ export default function BlogPage() {
 
                         {/* Video Link */}
                       {post.videoUrl && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(post.videoUrl, '_blank', 'noopener,noreferrer');
-                          }}
+                        <a
+                          href={post.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="inline-block mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-sm text-white transition-all duration-300"
                         >
                           Watch Video
-                        </button>
+                        </a>
                       )}
                     </div>
                     </article>

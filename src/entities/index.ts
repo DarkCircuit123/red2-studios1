@@ -181,6 +181,31 @@ export interface Prints {
 
 
 /**
+ * Collection ID: reels
+ * Interface for Reels
+ */
+export interface Reels {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  title?: string;
+  /** @wixFieldType url */
+  videoUrl?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  thumbnail?: string;
+  /** @wixFieldType text */
+  duration?: string;
+  /** @wixFieldType text */
+  category?: string;
+  /** @wixFieldType boolean */
+  featured?: boolean;
+  /** @wixFieldType number */
+  order?: number;
+}
+
+
+/**
  * Collection ID: services
  * Interface for Services
  */
