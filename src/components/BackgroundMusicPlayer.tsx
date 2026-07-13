@@ -84,25 +84,23 @@ export default function BackgroundMusicPlayer() {
 
   return (
     <>
-      {/* SoundCloud embed iframe - preloaded and ready */}
+      {/* SoundCloud embed iframe - hidden but functional */}
       <iframe
         ref={iframeRef}
         title="Background Music Player - SoundCloud"
-        width="100%"
-        height="60"
+        width="0"
+        height="0"
         scrolling="no"
         frameBorder="no"
         allow="autoplay"
         onLoad={handleIframeLoad}
         src={SOUNDCLOUD_EMBED_URL}
         style={{ 
-          position: 'fixed',
-          bottom: '100px',
-          right: '8px',
-          zIndex: 30,
-          borderRadius: '8px',
-          opacity: 0.9,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+          display: 'none',
+          visibility: 'hidden',
+          position: 'absolute',
+          width: '0',
+          height: '0'
         }}
       />
 
