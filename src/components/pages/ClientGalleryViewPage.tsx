@@ -16,7 +16,13 @@ interface ClientGallery {
   approvalStatus: string;
   galleryCoverImage: string;
   galleryExpirationDate: string;
+  isPublic?: boolean;
 }
+
+const SAMPLE_PUBLIC_GALLERY_IMAGES = [
+  'https://static.wixstatic.com/media/e9d727_fe361c98e64f40a0b892953a9484b8b0~mv2.png?originWidth=384&originHeight=384',
+  'https://static.wixstatic.com/media/e9d727_fe361c98e64f40a0b892953a9484b8b0~mv2.png?originWidth=384&originHeight=384',
+];
 
 export default function ClientGalleryViewPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,8 +34,12 @@ export default function ClientGalleryViewPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
-  // Redirect if not authenticated
+  // Allow public sample gallery or authenticated sessions
   useEffect(() => {
+    if (id === 'sample-public-gallery') {
+      // Public gallery - no auth needed
+      return;
+    }
     if (!clientSession || clientSession.galleryId !== id) {
       navigate('/client-login');
     }
@@ -39,8 +49,22 @@ export default function ClientGalleryViewPage() {
     const loadGallery = async () => {
       if (!id) return;
       try {
-        const data = await BaseCrudService.getById<ClientGallery>('clientgalleries', id);
-        setGallery(data);
+        // Handle public sample gallery
+        if (id === 'sample-public-gallery') {
+          setGallery({
+            _id: 'sample-public-gallery',
+            clientName: 'Public Sample Gallery',
+            clientEmail: 'sample@gallery.com',
+            galleryAccessCode: 'PUBLIC',
+            approvalStatus: 'approved',
+            galleryCoverImage: SAMPLE_PUBLIC_GALLERY_IMAGES[0],
+            galleryExpirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+            isPublic: true,
+          });
+        } else {
+          const data = await BaseCrudService.getById<ClientGallery>('clientgalleries', id);
+          setGallery(data);
+        }
       } catch (error) {
         console.error('Error loading gallery:', error);
       } finally {
@@ -102,7 +126,7 @@ export default function ClientGalleryViewPage() {
     );
   }
 
-  const images = gallery.galleryCoverImage ? [gallery.galleryCoverImage] : [];
+  const images = gallery?.isPublic ? SAMPLE_PUBLIC_GALLERY_IMAGES : (gallery?.galleryCoverImage ? [gallery.galleryCoverImage] : []);
 
   return (
     <div className="min-h-screen bg-black text-white">

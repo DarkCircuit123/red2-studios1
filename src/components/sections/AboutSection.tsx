@@ -6,7 +6,6 @@ import FashionTicker from '@/components/FashionTicker';
 
 export default function AboutSection() {
   const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_b2c52e273a12463198e51100c1907f31~mv2.jpg');
-  const [isLoading, setIsLoading] = useState(true);
   const fetchedRef = useRef(false);
 
   useEffect(() => {
@@ -26,8 +25,6 @@ export default function AboutSection() {
         }
       } catch (error) {
         console.error('Error loading about image:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
     loadAboutImage();

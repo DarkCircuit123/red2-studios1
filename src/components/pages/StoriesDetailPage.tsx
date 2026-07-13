@@ -28,7 +28,6 @@ export default function StoriesDetailPage() {
   useEffect(() => {
     const loadStory = async () => {
       try {
-        setIsLoading(true);
         if (slug) {
           const data = await fetchStoryBySlug(slug);
           if (data) {

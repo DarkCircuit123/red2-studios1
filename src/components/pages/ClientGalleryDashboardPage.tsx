@@ -37,7 +37,6 @@ export default function ClientGalleryDashboardPage() {
 
   const loadGalleries = async () => {
     try {
-      setIsLoading(true);
       const result = await BaseCrudService.getAll<ClientGallery>(
         'clientgalleries',
         {},

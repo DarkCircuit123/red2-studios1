@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, CheckCircle, Clock } from 'lucide-react';
+import { Lock, CheckCircle, Clock, ExternalLink } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -30,7 +30,7 @@ const SAMPLE_PUBLIC_GALLERY: ClientGallery = {
 };
 
 export default function ClientGalleriesPage() {
-  const [galleries, setGalleries] = useState<ClientGallery[]>([]);
+  const [galleries, setGalleries] = useState<ClientGallery[]>([SAMPLE_PUBLIC_GALLERY]);
   const [isLoading, setIsLoading] = useState(true);
   const [accessCode, setAccessCode] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -43,21 +43,23 @@ export default function ClientGalleriesPage() {
         // Add the public sample gallery at the beginning
         setGalleries([SAMPLE_PUBLIC_GALLERY, ...(result.items || [])]);
       } catch (error) {
-        // Silently fail - show empty state with sample gallery
+        // Keep the sample gallery visible even if fetch fails
         setGalleries([SAMPLE_PUBLIC_GALLERY]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadGalleries();
+    // Load galleries with a slight delay to ensure initial render
+    const timer = setTimeout(loadGalleries, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleAccessGallery = (code: string) => {
     const gallery = galleries.find(g => g.galleryAccessCode === code);
     if (gallery) {
-      // Navigate to gallery view or open modal
-      alert(`Accessing gallery for ${gallery.clientName}`);
+      // Navigate to gallery view
+      window.location.href = `/client-gallery/${gallery._id}`;
     } else {
       alert('Invalid access code');
     }
@@ -85,19 +87,20 @@ export default function ClientGalleriesPage() {
     <div className="min-h-screen bg-black text-white">
       <Header />
 
-      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20">
+      <section className="relative w-full flex items-center justify-center overflow-hidden pt-32 pb-20">
         <div className="max-w-[100rem] mx-auto px-8 w-full">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
             className="mb-16"
           >
             <h1 className="text-6xl md:text-7xl font-heading font-black text-white mb-4 uppercase">
               Client Galleries
             </h1>
             <p className="text-lg text-white/60 max-w-2xl">
-              Access your private proofing gallery with your unique access code.
+              Access your private proofing gallery with your unique access code. Try the public sample gallery below to verify image loading.
             </p>
           </motion.div>
 
@@ -105,7 +108,7 @@ export default function ClientGalleriesPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
             className="mb-16 max-w-md"
           >
             <div className="flex gap-3">
@@ -151,16 +154,23 @@ export default function ClientGalleriesPage() {
                     key={gallery._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="group cursor-pointer"
+                    transition={{ delay: idx * 0.05, duration: 0.4 }}
+                    className="group cursor-pointer h-full"
+                    onClick={() => {
+                      if (isAccessible) {
+                        window.location.href = `/client-gallery/${gallery._id}`;
+                      }
+                    }}
                   >
-                    <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5 flex items-center justify-center">
+                    <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5 flex items-center justify-center h-64">
                       {gallery.galleryCoverImage && (
                         <>
                           <Image
                             src={gallery.galleryCoverImage}
                             alt={gallery.clientName}
-                            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            width={400}
+                            height={400}
                           />
                           {/* Mosaic overlay for non-authenticated users */}
                           {!isAccessible && (
@@ -199,9 +209,14 @@ export default function ClientGalleriesPage() {
                           </span>
                         )}
                       </div>
-                      {!isAccessible && (
+                      {isAccessible ? (
+                        <div className="flex items-center gap-2 pt-2">
+                          <span className="text-xs text-green-400 font-semibold">Click to view</span>
+                          <ExternalLink className="w-3 h-3 text-green-400" />
+                        </div>
+                      ) : (
                         <p className="text-xs text-white/40 italic pt-2">
-                          {gallery.isPublic ? 'Public sample - no code needed' : 'Enter your access code to view'}
+                          {gallery.isPublic ? 'Public sample - click to view' : 'Enter your access code to view'}
                         </p>
                       )}
                     </div>
