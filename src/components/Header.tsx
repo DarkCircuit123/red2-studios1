@@ -115,7 +115,7 @@ export default function Header() {
             { href: '#about', label: 'About', isAnchor: true },
             { href: '/portfolio', label: 'Work', isLink: true },
             { href: '/booking', label: 'Booking', isLink: true },
-            { href: '#contact', label: 'Contact', isAnchor: true },
+            { href: '/contact', label: 'Contact', isLink: true },
             { href: '/galleries', label: 'Galleries', isLink: true },
             { href: '/play', label: 'Play', isLink: true },
           ].map((item, i) => (
@@ -192,7 +192,7 @@ export default function Header() {
               { href: '/portfolio', label: 'Work', isLink: true },
               { href: '/booking', label: 'Booking', isLink: true },
               { href: '/galleries', label: 'Galleries', isLink: true },
-              { href: '#contact', label: 'Contact', isAnchor: true },
+              { href: '/contact', label: 'Contact', isLink: true },
               { href: '/play', label: 'Play', isLink: true },
             ].map((item, i) => (
               <motion.div

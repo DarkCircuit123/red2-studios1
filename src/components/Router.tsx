@@ -17,6 +17,7 @@ import ClientRegisterPage from './pages/ClientRegisterPage';
 import ClientGalleryViewPage from './pages/ClientGalleryViewPage';
 import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
 import WorkPage from './pages/WorkPage';
+import ContactPage from './pages/ContactPage';
 // ... keep existing code (other imports) ...
 
 // Layout component that includes ScrollToTop
@@ -94,6 +95,10 @@ const router = createBrowserRouter([
       {
         path: "work",
         element: <WorkPage />,
+      },
+      {
+        path: "contact",
+        element: <ContactPage />,
       },
       {
         path: "*",
