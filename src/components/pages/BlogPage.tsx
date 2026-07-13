@@ -142,17 +142,15 @@ export default function BlogPage() {
                         </p>
                       )}
 
-                        {/* Video Link */}
+                        {/* Video Link - routes to cinematic watch page */}
                       {post.videoUrl && (
-                        <a
-                          href={post.videoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <Link
+                          to={`/watch`}
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-block mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-sm text-white transition-all duration-300"
+                          className="inline-block mt-4 px-4 py-2 bg-primary hover:bg-primary/90 border border-primary rounded text-sm text-white transition-all duration-300 font-medium"
                         >
                           Watch Video
-                        </a>
+                        </Link>
                       )}
                     </div>
                     </article>

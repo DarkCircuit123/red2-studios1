@@ -166,18 +166,16 @@ export default function BlogDetailPage() {
               </div>
             )}
 
-            {/* Video Section */}
+            {/* Video Section - routes to cinematic watch page */}
             {post.videoUrl && (
               <div className="mb-12">
-                <a
-                  href={post.videoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded transition-colors"
+                <Link
+                  to={`/watch`}
+                  className="inline-flex items-center gap-3 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded transition-colors font-medium"
                 >
                   <Play className="w-4 h-4" />
                   Watch Video
-                </a>
+                </Link>
               </div>
             )}
 
