@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
-import { throttle } from '@/lib/performance';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
 
@@ -15,7 +14,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
-  const prefersReducedMotion = respectReducedMotion();
+  const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
   // Optimized throttled scroll handler with useThrottleCallback
   const handleScroll = useThrottleCallback(() => {
