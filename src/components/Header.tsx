@@ -112,11 +112,11 @@ export default function Header() {
         {/* Desktop Navigation - Centered */}
         <div className="hidden md:flex items-center justify-center gap-12 absolute left-1/2 transform -translate-x-1/2">
           {[
-            { href: '#about', label: 'About' },
+            { href: '#about', label: 'About', isAnchor: true },
             { href: '/portfolio', label: 'Work', isLink: true },
             { href: '/booking', label: 'Booking', isLink: true },
             { href: '/galleries', label: 'Galleries', isLink: true },
-            { href: '#contact', label: 'Contact' },
+            { href: '#contact', label: 'Contact', isAnchor: true },
             { href: '/play', label: 'Play', isLink: true },
           ].map((item, i) => (
             <motion.div
@@ -188,11 +188,11 @@ export default function Header() {
         >
           <div className="max-w-[120rem] mx-auto px-8 py-6 flex flex-col gap-6">
             {[
-              { href: '#about', label: 'About' },
+              { href: '#about', label: 'About', isAnchor: true },
               { href: '/portfolio', label: 'Work', isLink: true },
               { href: '/booking', label: 'Booking', isLink: true },
               { href: '/galleries', label: 'Galleries', isLink: true },
-              { href: '#contact', label: 'Contact' },
+              { href: '#contact', label: 'Contact', isAnchor: true },
               { href: '/play', label: 'Play', isLink: true },
             ].map((item, i) => (
               <motion.div
