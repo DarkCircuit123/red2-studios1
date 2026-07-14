@@ -7,66 +7,37 @@ export default function RouterFallback() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        backgroundColor: '#1a1a2e',
+        backgroundColor: '#000000',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        color: '#e0e0e0',
+        color: '#ffffff',
       }}
     >
       <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-        <h1 style={{ fontSize: '32px', marginBottom: '20px', fontWeight: 'bold' }}>
-          Router temporarily unavailable
-        </h1>
-        <p style={{ fontSize: '16px', color: '#b0b0b0', marginBottom: '40px' }}>
-          The application is loading. Please refresh the page.
-        </p>
+        {/* Loading spinner animation */}
+        <div
+          style={{
+            width: '60px',
+            height: '60px',
+            border: '3px solid rgba(111, 8, 9, 0.2)',
+            borderTop: '3px solid #6F0809',
+            borderRadius: '50%',
+            margin: '0 auto 30px',
+            animation: 'spin 1s linear infinite',
+          }}
+        />
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
         
-        <nav style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a
-            href="/"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#860f0f',
-              color: '#ffffff',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              border: 'none',
-            }}
-          >
-            Home
-          </a>
-          <a
-            href="/#about"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#2a2a3e',
-              color: '#e0e0e0',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              border: '1px solid #444',
-            }}
-          >
-            About
-          </a>
-          <a
-            href="/#contact"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#2a2a3e',
-              color: '#e0e0e0',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              border: '1px solid #444',
-            }}
-          >
-            Contact
-          </a>
-        </nav>
+        <h1 style={{ fontSize: '28px', marginBottom: '15px', fontWeight: 'bold' }}>
+          Loading Application
+        </h1>
+        <p style={{ fontSize: '16px', color: '#b0b0b0', marginBottom: '10px' }}>
+          Please wait while we initialize your experience...
+        </p>
       </div>
     </div>
   );

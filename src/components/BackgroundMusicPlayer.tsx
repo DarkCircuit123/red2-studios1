@@ -19,7 +19,6 @@ export default function BackgroundMusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const audioManagerRef = useRef(GlobalAudioManager.getInstance());
 
@@ -27,25 +26,43 @@ export default function BackgroundMusicPlayer() {
   const SOUNDCLOUD_TRACK_URL = 'https://soundcloud.com/markd54321/198-blue-in-green-miles-davis';
   const SOUNDCLOUD_EMBED_URL = `https://w.soundcloud.com/player/?url=${encodeURIComponent(SOUNDCLOUD_TRACK_URL)}&color=%236F0809&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false`;
 
-  // Load SoundCloud Widget API
+  // Load SoundCloud Widget API with timeout and error handling
   useEffect(() => {
     if (window.SC) {
-      setIsLoading(false);
       return;
     }
 
     const script = document.createElement('script');
     script.src = 'https://w.soundcloud.com/player/api.js';
     script.async = true;
+    
+    const timeoutId = setTimeout(() => {
+      // If script doesn't load within 5 seconds, continue anyway
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    }, 5000);
+
     script.onload = () => {
-      setIsLoading(false);
+      clearTimeout(timeoutId);
       if (window.SC?.Widget && iframeRef.current) {
-        widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
+        try {
+          widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
+        } catch (e) {
+          console.warn('Failed to initialize SoundCloud widget:', e);
+        }
       }
     };
+
+    script.onerror = () => {
+      clearTimeout(timeoutId);
+      console.warn('Failed to load SoundCloud API');
+    };
+
     document.body.appendChild(script);
 
     return () => {
+      clearTimeout(timeoutId);
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
@@ -87,9 +104,12 @@ export default function BackgroundMusicPlayer() {
   }, [isMuted]);
 
   const handleIframeLoad = useCallback(() => {
-    setIsLoading(false);
     if (window.SC?.Widget && iframeRef.current) {
-      widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
+      try {
+        widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
+      } catch (e) {
+        console.warn('Failed to initialize SoundCloud widget on iframe load:', e);
+      }
     }
   }, []);
 

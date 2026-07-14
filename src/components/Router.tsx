@@ -20,14 +20,16 @@ import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
 import WatchPage from './pages/WatchPage';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
-// ... keep existing code (other imports) ...
+import { Suspense } from 'react';
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
   return (
     <>
       <ScrollToTop />
-      <BackgroundMusicPlayer />
+      <Suspense fallback={null}>
+        <BackgroundMusicPlayer />
+      </Suspense>
       <Outlet />
     </>
   );
