@@ -1,11 +1,20 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { MemberProvider } from '@/integrations';
 import RouterFallback from '@/components/RouterFallback';
+import DiagnosticWrapper from '@/components/DiagnosticWrapper';
+import IntegrationTest from '@/components/IntegrationTest';
 
 // Lazy load the router to prevent circular dependencies
 const AppRouter = lazy(() => 
   import('@/components/Router').catch(err => {
     console.error('[AppRoot] Failed to load Router:', err);
+    throw err;
+  })
+);
+
+// Lazy load MemberProvider to prevent circular dependencies
+const MemberProvider = lazy(() =>
+  import('@/integrations').then(mod => ({ default: mod.MemberProvider })).catch(err => {
+    console.error('[AppRoot] Failed to load MemberProvider:', err);
     throw err;
   })
 );
@@ -52,16 +61,23 @@ function AppRootContent() {
   }
 
   return (
-    <MemberProvider>
-      <RouterErrorBoundary>
-        <Suspense fallback={<RouterFallback />}>
-          <AppRouter />
-        </Suspense>
-      </RouterErrorBoundary>
-    </MemberProvider>
+    <Suspense fallback={<RouterFallback />}>
+      <MemberProvider>
+        <RouterErrorBoundary>
+          <Suspense fallback={<RouterFallback />}>
+            <AppRouter />
+          </Suspense>
+        </RouterErrorBoundary>
+      </MemberProvider>
+    </Suspense>
   );
 }
 
 export default function AppRoot() {
-  return <AppRootContent />;
+  return (
+    <DiagnosticWrapper>
+      <IntegrationTest />
+      <AppRootContent />
+    </DiagnosticWrapper>
+  );
 }
