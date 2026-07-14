@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { MemberProvider } from '@/integrations';
 import RouterFallback from '@/components/RouterFallback';
-import { initializeApp } from '@/lib/app-initialization';
 
 // Lazy load the router to prevent circular dependencies
 const AppRouter = lazy(() => 
@@ -40,22 +40,11 @@ class RouterErrorBoundary extends React.Component<
 }
 
 function AppRootContent() {
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(true);
 
   useEffect(() => {
-    // Initialize critical systems
-    const init = async () => {
-      try {
-        const status = await initializeApp();
-        console.log('[AppRoot] Initialization status:', status);
-        setIsReady(true);
-      } catch (err) {
-        console.warn('[AppRoot] Initialization error:', err);
-        setIsReady(true); // Continue anyway
-      }
-    };
-
-    init();
+    // Minimal initialization - just set ready immediately
+    console.log('[AppRoot] Initialization complete');
   }, []);
 
   if (!isReady) {
@@ -63,11 +52,13 @@ function AppRootContent() {
   }
 
   return (
-    <RouterErrorBoundary>
-      <Suspense fallback={<RouterFallback />}>
-        <AppRouter />
-      </Suspense>
-    </RouterErrorBoundary>
+    <MemberProvider>
+      <RouterErrorBoundary>
+        <Suspense fallback={<RouterFallback />}>
+          <AppRouter />
+        </Suspense>
+      </RouterErrorBoundary>
+    </MemberProvider>
   );
 }
 

@@ -1,7 +1,6 @@
 import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
-import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
@@ -19,20 +18,23 @@ import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
 import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
 import WatchPage from './pages/WatchPage';
-import BackgroundMusicPlayer from './BackgroundMusicPlayer';
-import { Suspense, lazy } from 'react';
+import { Suspense } from 'react';
 
-// Lazy load error page to prevent circular dependencies
-const LazyErrorPage = lazy(() => Promise.resolve({ default: ErrorPage }));
+// Simple error fallback
+function ErrorFallback() {
+  return (
+    <div style={{ padding: '40px', textAlign: 'center', color: '#fff', backgroundColor: '#000' }}>
+      <h1>Error Loading Page</h1>
+      <p>Please refresh the page or try again later.</p>
+    </div>
+  );
+}
 
-// Layout component that includes ScrollToTop and BackgroundMusicPlayer
+// Layout component that includes ScrollToTop
 function Layout() {
   return (
     <>
       <ScrollToTop />
-      <Suspense fallback={null}>
-        <BackgroundMusicPlayer />
-      </Suspense>
       <Outlet />
     </>
   );
@@ -42,7 +44,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    errorElement: <Suspense fallback={<ErrorPage />}><LazyErrorPage /></Suspense>,
+    errorElement: <ErrorFallback />,
     children: [
       {
         index: true,
@@ -127,9 +129,5 @@ const router = createBrowserRouter([
 });
 
 export default function AppRouter() {
-  return (
-    <MemberProvider>
-      <RouterProvider router={router} />
-    </MemberProvider>
-  );
+  return <RouterProvider router={router} />;
 }
