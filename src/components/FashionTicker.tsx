@@ -39,7 +39,7 @@ export default function FashionTicker() {
           setNews([]);
         }
       } catch (err) {
-        console.error('Error fetching fashion news:', err);
+        console.error('[FashionTicker] Error fetching fashion news:', err);
         setError('Unable to load articles');
         setNews([]);
       } finally {

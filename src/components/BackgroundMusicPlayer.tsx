@@ -20,7 +20,19 @@ export default function BackgroundMusicPlayer() {
   const [isMuted, setIsMuted] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [showControls, setShowControls] = useState(false);
-  const audioManagerRef = useRef(GlobalAudioManager.getInstance());
+  const [isReady, setIsReady] = useState(false);
+  const audioManagerRef = useRef<GlobalAudioManager | null>(null);
+
+  // Initialize audio manager safely
+  useEffect(() => {
+    try {
+      audioManagerRef.current = GlobalAudioManager.getInstance();
+      setIsReady(true);
+    } catch (e) {
+      console.warn('[BackgroundMusicPlayer] Failed to initialize audio manager:', e);
+      setIsReady(true); // Continue anyway
+    }
+  }, []);
 
   // SoundCloud track URL - Blue in Green by Miles Davis
   const SOUNDCLOUD_TRACK_URL = 'https://soundcloud.com/markd54321/198-blue-in-green-miles-davis';
@@ -71,10 +83,16 @@ export default function BackgroundMusicPlayer() {
 
   // Handle first user interaction to enable autoplay
   useEffect(() => {
+    if (!isReady || !audioManagerRef.current) return;
+
     const handleUserInteraction = () => {
       if (!hasInteracted) {
         setHasInteracted(true);
-        audioManagerRef.current.resumeAudioContext().catch(() => {});
+        try {
+          audioManagerRef.current?.resumeAudioContext().catch(() => {});
+        } catch (e) {
+          console.warn('[BackgroundMusicPlayer] Failed to resume audio context:', e);
+        }
       }
     };
 
@@ -88,7 +106,7 @@ export default function BackgroundMusicPlayer() {
         document.removeEventListener(event, handleUserInteraction);
       });
     };
-  }, [hasInteracted]);
+  }, [hasInteracted, isReady]);
 
   const togglePlayPause = useCallback(() => {
     if (widgetRef.current) {
@@ -100,7 +118,11 @@ export default function BackgroundMusicPlayer() {
   const toggleMute = useCallback(() => {
     const newMutedState = !isMuted;
     setIsMuted(newMutedState);
-    audioManagerRef.current.setAudioEnabled(!newMutedState);
+    try {
+      audioManagerRef.current?.setAudioEnabled(!newMutedState);
+    } catch (e) {
+      console.warn('[BackgroundMusicPlayer] Failed to toggle mute:', e);
+    }
   }, [isMuted]);
 
   const handleIframeLoad = useCallback(() => {

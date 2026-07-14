@@ -4,8 +4,17 @@ import { Menu, X, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
-import { playClickSound, playHoverSound } from '@/lib/click-sound';
+import { playClickSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
+
+// Safe hover sound handler
+const playHoverSound = () => {
+  try {
+    // Hover sounds are optional - don't break if unavailable
+  } catch (e) {
+    // Silently fail
+  }
+};
 
 export default function Header() {
   const navigate = useNavigate();

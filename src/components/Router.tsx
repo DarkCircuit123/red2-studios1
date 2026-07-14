@@ -20,7 +20,10 @@ import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
 import WatchPage from './pages/WatchPage';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
-import { Suspense } from 'react';
+import { Suspense, lazy } from 'react';
+
+// Lazy load error page to prevent circular dependencies
+const LazyErrorPage = lazy(() => Promise.resolve({ default: ErrorPage }));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
@@ -39,7 +42,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    errorElement: <ErrorPage />,
+    errorElement: <Suspense fallback={<ErrorPage />}><LazyErrorPage /></Suspense>,
     children: [
       {
         index: true,
