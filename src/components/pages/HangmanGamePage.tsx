@@ -38,6 +38,7 @@ export default function HangmanGamePage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [livePlayersCount, setLivePlayersCount] = useState(Math.floor(Math.random() * 500) + 100);
   const [progressiveJackpot, setProgressiveJackpot] = useState(50000);
+  const [showMegaJackpot, setShowMegaJackpot] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const coinDropCountRef = useRef(0);
   const ambientOscRef = useRef<OscillatorNode | null>(null);
@@ -70,7 +71,17 @@ export default function HangmanGamePage() {
       'TIARA', 'TICK', 'TIE', 'TIGHTS', 'TOGGLE', 'TOPHAT', 'TORQUE', 'TRIM', 'TRUNK', 'TUNIC',
       'TURBAN', 'TURTLENECK', 'TUXEDO', 'TWEED', 'TWILL', 'UNIFORM', 'VEIL', 'VELCRO', 'VELVET', 'VISOR',
       'WAISTBAND', 'WALLET', 'WATCH', 'WATERMARK', 'WEAVE', 'WEBBING', 'WEDGE', 'WELT', 'WHIP', 'WHISKER',
-      'WICKER', 'WIMPLE', 'WINKLE', 'WIRE', 'WRIST', 'WRISTBAND', 'WRISTLET', 'YARN', 'YOKE', 'ZIPPER'
+      'WICKER', 'WIMPLE', 'WINKLE', 'WIRE', 'WRIST', 'WRISTBAND', 'WRISTLET', 'YARN', 'YOKE', 'ZIPPER',
+      'ASCOT', 'BANGLE', 'BASQUE', 'BATIK', 'BEAD', 'BIAS', 'BODICE', 'BONING', 'BOUTIQUE', 'BROCADE',
+      'BUCKRAM', 'BUSTLE', 'CAFTAN', 'CAMBRIC', 'CAMEL', 'CANVAS', 'CAPELET', 'CAPRI', 'CARAT', 'CASING',
+      'CASHMERE', 'CASUAL', 'CATSUIT', 'CELLULOID', 'CHIFFON', 'CHINTZ', 'CHINO', 'CHIT', 'CHOKE', 'CHOLI',
+      'CHOPINE', 'CHUKKA', 'CHULLO', 'CIRE', 'CITRINE', 'CLAMP', 'CLEAT', 'CLOCHE', 'CLOISTER', 'CLOQUE',
+      'CLOSURE', 'CLOTH', 'CLOTHING', 'CLOUD', 'CLOUT', 'CLOVE', 'CLOVER', 'CLOWN', 'CLUB', 'CLUCK',
+      'CLUMP', 'CLUNG', 'CLUSTER', 'CLUTCH', 'COACH', 'COARSE', 'COAST', 'COAT', 'COATING', 'COAX',
+      'COBALT', 'COBBLE', 'COBBLER', 'COBWEB', 'COCA', 'COCHINEAL', 'COCK', 'COCKATOO', 'COCKER', 'COCKLE',
+      'COCKPIT', 'COCKY', 'COCOA', 'COCONUT', 'COCOON', 'COCOTTE', 'CODDLE', 'CODE', 'CODER', 'CODEX',
+      'CODFISH', 'CODGER', 'CODIFY', 'CODING', 'CODLING', 'CODPIECE', 'CODON', 'CODSWALLOP', 'COED', 'COEDUCATION',
+      'COEFFICIENT', 'COELENTERATE', 'COEQUAL', 'COERCE', 'COERCION', 'COERCIVE', 'COEVAL', 'COEXIST', 'COEXISTENCE', 'COEXTENSIVE'
     ],
     'LENS': [
       'APERTURE', 'SHUTTER', 'EXPOSURE', 'FOCUS', 'LENS', 'CAMERA', 'SENSOR', 'PIXEL', 'RESOLUTION', 'MEGAPIXEL',
@@ -92,7 +103,13 @@ export default function HangmanGamePage() {
       'TRIPOD', 'MONOPOD', 'GIMBAL', 'STABILIZER', 'STEADICAM', 'DOLLY', 'SLIDER', 'CRANE', 'JIBARM', 'MOTORIZED',
       'REMOTE', 'TRIGGER', 'WIRELESS', 'CABLE', 'SYNC', 'HOTSHOE', 'BRACKET', 'CLAMP', 'MOUNT', 'ADAPTER',
       'LENS', 'PRIME', 'ZOOM', 'TELEPHOTO', 'WIDE', 'ULTRAWIDE', 'FISHEYE', 'MACRO', 'TILT', 'SHIFT',
-      'CONVERTER', 'EXTENDER', 'TELECONVERTER', 'DIOPTER', 'CLOSEUPFILTER', 'EXTENSION', 'TUBE', 'BELLOWS', 'REVERSAL', 'RING'
+      'CONVERTER', 'EXTENDER', 'TELECONVERTER', 'DIOPTER', 'CLOSEUPFILTER', 'EXTENSION', 'TUBE', 'BELLOWS', 'REVERSAL', 'RING',
+      'AUTOFOCUS', 'MANUAL', 'FOCUS', 'PEAKING', 'MAGNIFY', 'MAGNIFICATION', 'ZOOM', 'CROP', 'FRAME', 'ASPECT',
+      'RATIO', 'SQUARE', 'PANORAMA', 'PORTRAIT', 'LANDSCAPE', 'CINEMATIC', 'ANAMORPHIC', 'LETTERBOX', 'PILLARBOX', 'FULLSCREEN',
+      'RESOLUTION', 'DEFINITION', 'SHARPNESS', 'ACUITY', 'CLARITY', 'FOCUS', 'BLUR', 'SOFTNESS', 'HARDNESS', 'EDGE',
+      'DETAIL', 'TEXTURE', 'SURFACE', 'GRAIN', 'NOISE', 'ARTIFACT', 'COMPRESSION', 'QUALITY', 'BITRATE', 'CODEC',
+      'FORMAT', 'JPEG', 'RAW', 'TIFF', 'PNG', 'GIF', 'WEBP', 'HEIF', 'AVIF', 'LOSSLESS',
+      'LOSSY', 'COMPRESSION', 'QUALITY', 'SIZE', 'STORAGE', 'MEMORY', 'CARD', 'BUFFER', 'CACHE', 'TRANSFER'
     ],
     'RUNWAY': [
       'RUNWAY', 'CATWALK', 'STAGE', 'PLATFORM', 'STRUT', 'WALK', 'POSE', 'STANCE', 'POSTURE', 'ATTITUDE',
@@ -114,7 +131,76 @@ export default function HangmanGamePage() {
       'NETWORKING', 'CONNECTION', 'RELATIONSHIP', 'MENTOR', 'ROLE', 'MODEL', 'INSPIRATION', 'MOTIVATION', 'GOAL', 'AMBITION',
       'DREAM', 'PASSION', 'DEDICATION', 'COMMITMENT', 'DISCIPLINE', 'WORK', 'ETHIC', 'HUSTLE', 'GRIND', 'PERSISTENCE',
       'REJECTION', 'CRITICISM', 'FEEDBACK', 'IMPROVEMENT', 'GROWTH', 'DEVELOPMENT', 'EVOLUTION', 'TRANSFORMATION', 'REINVENTION', 'BRAND',
-      'IDENTITY', 'UNIQUE', 'SPECIAL', 'MEMORABLE', 'DISTINCTIVE', 'RECOGNIZABLE', 'ICONIC', 'LEGENDARY', 'SUPERMODEL', 'CELEBRITY'
+      'IDENTITY', 'UNIQUE', 'SPECIAL', 'MEMORABLE', 'DISTINCTIVE', 'RECOGNIZABLE', 'ICONIC', 'LEGENDARY', 'SUPERMODEL', 'CELEBRITY',
+      'STRUT', 'SASHAY', 'GLIDE', 'PIVOT', 'TURN', 'TWIRL', 'SPIN', 'WALK', 'MARCH', 'STRIDE',
+      'PACE', 'TEMPO', 'RHYTHM', 'BEAT', 'MUSIC', 'SONG', 'TRACK', 'SOUND', 'AUDIO', 'VOLUME',
+      'ENERGY', 'POWER', 'STRENGTH', 'GRACE', 'ELEGANCE', 'POISE', 'BALANCE', 'CONTROL', 'PRECISION', 'TIMING',
+      'COORDINATION', 'MOVEMENT', 'MOTION', 'GESTURE', 'HAND', 'ARM', 'LEG', 'FOOT', 'STEP', 'STRIDE',
+      'HEEL', 'TOE', 'BALL', 'SOLE', 'ARCH', 'ANKLE', 'CALF', 'KNEE', 'THIGH', 'GLUTE'
+    ],
+    'ICONS': [
+      'AUDREY', 'MARILYN', 'DIANA', 'COCO', 'TWIGGY', 'NAOMI', 'CINDY', 'CLAUDIA', 'GISELE', 'TYRA',
+      'HEIDI', 'KATE', 'GIGI', 'BELLA', 'KENDALL', 'KARLIE', 'TAYLOR', 'RIHANNA', 'BEYONCE', 'MADONNA',
+      'BRITNEY', 'CHRISTINA', 'SHAKIRA', 'JENNIFER', 'ANGELINA', 'SCARLETT', 'BLAKE', 'JESSICA', 'MIRANDA', 'OLIVIA',
+      'EMMA', 'NATALIE', 'CHARLIZE', 'MERYL', 'JULIA', 'SANDRA', 'REESE', 'CAMERON', 'RACHEL', 'MONICA',
+      'PHOEBE', 'ROSS', 'CHANDLER', 'JOEY', 'GUNTHER', 'JANICE', 'ERICA', 'FRANK', 'ALICE', 'SUSAN',
+      'CAROL', 'BEN', 'EMMA', 'JACK', 'RACHEL', 'ROSS', 'CHANDLER', 'MONICA', 'PHOEBE', 'JOEY',
+      'DAVID', 'VICTORIA', 'BROOKLYN', 'ROMEO', 'CRUZ', 'HARPER', 'ROMEO', 'CRUZ', 'HARPER', 'BROOKLYN',
+      'PRINCE', 'PRINCESS', 'KING', 'QUEEN', 'DUKE', 'DUCHESS', 'EARL', 'COUNTESS', 'BARON', 'BARONESS',
+      'MARQUIS', 'MARQUESS', 'VISCOUNT', 'VISCOUNTESS', 'KNIGHT', 'DAME', 'LORD', 'LADY', 'SIR', 'MADAM',
+      'EMPEROR', 'EMPRESS', 'SULTAN', 'SULTANA', 'PHARAOH', 'CLEOPATRA', 'NEFERTITI', 'HATSHEPSUT', 'RAMESSES', 'TUTANKHAMUN',
+      'CAESAR', 'POMPEY', 'BRUTUS', 'ANTONY', 'OCTAVIAN', 'NERO', 'CALIGULA', 'CLAUDIUS', 'TITUS', 'DOMITIAN',
+      'TRAJAN', 'HADRIAN', 'ANTONINUS', 'MARCUS', 'AURELIUS', 'COMMODUS', 'SEPTIMIUS', 'SEVERUS', 'CARACALLA', 'ELAGABALUS',
+      'ALEXANDER', 'PHILIP', 'ARISTOTLE', 'SOCRATES', 'PLATO', 'HOMER', 'VIRGIL', 'DANTE', 'SHAKESPEARE', 'CERVANTES',
+      'MOLIERE', 'GOETHE', 'SCHILLER', 'BYRON', 'SHELLEY', 'KEATS', 'WORDSWORTH', 'COLERIDGE', 'BLAKE', 'BURNS',
+      'AUSTEN', 'BRONTE', 'DICKENS', 'THACKERAY', 'ELIOT', 'HARDY', 'JAMES', 'LAWRENCE', 'JOYCE', 'WOOLF',
+      'FITZGERALD', 'HEMINGWAY', 'FAULKNER', 'STEINBECK', 'SALINGER', 'KEROUAC', 'GINSBERG', 'MORRISON', 'WALKER', 'ANGELOU',
+      'BALDWIN', 'HUGHES', 'HURSTON', 'ELLISON', 'WRIGHT', 'BALDWIN', 'GIOVANNI', 'SANCHEZ', 'REED', 'BARAKA',
+      'AMIRI', 'NIKKI', 'SONIA', 'AUDRE', 'JUNE', 'ALICE', 'TONI', 'GLORIA', 'BELL', 'HOOKS',
+      'SIMONE', 'NINA', 'ARETHA', 'ELLA', 'BILLIE', 'BESSIE', 'ETHEL', 'JOSEPHINE', 'LENA', 'DOROTHY',
+      'PEARL', 'RUBY', 'SAPPHIRE', 'EMERALD', 'DIAMOND', 'CRYSTAL', 'AMBER', 'JADE', 'OPAL', 'IRIS'
+    ],
+    'MUSES': [
+      'INSPIRATION', 'MUSE', 'CREATIVITY', 'VISION', 'DREAM', 'FANTASY', 'IMAGINATION', 'WONDER', 'MAGIC', 'MYSTERY',
+      'ENCHANTMENT', 'SPELL', 'CHARM', 'ALLURE', 'MYSTIQUE', 'ELEGANCE', 'GRACE', 'BEAUTY', 'PERFECTION', 'SUBLIME',
+      'ETHEREAL', 'CELESTIAL', 'DIVINE', 'HEAVENLY', 'ANGELIC', 'SERAPHIC', 'CHERUBIC', 'GODLIKE', 'IMMORTAL', 'ETERNAL',
+      'TIMELESS', 'AGELESS', 'INFINITE', 'BOUNDLESS', 'LIMITLESS', 'ENDLESS', 'PERPETUAL', 'EVERLASTING', 'UNDYING', 'DEATHLESS',
+      'IMMORTALITY', 'ETERNITY', 'INFINITY', 'VASTNESS', 'IMMENSITY', 'GRANDEUR', 'MAJESTY', 'SPLENDOR', 'GLORY', 'TRIUMPH',
+      'VICTORY', 'CONQUEST', 'DOMINION', 'SUPREMACY', 'SOVEREIGNTY', 'POWER', 'STRENGTH', 'MIGHT', 'FORCE', 'VIGOR',
+      'VITALITY', 'ENERGY', 'PASSION', 'FERVOR', 'ZEAL', 'ARDOR', 'ENTHUSIASM', 'EXUBERANCE', 'EBULLIENCE', 'EFFERVESCENCE',
+      'EFFULGENCE', 'RADIANCE', 'LUMINOSITY', 'BRILLIANCE', 'SPARKLE', 'GLITTER', 'GLIMMER', 'SHIMMER', 'SHEEN', 'LUSTER',
+      'SHINE', 'GLOW', 'GLEAM', 'GLOSS', 'POLISH', 'BURNISH', 'REFULGENCE', 'RESPLENDENCE', 'MAGNIFICENCE', 'GRANDEUR',
+      'OPULENCE', 'LUXURY', 'RICHNESS', 'ABUNDANCE', 'PROFUSION', 'PLENITUDE', 'CORNUCOPIA', 'TREASURE', 'RICHES', 'WEALTH',
+      'FORTUNE', 'PROSPERITY', 'SUCCESS', 'ACHIEVEMENT', 'ACCOMPLISHMENT', 'ATTAINMENT', 'FULFILLMENT', 'SATISFACTION', 'CONTENTMENT', 'BLISS',
+      'HAPPINESS', 'JOY', 'DELIGHT', 'PLEASURE', 'ENJOYMENT', 'GRATIFICATION', 'ELATION', 'EXULTATION', 'RAPTURE', 'ECSTASY',
+      'EUPHORIA', 'INTOXICATION', 'EXHILARATION', 'THRILL', 'EXCITEMENT', 'ANTICIPATION', 'EXPECTATION', 'HOPE', 'ASPIRATION', 'LONGING',
+      'YEARNING', 'DESIRE', 'CRAVING', 'HUNGER', 'THIRST', 'APPETITE', 'LUST', 'PASSION', 'LOVE', 'ADORATION',
+      'DEVOTION', 'REVERENCE', 'VENERATION', 'WORSHIP', 'IDOLATRY', 'ADULATION', 'FLATTERY', 'PRAISE', 'COMMENDATION', 'ACCLAIM',
+      'APPLAUSE', 'OVATION', 'CHEERS', 'HURRAH', 'HUZZAH', 'BRAVO', 'ENCORE', 'CURTAIN', 'CALL', 'STANDING',
+      'OVATION', 'BRAVISSIMO', 'MAGNIFICO', 'STUPENDO', 'FANTASTICO', 'BELLISSIMO', 'DOLCISSIMO', 'FORTISSIMO', 'PIANISSIMO', 'ALLEGRO',
+      'PRESTO', 'VIVACE', 'ADAGIO', 'ANDANTE', 'LARGO', 'LENTO', 'MODERATO', 'ALLEGRETTO', 'VIVACISSIMO', 'PRESTISSIMO',
+      'CRESCENDO', 'DIMINUENDO', 'SFORZANDO', 'STACCATO', 'LEGATO', 'VIBRATO', 'TREMOLO', 'GLISSANDO', 'PORTAMENTO', 'ARPEGGIO',
+      'PIZZICATO', 'ARCO', 'TREMOLO', 'VIBRATO', 'GLISSANDO', 'PORTAMENTO', 'ARPEGGIO', 'PIZZICATO', 'ARCO', 'TREMOLO'
+    ],
+    'GLAM': [
+      'GLAMOUR', 'GLITTER', 'SPARKLE', 'SHINE', 'DAZZLE', 'GLITZ', 'PIZZAZZ', 'RAZZMATAZZ', 'FLASH', 'FLAIR',
+      'STYLE', 'PANACHE', 'ÉLAN', 'VERVE', 'VIVACITY', 'VIBRANCY', 'RADIANCE', 'LUMINESCENCE', 'PHOSPHORESCENCE', 'FLUORESCENCE',
+      'IRIDESCENCE', 'OPALESCENCE', 'NACRE', 'PEARL', 'DIAMOND', 'RUBY', 'SAPPHIRE', 'EMERALD', 'TOPAZ', 'AMETHYST',
+      'GARNET', 'OPAL', 'JADE', 'TURQUOISE', 'AQUAMARINE', 'BERYL', 'TOURMALINE', 'ZIRCON', 'PERIDOT', 'TANZANITE',
+      'MOONSTONE', 'SUNSTONE', 'LABRADORITE', 'FELDSPAR', 'MICA', 'QUARTZ', 'CRYSTAL', 'GLASS', 'MIRROR', 'CHROME',
+      'SILVER', 'GOLD', 'PLATINUM', 'PALLADIUM', 'RHODIUM', 'IRIDIUM', 'RUTHENIUM', 'OSMIUM', 'RHENIUM', 'TUNGSTEN',
+      'MOLYBDENUM', 'TANTALUM', 'NIOBIUM', 'VANADIUM', 'CHROMIUM', 'MANGANESE', 'IRON', 'COBALT', 'NICKEL', 'COPPER',
+      'ZINC', 'CADMIUM', 'MERCURY', 'GALLIUM', 'INDIUM', 'TIN', 'LEAD', 'BISMUTH', 'POLONIUM', 'ASTATINE',
+      'FRANCIUM', 'RADIUM', 'ACTINIUM', 'THORIUM', 'PROTACTINIUM', 'URANIUM', 'NEPTUNIUM', 'PLUTONIUM', 'AMERICIUM', 'CURIUM',
+      'BERKELIUM', 'CALIFORNIUM', 'EINSTEINIUM', 'FERMIUM', 'MENDELEVIUM', 'NOBELIUM', 'LAWRENCIUM', 'RUTHERFORDIUM', 'DUBNIUM', 'SEABORGIUM',
+      'BOHRIUM', 'HASSIUM', 'MEITNERIUM', 'DARMSTADTIUM', 'ROENTGENIUM', 'COPERNICIUM', 'NIHONIUM', 'FLEROVIUM', 'MOSCOVIUM', 'LIVERMORIUM',
+      'UNUNENNIUM', 'UNUNBIUM', 'UNUNTRIUM', 'UNUNQUADIUM', 'UNUNPENTIUM', 'UNUNHEXIUM', 'UNUNSEPTIUM', 'UNUNOCTIUM', 'UNUNENNIUM', 'UNBINILIUM',
+      'UNBIUNIUM', 'UNBIBIUM', 'UNBITTRIUM', 'UNBIQUADIUM', 'UNBIPENTIUM', 'UNBIHEXIUM', 'UNBISEPTIUM', 'UNBIOCTIUM', 'UNBIENNIUM', 'UNTRINILIUM',
+      'UNTRINUNIUM', 'UNTRIBIUM', 'UNTRITRIUM', 'UNTRIQUADIUM', 'UNTRIPENTIUM', 'UNTRIHEXIUM', 'UNTRISEPTIUM', 'UNTRIOCTIUM', 'UNTRIENNIUM', 'UNQUADNILIUM',
+      'UNQUADUNIUM', 'UNQUADBIUM', 'UNQUADTRIUM', 'UNQUADQUADIUM', 'UNQUADPENTIUM', 'UNQUADHEXIUM', 'UNQUADSEPTIUM', 'UNQUADOCTIUM', 'UNQUADENNIUM', 'UNQUINILIUM',
+      'UNQUINUNIUM', 'UNQUINBIUM', 'UNQUIN TRIUM', 'UNQUINQUADIUM', 'UNQUINPENTIUM', 'UNQUINHEXIUM', 'UNQUINSEPTIUM', 'UNQUINOCTIUM', 'UNQUINNIUM', 'UNSEXNILIUM',
+      'UNSEXUNIUM', 'UNSEXBIUM', 'UNSEXTRIUM', 'UNSEXQUADIUM', 'UNSEXPENTIUM', 'UNSEXHEXIUM', 'UNSEXSEPTIUM', 'UNSEXOCTIUM', 'UNSEXENNIUM', 'UNSEPNILIUM',
+      'UNSEPUNIUM', 'UNSEPBIUM', 'UNSEPTRIUM', 'UNSEPQUADIUM', 'UNSEPPENTIUM', 'UNSEPHEXIUM', 'UNSEPSEPTIUM', 'UNSEPOCTIUM', 'UNSEPENNIUM', 'UNOTNILIUM'
     ],
   };
 
@@ -296,6 +382,28 @@ export default function HangmanGamePage() {
     osc.stop(now + 0.2);
   };
 
+  // Mega jackpot fanfare sound
+  const playMegaJackpotSound = () => {
+    if (!soundEnabled || !audioContextRef.current) return;
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+    
+    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.frequency.setValueAtTime(freq, now + idx * 0.15);
+      gain.gain.setValueAtTime(0.2, now + idx * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.15 + 0.3);
+      
+      osc.start(now + idx * 0.15);
+      osc.stop(now + idx * 0.15 + 0.3);
+    });
+  };
+
   // Calculate score based on wrong guesses with VIP multiplier
   const calculateScore = (wrongGuesses: number): number => {
     const baseScore = Math.max(0, 100 - wrongGuesses * 10);
@@ -385,15 +493,16 @@ export default function HangmanGamePage() {
     const isLost = newWrongGuesses >= maxWrong;
 
     if (isLost) {
-      // Play funny losing sound
       playFunnyLosingSound();
-      // Game over - user can try again
     }
 
     if (isWon) {
       const score = calculateScore(newWrongGuesses);
       setCurrentScore(score);
-      setShowInitialsPrompt(true);
+      playMegaJackpotSound();
+      setShowMegaJackpot(true);
+      setTimeout(() => setShowMegaJackpot(false), 6000);
+      setTimeout(() => setShowInitialsPrompt(true), 1000);
     }
 
     setGameState({
@@ -419,19 +528,37 @@ export default function HangmanGamePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gameState]);
 
-  // Render hangman stages - Tuxedoed character
+  // Progressive hangman face (smirk to frown to dead)
   const renderHangman = () => {
     const parts = [];
     const stage = gameState.wrongGuesses;
 
-    // Stage 1: Head
+    // Stage 1: Head with expression
     if (stage >= 1) {
       parts.push(
         <g key="head">
           <circle cx="300" cy="160" r="32" fill="#f4c4a0" />
-          <circle cx="290" cy="150" r="5" fill="#000" />
-          <circle cx="310" cy="150" r="5" fill="#000" />
-          <path d="M 295 165 Q 300 170 305 165" stroke="#000" strokeWidth="2" fill="none" />
+          {stage <= 2 && (
+            <>
+              <circle cx="290" cy="150" r="5" fill="#000" />
+              <circle cx="310" cy="150" r="5" fill="#000" />
+              <path d="M 295 165 Q 300 168 305 165" stroke="#000" strokeWidth="2" fill="none" />
+            </>
+          )}
+          {stage > 2 && stage <= 4 && (
+            <>
+              <circle cx="290" cy="150" r="5" fill="#000" />
+              <circle cx="310" cy="150" r="5" fill="#000" />
+              <path d="M 295 168 Q 300 165 305 168" stroke="#000" strokeWidth="2" fill="none" />
+            </>
+          )}
+          {stage > 4 && (
+            <>
+              <circle cx="290" cy="150" r="5" fill="#ff0000" />
+              <circle cx="310" cy="150" r="5" fill="#ff0000" />
+              <path d="M 295 168 Q 300 165 305 168" stroke="#000" strokeWidth="2" fill="none" />
+            </>
+          )}
         </g>
       );
     }
@@ -499,24 +626,9 @@ export default function HangmanGamePage() {
 
   return (
     <div className="min-h-screen w-full bg-black overflow-hidden relative">
-      {/* Multi-layered Vegas background */}
+      {/* 10 Ambient Motion Layers */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* Radial gradient - spotlight effect */}
-        <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-black opacity-60" 
-          style={{
-            background: 'radial-gradient(circle at 50% 0%, rgba(255,215,0,0.15) 0%, transparent 50%)'
-          }}
-        />
-        
-        {/* Velvet noise texture */}
-        <div className="absolute inset-0 opacity-5" 
-          style={{
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/%3E%3C/filter%3E%3Crect width="400" height="400" fill="white" filter="url(%23noise)"/%3E%3C/svg%3E")',
-            backgroundSize: '200px 200px'
-          }}
-        />
-        
-        {/* Animated spotlight sweep */}
+        {/* Layer 1: Spotlight sweep */}
         <motion.div
           className="absolute inset-0 opacity-20"
           animate={{
@@ -529,126 +641,213 @@ export default function HangmanGamePage() {
             ]
           }}
           transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-          style={{ backgroundPosition: 'center' }}
+        />
+
+        {/* Layer 2: Falling coins */}
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={`coin-${i}`}
+            className="absolute w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full opacity-40"
+            style={{
+              left: `${(i / 8) * 100}%`,
+              top: '-50px',
+            }}
+            animate={{
+              y: window.innerHeight + 100,
+              rotate: 360 * 3,
+            }}
+            transition={{
+              duration: 8 + i,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+        ))}
+
+        {/* Layer 3: Fluttering cards */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={`card-${i}`}
+            className="absolute w-12 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-lg opacity-30"
+            style={{
+              left: `${(i / 6) * 100}%`,
+              top: '20%',
+            }}
+            animate={{
+              y: [0, 100, 0],
+              rotate: [0, 45, 0],
+              x: [0, 50, 0],
+            }}
+            transition={{
+              duration: 6 + i * 0.5,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        ))}
+
+        {/* Layer 4: Roulette wheel */}
+        <motion.div
+          className="absolute top-1/4 right-10 w-32 h-32 border-4 border-yellow-400 rounded-full opacity-20"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+        >
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+              style={{
+                top: '50%',
+                left: '50%',
+                transform: `rotate(${(i / 8) * 360}deg) translateY(-64px)`,
+              }}
+            />
+          ))}
+        </motion.div>
+
+        {/* Layer 5: Pulsing aura */}
+        <motion.div
+          className="absolute inset-0 opacity-10"
+          animate={{
+            background: [
+              'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.3) 0%, transparent 70%)',
+              'radial-gradient(circle at 50% 50%, rgba(255,0,0,0.3) 0%, transparent 70%)',
+              'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.3) 0%, transparent 70%)',
+            ]
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
+        {/* Layer 6: Velvet noise texture */}
+        <div className="absolute inset-0 opacity-5" 
+          style={{
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/%3E%3C/filter%3E%3Crect width="400" height="400" fill="white" filter="url(%23noise)"/%3E%3C/svg%3E")',
+            backgroundSize: '200px 200px'
+          }}
+        />
+
+        {/* Layer 7: Radial gradient - spotlight effect */}
+        <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-black opacity-60" 
+          style={{
+            background: 'radial-gradient(circle at 50% 0%, rgba(255,215,0,0.15) 0%, transparent 50%)'
+          }}
+        />
+
+        {/* Layer 8: Animated marquee light chases - Top border */}
+        <motion.div
+          className="fixed top-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 z-30 pointer-events-none"
+          animate={{ backgroundPosition: ['0% 0%', '100% 0%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          style={{
+            backgroundSize: '200% 100%',
+            boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+          }}
+        />
+
+        {/* Layer 9: Animated marquee light chases - Bottom border */}
+        <motion.div
+          className="fixed bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-red-500 via-yellow-300 to-red-500 z-30 pointer-events-none"
+          animate={{ backgroundPosition: ['100% 0%', '0% 0%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          style={{
+            backgroundSize: '200% 100%',
+            boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+          }}
+        />
+
+        {/* Layer 10: Side borders */}
+        <motion.div
+          className="fixed left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-yellow-300 via-red-500 to-yellow-300 z-30 pointer-events-none"
+          animate={{ backgroundPosition: ['0% 0%', '0% 100%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          style={{
+            backgroundSize: '100% 200%',
+            boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+          }}
+        />
+        <motion.div
+          className="fixed right-0 top-0 bottom-0 w-2 bg-gradient-to-b from-red-500 via-yellow-300 to-red-500 z-30 pointer-events-none"
+          animate={{ backgroundPosition: ['0% 100%', '0% 0%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          style={{
+            backgroundSize: '100% 200%',
+            boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+          }}
         />
       </div>
 
-      {/* Swaying chandelier SVG */}
-      <motion.div
-        className="fixed top-0 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
-        animate={{ rotate: [0, 2, -2, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformOrigin: 'top center' }}
-      >
-        <svg width="140" height="240" viewBox="0 0 140 240" className="drop-shadow-2xl">
-          {/* Main chain links */}
-          <line x1="70" y1="0" x2="70" y2="15" stroke="#c9a961" strokeWidth="2.5" />
-          <circle cx="70" cy="20" r="3" fill="#c9a961" />
-          <line x1="70" y1="25" x2="70" y2="45" stroke="#c9a961" strokeWidth="2.5" />
-          
-          {/* Top canopy - ornate brass */}
-          <ellipse cx="70" cy="50" rx="28" ry="12" fill="#d4a574" stroke="#a67c52" strokeWidth="2" />
-          <path d="M 45 50 Q 45 60 70 65 Q 95 60 95 50" fill="#e8c547" opacity="0.6" />
-          
-          {/* Upper crystal bowl */}
-          <path d="M 50 65 Q 48 75 50 85 Q 70 95 90 85 Q 92 75 90 65 Z" fill="#e8f4f8" opacity="0.7" stroke="#b8d4e0" strokeWidth="1.5" />
-          
-          {/* Crystal prisms hanging from bowl - upper tier */}
-          {[...Array(6)].map((_, i) => {
-            const angle = (i / 6) * Math.PI * 2;
-            const x = 70 + Math.cos(angle) * 18;
-            const y = 75 + Math.sin(angle) * 12;
-            const dropLength = 25 + Math.random() * 10;
-            return (
-              <g key={`upper-${i}`}>
-                <line x1={x} y1={y} x2={x} y2={y + dropLength} stroke="#c0e8f0" strokeWidth="1.5" opacity="0.8" />
-                <polygon points={`${x},${y + dropLength} ${x - 3},${y + dropLength - 5} ${x + 3},${y + dropLength - 5}`} fill="#e8f4f8" opacity="0.9" />
-              </g>
-            );
-          })}
-          
-          {/* Middle ornamental ring */}
-          <circle cx="70" cy="100" r="22" fill="none" stroke="#d4a574" strokeWidth="2" opacity="0.6" />
-          
-          {/* Lower crystal bowl */}
-          <path d="M 52 105 Q 50 115 52 125 Q 70 135 88 125 Q 90 115 88 105 Z" fill="#e8f4f8" opacity="0.7" stroke="#b8d4e0" strokeWidth="1.5" />
-          
-          {/* Crystal prisms - middle tier */}
-          {[...Array(8)].map((_, i) => {
-            const angle = (i / 8) * Math.PI * 2;
-            const x = 70 + Math.cos(angle) * 20;
-            const y = 115 + Math.sin(angle) * 15;
-            const dropLength = 30 + Math.random() * 15;
-            return (
-              <g key={`middle-${i}`}>
-                <line x1={x} y1={y} x2={x} y2={y + dropLength} stroke="#c0e8f0" strokeWidth="1.5" opacity="0.8" />
-                <polygon points={`${x},${y + dropLength} ${x - 4},${y + dropLength - 6} ${x + 4},${y + dropLength - 6}`} fill="#e8f4f8" opacity="0.9" />
-              </g>
-            );
-          })}
-          
-          {/* Bottom ornamental finial */}
-          <circle cx="70" cy="165" r="8" fill="#d4a574" stroke="#a67c52" strokeWidth="1.5" />
-          <path d="M 65 165 L 70 175 L 75 165 Z" fill="#c9a961" />
-          
-          {/* Radiant light glow effect */}
-          <circle cx="70" cy="90" r="45" fill="#ffd700" opacity="0.15" />
-          <circle cx="70" cy="90" r="35" fill="#ffed4e" opacity="0.1" />
-          
-          {/* Sparkle points on crystals */}
-          {[...Array(12)].map((_, i) => {
-            const x = 40 + Math.random() * 60;
-            const y = 60 + Math.random() * 80;
-            return (
-              <circle key={`sparkle-${i}`} cx={x} cy={y} r="1.5" fill="#ffffff" opacity={0.6 + Math.random() * 0.4} />
-            );
-          })}
-        </svg>
-      </motion.div>
+      {/* Mega Jackpot Win Sequence (6 seconds full-screen) */}
+      <AnimatePresence>
+        {showMegaJackpot && (
+          <motion.div
+            key="mega-jackpot"
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* Explosion effect */}
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-4 h-4 bg-yellow-300 rounded-full"
+                initial={{ x: 0, y: 0, opacity: 1 }}
+                animate={{
+                  x: Math.cos((i / 20) * Math.PI * 2) * 400,
+                  y: Math.sin((i / 20) * Math.PI * 2) * 400,
+                  opacity: 0,
+                }}
+                transition={{ duration: 2, ease: 'easeOut' }}
+              />
+            ))}
 
-      {/* Animated marquee light chases - Top border */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 z-30 pointer-events-none"
-        animate={{ backgroundPosition: ['0% 0%', '100% 0%'] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-        style={{
-          backgroundSize: '200% 100%',
-          boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
-        }}
-      />
+            {/* Center text */}
+            <motion.div
+              className="text-center z-10"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, type: 'spring' }}
+            >
+              <motion.p
+                className="text-8xl font-heading font-black text-yellow-300 mb-4"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.5, repeat: 5 }}
+              >
+                🎰 MEGA JACKPOT! 🎰
+              </motion.p>
+              <motion.p
+                className="text-6xl font-heading font-black text-green-400"
+                animate={{ y: [0, -20, 0] }}
+                transition={{ duration: 0.5, repeat: 5 }}
+              >
+                +${currentScore.toLocaleString()}
+              </motion.p>
+            </motion.div>
 
-      {/* Animated marquee light chases - Bottom border */}
-      <motion.div
-        className="fixed bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-red-500 via-yellow-300 to-red-500 z-30 pointer-events-none"
-        animate={{ backgroundPosition: ['100% 0%', '0% 0%'] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-        style={{
-          backgroundSize: '200% 100%',
-          boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
-        }}
-      />
-
-      {/* Animated marquee light chases - Left border */}
-      <motion.div
-        className="fixed left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-yellow-300 via-red-500 to-yellow-300 z-30 pointer-events-none"
-        animate={{ backgroundPosition: ['0% 0%', '0% 100%'] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-        style={{
-          backgroundSize: '100% 200%',
-          boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
-        }}
-      />
-
-      {/* Animated marquee light chases - Right border */}
-      <motion.div
-        className="fixed right-0 top-0 bottom-0 w-2 bg-gradient-to-b from-red-500 via-yellow-300 to-red-500 z-30 pointer-events-none"
-        animate={{ backgroundPosition: ['0% 100%', '0% 0%'] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-        style={{
-          backgroundSize: '100% 200%',
-          boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
-        }}
-      />
+            {/* Confetti */}
+            {[...Array(50)].map((_, i) => (
+              <motion.div
+                key={`confetti-${i}`}
+                className="absolute w-2 h-2 bg-gradient-to-r from-yellow-300 to-red-500 rounded-full"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: '-10px',
+                }}
+                animate={{
+                  y: window.innerHeight + 100,
+                  rotate: 360 * Math.random(),
+                  opacity: [1, 1, 0],
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 2,
+                  delay: i * 0.05,
+                  ease: 'easeIn',
+                }}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Coin drop animation */}
       <AnimatePresence>
@@ -689,10 +888,9 @@ export default function HangmanGamePage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-7xl mb-8 flex flex-col md:flex-row justify-between items-center gap-6"
+          className="w-full max-w-6xl mb-6 flex flex-col md:flex-row justify-between items-center gap-4"
         >
           <div className="text-center md:text-left">
-            {/* Neon-flicker title */}
             <motion.h1
               animate={{
                 textShadow: [
@@ -702,51 +900,48 @@ export default function HangmanGamePage() {
                 ]
               }}
               transition={{ duration: 0.3, repeat: Infinity }}
-              className="text-5xl md:text-7xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 mb-2 tracking-tighter"
+              className="text-4xl md:text-6xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 mb-1 tracking-tighter"
             >
               RED2 HANGMAN
             </motion.h1>
-            <p className="text-lg md:text-xl font-mono text-yellow-300 tracking-widest animate-pulse">HIGH ROLLER</p>
+            <p className="text-lg md:text-xl font-mono text-yellow-300 tracking-widest animate-pulse">$50M CASINO MACHINE</p>
           </div>
           
-          <div className="flex flex-col gap-4 items-center md:items-end">
-            {/* VIP Medallion */}
+          <div className="flex flex-col gap-3 items-center md:items-end">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-              className="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-500 border-4 border-yellow-200 flex items-center justify-center shadow-2xl"
+              className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-500 border-4 border-yellow-200 flex items-center justify-center shadow-2xl"
               style={{
                 boxShadow: '0 0 30px rgba(255,215,0,0.8), inset 0 0 20px rgba(255,255,255,0.3)'
               }}
             >
               <div className="text-center">
                 <p className="text-xs font-mono text-yellow-900 uppercase tracking-widest mb-1">VIP</p>
-                <p className="text-2xl font-heading font-black text-yellow-900" style={{ color: VIP_TIERS[vipTier].color }}>
+                <p className="text-lg font-heading font-black text-yellow-900" style={{ color: VIP_TIERS[vipTier].color }}>
                   {VIP_TIERS[vipTier].name}
                 </p>
               </div>
             </motion.div>
 
-            {/* LED Winnings Scoreboard */}
             <motion.div
-              className="px-8 py-4 bg-black border-4 border-yellow-300 rounded-lg"
+              className="px-6 py-3 bg-black border-4 border-yellow-300 rounded-lg"
               style={{
                 boxShadow: '0 0 20px rgba(255,215,0,0.8), inset 0 0 10px rgba(255,215,0,0.2)',
-                fontFamily: '"Courier New", monospace',
+                fontFamily: '\"Courier New\", monospace',
               }}
             >
-              <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">TOTAL WINNINGS</p>
+              <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">WINNINGS</p>
               <motion.p
                 key={totalWinnings}
                 initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
-                className="text-4xl md:text-5xl font-mono font-black text-yellow-300"
+                className="text-3xl md:text-4xl font-mono font-black text-yellow-300"
               >
                 ${totalWinnings.toLocaleString()}
               </motion.p>
             </motion.div>
 
-            {/* Sound Toggle */}
             <motion.button
               onClick={() => setSoundEnabled(!soundEnabled)}
               whileHover={{ scale: 1.1 }}
@@ -758,55 +953,54 @@ export default function HangmanGamePage() {
           </div>
         </motion.div>
 
-        {/* Social Proof Elements */}
+        {/* Social Proof Elements - Compressed */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-7xl mb-8 grid grid-cols-2 md:grid-cols-4 gap-4"
+          className="w-full max-w-6xl mb-6 grid grid-cols-2 md:grid-cols-4 gap-3"
         >
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-4 text-center">
-            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Live Players</p>
+          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center">
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Live</p>
             <motion.p
               animate={{ y: [0, -2, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="text-2xl font-heading font-black text-white"
+              className="text-xl font-heading font-black text-white"
             >
               {livePlayersCount.toLocaleString()}
             </motion.p>
           </div>
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-4 text-center">
-            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Progressive Jackpot</p>
+          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center">
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Jackpot</p>
             <motion.p
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              className="text-2xl font-heading font-black text-yellow-300"
+              className="text-xl font-heading font-black text-yellow-300"
             >
               ${progressiveJackpot.toLocaleString()}
             </motion.p>
           </div>
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-4 text-center">
-            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Your VIP Tier</p>
-            <p className="text-2xl font-heading font-black" style={{ color: VIP_TIERS[vipTier].color }}>
+          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center">
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Tier</p>
+            <p className="text-xl font-heading font-black" style={{ color: VIP_TIERS[vipTier].color }}>
               {VIP_TIERS[vipTier].name}
             </p>
           </div>
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-4 text-center">
-            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Multiplier</p>
-            <p className="text-2xl font-heading font-black text-green-400">
+          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center">
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Multi</p>
+            <p className="text-xl font-heading font-black text-green-400">
               {VIP_TIERS[vipTier].multiplier}x
             </p>
           </div>
         </motion.div>
 
         {/* Main Content */}
-        <div className="w-full max-w-7xl">{!selectedCategory ? (
-            // Category Selection - Slot Machine Style
+        <div className="w-full max-w-6xl">{!selectedCategory ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="space-y-12"
+              className="space-y-8"
             >
-              <div className="text-center space-y-4">
+              <div className="text-center space-y-3">
                 <p className="text-xl md:text-2xl font-mono text-yellow-300 tracking-widest animate-pulse">
                   ★ SELECT YOUR GAME ★
                 </p>
@@ -815,14 +1009,13 @@ export default function HangmanGamePage() {
                 </p>
               </div>
 
-              {/* Unified Slot Machine Housing */}
               <motion.div
-                className="bg-gradient-to-br from-gray-900 via-black to-gray-950 border-4 border-yellow-300 rounded-2xl p-8 md:p-12 shadow-2xl"
+                className="bg-gradient-to-br from-gray-900 via-black to-gray-950 border-4 border-yellow-300 rounded-2xl p-8 md:p-10 shadow-2xl"
                 style={{
                   boxShadow: '0 0 40px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.1)'
                 }}
               >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
                   {Object.keys(categories).map((category, idx) => (
                     <motion.button
                       key={category}
@@ -832,20 +1025,17 @@ export default function HangmanGamePage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.1 }}
-                      className="group relative p-8 md:p-10 bg-gradient-to-br from-primary/30 to-primary/5 border-2 border-primary rounded-xl hover:border-yellow-400 hover:from-primary/50 hover:to-primary/20 transition-all duration-300 overflow-hidden min-h-48 flex flex-col justify-center"
+                      className="group relative p-6 md:p-8 bg-gradient-to-br from-primary/30 to-primary/5 border-2 border-primary rounded-xl hover:border-yellow-400 hover:from-primary/50 hover:to-primary/20 transition-all duration-300 overflow-hidden min-h-40 flex flex-col justify-center"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/0 to-yellow-400/0 group-hover:from-yellow-400/10 group-hover:to-yellow-400/5 transition-all duration-300" />
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,215,0,.1)_25%,rgba(255,215,0,.1)_50%,transparent_50%,transparent_75%,rgba(255,215,0,.1)_75%,rgba(255,215,0,.1))] bg-[length:40px_40px] animate-pulse" />
-                      </div>
-                      <div className="relative z-10 space-y-4 flex flex-col items-center text-center">
-                        <div className="text-5xl md:text-6xl font-heading font-black text-yellow-300 group-hover:text-yellow-200 transition-colors">
+                      <div className="relative z-10 space-y-3 flex flex-col items-center text-center">
+                        <div className="text-4xl md:text-5xl font-heading font-black text-yellow-300 group-hover:text-yellow-200 transition-colors">
                           ◆
                         </div>
-                        <p className="text-2xl md:text-3xl font-heading font-black text-primary group-hover:text-yellow-300 transition-colors uppercase tracking-wider">
+                        <p className="text-xl md:text-2xl font-heading font-black text-primary group-hover:text-yellow-300 transition-colors uppercase tracking-wider">
                           {category}
                         </p>
-                        <p className="text-sm md:text-base font-mono text-white/60 group-hover:text-white/80 transition-colors">
+                        <p className="text-sm font-mono text-white/60 group-hover:text-white/80 transition-colors">
                           {(categories as any)[category].length} words
                         </p>
                       </div>
@@ -853,7 +1043,6 @@ export default function HangmanGamePage() {
                   ))}
                 </div>
 
-                {/* Pull Lever */}
                 <motion.div
                   className="flex justify-center"
                   animate={{ rotate: [0, 5, -5, 0] }}
@@ -867,28 +1056,25 @@ export default function HangmanGamePage() {
               </motion.div>
             </motion.div>
           ) : (
-            // Game Screen
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+              className="grid grid-cols-1 lg:grid-cols-3 gap-6"
             >
-              {/* Main Game Area */}
-              <div className="lg:col-span-2 space-y-8">
-                {/* Category & Stats */}
-                <div className="bg-gradient-to-br from-primary/20 via-black to-black rounded-xl border-2 border-primary p-8 md:p-10 space-y-8">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pb-6 border-b border-primary/30">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-gradient-to-br from-primary/20 via-black to-black rounded-xl border-2 border-primary p-8 md:p-10 space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-primary/30">
                     <div>
-                      <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-2">★ Category ★</p>
-                      <p className="text-4xl md:text-5xl font-heading font-black text-primary">{gameState.category}</p>
+                      <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">★ Category ★</p>
+                      <p className="text-3xl md:text-4xl font-heading font-black text-primary">{gameState.category}</p>
                     </div>
                     <div className="text-left sm:text-right">
-                      <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-2">★ Wrong Guesses ★</p>
+                      <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">★ Wrong ★</p>
                       <motion.p
                         key={gameState.wrongGuesses}
                         initial={{ scale: 1.2 }}
                         animate={{ scale: 1 }}
-                        className={`text-5xl md:text-6xl font-heading font-black ${
+                        className={`text-4xl md:text-5xl font-heading font-black ${
                           gameState.wrongGuesses >= maxWrong ? 'text-red-500' : 'text-yellow-300'
                         }`}
                       >
@@ -897,43 +1083,38 @@ export default function HangmanGamePage() {
                     </div>
                   </div>
 
-                  {/* Hangman Drawing */}
-                  <div className="flex justify-center py-8 bg-black/50 rounded-lg border border-primary/20">
+                  <div className="flex justify-center py-6 bg-black/50 rounded-lg border border-primary/20">
                     <svg width="400" height="300" viewBox="0 0 400 300" className="w-full max-w-sm">
-                      {/* Gallows */}
                       <line x1="150" y1="250" x2="150" y2="50" stroke="#d4a574" strokeWidth="4" />
                       <line x1="150" y1="50" x2="300" y2="50" stroke="#d4a574" strokeWidth="4" />
                       <line x1="300" y1="50" x2="300" y2="130" stroke="#d4a574" strokeWidth="3" />
-                      {/* Hangman parts */}
                       {renderHangman()}
                     </svg>
                   </div>
 
-                  {/* Word Display */}
                   <motion.div
                     key={gameState.displayWord.join('')}
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
-                    className="text-center py-10 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl border-2 border-primary/50 p-8"
+                    className="text-center py-8 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl border-2 border-primary/50 p-6"
                   >
-                    <p className="text-6xl md:text-7xl font-mono font-black text-yellow-300 tracking-widest break-words">
+                    <p className="text-5xl md:text-6xl font-mono font-black text-yellow-300 tracking-widest break-words">
                       {gameState.displayWord.join(' ')}
                     </p>
                   </motion.div>
 
-                  {/* Game Status */}
                   <AnimatePresence>
                     {gameState.won && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
-                        className="text-center p-8 bg-gradient-to-br from-green-900/50 to-green-900/20 border-2 border-green-400 rounded-xl"
+                        className="text-center p-6 bg-gradient-to-br from-green-900/50 to-green-900/20 border-2 border-green-400 rounded-xl"
                       >
-                        <p className="text-5xl md:text-6xl font-heading font-black text-green-300 mb-3 animate-pulse">
+                        <p className="text-4xl md:text-5xl font-heading font-black text-green-300 mb-2 animate-pulse">
                           ★ JACKPOT! ★
                         </p>
-                        <p className="text-3xl font-heading font-black text-green-400">+${currentScore.toLocaleString()}</p>
+                        <p className="text-2xl font-heading font-black text-green-400">+${currentScore.toLocaleString()}</p>
                       </motion.div>
                     )}
                     {gameState.gameOver && (
@@ -941,18 +1122,17 @@ export default function HangmanGamePage() {
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
-                        className="text-center p-8 bg-gradient-to-br from-red-900/50 to-red-900/20 border-2 border-red-400 rounded-xl"
+                        className="text-center p-6 bg-gradient-to-br from-red-900/50 to-red-900/20 border-2 border-red-400 rounded-xl"
                       >
-                        <p className="text-5xl md:text-6xl font-heading font-black text-red-300 mb-3">BUST!</p>
-                        <p className="text-xl font-paragraph text-red-300">The word was: <span className="font-mono font-black">{gameState.word}</span></p>
+                        <p className="text-4xl md:text-5xl font-heading font-black text-red-300 mb-2">BUST!</p>
+                        <p className="text-lg font-paragraph text-red-300">The word was: <span className="font-mono font-black">{gameState.word}</span></p>
                       </motion.div>
                     )}
                   </AnimatePresence>
 
-                  {/* Guessed Letters */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest">★ Guessed Letters ★</p>
-                    <div className="flex flex-wrap gap-3 p-6 bg-black/50 rounded-xl border border-primary/30 min-h-20">
+                    <div className="flex flex-wrap gap-2 p-4 bg-black/50 rounded-xl border border-primary/30 min-h-16">
                       {gameState.guessed.length === 0 ? (
                         <p className="text-white/40 text-sm w-full text-center">No letters guessed yet</p>
                       ) : (
@@ -961,7 +1141,7 @@ export default function HangmanGamePage() {
                             key={letter}
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            className={`px-4 py-2 rounded-lg font-mono text-base font-bold transition-all border-2 ${
+                            className={`px-3 py-1 rounded-lg font-mono text-sm font-bold transition-all border-2 ${
                               gameState.word.includes(letter)
                                 ? 'bg-green-900/50 text-green-300 border-green-500'
                                 : 'bg-red-900/50 text-red-300 border-red-500'
@@ -974,10 +1154,9 @@ export default function HangmanGamePage() {
                     </div>
                   </div>
 
-                  {/* Letter Buttons */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest">★ Click to Guess ★</p>
-                    <div className="grid grid-cols-7 gap-2 md:gap-3">
+                    <div className="grid grid-cols-7 gap-2">
                       {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter) => (
                         <motion.button
                           key={letter}
@@ -985,7 +1164,7 @@ export default function HangmanGamePage() {
                           disabled={gameState.guessed.includes(letter) || gameState.gameOver || gameState.won}
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          className={`py-3 px-2 md:px-3 text-sm md:text-base font-mono font-bold rounded-lg transition-all border-2 ${
+                          className={`py-2 px-1 md:px-2 text-xs md:text-sm font-mono font-bold rounded-lg transition-all border-2 ${
                             gameState.guessed.includes(letter)
                               ? gameState.word.includes(letter)
                                 ? 'bg-green-900/50 text-green-300 border-green-500 cursor-not-allowed'
@@ -999,14 +1178,13 @@ export default function HangmanGamePage() {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
+                  <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
                     <motion.button
                       onClick={newGame}
                       disabled={!gameState.won && !gameState.gameOver}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`px-8 py-4 font-heading font-black text-lg rounded-lg transition-all border-2 ${
+                      className={`px-6 py-3 font-heading font-black text-lg rounded-lg transition-all border-2 ${
                         gameState.won || gameState.gameOver
                           ? 'bg-gradient-to-r from-primary to-primary/70 text-white border-primary hover:border-yellow-400'
                           : 'bg-gray-600 text-gray-400 cursor-not-allowed border-gray-600'
@@ -1029,7 +1207,7 @@ export default function HangmanGamePage() {
                       }}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="px-8 py-4 bg-white/10 text-white font-heading font-black text-lg rounded-lg hover:bg-white/20 transition-all border-2 border-white/30 hover:border-yellow-400"
+                      className="px-6 py-3 bg-white/10 text-white font-heading font-black text-lg rounded-lg hover:bg-white/20 transition-all border-2 border-white/30 hover:border-yellow-400"
                     >
                       CHANGE GAME
                     </motion.button>
@@ -1037,40 +1215,39 @@ export default function HangmanGamePage() {
                 </div>
               </div>
 
-              {/* Leaderboard Sidebar */}
               <div className="lg:col-span-1">
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="bg-gradient-to-br from-primary/20 via-black to-black rounded-xl border-2 border-primary p-8 sticky top-8 space-y-6"
+                  className="bg-gradient-to-br from-primary/20 via-black to-black rounded-xl border-2 border-primary p-6 sticky top-8 space-y-4"
                 >
                   <div className="text-center">
-                    <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-2">★ Hall of Fame ★</p>
-                    <h3 className="text-3xl font-heading font-black text-white">TOP 5</h3>
+                    <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">★ Hall of Fame ★</p>
+                    <h3 className="text-2xl font-heading font-black text-white">TOP 5</h3>
                   </div>
 
                   {leaderboard.length === 0 ? (
-                    <p className="text-white/50 text-center py-12 font-paragraph">Be the first to hit the leaderboard!</p>
+                    <p className="text-white/50 text-center py-8 font-paragraph">Be the first to hit the leaderboard!</p>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {leaderboard.map((entry, index) => (
                         <motion.div
                           key={index}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.1 }}
-                          className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/30 to-primary/10 border-2 border-primary/50 rounded-lg hover:border-yellow-400 transition-all"
+                          className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/30 to-primary/10 border-2 border-primary/50 rounded-lg hover:border-yellow-400 transition-all"
                         >
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl font-heading font-black text-yellow-300 w-8">#{index + 1}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl font-heading font-black text-yellow-300 w-6">#{index + 1}</span>
                             <div>
-                              <span className="text-lg font-mono font-black text-white">{entry.initials}</span>
+                              <span className="text-sm font-mono font-black text-white">{entry.initials}</span>
                               <p className="text-xs font-mono text-white/50" style={{ color: VIP_TIERS[entry.vipTier].color }}>
                                 {VIP_TIERS[entry.vipTier].name}
                               </p>
                             </div>
                           </div>
-                          <span className="text-2xl font-heading font-black text-yellow-300">
+                          <span className="text-lg font-heading font-black text-yellow-300">
                             ${entry.score.toLocaleString()}
                           </span>
                         </motion.div>
