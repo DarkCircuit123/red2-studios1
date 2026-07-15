@@ -1,7 +1,20 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Volume2, VolumeX, Music, Play, Pause } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { GlobalAudioManager } from '@/lib/audio-manager';
+
+// Lazy load audio manager to prevent circular dependencies
+let audioManagerInstance: any = null;
+const getAudioManager = () => {
+  if (!audioManagerInstance && typeof window !== 'undefined') {
+    try {
+      const { GlobalAudioManager } = require('@/lib/audio-manager');
+      audioManagerInstance = GlobalAudioManager.getInstance();
+    } catch (e) {
+      console.warn('Failed to load audio manager:', e);
+    }
+  }
+  return audioManagerInstance;
+};
 
 declare global {
   interface Window {
@@ -21,7 +34,7 @@ export default function BackgroundMusicPlayer() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
-  const audioManagerRef = useRef(GlobalAudioManager.getInstance());
+  const audioManagerRef = useRef(getAudioManager());
 
   // SoundCloud track URL - Blue in Green by Miles Davis
   const SOUNDCLOUD_TRACK_URL = 'https://soundcloud.com/markd54321/198-blue-in-green-miles-davis';
