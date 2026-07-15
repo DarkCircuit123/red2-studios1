@@ -419,17 +419,74 @@ export default function HangmanGamePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gameState]);
 
-  // Render hangman stages
+  // Render hangman stages - Tuxedoed character
   const renderHangman = () => {
     const parts = [];
     const stage = gameState.wrongGuesses;
 
-    if (stage >= 1) parts.push(<circle key="head" cx="300" cy="180" r="35" fill="#fdbcb4" />);
-    if (stage >= 2) parts.push(<rect key="body" x="290" y="220" width="20" height="100" fill="#ff6b6b" />);
-    if (stage >= 3) parts.push(<rect key="leftArm" x="240" y="245" width="50" height="15" fill="#fdbcb4" />);
-    if (stage >= 4) parts.push(<rect key="rightArm" x="310" y="245" width="50" height="15" fill="#fdbcb4" />);
-    if (stage >= 5) parts.push(<rect key="leftLeg" x="285" y="320" width="12" height="70" fill="#4a4a4a" />);
-    if (stage >= 6) parts.push(<rect key="rightLeg" x="303" y="320" width="12" height="70" fill="#4a4a4a" />);
+    // Stage 1: Head
+    if (stage >= 1) {
+      parts.push(
+        <g key="head">
+          <circle cx="300" cy="160" r="32" fill="#f4c4a0" />
+          <circle cx="290" cy="150" r="5" fill="#000" />
+          <circle cx="310" cy="150" r="5" fill="#000" />
+          <path d="M 295 165 Q 300 170 305 165" stroke="#000" strokeWidth="2" fill="none" />
+        </g>
+      );
+    }
+
+    // Stage 2: Tuxedo jacket body
+    if (stage >= 2) {
+      parts.push(
+        <g key="body">
+          <path d="M 280 195 L 280 280 L 320 280 L 320 195 Q 300 185 280 195" fill="#1a1a1a" stroke="#d4a574" strokeWidth="2" />
+          <rect x="295" y="195" width="10" height="85" fill="#fff" />
+          <circle cx="300" cy="210" r="3" fill="#d4a574" />
+          <circle cx="300" cy="225" r="3" fill="#d4a574" />
+        </g>
+      );
+    }
+
+    // Stage 3: Left arm
+    if (stage >= 3) {
+      parts.push(
+        <g key="leftArm">
+          <rect x="230" y="215" width="50" height="12" fill="#1a1a1a" stroke="#d4a574" strokeWidth="1" rx="6" />
+          <circle cx="235" cy="221" r="8" fill="#f4c4a0" />
+        </g>
+      );
+    }
+
+    // Stage 4: Right arm
+    if (stage >= 4) {
+      parts.push(
+        <g key="rightArm">
+          <rect x="320" y="215" width="50" height="12" fill="#1a1a1a" stroke="#d4a574" strokeWidth="1" rx="6" />
+          <circle cx="365" cy="221" r="8" fill="#f4c4a0" />
+        </g>
+      );
+    }
+
+    // Stage 5: Left leg
+    if (stage >= 5) {
+      parts.push(
+        <g key="leftLeg">
+          <rect x="285" y="280" width="10" height="60" fill="#2a2a2a" stroke="#d4a574" strokeWidth="1" />
+          <rect x="282" y="340" width="16" height="12" fill="#1a1a1a" rx="2" />
+        </g>
+      );
+    }
+
+    // Stage 6: Right leg
+    if (stage >= 6) {
+      parts.push(
+        <g key="rightLeg">
+          <rect x="305" y="280" width="10" height="60" fill="#2a2a2a" stroke="#d4a574" strokeWidth="1" />
+          <rect x="302" y="340" width="16" height="12" fill="#1a1a1a" rx="2" />
+        </g>
+      );
+    }
 
     return parts;
   };
@@ -483,22 +540,69 @@ export default function HangmanGamePage() {
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         style={{ transformOrigin: 'top center' }}
       >
-        <svg width="120" height="200" viewBox="0 0 120 200" className="drop-shadow-2xl">
-          {/* Chain */}
-          <line x1="60" y1="0" x2="60" y2="40" stroke="#d4a574" strokeWidth="3" />
-          {/* Chandelier body */}
-          <circle cx="60" cy="50" r="20" fill="#ffd700" opacity="0.8" />
-          {/* Crystals */}
-          {[...Array(8)].map((_, i) => {
-            const angle = (i / 8) * Math.PI * 2;
-            const x = 60 + Math.cos(angle) * 25;
-            const y = 50 + Math.sin(angle) * 25;
+        <svg width="140" height="240" viewBox="0 0 140 240" className="drop-shadow-2xl">
+          {/* Main chain links */}
+          <line x1="70" y1="0" x2="70" y2="15" stroke="#c9a961" strokeWidth="2.5" />
+          <circle cx="70" cy="20" r="3" fill="#c9a961" />
+          <line x1="70" y1="25" x2="70" y2="45" stroke="#c9a961" strokeWidth="2.5" />
+          
+          {/* Top canopy - ornate brass */}
+          <ellipse cx="70" cy="50" rx="28" ry="12" fill="#d4a574" stroke="#a67c52" strokeWidth="2" />
+          <path d="M 45 50 Q 45 60 70 65 Q 95 60 95 50" fill="#e8c547" opacity="0.6" />
+          
+          {/* Upper crystal bowl */}
+          <path d="M 50 65 Q 48 75 50 85 Q 70 95 90 85 Q 92 75 90 65 Z" fill="#e8f4f8" opacity="0.7" stroke="#b8d4e0" strokeWidth="1.5" />
+          
+          {/* Crystal prisms hanging from bowl - upper tier */}
+          {[...Array(6)].map((_, i) => {
+            const angle = (i / 6) * Math.PI * 2;
+            const x = 70 + Math.cos(angle) * 18;
+            const y = 75 + Math.sin(angle) * 12;
+            const dropLength = 25 + Math.random() * 10;
             return (
-              <circle key={i} cx={x} cy={y} r="4" fill="#ffed4e" opacity="0.9" />
+              <g key={`upper-${i}`}>
+                <line x1={x} y1={y} x2={x} y2={y + dropLength} stroke="#c0e8f0" strokeWidth="1.5" opacity="0.8" />
+                <polygon points={`${x},${y + dropLength} ${x - 3},${y + dropLength - 5} ${x + 3},${y + dropLength - 5}`} fill="#e8f4f8" opacity="0.9" />
+              </g>
             );
           })}
-          {/* Light glow */}
-          <circle cx="60" cy="50" r="30" fill="#ffd700" opacity="0.2" />
+          
+          {/* Middle ornamental ring */}
+          <circle cx="70" cy="100" r="22" fill="none" stroke="#d4a574" strokeWidth="2" opacity="0.6" />
+          
+          {/* Lower crystal bowl */}
+          <path d="M 52 105 Q 50 115 52 125 Q 70 135 88 125 Q 90 115 88 105 Z" fill="#e8f4f8" opacity="0.7" stroke="#b8d4e0" strokeWidth="1.5" />
+          
+          {/* Crystal prisms - middle tier */}
+          {[...Array(8)].map((_, i) => {
+            const angle = (i / 8) * Math.PI * 2;
+            const x = 70 + Math.cos(angle) * 20;
+            const y = 115 + Math.sin(angle) * 15;
+            const dropLength = 30 + Math.random() * 15;
+            return (
+              <g key={`middle-${i}`}>
+                <line x1={x} y1={y} x2={x} y2={y + dropLength} stroke="#c0e8f0" strokeWidth="1.5" opacity="0.8" />
+                <polygon points={`${x},${y + dropLength} ${x - 4},${y + dropLength - 6} ${x + 4},${y + dropLength - 6}`} fill="#e8f4f8" opacity="0.9" />
+              </g>
+            );
+          })}
+          
+          {/* Bottom ornamental finial */}
+          <circle cx="70" cy="165" r="8" fill="#d4a574" stroke="#a67c52" strokeWidth="1.5" />
+          <path d="M 65 165 L 70 175 L 75 165 Z" fill="#c9a961" />
+          
+          {/* Radiant light glow effect */}
+          <circle cx="70" cy="90" r="45" fill="#ffd700" opacity="0.15" />
+          <circle cx="70" cy="90" r="35" fill="#ffed4e" opacity="0.1" />
+          
+          {/* Sparkle points on crystals */}
+          {[...Array(12)].map((_, i) => {
+            const x = 40 + Math.random() * 60;
+            const y = 60 + Math.random() * 80;
+            return (
+              <circle key={`sparkle-${i}`} cx={x} cy={y} r="1.5" fill="#ffffff" opacity={0.6 + Math.random() * 0.4} />
+            );
+          })}
         </svg>
       </motion.div>
 
