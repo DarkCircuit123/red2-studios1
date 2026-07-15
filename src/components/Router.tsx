@@ -3,23 +3,23 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
-import HomePage from './pages/HomePage';
-import PortfolioPage from './pages/PortfolioPage';
-import PortfolioDetailPage from './pages/PortfolioDetailPage';
-import BookingPage from './pages/BookingPage';
-import ClientGalleriesPage from './pages/ClientGalleriesPage';
-import BlogPage from './pages/BlogPage';
-import BlogDetailPage from './pages/BlogDetailPage';
-import ProfilePage from './pages/ProfilePage';
-import PrivatePage from './pages/PrivatePage';
-import HangmanGamePage from './pages/HangmanGamePage';
-import ClientRegisterPage from './pages/ClientRegisterPage';
-import ClientGalleryViewPage from './pages/ClientGalleryViewPage';
-import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
-import WorkPage from './pages/WorkPage';
-import ContactPage from './pages/ContactPage';
-import WatchPage from './pages/WatchPage';
-import BackgroundMusicPlayer from './BackgroundMusicPlayer';
+import HomePage from '@/components/pages/HomePage';
+import PortfolioPage from '@/components/pages/PortfolioPage';
+import PortfolioDetailPage from '@/components/pages/PortfolioDetailPage';
+import BookingPage from '@/components/pages/BookingPage';
+import ClientGalleriesPage from '@/components/pages/ClientGalleriesPage';
+import BlogPage from '@/components/pages/BlogPage';
+import BlogDetailPage from '@/components/pages/BlogDetailPage';
+import ProfilePage from '@/components/pages/ProfilePage';
+import PrivatePage from '@/components/pages/PrivatePage';
+import HangmanGamePage from '@/components/pages/HangmanGamePage';
+import ClientRegisterPage from '@/components/pages/ClientRegisterPage';
+import ClientGalleryViewPage from '@/components/pages/ClientGalleryViewPage';
+import ClientGalleryDashboardPage from '@/components/pages/ClientGalleryDashboardPage';
+import WorkPage from '@/components/pages/WorkPage';
+import ContactPage from '@/components/pages/ContactPage';
+import WatchPage from '@/components/pages/WatchPage';
+import BackgroundMusicPlayer from '@/components/BackgroundMusicPlayer';
 // ... keep existing code (other imports) ...
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
