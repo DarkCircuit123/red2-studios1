@@ -1,10 +1,6 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import RouterFallback from '@/components/RouterFallback';
 import AppRouter from '@/components/Router';
-import '@/lib/site-diagnostics';
-import '@/lib/performance-optimizer';
-import '@/lib/accessibility-checker';
-import { diagnosticCleanup } from '@/lib/diagnostic-cleanup';
 
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -33,6 +29,19 @@ class RouterErrorBoundary extends React.Component<
 }
 
 export default function AppRoot() {
+  useEffect(() => {
+    // Lazy load diagnostics after app is mounted
+    const loadDiagnostics = async () => {
+      try {
+        await import('@/lib/performance-optimizer');
+        await import('@/lib/accessibility-checker');
+      } catch (err) {
+        console.warn('Failed to load diagnostics:', err);
+      }
+    };
+    loadDiagnostics();
+  }, []);
+
   return (
     <RouterErrorBoundary>
       <Suspense fallback={<RouterFallback />}>
