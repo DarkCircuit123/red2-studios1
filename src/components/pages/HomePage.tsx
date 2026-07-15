@@ -6,7 +6,6 @@ import AboutSection from '@/components/sections/AboutSection';
 import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
-import LiveTickerSection from '@/components/sections/LiveTickerSection';
 
 // Fallback component for sections
 function SectionFallback() {
@@ -21,11 +20,6 @@ export default function HomePage() {
       {/* Hero Section */}
       <Suspense fallback={<SectionFallback />}>
         <HeroSection />
-      </Suspense>
-
-      {/* Live Ticker Section */}
-      <Suspense fallback={null}>
-        <LiveTickerSection />
       </Suspense>
 
       {/* About / Vision */}

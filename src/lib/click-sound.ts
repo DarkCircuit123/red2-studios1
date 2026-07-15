@@ -1,43 +1,13 @@
 // Enhanced click sound effect utility - more impressive
-import { GlobalAudioManager } from './audio-manager';
-
 export const playClickSound = () => {
   try {
-    const manager = GlobalAudioManager.getInstance();
-    
-    // Check if audio is enabled
-    if (!manager.isAudioEnabledState()) {
-      return;
-    }
-
-    // Resume audio context if needed
-    manager.resumeAudioContext().catch(() => {});
-
-    const audioContext = manager.getAudioContext();
-    if (!audioContext) {
-      // Fallback: create new context
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioContextClass();
-      playClickSoundWithContext(ctx);
-    } else {
-      playClickSoundWithContext(audioContext);
-    }
-  } catch (e) {
-    console.warn('Click sound failed:', e);
-  }
-};
-
-function playClickSoundWithContext(audioContext: AudioContext) {
-  try {
-    const masterGain = audioContext.createGain();
-    masterGain.gain.value = 0.3; // Reduce volume for click
-    masterGain.connect(audioContext.destination);
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     
     // Main click tone
     const oscillator1 = audioContext.createOscillator();
     const gainNode1 = audioContext.createGain();
     oscillator1.connect(gainNode1);
-    gainNode1.connect(masterGain);
+    gainNode1.connect(audioContext.destination);
     
     oscillator1.frequency.value = 900; // Hz
     oscillator1.type = 'sine';
@@ -51,7 +21,7 @@ function playClickSoundWithContext(audioContext: AudioContext) {
     const oscillator2 = audioContext.createOscillator();
     const gainNode2 = audioContext.createGain();
     oscillator2.connect(gainNode2);
-    gainNode2.connect(masterGain);
+    gainNode2.connect(audioContext.destination);
     
     oscillator2.frequency.value = 1350; // Hz - harmonic
     oscillator2.type = 'sine';
@@ -61,49 +31,21 @@ function playClickSoundWithContext(audioContext: AudioContext) {
     oscillator2.start(audioContext.currentTime);
     oscillator2.stop(audioContext.currentTime + 0.1);
   } catch (e) {
-    console.warn('Click sound synthesis failed:', e);
+    // Silently fail if audio context is not available
   }
-}
+};
 
 // Short, sharp "ting" sound effect for hover
 export const playHoverSound = () => {
   try {
-    const manager = GlobalAudioManager.getInstance();
-    
-    // Check if audio is enabled
-    if (!manager.isAudioEnabledState()) {
-      return;
-    }
-
-    // Resume audio context if needed
-    manager.resumeAudioContext().catch(() => {});
-
-    const audioContext = manager.getAudioContext();
-    if (!audioContext) {
-      // Fallback: create new context
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioContextClass();
-      playHoverSoundWithContext(ctx);
-    } else {
-      playHoverSoundWithContext(audioContext);
-    }
-  } catch (e) {
-    console.warn('Hover sound failed:', e);
-  }
-};
-
-function playHoverSoundWithContext(audioContext: AudioContext) {
-  try {
-    const masterGain = audioContext.createGain();
-    masterGain.gain.value = 0.2; // Reduce volume for hover
-    masterGain.connect(audioContext.destination);
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     
     // High-pitched ting tone
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
     oscillator.connect(gainNode);
-    gainNode.connect(masterGain);
+    gainNode.connect(audioContext.destination);
     
     oscillator.type = 'sine';
     oscillator.frequency.value = 1200; // High frequency for "ting"
@@ -115,7 +57,7 @@ function playHoverSoundWithContext(audioContext: AudioContext) {
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.05);
   } catch (e) {
-    console.warn('Hover sound synthesis failed:', e);
+    // Silently fail if audio context is not available
   }
-}
+};
 

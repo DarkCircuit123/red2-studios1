@@ -1,179 +1,95 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { Volume2, VolumeX, Music, Play, Pause } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-declare global {
-  interface Window {
-    SC?: {
-      Widget: {
-        getInstance: () => any;
-      };
-    };
-  }
-}
 
 export default function BackgroundMusicPlayer() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const widgetRef = useRef<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showControls, setShowControls] = useState(false);
 
-  // SoundCloud track URL - Blue in Green by Miles Davis
-  const SOUNDCLOUD_TRACK_URL = 'https://soundcloud.com/markd54321/198-blue-in-green-miles-davis';
-  const SOUNDCLOUD_EMBED_URL = `https://w.soundcloud.com/player/?url=${encodeURIComponent(SOUNDCLOUD_TRACK_URL)}&color=%236F0809&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false`;
-
-  // Load SoundCloud Widget API
-  useEffect(() => {
-    if (window.SC) {
-      setIsLoading(false);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://w.soundcloud.com/player/api.js';
-    script.async = true;
-    script.onload = () => {
-      setIsLoading(false);
-      if (window.SC?.Widget && iframeRef.current) {
-        widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
-      }
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, []);
-
-  // Handle first user interaction to enable autoplay
+  // Preload and attempt to play music on first user interaction
   useEffect(() => {
     const handleUserInteraction = () => {
       if (!hasInteracted) {
         setHasInteracted(true);
+        // Trigger play via iframe postMessage
+        if (iframeRef.current) {
+          try {
+            iframeRef.current.contentWindow?.postMessage(
+              { method: 'play' },
+              '*'
+            );
+            setIsPlaying(true);
+          } catch (e) {
+            console.log('Could not trigger SoundCloud playback');
+          }
+        }
       }
     };
 
-    const events = ['click', 'touchstart', 'keydown'];
-    events.forEach(event => {
-      document.addEventListener(event, handleUserInteraction, { once: true });
-    });
+    // Listen for any user interaction
+    document.addEventListener('click', handleUserInteraction, { once: true });
+    document.addEventListener('touchstart', handleUserInteraction, { once: true });
+    document.addEventListener('keydown', handleUserInteraction, { once: true });
 
     return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, handleUserInteraction);
-      });
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
     };
   }, [hasInteracted]);
 
-  const togglePlayPause = useCallback(() => {
-    if (widgetRef.current) {
-      widgetRef.current.toggle();
-      setIsPlaying(!isPlaying);
+  const togglePlayPause = () => {
+    if (iframeRef.current) {
+      try {
+        const method = isPlaying ? 'pause' : 'play';
+        iframeRef.current.contentWindow?.postMessage(
+          { method },
+          '*'
+        );
+        setIsPlaying(!isPlaying);
+      } catch (e) {
+        console.log('Could not control SoundCloud playback');
+      }
     }
-  }, [isPlaying]);
+  };
 
-  const toggleMute = useCallback(() => {
+  const toggleMute = () => {
     setIsMuted(!isMuted);
-  }, [isMuted]);
-
-  const handleIframeLoad = useCallback(() => {
-    setIsLoading(false);
-    if (window.SC?.Widget && iframeRef.current) {
-      widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
-    }
-  }, []);
+  };
 
   return (
     <>
-      {/* SoundCloud embed iframe */}
+      {/* Hidden SoundCloud iframe - preloaded */}
       <iframe
         ref={iframeRef}
-        title="Background Music Player - SoundCloud"
-        width="100%"
-        height="166"
+        title="Background Music Player"
+        width="0"
+        height="0"
         scrolling="no"
         frameBorder="no"
         allow="autoplay"
-        onLoad={handleIframeLoad}
-        src={SOUNDCLOUD_EMBED_URL}
-        style={{
-          position: 'fixed',
-          bottom: '80px',
-          right: '8px',
-          zIndex: 39,
-          borderRadius: '8px',
-          overflow: 'hidden',
-          maxWidth: '320px',
-          opacity: showControls ? 1 : 0,
-          pointerEvents: showControls ? 'auto' : 'none',
-          transition: 'opacity 0.3s ease-in-out',
-        }}
+        src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1234567890&color=%236F0809&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
+        style={{ display: 'none' }}
       />
 
       {/* Music control button - fixed position */}
-      <motion.div
+      <motion.button
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.5 }}
-        className="fixed bottom-8 right-8 z-40 flex flex-col items-center gap-2"
+        onClick={toggleMute}
+        className="fixed bottom-8 right-8 z-40 p-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 shadow-lg"
+        aria-label={isMuted ? 'Unmute music' : 'Mute music'}
+        title={isMuted ? 'Click to unmute background music' : 'Click to mute background music'}
       >
-        {/* Toggle player visibility */}
-        <motion.button
-          onClick={() => setShowControls(!showControls)}
-          className="p-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl"
-          aria-label="Toggle music player"
-          title="Toggle music player"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Music className="w-5 h-5" />
-        </motion.button>
-
-        {/* Play/Pause button */}
-        {showControls && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={togglePlayPause}
-            className="p-2 bg-primary/80 text-white rounded-full hover:bg-primary transition-all duration-300"
-            aria-label={isPlaying ? 'Pause music' : 'Play music'}
-            title={isPlaying ? 'Pause music' : 'Play music'}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {isPlaying ? (
-              <Pause className="w-4 h-4" />
-            ) : (
-              <Play className="w-4 h-4" />
-            )}
-          </motion.button>
+        {isMuted ? (
+          <VolumeX className="w-5 h-5" />
+        ) : (
+          <Volume2 className="w-5 h-5" />
         )}
-
-        {/* Mute button */}
-        {showControls && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={toggleMute}
-            className="p-2 bg-primary/80 text-white rounded-full hover:bg-primary transition-all duration-300"
-            aria-label={isMuted ? 'Unmute music' : 'Mute music'}
-            title={isMuted ? 'Unmute music' : 'Mute music'}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {isMuted ? (
-              <VolumeX className="w-4 h-4" />
-            ) : (
-              <Volume2 className="w-4 h-4" />
-            )}
-          </motion.button>
-        )}
-      </motion.div>
+      </motion.button>
     </>
   );
 }

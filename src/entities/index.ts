@@ -98,35 +98,6 @@ export interface ClientsPress {
 
 
 /**
- * Collection ID: dataexportaudit
- * Interface for DataExportAudit
- */
-export interface DataExportAudit {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType text */
-  exportedBy?: string;
-  /** @wixFieldType datetime */
-  exportDate?: Date | string;
-  /** @wixFieldType text */
-  collectionsExported?: string;
-  /** @wixFieldType text */
-  exportFormat?: string;
-  /** @wixFieldType boolean */
-  includedPII?: boolean;
-  /** @wixFieldType number */
-  recordCount?: number;
-  /** @wixFieldType number */
-  fileSize?: number;
-  /** @wixFieldType text */
-  status?: string;
-  /** @wixFieldType text */
-  errorMessage?: string;
-}
-
-
-/**
  * Collection ID: homepageimages
  * Interface for HomepageImages
  */
@@ -210,31 +181,6 @@ export interface Prints {
 
 
 /**
- * Collection ID: reels
- * Interface for Reels
- */
-export interface Reels {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType text */
-  title?: string;
-  /** @wixFieldType url */
-  videoUrl?: string;
-  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
-  thumbnail?: string;
-  /** @wixFieldType text */
-  duration?: string;
-  /** @wixFieldType text */
-  category?: string;
-  /** @wixFieldType boolean */
-  featured?: boolean;
-  /** @wixFieldType number */
-  order?: number;
-}
-
-
-/**
  * Collection ID: services
  * Interface for Services
  */
@@ -306,31 +252,6 @@ export interface TeamMembers {
   specialization?: string;
   /** @wixFieldType url */
   socialLink?: string;
-}
-
-
-/**
- * Collection ID: tickerstories
- * Interface for TickerStories
- */
-export interface TickerStories {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType text */
-  headline?: string;
-  /** @wixFieldType text */
-  slug?: string;
-  /** @wixFieldType url */
-  storyURL?: string;
-  /** @wixFieldType text */
-  category?: string;
-  /** @wixFieldType date */
-  publishDate?: Date | string;
-  /** @wixFieldType boolean */
-  active?: boolean;
-  /** @wixFieldType number */
-  priority?: number;
 }
 
 
