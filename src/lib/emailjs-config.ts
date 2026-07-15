@@ -15,10 +15,10 @@
 
 export const EMAILJS_CONFIG = {
   // Your EmailJS Public Key (found in Account > API Keys)
-  PUBLIC_KEY: 'pvYRte4VcD3xgNO_B',
+  PUBLIC_KEY: 'YOUR_EMAILJS_PUBLIC_KEY_HERE',
   
   // Your EmailJS Service ID (found in Email Services)
-  SERVICE_ID: 'service_hfiysjg',
+  SERVICE_ID: 'YOUR_EMAILJS_SERVICE_ID_HERE',
   
   // Template IDs for booking emails
   TEMPLATES: {

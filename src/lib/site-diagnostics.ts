@@ -520,13 +520,11 @@ export class SiteDiagnostics {
   }
 }
 
-// Initialize diagnostics only when explicitly called
-export function initializeSiteDiagnostics() {
-  if (typeof window !== 'undefined') {
-    window.addEventListener('load', async () => {
-      const report = await SiteDiagnostics.runFullDiagnostics();
-      SiteDiagnostics.logReport(report);
-      SiteDiagnostics.fixCommonIssues();
-    });
-  }
+// Auto-run diagnostics on page load
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', async () => {
+    const report = await SiteDiagnostics.runFullDiagnostics();
+    SiteDiagnostics.logReport(report);
+    SiteDiagnostics.fixCommonIssues();
+  });
 }

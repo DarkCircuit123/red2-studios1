@@ -1,14 +1,71 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, User, ArrowRight, Share2, Clock, AlertCircle, RotateCcw, Twitter, Linkedin, Facebook, Copy } from 'lucide-react';
+import { Calendar, User, ArrowLeft, Share2, Clock, AlertCircle, RotateCcw } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { BlogPosts } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import VideoPlayer from '@/components/VideoPlayer';
+
+// Inline video player component
+function VideoPlayer({ url }: { url: string }) {
+  const [playerType, setPlayerType] = useState<'youtube' | 'vimeo' | 'html5' | null>(null);
+
+  useEffect(() => {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      setPlayerType('youtube');
+    } else if (url.includes('vimeo.com')) {
+      setPlayerType('vimeo');
+    } else if (url.endsWith('.mp4') || url.endsWith('.webm')) {
+      setPlayerType('html5');
+    }
+  }, [url]);
+
+  if (!playerType) return null;
+
+  if (playerType === 'youtube') {
+    const videoId = url.includes('youtu.be')
+      ? url.split('youtu.be/')[1]?.split('?')[0]
+      : url.split('v=')[1]?.split('&')[0];
+    return (
+      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden mb-12">
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}`}
+          title="Video player"
+          className="w-full h-full"
+          allowFullScreen
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  if (playerType === 'vimeo') {
+    const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
+    return (
+      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden mb-12">
+        <iframe
+          src={`https://player.vimeo.com/video/${videoId}`}
+          title="Video player"
+          className="w-full h-full"
+          allowFullScreen
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden mb-12">
+      <video controls className="w-full h-full">
+        <source src={url} type={url.endsWith('.webm') ? 'video/webm' : 'video/mp4'} />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  );
+}
 
 // Calculate reading time
 function calculateReadingTime(text: string): number {
@@ -17,15 +74,13 @@ function calculateReadingTime(text: string): number {
   return Math.ceil(wordCount / wordsPerMinute);
 }
 
-// Sanitize and render HTML/markdown content with enhanced security
+// Sanitize and render HTML/markdown content
 function ContentRenderer({ content }: { content: string }) {
   const sanitizedContent = useMemo(() => {
-    // Remove script tags and event handlers
+    // Basic HTML sanitization - remove script tags and event handlers
     let sanitized = content
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/on\w+\s*=\s*[\"'][^\"']*[\"']/gi, '')
-      .replace(/javascript:/gi, '')
-      .replace(/data:/gi, '');
+      .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
     return sanitized;
   }, [content]);
 
@@ -38,108 +93,14 @@ function ContentRenderer({ content }: { content: string }) {
   );
 }
 
-// Validate URL - hardened to block non-http protocols
+// Validate URL
 function isValidUrl(url: string): boolean {
   try {
-    const parsed = new URL(url);
-    // Only allow http and https protocols
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return false;
-    }
+    new URL(url);
     return true;
   } catch {
     return false;
   }
-}
-
-// Share buttons component
-function ShareButtons({ post }: { post: BlogPosts }) {
-  const [copied, setCopied] = useState(false);
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const encodedUrl = encodeURIComponent(currentUrl);
-  const encodedTitle = encodeURIComponent(post.title || 'Check out this article');
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(currentUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy link:', err);
-    }
-  };
-
-  const handleNativeShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: post.title,
-        text: post.excerpt,
-        url: currentUrl,
-      });
-    }
-  };
-
-  return (
-    <div className="flex flex-wrap gap-3 mt-6">
-      {/* X (Twitter) */}
-      <a
-        href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded transition-colors text-sm"
-        title="Share on X"
-      >
-        <Twitter className="w-4 h-4" />
-        <span className="hidden sm:inline">X</span>
-      </a>
-
-      {/* LinkedIn */}
-      <a
-        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded transition-colors text-sm"
-        title="Share on LinkedIn"
-      >
-        <Linkedin className="w-4 h-4" />
-        <span className="hidden sm:inline">LinkedIn</span>
-      </a>
-
-      {/* Facebook */}
-      <a
-        href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded transition-colors text-sm"
-        title="Share on Facebook"
-      >
-        <Facebook className="w-4 h-4" />
-        <span className="hidden sm:inline">Facebook</span>
-      </a>
-
-      {/* Copy Link */}
-      <button
-        onClick={handleCopyLink}
-        className="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded transition-colors text-sm"
-        title="Copy link to clipboard"
-      >
-        <Copy className="w-4 h-4" />
-        <span className="hidden sm:inline">{copied ? 'Copied!' : 'Copy'}</span>
-      </button>
-
-      {/* Native Share */}
-      {typeof navigator !== 'undefined' && navigator.share && (
-        <button
-          onClick={handleNativeShare}
-          className="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded transition-colors text-sm"
-          title="Share"
-        >
-          <Share2 className="w-4 h-4" />
-          <span className="hidden sm:inline">Share</span>
-        </button>
-      )}
-    </div>
-  );
 }
 
 export default function BlogDetailPage() {
@@ -170,7 +131,7 @@ export default function BlogDetailPage() {
         if (result) {
           setPost(result);
 
-          // Load related articles - limit to 3, filter by same category if available
+          // Load related articles by category
           if (result.content) {
             try {
               const allPosts = await BaseCrudService.getAll<BlogPosts>('blogposts', [], { limit: 100 });
@@ -207,7 +168,17 @@ export default function BlogDetailPage() {
     return post?.content ? calculateReadingTime(post.content) : 0;
   }, [post?.content]);
 
-  // SEO Meta Tags and JSON-LD
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: post?.title,
+        text: post?.excerpt,
+        url: window.location.href,
+      });
+    }
+  };
+
+  // SEO Meta Tags
   useEffect(() => {
     if (post) {
       document.title = `${post.title} | Blog`;
@@ -216,7 +187,7 @@ export default function BlogDetailPage() {
         metaDescription.setAttribute('content', post.excerpt || post.title || '');
       }
 
-      // JSON-LD Schema for BlogPosting
+      // JSON-LD Schema
       const schema = {
         '@context': 'https://schema.org',
         '@type': 'BlogPosting',
@@ -235,9 +206,7 @@ export default function BlogDetailPage() {
       document.head.appendChild(scriptTag);
 
       return () => {
-        if (document.head.contains(scriptTag)) {
-          document.head.removeChild(scriptTag);
-        }
+        document.head.removeChild(scriptTag);
       };
     } else if (notFound) {
       // Soft 404 - noindex
@@ -271,7 +240,7 @@ export default function BlogDetailPage() {
             </div>
             <h1 className="text-4xl font-heading font-bold mb-4">Error Loading Article</h1>
             <p className="text-white/60 mb-8">{error}</p>
-            <div className="flex gap-4 justify-center flex-wrap">
+            <div className="flex gap-4 justify-center">
               <button
                 onClick={() => window.location.reload()}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded transition-colors font-medium"
@@ -283,7 +252,7 @@ export default function BlogDetailPage() {
                 to="/blog"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded transition-colors font-medium"
               >
-                <ArrowRight className="w-4 h-4 rotate-180" />
+                <ArrowLeft className="w-4 h-4" />
                 Back to Blog
               </Link>
             </div>
@@ -306,7 +275,7 @@ export default function BlogDetailPage() {
               to="/blog"
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded transition-colors font-medium"
             >
-              <ArrowRight className="w-4 h-4 rotate-180" />
+              <ArrowLeft className="w-4 h-4" />
               Back to Blog
             </Link>
           </div>
@@ -346,7 +315,7 @@ export default function BlogDetailPage() {
               to="/blog"
               className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors"
             >
-              <ArrowRight className="w-4 h-4 rotate-180" />
+              <ArrowLeft className="w-4 h-4" />
               Back to Blog
             </Link>
           </motion.div>
@@ -393,13 +362,21 @@ export default function BlogDetailPage() {
 
             {/* Excerpt */}
             {post.excerpt && (
-              <p className="text-xl text-white/70 max-w-3xl mb-6">
+              <p className="text-xl text-white/70 max-w-3xl">
                 {post.excerpt}
               </p>
             )}
 
-            {/* Share Buttons */}
-            {post && <ShareButtons post={post} />}
+            {/* Share Button */}
+            <div className="mt-6">
+              <button
+                onClick={handleShare}
+                className="inline-flex items-center gap-2 px-4 py-2 text-white/60 hover:text-white transition-colors"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+            </div>
           </motion.header>
 
           {/* Featured Image with LCP optimization */}
@@ -429,7 +406,7 @@ export default function BlogDetailPage() {
             className="max-w-3xl"
           >
             {/* Video Section - Inline player */}
-            {post.videoUrl && <VideoPlayer url={post.videoUrl} title={post.title} />}
+            {post.videoUrl && <VideoPlayer url={post.videoUrl} />}
 
             {/* Content with sanitization */}
             {post.content && <ContentRenderer content={post.content} />}
@@ -444,7 +421,7 @@ export default function BlogDetailPage() {
                   className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   Read Full Article
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowLeft className="w-4 h-4 rotate-180" />
                 </a>
               </div>
             )}
@@ -504,7 +481,7 @@ export default function BlogDetailPage() {
               to="/blog"
               className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors"
             >
-              <ArrowRight className="w-4 h-4 rotate-180" />
+              <ArrowLeft className="w-4 h-4" />
               Back to All Articles
             </Link>
           </motion.div>

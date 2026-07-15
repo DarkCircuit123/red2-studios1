@@ -1,8 +1,10 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import RouterFallback from '@/components/RouterFallback';
-
-// Lazy load the router to prevent circular dependency issues
-const AppRouter = lazy(() => import('@/components/Router').then(m => ({ default: m.default })));
+import AppRouter from '@/components/Router';
+import '@/lib/site-diagnostics';
+import '@/lib/performance-optimizer';
+import '@/lib/accessibility-checker';
+import { diagnosticCleanup } from '@/lib/diagnostic-cleanup';
 
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },

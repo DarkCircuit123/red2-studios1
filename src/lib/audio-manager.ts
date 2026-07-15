@@ -242,5 +242,7 @@ export class GlobalAudioManager {
   }
 }
 
-// Lazy initialization - will be called when first needed
-// This prevents errors during dynamic module loading
+// Initialize on module load
+if (typeof window !== 'undefined') {
+  GlobalAudioManager.getInstance();
+}
