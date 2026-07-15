@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Volume2, VolumeX } from 'lucide-react';
 
 interface LeaderboardEntry {
   initials: string;
@@ -34,8 +35,12 @@ export default function HangmanGamePage() {
   const [totalWinnings, setTotalWinnings] = useState(0);
   const [vipTier, setVipTier] = useState(0);
   const [showCoinDrop, setShowCoinDrop] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [livePlayersCount, setLivePlayersCount] = useState(Math.floor(Math.random() * 500) + 100);
+  const [progressiveJackpot, setProgressiveJackpot] = useState(50000);
   const audioContextRef = useRef<AudioContext | null>(null);
   const coinDropCountRef = useRef(0);
+  const ambientOscRef = useRef<OscillatorNode | null>(null);
 
   const VIP_TIERS: VIPTier[] = [
     { level: 0, name: 'PLAYER', minScore: 0, color: '#888888', multiplier: 1 },
@@ -146,9 +151,38 @@ export default function HangmanGamePage() {
     }
   }, []);
 
+  // Ambient casino murmur (low frequency background)
+  useEffect(() => {
+    if (!soundEnabled || !audioContextRef.current) return;
+    
+    const ctx = audioContextRef.current;
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    // Create ambient murmur
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.frequency.setValueAtTime(40, ctx.currentTime);
+    gain.gain.setValueAtTime(0.02, ctx.currentTime);
+    
+    osc.start();
+    ambientOscRef.current = osc;
+
+    return () => {
+      if (ambientOscRef.current) {
+        ambientOscRef.current.stop();
+        ambientOscRef.current = null;
+      }
+    };
+  }, [soundEnabled]);
+
   // Slot machine spin sound
   const playSlotMachineSound = () => {
-    if (!audioContextRef.current) return;
+    if (!soundEnabled || !audioContextRef.current) return;
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
     
@@ -169,7 +203,7 @@ export default function HangmanGamePage() {
 
   // Play success sound - casino bell
   const playSuccessSound = () => {
-    if (!audioContextRef.current) return;
+    if (!soundEnabled || !audioContextRef.current) return;
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
     
@@ -204,7 +238,7 @@ export default function HangmanGamePage() {
 
   // Play wrong sound - buzzer
   const playWrongSound = () => {
-    if (!audioContextRef.current) return;
+    if (!soundEnabled || !audioContextRef.current) return;
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
     
@@ -224,7 +258,7 @@ export default function HangmanGamePage() {
 
   // Play losing sound - sad trombone
   const playFunnyLosingSound = () => {
-    if (!audioContextRef.current) return;
+    if (!soundEnabled || !audioContextRef.current) return;
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
     
@@ -244,7 +278,7 @@ export default function HangmanGamePage() {
 
   // Play coin drop sound
   const playCoinDropSound = () => {
-    if (!audioContextRef.current) return;
+    if (!soundEnabled || !audioContextRef.current) return;
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
     
@@ -407,11 +441,110 @@ export default function HangmanGamePage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-black via-slate-950 to-black overflow-hidden relative">
-      {/* Animated background grid */}
-      <div className="fixed inset-0 opacity-10 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,#6F0809_1px,transparent_1px),linear-gradient(#6F0809_1px,transparent_1px)] bg-[size:50px_50px]" />
+    <div className="min-h-screen w-full bg-black overflow-hidden relative">
+      {/* Multi-layered Vegas background */}
+      <div className="fixed inset-0 pointer-events-none">
+        {/* Radial gradient - spotlight effect */}
+        <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-black opacity-60" 
+          style={{
+            background: 'radial-gradient(circle at 50% 0%, rgba(255,215,0,0.15) 0%, transparent 50%)'
+          }}
+        />
+        
+        {/* Velvet noise texture */}
+        <div className="absolute inset-0 opacity-5" 
+          style={{
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/%3E%3C/filter%3E%3Crect width="400" height="400" fill="white" filter="url(%23noise)"/%3E%3C/svg%3E")',
+            backgroundSize: '200px 200px'
+          }}
+        />
+        
+        {/* Animated spotlight sweep */}
+        <motion.div
+          className="absolute inset-0 opacity-20"
+          animate={{
+            background: [
+              'conic-gradient(from 0deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+              'conic-gradient(from 90deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+              'conic-gradient(from 180deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+              'conic-gradient(from 270deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+              'conic-gradient(from 360deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+            ]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          style={{ backgroundPosition: 'center' }}
+        />
       </div>
+
+      {/* Swaying chandelier SVG */}
+      <motion.div
+        className="fixed top-0 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+        animate={{ rotate: [0, 2, -2, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformOrigin: 'top center' }}
+      >
+        <svg width="120" height="200" viewBox="0 0 120 200" className="drop-shadow-2xl">
+          {/* Chain */}
+          <line x1="60" y1="0" x2="60" y2="40" stroke="#d4a574" strokeWidth="3" />
+          {/* Chandelier body */}
+          <circle cx="60" cy="50" r="20" fill="#ffd700" opacity="0.8" />
+          {/* Crystals */}
+          {[...Array(8)].map((_, i) => {
+            const angle = (i / 8) * Math.PI * 2;
+            const x = 60 + Math.cos(angle) * 25;
+            const y = 50 + Math.sin(angle) * 25;
+            return (
+              <circle key={i} cx={x} cy={y} r="4" fill="#ffed4e" opacity="0.9" />
+            );
+          })}
+          {/* Light glow */}
+          <circle cx="60" cy="50" r="30" fill="#ffd700" opacity="0.2" />
+        </svg>
+      </motion.div>
+
+      {/* Animated marquee light chases - Top border */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 z-30 pointer-events-none"
+        animate={{ backgroundPosition: ['0% 0%', '100% 0%'] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+        style={{
+          backgroundSize: '200% 100%',
+          boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+        }}
+      />
+
+      {/* Animated marquee light chases - Bottom border */}
+      <motion.div
+        className="fixed bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-red-500 via-yellow-300 to-red-500 z-30 pointer-events-none"
+        animate={{ backgroundPosition: ['100% 0%', '0% 0%'] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+        style={{
+          backgroundSize: '200% 100%',
+          boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+        }}
+      />
+
+      {/* Animated marquee light chases - Left border */}
+      <motion.div
+        className="fixed left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-yellow-300 via-red-500 to-yellow-300 z-30 pointer-events-none"
+        animate={{ backgroundPosition: ['0% 0%', '0% 100%'] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+        style={{
+          backgroundSize: '100% 200%',
+          boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+        }}
+      />
+
+      {/* Animated marquee light chases - Right border */}
+      <motion.div
+        className="fixed right-0 top-0 bottom-0 w-2 bg-gradient-to-b from-red-500 via-yellow-300 to-red-500 z-30 pointer-events-none"
+        animate={{ backgroundPosition: ['0% 100%', '0% 0%'] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+        style={{
+          backgroundSize: '100% 200%',
+          boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+        }}
+      />
 
       {/* Coin drop animation */}
       <AnimatePresence>
@@ -448,38 +581,121 @@ export default function HangmanGamePage() {
       </AnimatePresence>
 
       <main className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8 md:py-12">
-        {/* Header - VIP Status */}
+        {/* Header - VIP Status & Sound Toggle */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-7xl mb-8 flex flex-col md:flex-row justify-between items-center gap-6"
         >
           <div className="text-center md:text-left">
-            <h1 className="text-5xl md:text-7xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 mb-2 tracking-tighter">
+            {/* Neon-flicker title */}
+            <motion.h1
+              animate={{
+                textShadow: [
+                  '0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,0,0,0.6)',
+                  '0 0 20px rgba(255,215,0,1), 0 0 40px rgba(255,0,0,0.8)',
+                  '0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,0,0,0.6)',
+                ]
+              }}
+              transition={{ duration: 0.3, repeat: Infinity }}
+              className="text-5xl md:text-7xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 mb-2 tracking-tighter"
+            >
               RED2 HANGMAN
-            </h1>
-            <p className="text-lg md:text-xl font-mono text-yellow-300 tracking-widest">HIGH ROLLER</p>
+            </motion.h1>
+            <p className="text-lg md:text-xl font-mono text-yellow-300 tracking-widest animate-pulse">HIGH ROLLER</p>
           </div>
           
           <div className="flex flex-col gap-4 items-center md:items-end">
-            <div className="px-6 py-3 bg-gradient-to-r from-primary/40 to-primary/20 border-2 border-primary rounded-lg">
-              <p className="text-xs font-mono text-white/60 uppercase tracking-widest mb-1">VIP Status</p>
-              <p className="text-2xl md:text-3xl font-heading font-black" style={{ color: VIP_TIERS[vipTier].color }}>
-                {VIP_TIERS[vipTier].name}
-              </p>
-            </div>
-            <div className="px-6 py-3 bg-gradient-to-r from-yellow-900/40 to-yellow-900/20 border-2 border-yellow-500 rounded-lg">
-              <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Total Winnings</p>
-              <p className="text-2xl md:text-3xl font-heading font-black text-yellow-300">
+            {/* VIP Medallion */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              className="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-500 border-4 border-yellow-200 flex items-center justify-center shadow-2xl"
+              style={{
+                boxShadow: '0 0 30px rgba(255,215,0,0.8), inset 0 0 20px rgba(255,255,255,0.3)'
+              }}
+            >
+              <div className="text-center">
+                <p className="text-xs font-mono text-yellow-900 uppercase tracking-widest mb-1">VIP</p>
+                <p className="text-2xl font-heading font-black text-yellow-900" style={{ color: VIP_TIERS[vipTier].color }}>
+                  {VIP_TIERS[vipTier].name}
+                </p>
+              </div>
+            </motion.div>
+
+            {/* LED Winnings Scoreboard */}
+            <motion.div
+              className="px-8 py-4 bg-black border-4 border-yellow-300 rounded-lg"
+              style={{
+                boxShadow: '0 0 20px rgba(255,215,0,0.8), inset 0 0 10px rgba(255,215,0,0.2)',
+                fontFamily: '"Courier New", monospace',
+              }}
+            >
+              <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">TOTAL WINNINGS</p>
+              <motion.p
+                key={totalWinnings}
+                initial={{ scale: 1.2 }}
+                animate={{ scale: 1 }}
+                className="text-4xl md:text-5xl font-mono font-black text-yellow-300"
+              >
                 ${totalWinnings.toLocaleString()}
-              </p>
-            </div>
+              </motion.p>
+            </motion.div>
+
+            {/* Sound Toggle */}
+            <motion.button
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-3 bg-gradient-to-r from-primary to-primary/70 text-white rounded-lg border-2 border-primary hover:border-yellow-400 transition-all"
+            >
+              {soundEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
+            </motion.button>
+          </div>
+        </motion.div>
+
+        {/* Social Proof Elements */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-7xl mb-8 grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-4 text-center">
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Live Players</p>
+            <motion.p
+              animate={{ y: [0, -2, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-2xl font-heading font-black text-white"
+            >
+              {livePlayersCount.toLocaleString()}
+            </motion.p>
+          </div>
+          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-4 text-center">
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Progressive Jackpot</p>
+            <motion.p
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="text-2xl font-heading font-black text-yellow-300"
+            >
+              ${progressiveJackpot.toLocaleString()}
+            </motion.p>
+          </div>
+          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-4 text-center">
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Your VIP Tier</p>
+            <p className="text-2xl font-heading font-black" style={{ color: VIP_TIERS[vipTier].color }}>
+              {VIP_TIERS[vipTier].name}
+            </p>
+          </div>
+          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-4 text-center">
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Multiplier</p>
+            <p className="text-2xl font-heading font-black text-green-400">
+              {VIP_TIERS[vipTier].multiplier}x
+            </p>
           </div>
         </motion.div>
 
         {/* Main Content */}
-        <div className="w-full max-w-7xl">
-          {!selectedCategory ? (
+        <div className="w-full max-w-7xl">{!selectedCategory ? (
             // Category Selection - Slot Machine Style
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -495,36 +711,56 @@ export default function HangmanGamePage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {Object.keys(categories).map((category, idx) => (
-                  <motion.button
-                    key={category}
-                    onClick={() => startGame(category)}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="group relative p-8 md:p-10 bg-gradient-to-br from-primary/30 to-primary/5 border-2 border-primary rounded-xl hover:border-yellow-400 hover:from-primary/50 hover:to-primary/20 transition-all duration-300 overflow-hidden min-h-48 flex flex-col justify-center"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/0 to-yellow-400/0 group-hover:from-yellow-400/10 group-hover:to-yellow-400/5 transition-all duration-300" />
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,215,0,.1)_25%,rgba(255,215,0,.1)_50%,transparent_50%,transparent_75%,rgba(255,215,0,.1)_75%,rgba(255,215,0,.1))] bg-[length:40px_40px] animate-pulse" />
-                    </div>
-                    <div className="relative z-10 space-y-4 flex flex-col items-center text-center">
-                      <div className="text-5xl md:text-6xl font-heading font-black text-yellow-300 group-hover:text-yellow-200 transition-colors">
-                        ◆
+              {/* Unified Slot Machine Housing */}
+              <motion.div
+                className="bg-gradient-to-br from-gray-900 via-black to-gray-950 border-4 border-yellow-300 rounded-2xl p-8 md:p-12 shadow-2xl"
+                style={{
+                  boxShadow: '0 0 40px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.1)'
+                }}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                  {Object.keys(categories).map((category, idx) => (
+                    <motion.button
+                      key={category}
+                      onClick={() => startGame(category)}
+                      whileHover={{ scale: 1.05, y: -5 }}
+                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="group relative p-8 md:p-10 bg-gradient-to-br from-primary/30 to-primary/5 border-2 border-primary rounded-xl hover:border-yellow-400 hover:from-primary/50 hover:to-primary/20 transition-all duration-300 overflow-hidden min-h-48 flex flex-col justify-center"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/0 to-yellow-400/0 group-hover:from-yellow-400/10 group-hover:to-yellow-400/5 transition-all duration-300" />
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,215,0,.1)_25%,rgba(255,215,0,.1)_50%,transparent_50%,transparent_75%,rgba(255,215,0,.1)_75%,rgba(255,215,0,.1))] bg-[length:40px_40px] animate-pulse" />
                       </div>
-                      <p className="text-2xl md:text-3xl font-heading font-black text-primary group-hover:text-yellow-300 transition-colors uppercase tracking-wider">
-                        {category}
-                      </p>
-                      <p className="text-sm md:text-base font-mono text-white/60 group-hover:text-white/80 transition-colors">
-                        {(categories as any)[category].length} words
-                      </p>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
+                      <div className="relative z-10 space-y-4 flex flex-col items-center text-center">
+                        <div className="text-5xl md:text-6xl font-heading font-black text-yellow-300 group-hover:text-yellow-200 transition-colors">
+                          ◆
+                        </div>
+                        <p className="text-2xl md:text-3xl font-heading font-black text-primary group-hover:text-yellow-300 transition-colors uppercase tracking-wider">
+                          {category}
+                        </p>
+                        <p className="text-sm md:text-base font-mono text-white/60 group-hover:text-white/80 transition-colors">
+                          {(categories as any)[category].length} words
+                        </p>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+
+                {/* Pull Lever */}
+                <motion.div
+                  className="flex justify-center"
+                  animate={{ rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+                  style={{ transformOrigin: 'top center' }}
+                >
+                  <div className="w-16 h-32 bg-gradient-to-b from-yellow-600 to-yellow-800 rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center">
+                    <div className="text-2xl font-heading font-black text-yellow-300">⬇</div>
+                  </div>
+                </motion.div>
+              </motion.div>
             </motion.div>
           ) : (
             // Game Screen
