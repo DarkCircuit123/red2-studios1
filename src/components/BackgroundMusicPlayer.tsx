@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Volume2, VolumeX, Music, Play, Pause } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { GlobalAudioManager } from '@/lib/audio-manager';
 
 declare global {
   interface Window {
@@ -21,7 +20,6 @@ export default function BackgroundMusicPlayer() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
-  const audioManagerRef = useRef(GlobalAudioManager.getInstance());
 
   // SoundCloud track URL - Blue in Green by Miles Davis
   const SOUNDCLOUD_TRACK_URL = 'https://soundcloud.com/markd54321/198-blue-in-green-miles-davis';
@@ -57,7 +55,6 @@ export default function BackgroundMusicPlayer() {
     const handleUserInteraction = () => {
       if (!hasInteracted) {
         setHasInteracted(true);
-        audioManagerRef.current.resumeAudioContext().catch(() => {});
       }
     };
 
@@ -81,9 +78,7 @@ export default function BackgroundMusicPlayer() {
   }, [isPlaying]);
 
   const toggleMute = useCallback(() => {
-    const newMutedState = !isMuted;
-    setIsMuted(newMutedState);
-    audioManagerRef.current.setAudioEnabled(!newMutedState);
+    setIsMuted(!isMuted);
   }, [isMuted]);
 
   const handleIframeLoad = useCallback(() => {
