@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 
 interface Story {
   _id: string;
@@ -22,14 +22,13 @@ interface StoriesResult {
 }
 
 /**
- * Hook to fetch stories from the API with optimized memoization
+ * Hook to fetch stories from the API
  */
 export function useStories() {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Memoized fetch function with stable reference
   const fetchStories = useCallback(async (limit: number = 12, skip: number = 0): Promise<StoriesResult | null> => {
     try {
       setIsLoading(true);
@@ -45,12 +44,7 @@ export function useStories() {
       if (skip === 0) {
         setStories(data.items);
       } else {
-        // Deduplicate stories on merge
-        setStories(prev => {
-          const seen = new Set(prev.map(s => s._id));
-          const newItems = data.items.filter(item => !seen.has(item._id));
-          return [...prev, ...newItems];
-        });
+        setStories(prev => [...prev, ...data.items]);
       }
 
       return data;
@@ -63,7 +57,6 @@ export function useStories() {
     }
   }, []);
 
-  // Memoized fetch by slug
   const fetchStoryBySlug = useCallback(async (slug: string): Promise<Story | null> => {
     try {
       setIsLoading(true);
@@ -85,7 +78,6 @@ export function useStories() {
     }
   }, []);
 
-  // Memoized fetch by source URL
   const fetchStoryBySourceURL = useCallback(async (sourceURL: string): Promise<Story | null> => {
     try {
       setIsLoading(true);
@@ -99,22 +91,19 @@ export function useStories() {
       const data: Story = await response.json();
       return data;
     } catch (err) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error fetching story by URL:', err);
-      }
+      console.error('Error fetching story by URL:', err);
       return null;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Memoize return object to prevent unnecessary re-renders
-  return useMemo(() => ({
+  return {
     stories,
     isLoading,
     error,
     fetchStories,
     fetchStoryBySlug,
     fetchStoryBySourceURL
-  }), [stories, isLoading, error, fetchStories, fetchStoryBySlug, fetchStoryBySourceURL]);
+  };
 }

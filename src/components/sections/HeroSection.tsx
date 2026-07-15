@@ -9,7 +9,6 @@ export default function HeroSection() {
   const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_c01a98369e0e46449c4db84b41fdb2dc~mv2.jpg');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [scrollY, setScrollY] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadHeroImage = async () => {
@@ -23,9 +22,7 @@ export default function HeroSection() {
         }
       } catch (error) {
         console.error('[HeroSection] Failed to load hero image:', error);
-        // Use default image - continue anyway
-      } finally {
-        setIsLoading(false);
+        // Use default image
       }
     };
     loadHeroImage();
@@ -41,21 +38,13 @@ export default function HeroSection() {
   }, []);
 
   const scrollToGallery = useCallback(() => {
-    try {
-      playClickSound();
-    } catch (e) {
-      console.warn('[HeroSection] Click sound failed:', e);
-    }
+    playClickSound();
     const element = document.getElementById('portfolio');
     element?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   const handleContactClick = useCallback(() => {
-    try {
-      playClickSound();
-    } catch (e) {
-      console.warn('[HeroSection] Click sound failed:', e);
-    }
+    playClickSound();
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 

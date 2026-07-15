@@ -1,5 +1,7 @@
+import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
+import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
@@ -17,23 +19,15 @@ import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
 import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
 import WatchPage from './pages/WatchPage';
-import { Suspense } from 'react';
+import BackgroundMusicPlayer from './BackgroundMusicPlayer';
+// ... keep existing code (other imports) ...
 
-// Simple error fallback
-function ErrorFallback() {
-  return (
-    <div style={{ padding: '40px', textAlign: 'center', color: '#fff', backgroundColor: '#000' }}>
-      <h1>Error Loading Page</h1>
-      <p>Please refresh the page or try again later.</p>
-    </div>
-  );
-}
-
-// Layout component that includes ScrollToTop
+// Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
   return (
     <>
       <ScrollToTop />
+      <BackgroundMusicPlayer />
       <Outlet />
     </>
   );
@@ -43,7 +37,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    errorElement: <ErrorFallback />,
+    errorElement: <ErrorPage />,
     children: [
       {
         index: true,
@@ -128,5 +122,9 @@ const router = createBrowserRouter([
 });
 
 export default function AppRouter() {
-  return <RouterProvider router={router} />;
+  return (
+    <MemberProvider>
+      <RouterProvider router={router} />
+    </MemberProvider>
+  );
 }

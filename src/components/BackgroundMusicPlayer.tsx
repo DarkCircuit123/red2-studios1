@@ -19,62 +19,33 @@ export default function BackgroundMusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const audioManagerRef = useRef<GlobalAudioManager | null>(null);
-
-  // Initialize audio manager safely
-  useEffect(() => {
-    try {
-      audioManagerRef.current = GlobalAudioManager.getInstance();
-      setIsReady(true);
-    } catch (e) {
-      console.warn('[BackgroundMusicPlayer] Failed to initialize audio manager:', e);
-      setIsReady(true); // Continue anyway
-    }
-  }, []);
+  const audioManagerRef = useRef(GlobalAudioManager.getInstance());
 
   // SoundCloud track URL - Blue in Green by Miles Davis
   const SOUNDCLOUD_TRACK_URL = 'https://soundcloud.com/markd54321/198-blue-in-green-miles-davis';
   const SOUNDCLOUD_EMBED_URL = `https://w.soundcloud.com/player/?url=${encodeURIComponent(SOUNDCLOUD_TRACK_URL)}&color=%236F0809&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false`;
 
-  // Load SoundCloud Widget API with timeout and error handling
+  // Load SoundCloud Widget API
   useEffect(() => {
     if (window.SC) {
+      setIsLoading(false);
       return;
     }
 
     const script = document.createElement('script');
     script.src = 'https://w.soundcloud.com/player/api.js';
     script.async = true;
-    
-    const timeoutId = setTimeout(() => {
-      // If script doesn't load within 5 seconds, continue anyway
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    }, 5000);
-
     script.onload = () => {
-      clearTimeout(timeoutId);
+      setIsLoading(false);
       if (window.SC?.Widget && iframeRef.current) {
-        try {
-          widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
-        } catch (e) {
-          console.warn('Failed to initialize SoundCloud widget:', e);
-        }
+        widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
       }
     };
-
-    script.onerror = () => {
-      clearTimeout(timeoutId);
-      console.warn('Failed to load SoundCloud API');
-    };
-
     document.body.appendChild(script);
 
     return () => {
-      clearTimeout(timeoutId);
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
@@ -83,16 +54,10 @@ export default function BackgroundMusicPlayer() {
 
   // Handle first user interaction to enable autoplay
   useEffect(() => {
-    if (!isReady || !audioManagerRef.current) return;
-
     const handleUserInteraction = () => {
       if (!hasInteracted) {
         setHasInteracted(true);
-        try {
-          audioManagerRef.current?.resumeAudioContext().catch(() => {});
-        } catch (e) {
-          console.warn('[BackgroundMusicPlayer] Failed to resume audio context:', e);
-        }
+        audioManagerRef.current.resumeAudioContext().catch(() => {});
       }
     };
 
@@ -106,7 +71,7 @@ export default function BackgroundMusicPlayer() {
         document.removeEventListener(event, handleUserInteraction);
       });
     };
-  }, [hasInteracted, isReady]);
+  }, [hasInteracted]);
 
   const togglePlayPause = useCallback(() => {
     if (widgetRef.current) {
@@ -118,20 +83,13 @@ export default function BackgroundMusicPlayer() {
   const toggleMute = useCallback(() => {
     const newMutedState = !isMuted;
     setIsMuted(newMutedState);
-    try {
-      audioManagerRef.current?.setAudioEnabled(!newMutedState);
-    } catch (e) {
-      console.warn('[BackgroundMusicPlayer] Failed to toggle mute:', e);
-    }
+    audioManagerRef.current.setAudioEnabled(!newMutedState);
   }, [isMuted]);
 
   const handleIframeLoad = useCallback(() => {
+    setIsLoading(false);
     if (window.SC?.Widget && iframeRef.current) {
-      try {
-        widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
-      } catch (e) {
-        console.warn('Failed to initialize SoundCloud widget on iframe load:', e);
-      }
+      widgetRef.current = window.SC.Widget.getInstance(iframeRef.current);
     }
   }, []);
 

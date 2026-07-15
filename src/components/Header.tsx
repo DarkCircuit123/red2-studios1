@@ -4,17 +4,9 @@ import { Menu, X, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
-import { playClickSound } from '@/lib/click-sound';
+import { playClickSound, playHoverSound } from '@/lib/click-sound';
+import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
-
-// Safe hover sound handler
-const playHoverSound = () => {
-  try {
-    // Hover sounds are optional - don't break if unavailable
-  } catch (e) {
-    // Silently fail
-  }
-};
 
 export default function Header() {
   const navigate = useNavigate();
@@ -24,10 +16,10 @@ export default function Header() {
   const { member, isAuthenticated, isLoading, actions } = useMember();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
-  // Optimized throttled scroll handler
-  const handleScroll = useCallback(() => {
+  // Optimized throttled scroll handler with useThrottleCallback
+  const handleScroll = useThrottleCallback(() => {
     setScrolled(window.scrollY > 50);
-  }, []);
+  }, 100);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -121,8 +113,8 @@ export default function Header() {
           {[
             { href: '#about', label: 'About', isAnchor: true },
             { href: '/portfolio', label: 'Work', isLink: true },
+            { href: '/booking', label: 'Booking', isLink: true },
             { href: '/contact', label: 'Contact', isLink: true },
-            { href: '/booking', label: 'Schedule', isLink: true },
             { href: '/galleries', label: 'Galleries', isLink: true },
             { href: '/play', label: 'Play', isLink: true },
           ].map((item, i) => (
@@ -197,9 +189,9 @@ export default function Header() {
             {[
               { href: '#about', label: 'About', isAnchor: true },
               { href: '/portfolio', label: 'Work', isLink: true },
-              { href: '/contact', label: 'Contact', isLink: true },
-              { href: '/booking', label: 'Schedule', isLink: true },
+              { href: '/booking', label: 'Booking', isLink: true },
               { href: '/galleries', label: 'Galleries', isLink: true },
+              { href: '/contact', label: 'Contact', isLink: true },
               { href: '/play', label: 'Play', isLink: true },
             ].map((item, i) => (
               <motion.div
