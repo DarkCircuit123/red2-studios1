@@ -62,7 +62,7 @@ export default function HangmanGamePage() {
 
   const categoriesData: Record<string, CategoryMeta> = {
     'FABRIC_FORMS': {
-      name: 'FASHION LEXICON',
+      name: 'DRIP CHECK',
       tagline: 'Clothing, Accessories & Wearables',
       icon: '✨',
       justification: 'Master the language of style. Every word is a tangible piece of clothing, accessory, or fashion element you can wear, carry, or display.',
@@ -98,7 +98,7 @@ export default function HangmanGamePage() {
       ]
     },
     'OPTICS_CRAFT': {
-      name: 'LENS MASTERY',
+      name: 'PIXEL PERFECT',
       tagline: 'Photography, Cameras & Visual Science',
       icon: '📸',
       justification: 'Dive into the art and science of photography. Every word relates to cameras, lenses, light, composition, and the technical mastery of capturing perfect images.',
@@ -131,7 +131,7 @@ export default function HangmanGamePage() {
       ]
     },
     'CATWALK_PRESENCE': {
-      name: 'RUNWAY ROYALTY',
+      name: 'MAIN CHARACTER',
       tagline: 'Modeling, Performance & Presence',
       icon: '👑',
       justification: 'Command the stage like a supermodel. Every word describes the physical presence, movement, style, and professional excellence of elite runway performance.',
@@ -164,7 +164,7 @@ export default function HangmanGamePage() {
       ]
     },
     'CULTURAL_ICONS': {
-      name: 'LEGENDARY NAMES',
+      name: 'VIBE SHIFT',
       tagline: 'Icons, Celebrities & Historical Figures',
       icon: '🌟',
       justification: 'Recognize the titans of culture. Every word is a name of a famous person, historical figure, or iconic celebrity who shaped entertainment, politics, and society.',
@@ -192,7 +192,7 @@ export default function HangmanGamePage() {
       ]
     },
     'ETHEREAL_CONCEPTS': {
-      name: 'TRANSCENDENT VIBES',
+      name: 'GLITCH CORE',
       tagline: 'Dreams, Mystique & Artistic Inspiration',
       icon: '🌌',
       justification: 'Explore the intangible. Every word evokes beauty, inspiration, and the transcendent essence of artistic vision, creativity, and human aspiration.',
@@ -220,7 +220,7 @@ export default function HangmanGamePage() {
       ]
     },
     'LUXE_ELEMENTS': {
-      name: 'PRECIOUS MATERIALS',
+      name: 'NEON LUXE',
       tagline: 'Gemstones, Metals & Luxury Elements',
       icon: '💎',
       justification: 'Discover the world of opulence. Every word represents a precious material, gemstone, metal, or element associated with luxury, glamour, and timeless elegance.',
