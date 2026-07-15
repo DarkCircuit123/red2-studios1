@@ -1,9 +1,6 @@
-import React, { Suspense, lazy } from 'react';
-import { HelmetProvider } from 'react-helmet-async';
+import React, { Suspense } from 'react';
 import RouterFallback from '@/components/RouterFallback';
-
-// Lazy load AppRouter to prevent circular dependency issues
-const AppRouter = lazy(() => import('@/components/Router'));
+import AppRouter from '@/components/Router';
 
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -33,12 +30,10 @@ class RouterErrorBoundary extends React.Component<
 
 export default function AppRoot() {
   return (
-    <HelmetProvider>
-      <RouterErrorBoundary>
-        <Suspense fallback={<RouterFallback />}>
-          <AppRouter />
-        </Suspense>
-      </RouterErrorBoundary>
-    </HelmetProvider>
+    <RouterErrorBoundary>
+      <Suspense fallback={<RouterFallback />}>
+        <AppRouter />
+      </Suspense>
+    </RouterErrorBoundary>
   );
 }

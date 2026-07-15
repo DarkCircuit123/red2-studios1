@@ -3,64 +3,22 @@ import { useNavigate } from 'react-router-dom';
 
 const Red2TerminalPage: React.FC = () => {
   const navigate = useNavigate();
-  const [stage, setStage] = useState<'unlock' | 'initial' | 'typing' | 'glitch' | 'countdown' | 'meltdown' | 'fadeout' | 'welcome'>('unlock');
+  const [stage, setStage] = useState<'initial' | 'typing' | 'glitch' | 'countdown' | 'meltdown' | 'fadeout' | 'welcome'>('initial');
   const [displayText, setDisplayText] = useState('');
   const [countdownNum, setCountdownNum] = useState(10);
   const [meltdownLines, setMeltdownLines] = useState<string[]>([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [glitchActive, setGlitchActive] = useState(false);
+  const [screenShake, setScreenShake] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const timerRefsRef = useRef<NodeJS.Timeout[]>([]);
+  const [hardDrivesSpinning, setHardDrivesSpinning] = useState(false);
+  const [keyboardLightsActive, setKeyboardLightsActive] = useState(false);
 
   const fullText = `> NODE CONNECTION DETECTED
 > AUTHENTICATION TOKEN ACCEPTED
 > CLASSIFIED ACCESS LEVEL CONFIRMED
 > INITIALIZING RED2 PROTOCOL
 > PREPARING SYSTEM DEPLOYMENT`;
-
-  // Check for prefers-reduced-motion on mount
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
-
-  // Check for skip flag in sessionStorage
-  useEffect(() => {
-    const shouldSkip = sessionStorage.getItem('red2-skip') === 'true';
-    const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
-    
-    if (shouldSkip || prefersReducedMotion) {
-      if (redirectUrl) {
-        navigate(redirectUrl);
-      } else {
-        navigate('/');
-      }
-    }
-  }, [prefersReducedMotion, navigate]);
-
-  // Handle visibility changes to pause/resume
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        timerRefsRef.current.forEach(clearTimeout);
-        timerRefsRef.current = [];
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  // Cleanup all timers on unmount
-  useEffect(() => {
-    return () => {
-      timerRefsRef.current.forEach(clearTimeout);
-    };
-  }, []);
 
   const commandExamples = [
     '> EXECUTE RED2.PROTOCOL',
@@ -90,18 +48,11 @@ const Red2TerminalPage: React.FC = () => {
     '> SYSTEM COMPROMISED',
   ];
 
-  // Initialize AudioContext on user gesture
-  const unlockAudio = () => {
+  // Audio synthesis functions
+  const playStaticNoise = () => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    setAudioUnlocked(true);
-    setStage('initial');
-  };
-
-  // Audio synthesis functions
-  const playStaticNoise = () => {
-    if (!audioUnlocked || !audioContextRef.current) return;
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
     const duration = 0.3;
@@ -127,7 +78,9 @@ const Red2TerminalPage: React.FC = () => {
   };
 
   const playScreech = () => {
-    if (!audioUnlocked || !audioContextRef.current) return;
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
     const duration = 0.2;
@@ -150,7 +103,9 @@ const Red2TerminalPage: React.FC = () => {
   };
 
   const playBeep = (frequency: number = 1000, duration: number = 0.1) => {
-    if (!audioUnlocked || !audioContextRef.current) return;
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
 
@@ -172,13 +127,11 @@ const Red2TerminalPage: React.FC = () => {
 
   // Stage 1: Initial black screen (1 second)
   useEffect(() => {
-    if (stage !== 'initial') return;
     const timer = setTimeout(() => {
       setStage('typing');
     }, 1000);
-    timerRefsRef.current.push(timer);
     return () => clearTimeout(timer);
-  }, [stage]);
+  }, []);
 
   // Stage 2: Typing effect
   useEffect(() => {
@@ -191,10 +144,9 @@ const Red2TerminalPage: React.FC = () => {
         currentIndex++;
       } else {
         clearInterval(typingInterval);
-        const timer = setTimeout(() => {
+        setTimeout(() => {
           setStage('glitch');
         }, 500);
-        timerRefsRef.current.push(timer);
       }
     }, 30);
 
@@ -211,7 +163,6 @@ const Red2TerminalPage: React.FC = () => {
       setGlitchActive(false);
       setStage('countdown');
     }, glitchDuration);
-    timerRefsRef.current.push(timer);
 
     return () => clearTimeout(timer);
   }, [stage]);
@@ -224,7 +175,6 @@ const Red2TerminalPage: React.FC = () => {
       const timer = setTimeout(() => {
         setCountdownNum(countdownNum - 1);
       }, 1000);
-      timerRefsRef.current.push(timer);
       return () => clearTimeout(timer);
     } else {
       setStage('meltdown');
@@ -235,11 +185,14 @@ const Red2TerminalPage: React.FC = () => {
   useEffect(() => {
     if (stage !== 'meltdown') return;
 
+    setScreenShake(true);
+    setHardDrivesSpinning(true);
+    setKeyboardLightsActive(true);
+
     // Play initial screeches and static
     playScreech();
-    const timer1 = setTimeout(() => playStaticNoise(), 100);
-    const timer2 = setTimeout(() => playScreech(), 200);
-    timerRefsRef.current.push(timer1, timer2);
+    setTimeout(() => playStaticNoise(), 100);
+    setTimeout(() => playScreech(), 200);
 
     const lines: string[] = [];
     const meltdownDuration = 3000;
@@ -255,8 +208,7 @@ const Red2TerminalPage: React.FC = () => {
 
     const generateLines = () => {
       const newLines = [];
-      // Reduced from 150 to 80 lines for better performance
-      for (let i = 0; i < 80; i++) {
+      for (let i = 0; i < 150; i++) {
         const randomCommand = commandExamples[Math.floor(Math.random() * commandExamples.length)];
         const randomNum = Math.floor(Math.random() * 1000000);
         const randomHex = Math.random().toString(16).substring(2, 10);
@@ -275,7 +227,6 @@ const Red2TerminalPage: React.FC = () => {
       return newLines;
     };
 
-    // Reduced frequency from 50ms to 100ms
     const meltdownInterval = setInterval(() => {
       const elapsed = Date.now() - startTime;
       if (elapsed < meltdownDuration) {
@@ -283,14 +234,20 @@ const Red2TerminalPage: React.FC = () => {
       } else {
         clearInterval(meltdownInterval);
         clearInterval(soundInterval);
+        setScreenShake(false);
+        setHardDrivesSpinning(false);
+        setKeyboardLightsActive(false);
         setMeltdownLines([]);
         setStage('fadeout');
       }
-    }, 100);
+    }, 50);
 
     return () => {
       clearInterval(meltdownInterval);
       clearInterval(soundInterval);
+      setScreenShake(false);
+      setHardDrivesSpinning(false);
+      setKeyboardLightsActive(false);
     };
   }, [stage]);
 
@@ -301,9 +258,7 @@ const Red2TerminalPage: React.FC = () => {
     const timer = setTimeout(() => {
       setStage('welcome');
       setShowWelcome(true);
-      sessionStorage.setItem('red2-skip', 'true');
     }, 800);
-    timerRefsRef.current.push(timer);
 
     return () => clearTimeout(timer);
   }, [stage]);
@@ -312,57 +267,20 @@ const Red2TerminalPage: React.FC = () => {
   useEffect(() => {
     if (stage !== 'welcome') return;
 
-    const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
     const timer = setTimeout(() => {
-      navigate(redirectUrl || '/');
+      navigate('/');
     }, 2000);
-    timerRefsRef.current.push(timer);
 
     return () => clearTimeout(timer);
   }, [stage, navigate]);
 
-  // Handle ESC key to skip
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (stage === 'unlock') {
-        unlockAudio();
-      } else if (e.key === 'Escape') {
-        sessionStorage.setItem('red2-skip', 'true');
-        const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
-        navigate(redirectUrl || '/');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [stage, navigate]);
-
   return (
     <div
-      className="fixed inset-0 bg-black overflow-hidden"
+      className={`fixed inset-0 bg-black overflow-hidden ${screenShake ? 'animate-pulse' : ''}`}
       style={{
-        animation: prefersReducedMotion ? 'none' : 'red2-terminal-shake 0.1s infinite',
+        transform: screenShake ? `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)` : 'none',
       }}
-      role="main"
-      aria-live="polite"
-      aria-label="RED2 Terminal initialization sequence"
     >
-      {/* SEO noindex meta tag */}
-      <meta name="robots" content="noindex" />
-
-      {/* Unlock overlay */}
-      {stage === 'unlock' && (
-        <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
-          <div className="text-center">
-            <div className="text-2xl md:text-4xl font-mono text-green-400 mb-8">
-              PRESS ANY KEY TO UNLOCK AUDIO
-            </div>
-            <div className="text-sm md:text-base font-mono text-green-400 opacity-70">
-              (or click anywhere to continue)
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* CRT Scanlines overlay */}
       <div
         className="fixed inset-0 pointer-events-none opacity-5"
@@ -379,7 +297,7 @@ const Red2TerminalPage: React.FC = () => {
           <div className="text-center">
             <div className="font-mono text-green-400 text-xl md:text-2xl whitespace-pre-wrap max-w-2xl">
               {displayText}
-              {stage === 'typing' && <span className="animate-red2-cursor">_</span>}
+              {stage === 'typing' && <span className="animate-pulse">_</span>}
             </div>
           </div>
         )}
@@ -390,14 +308,14 @@ const Red2TerminalPage: React.FC = () => {
             <div
               className="absolute inset-0 bg-red-600 opacity-20"
               style={{
-                animation: prefersReducedMotion ? 'none' : 'red2-glitch-flicker 0.1s infinite',
+                animation: 'glitch-flicker 0.1s infinite',
               }}
             />
             <div
               className="absolute inset-0"
               style={{
                 backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 0, 0, 0.3) 2px, rgba(255, 0, 0, 0.3) 4px)',
-                animation: prefersReducedMotion ? 'none' : 'red2-glitch-shift 0.15s infinite',
+                animation: 'glitch-shift 0.15s infinite',
               }}
             />
           </div>
@@ -406,7 +324,7 @@ const Red2TerminalPage: React.FC = () => {
         {/* Countdown stage */}
         {stage === 'countdown' && (
           <div className="text-center">
-            <div className="text-9xl font-mono font-bold text-green-400 animate-red2-pulse">
+            <div className="text-9xl font-mono font-bold text-green-400 animate-pulse">
               {countdownNum}
             </div>
           </div>
@@ -418,7 +336,7 @@ const Red2TerminalPage: React.FC = () => {
             <div
               className="w-full h-full font-mono text-xs md:text-sm text-green-400 p-4 overflow-hidden"
               style={{
-                animation: prefersReducedMotion ? 'none' : 'red2-meltdown-scroll 3s linear forwards',
+                animation: 'meltdown-scroll 3s linear forwards',
               }}
             >
               {meltdownLines.map((line, idx) => (
@@ -432,34 +350,43 @@ const Red2TerminalPage: React.FC = () => {
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                animation: prefersReducedMotion ? 'none' : 'red2-glitch-intense 0.1s infinite',
+                animation: 'glitch-intense 0.1s infinite',
                 backgroundColor: 'rgba(255, 0, 0, 0.1)',
               }}
             />
 
             {/* Hard drive and processing indicators */}
             <div className="absolute bottom-8 left-8 flex gap-4">
-              <div className="w-8 h-8 border-2 border-green-400 rounded-full animate-red2-spin" />
-              <div className="w-8 h-8 border-2 border-green-400 rounded-full animate-red2-spin-reverse" />
-              <div className="w-8 h-8 border-2 border-red-600 rounded-full animate-red2-spin-fast" />
-              <div className="w-6 h-6 bg-green-400 animate-red2-pulse" />
-              <div className="w-6 h-6 bg-red-600 animate-red2-pulse" style={{ animationDelay: '0.3s' }} />
+              {/* Spinning hard drives */}
+              {hardDrivesSpinning && (
+                <>
+                  <div className="w-8 h-8 border-2 border-green-400 rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-2 border-green-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
+                  <div className="w-8 h-8 border-2 border-red-600 rounded-full animate-spin" style={{ animationDuration: '0.6s' }} />
+                </>
+              )}
+              <div className="w-6 h-6 bg-green-400 animate-pulse" />
+              <div className="w-6 h-6 bg-red-600 animate-pulse" style={{ animationDelay: '0.3s' }} />
             </div>
 
-            {/* Keyboard lights simulation */}
+            {/* Keyboard lights simulation - more intense */}
             <div className="absolute bottom-8 right-8 flex gap-2">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="w-5 h-5 rounded-full animate-red2-pulse"
-                  style={{
-                    backgroundColor: ['#00FF66', '#FF0000', '#00FF66', '#FF0000', '#00FF66', '#FF0000'][i],
-                    animationDuration: `${0.2 + Math.random() * 0.3}s`,
-                    animationDelay: `${i * 0.05}s`,
-                    boxShadow: `0 0 10px ${['#00FF66', '#FF0000', '#00FF66', '#FF0000', '#00FF66', '#FF0000'][i]}`,
-                  }}
-                />
-              ))}
+              {keyboardLightsActive && (
+                <>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className="w-5 h-5 rounded-full animate-pulse shadow-lg"
+                      style={{
+                        backgroundColor: ['#00FF66', '#FF0000', '#00FF66', '#FF0000', '#00FF66', '#FF0000'][i],
+                        animationDuration: `${0.2 + Math.random() * 0.3}s`,
+                        animationDelay: `${i * 0.05}s`,
+                        boxShadow: `0 0 10px ${['#00FF66', '#FF0000', '#00FF66', '#FF0000', '#00FF66', '#FF0000'][i]}`,
+                      }}
+                    />
+                  ))}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -470,7 +397,7 @@ const Red2TerminalPage: React.FC = () => {
             <div
               className="text-6xl md:text-8xl font-mono font-bold text-green-400"
               style={{
-                animation: prefersReducedMotion ? 'none' : 'red2-fade-in 1s ease-in forwards',
+                animation: 'fade-in 1s ease-in forwards',
               }}
             >
               WELCOME TO RED2
@@ -481,19 +408,12 @@ const Red2TerminalPage: React.FC = () => {
 
       {/* Styles */}
       <style>{`
-        @keyframes red2-terminal-shake {
-          0%, 100% { transform: translate(0, 0); }
-          25% { transform: translate(1px, 1px); }
-          50% { transform: translate(-1px, -1px); }
-          75% { transform: translate(1px, -1px); }
-        }
-
-        @keyframes red2-glitch-flicker {
+        @keyframes glitch-flicker {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.3; }
         }
 
-        @keyframes red2-glitch-shift {
+        @keyframes glitch-shift {
           0% { transform: translateX(0); }
           20% { transform: translateX(-2px); }
           40% { transform: translateX(2px); }
@@ -502,59 +422,37 @@ const Red2TerminalPage: React.FC = () => {
           100% { transform: translateX(0); }
         }
 
-        @keyframes red2-glitch-intense {
+        @keyframes glitch-intense {
           0%, 100% { opacity: 0; }
           50% { opacity: 0.3; }
         }
 
-        @keyframes red2-meltdown-scroll {
+        @keyframes meltdown-scroll {
           0% { transform: translateY(100vh); }
           100% { transform: translateY(-100vh); }
         }
 
-        @keyframes red2-fade-in {
+        @keyframes fade-in {
           0% { opacity: 0; }
           100% { opacity: 1; }
         }
 
-        @keyframes red2-pulse {
+        @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
         }
 
-        @keyframes red2-spin {
+        @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
 
-        @keyframes red2-spin-reverse {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
+        .animate-pulse {
+          animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
-        @keyframes red2-spin-fast {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        .animate-red2-cursor {
-          animation: red2-pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        .animate-red2-pulse {
-          animation: red2-pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        .animate-red2-spin {
-          animation: red2-spin 1s linear infinite;
-        }
-
-        .animate-red2-spin-reverse {
-          animation: red2-spin-reverse 0.8s linear infinite;
-        }
-
-        .animate-red2-spin-fast {
-          animation: red2-spin-fast 0.6s linear infinite;
+        .animate-spin {
+          animation: spin 1s linear infinite;
         }
       `}</style>
     </div>
