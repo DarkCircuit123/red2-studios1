@@ -285,7 +285,7 @@ export default function HangmanGamePage() {
     }
   }, []);
 
-  // Ambient casino murmur (low frequency background)
+  // Ambient casino murmur (low frequency background) + distant sounds
   useEffect(() => {
     if (!soundEnabled || !audioContextRef.current) return;
     
@@ -306,11 +306,19 @@ export default function HangmanGamePage() {
     osc.start();
     ambientOscRef.current = osc;
 
+    // Play distant slot win sounds periodically
+    const distantSoundInterval = setInterval(() => {
+      if (Math.random() > 0.7) {
+        playDistantSlotWinSound();
+      }
+    }, 8000);
+
     return () => {
       if (ambientOscRef.current) {
         ambientOscRef.current.stop();
         ambientOscRef.current = null;
       }
+      clearInterval(distantSoundInterval);
     };
   }, [soundEnabled]);
 
@@ -452,6 +460,68 @@ export default function HangmanGamePage() {
     });
   };
 
+  // Slot machine win cascade sound
+  const playSlotWinSound = () => {
+    if (!soundEnabled || !audioContextRef.current) return;
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+    
+    for (let i = 0; i < 12; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.frequency.setValueAtTime(600 + i * 80, now + i * 0.08);
+      gain.gain.setValueAtTime(0.12, now + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.15);
+      
+      osc.start(now + i * 0.08);
+      osc.stop(now + i * 0.08 + 0.15);
+    }
+  };
+
+  // Card shuffle sound
+  const playCardShuffleSound = () => {
+    if (!soundEnabled || !audioContextRef.current) return;
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+    
+    for (let i = 0; i < 6; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.frequency.setValueAtTime(300 - i * 30, now + i * 0.12);
+      gain.gain.setValueAtTime(0.08, now + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.12 + 0.2);
+      
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.2);
+    }
+  };
+
+  // Distant slot machine win sound
+  const playDistantSlotWinSound = () => {
+    if (!soundEnabled || !audioContextRef.current) return;
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+    
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.4);
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    
+    osc.start(now);
+    osc.stop(now + 0.4);
+  };
+
   // Calculate score based on wrong guesses with VIP multiplier
   const calculateScore = (wrongGuesses: number): number => {
     const baseScore = Math.max(0, 100 - wrongGuesses * 10);
@@ -531,6 +601,7 @@ export default function HangmanGamePage() {
         }
       }
       playSuccessSound();
+      playSlotWinSound();
     } else {
       // Wrong guess
       newWrongGuesses++;
@@ -772,9 +843,43 @@ export default function HangmanGamePage() {
 
   return (
     <div className="min-h-screen w-full bg-black overflow-hidden relative">
+      {/* CRT Scanline Effect */}
+      <div className="fixed inset-0 pointer-events-none z-40">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px)',
+          animation: 'scanlines 8s linear infinite'
+        }} />
+        <style>{`
+          @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+          }
+          @keyframes glitch-3d {
+            0% { transform: translate(0, 0) rotateZ(0deg); }
+            20% { transform: translate(-2px, 2px) rotateZ(0.5deg); }
+            40% { transform: translate(2px, -2px) rotateZ(-0.5deg); }
+            60% { transform: translate(-1px, 1px) rotateZ(0.3deg); }
+            80% { transform: translate(1px, -1px) rotateZ(-0.3deg); }
+            100% { transform: translate(0, 0) rotateZ(0deg); }
+          }
+          @keyframes neon-glow {
+            0%, 100% { text-shadow: 0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,215,0,0.6), 0 0 30px rgba(255,0,0,0.4); }
+            50% { text-shadow: 0 0 20px rgba(255,215,0,1), 0 0 40px rgba(255,215,0,0.8), 0 0 60px rgba(255,0,0,0.6); }
+          }
+          @keyframes float-3d {
+            0%, 100% { transform: translateY(0px) translateZ(0px) rotateX(0deg); }
+            50% { transform: translateY(-20px) translateZ(50px) rotateX(5deg); }
+          }
+          @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.4), inset 0 0 10px rgba(255,215,0,0.1); }
+            50% { box-shadow: 0 0 30px rgba(255,215,0,0.8), inset 0 0 20px rgba(255,215,0,0.3); }
+          }
+        `}</style>
+      </div>
+
       {/* 10 Ambient Motion Layers */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* Layer 1: Spotlight sweep */}
+        {/* Layer 1: Spotlight sweep with 3D depth */}
         <motion.div
           className="absolute inset-0 opacity-20"
           animate={{
@@ -787,81 +892,94 @@ export default function HangmanGamePage() {
             ]
           }}
           transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          style={{ perspective: '1000px' }}
         />
 
-        {/* Layer 2: Falling coins */}
-        {[...Array(8)].map((_, i) => (
+        {/* Layer 2: Falling 3D coins with depth */}
+        {[...Array(12)].map((_, i) => (
           <motion.div
             key={`coin-${i}`}
-            className="absolute w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full opacity-40"
+            className="absolute w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full opacity-50 shadow-lg"
             style={{
-              left: `${(i / 8) * 100}%`,
+              left: `${(i / 12) * 100}%`,
               top: '-50px',
+              perspective: '1000px'
             }}
             animate={{
               y: window.innerHeight + 100,
-              rotate: 360 * 3,
+              rotate: 360 * 4,
+              rotateX: 360 * 2,
+              rotateY: 360 * 2,
             }}
             transition={{
-              duration: 8 + i,
+              duration: 10 + i * 0.5,
               repeat: Infinity,
               ease: 'linear',
             }}
           />
         ))}
 
-        {/* Layer 3: Fluttering cards */}
-        {[...Array(6)].map((_, i) => (
+        {/* Layer 3: Fluttering 3D cards with depth */}
+        {[...Array(8)].map((_, i) => (
           <motion.div
             key={`card-${i}`}
-            className="absolute w-12 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-lg opacity-30"
+            className="absolute w-12 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-lg opacity-40 shadow-lg"
             style={{
-              left: `${(i / 6) * 100}%`,
+              left: `${(i / 8) * 100}%`,
               top: '20%',
+              perspective: '1000px'
             }}
             animate={{
               y: [0, 100, 0],
               rotate: [0, 45, 0],
               x: [0, 50, 0],
+              rotateX: [0, 30, 0],
+              rotateY: [0, 45, 0],
             }}
             transition={{
-              duration: 6 + i * 0.5,
+              duration: 7 + i * 0.6,
               repeat: Infinity,
               ease: 'easeInOut',
             }}
           />
         ))}
 
-        {/* Layer 4: Roulette wheel */}
+        {/* Layer 4: 3D Roulette wheel with depth */}
         <motion.div
-          className="absolute top-1/4 right-10 w-32 h-32 border-4 border-yellow-400 rounded-full opacity-20"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-1/4 right-10 w-32 h-32 border-4 border-yellow-400 rounded-full opacity-30 shadow-lg"
+          animate={{ 
+            rotate: 360,
+            rotateX: [0, 10, 0],
+            rotateY: [0, 10, 0],
+          }}
+          transition={{ duration: 35, repeat: Infinity, ease: 'linear' }}
+          style={{ perspective: '1000px' }}
         >
-          {[...Array(8)].map((_, i) => (
+          {[...Array(12)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+              className="absolute w-3 h-3 bg-yellow-400 rounded-full shadow-lg"
               style={{
                 top: '50%',
                 left: '50%',
-                transform: `rotate(${(i / 8) * 360}deg) translateY(-64px)`,
+                transform: `rotate(${(i / 12) * 360}deg) translateY(-64px)`,
               }}
             />
           ))}
         </motion.div>
 
-        {/* Layer 5: Pulsing aura */}
+        {/* Layer 5: Pulsing 3D aura with depth */}
         <motion.div
-          className="absolute inset-0 opacity-10"
+          className="absolute inset-0 opacity-15"
           animate={{
             background: [
-              'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.3) 0%, transparent 70%)',
-              'radial-gradient(circle at 50% 50%, rgba(255,0,0,0.3) 0%, transparent 70%)',
-              'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.3) 0%, transparent 70%)',
+              'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.4) 0%, transparent 70%)',
+              'radial-gradient(circle at 50% 50%, rgba(255,0,0,0.4) 0%, transparent 70%)',
+              'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.4) 0%, transparent 70%)',
             ]
           }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ perspective: '1000px' }}
         />
 
         {/* Layer 6: Velvet noise texture */}
@@ -901,7 +1019,7 @@ export default function HangmanGamePage() {
           }}
         />
 
-        {/* Layer 10: Side borders */}
+        {/* Layer 10: Side borders with enhanced glow */}
         <motion.div
           className="fixed left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-yellow-300 via-red-500 to-yellow-300 z-30 pointer-events-none"
           animate={{ backgroundPosition: ['0% 0%', '0% 100%'] }}
@@ -1040,17 +1158,32 @@ export default function HangmanGamePage() {
             <motion.h1
               animate={{
                 textShadow: [
-                  '0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,0,0,0.6)',
-                  '0 0 20px rgba(255,215,0,1), 0 0 40px rgba(255,0,0,0.8)',
-                  '0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,0,0,0.6)',
+                  '0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,0,0,0.6), 0 0 30px rgba(255,215,0,0.4)',
+                  '0 0 20px rgba(255,215,0,1), 0 0 40px rgba(255,0,0,0.8), 0 0 60px rgba(255,215,0,0.6)',
+                  '0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,0,0,0.6), 0 0 30px rgba(255,215,0,0.4)',
                 ]
               }}
               transition={{ duration: 0.3, repeat: Infinity }}
               className="text-4xl md:text-6xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 mb-1 tracking-tighter"
+              style={{
+                animation: 'neon-glow 2s ease-in-out infinite, glitch-3d 0.4s ease-in-out infinite'
+              }}
             >
               RED2 HANGMAN
             </motion.h1>
-            <p className="text-lg md:text-xl font-mono text-yellow-300 tracking-widest animate-pulse">$50M CASINO MACHINE</p>
+            <motion.p 
+              className="text-lg md:text-xl font-mono text-yellow-300 tracking-widest animate-pulse"
+              animate={{
+                textShadow: [
+                  '0 0 5px rgba(255,215,0,0.6)',
+                  '0 0 15px rgba(255,215,0,0.9)',
+                  '0 0 5px rgba(255,215,0,0.6)',
+                ]
+              }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              $50M CASINO MACHINE
+            </motion.p>
           </div>
           
           <div className="flex flex-col gap-3 items-center md:items-end">
@@ -1059,23 +1192,43 @@ export default function HangmanGamePage() {
               transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
               className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-500 border-4 border-yellow-200 flex items-center justify-center shadow-2xl"
               style={{
-                boxShadow: '0 0 30px rgba(255,215,0,0.8), inset 0 0 20px rgba(255,255,255,0.3)'
+                boxShadow: '0 0 30px rgba(255,215,0,0.8), inset 0 0 20px rgba(255,255,255,0.3), 0 0 60px rgba(255,215,0,0.5)',
+                animation: 'pulse-gold 2s ease-in-out infinite'
               }}
             >
               <div className="text-center">
                 <p className="text-xs font-mono text-yellow-900 uppercase tracking-widest mb-1">VIP</p>
-                <p className="text-lg font-heading font-black text-yellow-900" style={{ color: VIP_TIERS[vipTier].color }}>
+                <motion.p 
+                  className="text-lg font-heading font-black text-yellow-900" 
+                  style={{ color: VIP_TIERS[vipTier].color }}
+                  animate={{
+                    textShadow: [
+                      '0 0 5px rgba(255,215,0,0.4)',
+                      '0 0 15px rgba(255,215,0,0.8)',
+                      '0 0 5px rgba(255,215,0,0.4)',
+                    ]
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
                   {VIP_TIERS[vipTier].name}
-                </p>
+                </motion.p>
               </div>
             </motion.div>
 
             <motion.div
               className="px-6 py-3 bg-black border-4 border-yellow-300 rounded-lg"
               style={{
-                boxShadow: '0 0 20px rgba(255,215,0,0.8), inset 0 0 10px rgba(255,215,0,0.2)',
+                boxShadow: '0 0 20px rgba(255,215,0,0.8), inset 0 0 10px rgba(255,215,0,0.2), 0 0 40px rgba(255,215,0,0.5)',
                 fontFamily: '\"Courier New\", monospace',
               }}
+              animate={{
+                boxShadow: [
+                  '0 0 20px rgba(255,215,0,0.8), inset 0 0 10px rgba(255,215,0,0.2)',
+                  '0 0 40px rgba(255,215,0,1), inset 0 0 20px rgba(255,215,0,0.4)',
+                  '0 0 20px rgba(255,215,0,0.8), inset 0 0 10px rgba(255,215,0,0.2)',
+                ]
+              }}
+              transition={{ duration: 1.5, repeat: Infinity }}
             >
               <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">WINNINGS</p>
               <motion.p
@@ -1083,6 +1236,9 @@ export default function HangmanGamePage() {
                 initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
                 className="text-3xl md:text-4xl font-mono font-black text-yellow-300"
+                style={{
+                  animation: 'neon-glow 1.5s ease-in-out infinite'
+                }}
               >
                 ${totalWinnings.toLocaleString()}
               </motion.p>
@@ -1099,13 +1255,23 @@ export default function HangmanGamePage() {
           </div>
         </motion.div>
 
-        {/* Social Proof Elements - Compressed */}
+        {/* Social Proof Elements - Compressed with 3D effects */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-6xl mb-6 grid grid-cols-2 md:grid-cols-4 gap-3"
         >
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center">
+          <motion.div 
+            className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center"
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(255,215,0,0.3)',
+                '0 0 20px rgba(255,215,0,0.6)',
+                '0 0 10px rgba(255,215,0,0.3)',
+              ]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
             <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Live</p>
             <motion.p
               animate={{ y: [0, -2, 0] }}
@@ -1114,8 +1280,18 @@ export default function HangmanGamePage() {
             >
               {livePlayersCount.toLocaleString()}
             </motion.p>
-          </div>
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center">
+          </motion.div>
+          <motion.div 
+            className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center"
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(255,215,0,0.3)',
+                '0 0 20px rgba(255,215,0,0.6)',
+                '0 0 10px rgba(255,215,0,0.3)',
+              ]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+          >
             <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Jackpot</p>
             <motion.p
               animate={{ scale: [1, 1.05, 1] }}
@@ -1124,19 +1300,39 @@ export default function HangmanGamePage() {
             >
               ${progressiveJackpot.toLocaleString()}
             </motion.p>
-          </div>
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center">
+          </motion.div>
+          <motion.div 
+            className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center"
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(255,215,0,0.3)',
+                '0 0 20px rgba(255,215,0,0.6)',
+                '0 0 10px rgba(255,215,0,0.3)',
+              ]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
+          >
             <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Tier</p>
             <p className="text-xl font-heading font-black" style={{ color: VIP_TIERS[vipTier].color }}>
               {VIP_TIERS[vipTier].name}
             </p>
-          </div>
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center">
+          </motion.div>
+          <motion.div 
+            className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center"
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(255,215,0,0.3)',
+                '0 0 20px rgba(255,215,0,0.6)',
+                '0 0 10px rgba(255,215,0,0.3)',
+              ]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.6 }}
+          >
             <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Multi</p>
             <p className="text-xl font-heading font-black text-green-400">
               {VIP_TIERS[vipTier].multiplier}x
             </p>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Main Content */}
@@ -1147,9 +1343,19 @@ export default function HangmanGamePage() {
               className="space-y-8"
             >
               <div className="text-center space-y-3">
-                <p className="text-xl md:text-2xl font-mono text-yellow-300 tracking-widest animate-pulse">
+                <motion.p 
+                  className="text-xl md:text-2xl font-mono text-yellow-300 tracking-widest animate-pulse"
+                  animate={{
+                    textShadow: [
+                      '0 0 5px rgba(255,215,0,0.6)',
+                      '0 0 15px rgba(255,215,0,0.9)',
+                      '0 0 5px rgba(255,215,0,0.6)',
+                    ]
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
                   ★ SELECT YOUR GAME ★
-                </p>
+                </motion.p>
                 <p className="text-base md:text-lg font-paragraph text-white/70 max-w-3xl mx-auto">
                   Choose your category and spin the wheel. Every correct guess earns you cash. VIP members earn multipliers!
                 </p>
@@ -1158,8 +1364,16 @@ export default function HangmanGamePage() {
               <motion.div
                 className="bg-gradient-to-br from-gray-900 via-black to-gray-950 border-4 border-yellow-300 rounded-2xl p-8 md:p-10 shadow-2xl"
                 style={{
-                  boxShadow: '0 0 40px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.1)'
+                  boxShadow: '0 0 40px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.1), 0 0 80px rgba(255,215,0,0.3)'
                 }}
+                animate={{
+                  boxShadow: [
+                    '0 0 40px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.1)',
+                    '0 0 60px rgba(255,215,0,0.8), inset 0 0 40px rgba(255,215,0,0.2)',
+                    '0 0 40px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.1)',
+                  ]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
               >
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
                   {Object.entries(categoriesData).map(([key, meta], idx) => (
@@ -1241,16 +1455,23 @@ export default function HangmanGamePage() {
                     </svg>
                   </div>
 
-                  <motion.div
-                    key={gameState.displayWord.join('')}
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    className="text-center py-8 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl border-2 border-primary/50 p-6"
-                  >
-                    <p className="text-5xl md:text-6xl font-mono font-black text-yellow-300 tracking-widest break-words">
-                      {gameState.displayWord.join(' ')}
-                    </p>
-                  </motion.div>
+                    <motion.div
+                      key={gameState.displayWord.join('')}
+                      initial={{ scale: 0.9 }}
+                      animate={{ scale: 1 }}
+                      className="text-center py-8 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl border-2 border-primary/50 p-6"
+                      style={{
+                        animation: 'float-3d 3s ease-in-out infinite'
+                      }}
+                    >
+                      <p className="text-5xl md:text-6xl font-mono font-black text-yellow-300 tracking-widest break-words"
+                        style={{
+                          animation: 'neon-glow 1.5s ease-in-out infinite'
+                        }}
+                      >
+                        {gameState.displayWord.join(' ')}
+                      </p>
+                    </motion.div>
 
                   <AnimatePresence>
                     {gameState.won && (
