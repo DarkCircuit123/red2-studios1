@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, CheckCircle, Clock, ExternalLink } from 'lucide-react';
+import { Lock, AlertCircle } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Image } from '@/components/ui/image';
 import { useAuthStore } from '@/lib/clientAuthStore';
+import { useGallerySEO } from '@/hooks/useGallerySEO';
 
 interface ClientGallery {
   _id: string;
@@ -15,72 +16,126 @@ interface ClientGallery {
   approvalStatus: string;
   galleryCoverImage: string;
   galleryExpirationDate: string;
-  isPublic?: boolean;
 }
 
-const SAMPLE_PUBLIC_GALLERY: ClientGallery = {
-  _id: 'sample-public-gallery',
-  clientName: 'Public Sample Gallery',
-  clientEmail: 'sample@gallery.com',
-  galleryAccessCode: 'PUBLIC',
-  approvalStatus: 'approved',
-  galleryCoverImage: 'https://static.wixstatic.com/media/e9d727_fe361c98e64f40a0b892953a9484b8b0~mv2.png?originWidth=384&originHeight=384',
-  galleryExpirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-  isPublic: true,
-};
+// Rate limiting configuration
+const RATE_LIMIT_ATTEMPTS = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+interface RateLimitData {
+  attempts: number;
+  firstAttemptTime: number;
+}
 
 export default function ClientGalleriesPage() {
-  const [galleries, setGalleries] = useState<ClientGallery[]>([SAMPLE_PUBLIC_GALLERY]);
-  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   const [accessCode, setAccessCode] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const { clientSession } = useAuthStore();
+  const [error, setError] = useState('');
+  const [rateLimitError, setRateLimitError] = useState(false);
+  const { setClientSession } = useAuthStore();
 
+  // Set SEO meta tags
+  useGallerySEO();
+
+  // Check rate limit on mount
   useEffect(() => {
-    const loadGalleries = async () => {
-      try {
-        const result = await BaseCrudService.getAll<ClientGallery>('clientgalleries', {}, { limit: 50 });
-        // Add the public sample gallery at the beginning
-        setGalleries([SAMPLE_PUBLIC_GALLERY, ...(result.items || [])]);
-      } catch (error) {
-        // Keep the sample gallery visible even if fetch fails
-        setGalleries([SAMPLE_PUBLIC_GALLERY]);
-      } finally {
-        setIsLoading(false);
+    const rateLimitData = sessionStorage.getItem('galleryAccessAttempts');
+    if (rateLimitData) {
+      const data: RateLimitData = JSON.parse(rateLimitData);
+      const now = Date.now();
+      if (now - data.firstAttemptTime < RATE_LIMIT_WINDOW_MS && data.attempts >= RATE_LIMIT_ATTEMPTS) {
+        setRateLimitError(true);
       }
-    };
-
-    // Load galleries with a slight delay to ensure initial render
-    const timer = setTimeout(loadGalleries, 100);
-    return () => clearTimeout(timer);
+    }
   }, []);
 
-  const handleAccessGallery = (code: string) => {
-    const gallery = galleries.find(g => g.galleryAccessCode === code);
-    if (gallery) {
-      // Navigate to gallery view
-      window.location.href = `/client-gallery/${gallery._id}`;
+  const updateRateLimit = () => {
+    const rateLimitData = sessionStorage.getItem('galleryAccessAttempts');
+    const now = Date.now();
+    let data: RateLimitData;
+
+    if (rateLimitData) {
+      data = JSON.parse(rateLimitData);
+      if (now - data.firstAttemptTime >= RATE_LIMIT_WINDOW_MS) {
+        // Reset if window expired
+        data = { attempts: 1, firstAttemptTime: now };
+      } else {
+        data.attempts += 1;
+      }
     } else {
-      alert('Invalid access code');
+      data = { attempts: 1, firstAttemptTime: now };
     }
+
+    sessionStorage.setItem('galleryAccessAttempts', JSON.stringify(data));
+    return data.attempts >= RATE_LIMIT_ATTEMPTS;
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'approved':
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
-      case 'pending':
-        return <Clock className="w-5 h-5 text-yellow-400" />;
-      default:
-        return <Lock className="w-5 h-5 text-white/40" />;
-    }
-  };
+  const handleAccessGallery = async (code: string) => {
+    setError('');
 
-  const isGalleryAccessible = (gallery: ClientGallery): boolean => {
-    // Public galleries are always accessible
-    if (gallery.isPublic) return true;
-    if (!clientSession) return false;
-    return clientSession.galleryId === gallery._id;
+    if (rateLimitError) {
+      setError('Too many attempts. Please try again later.');
+      return;
+    }
+
+    if (!code.trim()) {
+      setError('Please enter an access code.');
+      return;
+    }
+
+    setIsSearching(true);
+
+    try {
+      // Query for gallery with matching access code
+      const result = await BaseCrudService.getAll<ClientGallery>('clientgalleries', {}, { limit: 100 });
+      
+      // Find gallery with matching code
+      const gallery = result.items?.find(
+        (g) => g.galleryAccessCode?.toUpperCase() === code.toUpperCase()
+      );
+
+      if (!gallery) {
+        const isLimited = updateRateLimit();
+        if (isLimited) {
+          setRateLimitError(true);
+          setError('Too many failed attempts. Please try again in 15 minutes.');
+        } else {
+          setError('Invalid access code. Please check and try again.');
+        }
+        setIsSearching(false);
+        return;
+      }
+
+      // Check expiration
+      if (gallery.galleryExpirationDate) {
+        const expirationDate = new Date(gallery.galleryExpirationDate);
+        if (expirationDate < new Date()) {
+          setError('This gallery has expired.');
+          setIsSearching(false);
+          return;
+        }
+      }
+
+      // Store session in sessionStorage (not localStorage)
+      const session = {
+        clientEmail: gallery.clientEmail,
+        galleryId: gallery._id,
+        clientName: gallery.clientName,
+        accessCode: code.toUpperCase(),
+      };
+      sessionStorage.setItem('gallerySession', JSON.stringify(session));
+      setClientSession(session);
+
+      // Clear rate limit on success
+      sessionStorage.removeItem('galleryAccessAttempts');
+
+      // Navigate to gallery
+      navigate(`/client-gallery/${gallery._id}`);
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -100,7 +155,7 @@ export default function ClientGalleriesPage() {
               Client Galleries
             </h1>
             <p className="text-lg text-white/60 max-w-2xl">
-              Access your private proofing gallery with your unique access code. Try the public sample gallery below to verify image loading.
+              Access your private proofing gallery with your unique access code.
             </p>
           </motion.div>
 
@@ -117,11 +172,12 @@ export default function ClientGalleriesPage() {
                 value={accessCode}
                 onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                 placeholder="Enter your access code"
-                className="flex-1 px-4 py-3 bg-white/5 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-white/40 font-mono text-sm"
+                disabled={rateLimitError}
+                className="flex-1 px-4 py-3 bg-white/5 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:border-white/40 font-mono text-sm disabled:opacity-50"
               />
               <button
                 onClick={() => handleAccessGallery(accessCode)}
-                disabled={!accessCode || isSearching}
+                disabled={!accessCode || isSearching || rateLimitError}
                 className="px-6 py-3 bg-white text-slate-950 font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300 disabled:opacity-50"
               >
                 {isSearching ? 'Searching...' : 'Access'}
@@ -130,101 +186,38 @@ export default function ClientGalleriesPage() {
             <p className="text-xs text-white/40 mt-2">
               Check your email for your unique access code
             </p>
+
+            {/* Error Message */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded flex items-start gap-3"
+              >
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-300">{error}</p>
+              </motion.div>
+            )}
           </motion.div>
 
-          {/* Galleries Grid */}
-          {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          {/* Info Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="max-w-2xl p-6 bg-white/5 border border-white/10 rounded-lg"
+          >
+            <div className="flex items-start gap-3">
+              <Lock className="w-5 h-5 text-white/60 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-heading font-bold text-white mb-2">Private Access Only</h3>
+                <p className="text-sm text-white/60">
+                  This gallery is protected. Only authorized clients with a valid access code can view their proofing galleries. 
+                  All access is logged and galleries expire after the specified date.
+                </p>
+              </div>
             </div>
-          ) : galleries.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-20"
-            >
-              <p className="text-white/60">No galleries available at the moment.</p>
-            </motion.div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {galleries.map((gallery, idx) => {
-                const isAccessible = isGalleryAccessible(gallery);
-                return (
-                  <motion.div
-                    key={gallery._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.4 }}
-                    className="group cursor-pointer h-full"
-                    onClick={() => {
-                      if (isAccessible) {
-                        window.location.href = `/client-gallery/${gallery._id}`;
-                      }
-                    }}
-                  >
-                    <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-white/5 flex items-center justify-center h-64">
-                      {gallery.galleryCoverImage && (
-                        <>
-                          <Image
-                            src={gallery.galleryCoverImage}
-                            alt={gallery.clientName}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            width={400}
-                            height={400}
-                          />
-                          {/* Mosaic overlay for non-authenticated users */}
-                          {!isAccessible && (
-                            <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/60 to-black/40 flex items-center justify-center">
-                              <div className="grid grid-cols-8 gap-1 w-full h-full p-2">
-                                {Array.from({ length: 64 }).map((_, i) => (
-                                  <div
-                                    key={i}
-                                    className="bg-white/20 backdrop-blur-md rounded-sm"
-                                  />
-                                ))}
-                              </div>
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <Lock className="w-12 h-12 text-white/60" />
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-heading font-bold">{gallery.clientName}</h3>
-                        {getStatusIcon(gallery.approvalStatus)}
-                      </div>
-                      <p className="text-sm text-white/60">{gallery.clientEmail}</p>
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-xs text-white/40 uppercase tracking-wide">
-                          {gallery.approvalStatus || 'Pending'}
-                        </span>
-                        {gallery.galleryExpirationDate && (
-                          <span className="text-xs text-white/40">
-                            Expires: {new Date(gallery.galleryExpirationDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                      {isAccessible ? (
-                        <div className="flex items-center gap-2 pt-2">
-                          <span className="text-xs text-green-400 font-semibold">Click to view</span>
-                          <ExternalLink className="w-3 h-3 text-green-400" />
-                        </div>
-                      ) : (
-                        <p className="text-xs text-white/40 italic pt-2">
-                          {gallery.isPublic ? 'Public sample - click to view' : 'Enter your access code to view'}
-                        </p>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
+          </motion.div>
         </div>
       </section>
 

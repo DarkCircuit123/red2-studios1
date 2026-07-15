@@ -1,62 +1,115 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, Mail, AlertCircle } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { useAuthStore } from '@/lib/clientAuthStore';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ClientProofingGalleries } from '@/entities';
 
 export default function ClientLoginPage() {
   const navigate = useNavigate();
   const { setClientSession } = useAuthStore();
   const [email, setEmail] = useState('');
   const [accessCode, setAccessCode] = useState('');
+  const [honeypot, setHoneypot] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Add noindex/nofollow meta tags
+  useEffect(() => {
+    const metaRobots = document.createElement('meta');
+    metaRobots.name = 'robots';
+    metaRobots.content = 'noindex, nofollow';
+    document.head.appendChild(metaRobots);
+
+    return () => {
+      document.head.removeChild(metaRobots);
+    };
+  }, []);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate email format
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    // Validate access code
+    if (!accessCode || accessCode.trim().length === 0) {
+      setError('Access code is required.');
+      return;
+    }
+
     setIsLoading(true);
 
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+
     try {
-      const result = await BaseCrudService.getAll<ClientProofingGalleries>('clientgalleries', {}, { limit: 100 });
-      const galleries = result.items || [];
+      const response = await fetch('/api/auth/client-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          accessCode: accessCode.toUpperCase().trim(),
+          honeypot, // Honeypot field for bot detection
+        }),
+        signal: abortControllerRef.current.signal,
+      });
 
-      const gallery = galleries.find(
-        (g) =>
-          g.clientEmail?.toLowerCase() === email.toLowerCase() &&
-          g.galleryAccessCode === accessCode.toUpperCase()
-      );
-
-      if (!gallery) {
-        setError('Invalid email or access code. Please try again.');
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || 'Login failed. Please try again.');
         setIsLoading(false);
         return;
       }
 
-      // Check if gallery is expired
-      if (gallery.galleryExpirationDate) {
-        const expirationDate = new Date(gallery.galleryExpirationDate);
-        if (expirationDate < new Date()) {
-          setError('This gallery has expired. Please contact the photographer.');
-          setIsLoading(false);
-          return;
-        }
+      const data = await response.json();
+
+      if (data.success && data.session) {
+        // Set client session with server-validated data only
+        setClientSession({
+          clientEmail: data.session.clientEmail,
+          galleryId: data.session.galleryId,
+          clientName: data.session.clientName,
+          sessionId: data.session.sessionId,
+          isAccountLogin: data.session.isAccountLogin,
+        });
+
+        // Clear sensitive form data
+        setEmail('');
+        setAccessCode('');
+
+        // Redirect to client gallery view
+        navigate(`/client-gallery/${data.session.galleryId}`);
+      } else {
+        setError('Login failed. Please try again.');
       }
-
-      // Set client session
-      setClientSession({
-        clientEmail: gallery.clientEmail || '',
-        galleryId: gallery._id,
-        clientName: gallery.clientName || '',
-      });
-
-      // Redirect to client gallery view
-      navigate(`/client-gallery/${gallery._id}`);
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        // Request was cancelled, don't show error
+        return;
+      }
       if (process.env.NODE_ENV === 'development') {
         console.error('Login error:', err);
       }
@@ -125,6 +178,7 @@ export default function ClientLoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
                     required
+                    autoComplete="email"
                     className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300"
                   />
                 </div>
@@ -143,6 +197,7 @@ export default function ClientLoginPage() {
                     onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                     placeholder="Enter your code"
                     required
+                    autoComplete="off"
                     className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300 font-mono tracking-widest"
                   />
                 </div>
@@ -150,6 +205,18 @@ export default function ClientLoginPage() {
                   Check your email for your unique access code
                 </p>
               </div>
+
+              {/* Honeypot field (hidden from users) */}
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                style={{ display: 'none' }}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+              />
 
               {/* Submit Button */}
               <button
@@ -170,7 +237,7 @@ export default function ClientLoginPage() {
             >
               <p className="text-sm text-white/60">
                 Don't have an access code?{' '}
-                <a href="#contact" className="text-white hover:text-white/80 transition-colors font-bold">
+                <a href="/contact" className="text-white hover:text-white/80 transition-colors font-bold">
                   Contact us
                 </a>
               </p>

@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/clientAuthStore';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Image } from '@/components/ui/image';
+import { useGallerySEO } from '@/hooks/useGallerySEO';
 
 interface ClientGallery {
   _id: string;
@@ -16,13 +17,7 @@ interface ClientGallery {
   approvalStatus: string;
   galleryCoverImage: string;
   galleryExpirationDate: string;
-  isPublic?: boolean;
 }
-
-const SAMPLE_PUBLIC_GALLERY_IMAGES = [
-  'https://static.wixstatic.com/media/e9d727_fe361c98e64f40a0b892953a9484b8b0~mv2.png?originWidth=384&originHeight=384',
-  'https://static.wixstatic.com/media/e9d727_fe361c98e64f40a0b892953a9484b8b0~mv2.png?originWidth=384&originHeight=384',
-];
 
 export default function ClientGalleryViewPage() {
   const { id } = useParams<{ id: string }>();
@@ -30,68 +25,92 @@ export default function ClientGalleryViewPage() {
   const { clientSession, logout } = useAuthStore();
   const [gallery, setGallery] = useState<ClientGallery | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
-  // Allow public sample gallery or authenticated sessions
+  // Set SEO meta tags
+  useGallerySEO();
+
+  // Security: Check session on mount and redirect if unauthorized
   useEffect(() => {
-    if (id === 'sample-public-gallery') {
-      // Public gallery - no auth needed
+    const gallerySession = sessionStorage.getItem('gallerySession');
+    
+    if (!gallerySession || !id) {
+      setIsUnauthorized(true);
+      setIsLoading(false);
       return;
     }
-    if (!clientSession || clientSession.galleryId !== id) {
-      navigate('/client-login');
-    }
-  }, [clientSession, id, navigate]);
 
+    try {
+      const session = JSON.parse(gallerySession);
+      
+      // Verify session matches requested gallery
+      if (session.galleryId !== id) {
+        setIsUnauthorized(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // Check expiration
+      const expirationTime = sessionStorage.getItem('gallerySessionExpiry');
+      if (expirationTime && Date.now() > parseInt(expirationTime)) {
+        sessionStorage.removeItem('gallerySession');
+        sessionStorage.removeItem('gallerySessionExpiry');
+        setIsUnauthorized(true);
+        setIsLoading(false);
+        return;
+      }
+    } catch (err) {
+      setIsUnauthorized(true);
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  // Load gallery data
   useEffect(() => {
+    if (isUnauthorized || !id) return;
+
     const loadGallery = async () => {
-      if (!id) return;
       try {
-        // Handle public sample gallery
-        if (id === 'sample-public-gallery') {
-          setGallery({
-            _id: 'sample-public-gallery',
-            clientName: 'Public Sample Gallery',
-            clientEmail: 'sample@gallery.com',
-            galleryAccessCode: 'PUBLIC',
-            approvalStatus: 'approved',
-            galleryCoverImage: SAMPLE_PUBLIC_GALLERY_IMAGES[0],
-            galleryExpirationDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-            isPublic: true,
-          });
-        } else {
-          const data = await BaseCrudService.getById<ClientGallery>('clientgalleries', id);
-          setGallery(data);
+        const data = await BaseCrudService.getById<ClientGallery>('clientgalleries', id);
+        
+        if (!data) {
+          setIsUnauthorized(true);
+          return;
         }
+
+        // Verify expiration
+        if (data.galleryExpirationDate) {
+          const expirationDate = new Date(data.galleryExpirationDate);
+          if (expirationDate < new Date()) {
+            setIsUnauthorized(true);
+            return;
+          }
+        }
+
+        setGallery(data);
       } catch (error) {
-        console.error('Error loading gallery:', error);
+        setIsUnauthorized(true);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadGallery();
-  }, [id]);
-
-  // Load image dimensions when selected image changes
-  useEffect(() => {
-    if (!selectedImage) {
-      setImageDimensions(null);
-      return;
-    }
-
-    const img = new window.Image();
-    img.onload = () => {
-      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-    };
-    img.src = selectedImage;
-  }, [selectedImage]);
+  }, [id, isUnauthorized]);
 
   const handleLogout = () => {
     logout();
+    sessionStorage.removeItem('gallerySession');
+    sessionStorage.removeItem('gallerySessionExpiry');
     navigate('/client-login');
+  };
+
+  // Disable right-click on images for security
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    return false;
   };
 
   if (isLoading) {
@@ -106,13 +125,18 @@ export default function ClientGalleryViewPage() {
     );
   }
 
-  if (!gallery) {
+  if (isUnauthorized || !gallery) {
     return (
       <div className="min-h-screen bg-black text-white">
         <Header />
         <section className="relative w-full min-h-screen flex items-center justify-center pt-32">
-          <div className="text-center">
-            <h1 className="text-2xl font-heading font-bold mb-4">Gallery Not Found</h1>
+          <div className="text-center max-w-md">
+            <h1 className="text-2xl font-heading font-bold mb-4">Access Denied</h1>
+            <p className="text-white/60 mb-6">
+              {isUnauthorized 
+                ? 'Your session has expired or is invalid. Please request a new access code.' 
+                : 'Gallery not found.'}
+            </p>
             <button
               onClick={handleLogout}
               className="px-6 py-3 bg-white text-black font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300"
@@ -126,7 +150,7 @@ export default function ClientGalleryViewPage() {
     );
   }
 
-  const images = gallery?.isPublic ? SAMPLE_PUBLIC_GALLERY_IMAGES : (gallery?.galleryCoverImage ? [gallery.galleryCoverImage] : []);
+  const images = gallery.galleryCoverImage ? [gallery.galleryCoverImage] : [];
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -145,6 +169,7 @@ export default function ClientGalleryViewPage() {
                 setSelectedImage(null);
               }
             }}
+            onContextMenu={handleContextMenu}
           >
             <button
               onClick={(e) => {
@@ -169,11 +194,13 @@ export default function ClientGalleryViewPage() {
                 maxHeight: '95vh',
               }}
               onClick={(e) => e.stopPropagation()}
+              onContextMenu={handleContextMenu}
             >
               <Image
                 src={selectedImage}
                 alt="Full resolution image"
                 className="w-auto h-auto max-w-full max-h-full object-contain"
+                onContextMenu={handleContextMenu}
               />
             </motion.div>
           </motion.div>
@@ -212,11 +239,16 @@ export default function ClientGalleryViewPage() {
               className="space-y-8"
             >
               {/* Main Image - Photography-First with Aspect Ratio Preservation */}
-              <div className="relative w-full bg-black/50 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center min-h-[400px] md:min-h-[600px] cursor-pointer hover:opacity-90 transition-opacity" onClick={() => images[selectedImageIndex] && setSelectedImage(images[selectedImageIndex])}>
+              <div 
+                className="relative w-full bg-black/50 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center min-h-[400px] md:min-h-[600px] cursor-pointer hover:opacity-90 transition-opacity" 
+                onClick={() => images[selectedImageIndex] && setSelectedImage(images[selectedImageIndex])}
+                onContextMenu={handleContextMenu}
+              >
                 <Image
                   src={images[selectedImageIndex]}
                   alt={`${gallery.clientName} gallery image ${selectedImageIndex + 1}`}
                   className="w-auto h-auto max-w-full max-h-full object-contain"
+                  onContextMenu={handleContextMenu}
                 />
 
                 {/* Navigation Arrows */}

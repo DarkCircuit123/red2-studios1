@@ -1,12 +1,14 @@
 /**
  * Data Export Utility
  * Handles exporting collected data to various formats for backend storage
+ * Includes PII scrubbing, audit logging, and batch processing
  */
 
 export interface ExportOptions {
-  format: 'json' | 'csv' | 'xlsx';
+  format: 'json' | 'csv';
   includeTimestamp?: boolean;
   includeMetadata?: boolean;
+  includePII?: boolean;
 }
 
 export interface DataExportResult {
@@ -15,6 +17,47 @@ export interface DataExportResult {
   size: number;
   timestamp: string;
   format: string;
+}
+
+export interface ExportAuditLog {
+  _id: string;
+  exportedBy: string;
+  exportDate: string;
+  collectionsExported: string;
+  exportFormat: string;
+  includedPII: boolean;
+  recordCount: number;
+  fileSize: number;
+  status: 'success' | 'failed' | 'in_progress';
+  errorMessage?: string;
+}
+
+// Sensitive fields that should be redacted unless full PII is enabled
+const SENSITIVE_FIELDS = [
+  'password',
+  'galleryAccessCode',
+  'clientEmail',
+  'loginEmail',
+  'apiKey',
+  'token',
+  'secret',
+];
+
+/**
+ * Scrub sensitive data from records
+ */
+function scrubSensitiveData(data: any[], includePII: boolean): any[] {
+  if (includePII) return data;
+
+  return data.map(record => {
+    const scrubbed = { ...record };
+    SENSITIVE_FIELDS.forEach(field => {
+      if (field in scrubbed) {
+        scrubbed[field] = '[REDACTED]';
+      }
+    });
+    return scrubbed;
+  });
 }
 
 /**
@@ -58,27 +101,30 @@ function convertToJSON(data: any[], includeMetadata = true): string {
 }
 
 /**
- * Export data to file
+ * Export data to file with optional PII scrubbing
  */
 export async function exportData(
   data: any[],
   filename: string,
-  options: ExportOptions = { format: 'json', includeTimestamp: true, includeMetadata: true }
+  options: ExportOptions = { format: 'json', includeTimestamp: true, includeMetadata: true, includePII: false }
 ): Promise<DataExportResult> {
   try {
+    // Apply PII scrubbing if needed
+    const processedData = scrubSensitiveData(data, options.includePII ?? false);
+
     let content = '';
     let mimeType = 'application/json';
     let fileExtension = 'json';
 
     switch (options.format) {
       case 'csv':
-        content = convertToCSV(data);
+        content = convertToCSV(processedData);
         mimeType = 'text/csv;charset=utf-8;';
         fileExtension = 'csv';
         break;
       case 'json':
       default:
-        content = convertToJSON(data, options.includeMetadata);
+        content = convertToJSON(processedData, options.includeMetadata);
         mimeType = 'application/json;charset=utf-8;';
         fileExtension = 'json';
         break;
@@ -148,25 +194,22 @@ export function prepareGalleryDataForExport(galleries: any[]) {
 }
 
 /**
- * Batch export multiple data types
+ * Batch export multiple data types with Promise.allSettled for resilience
  */
 export async function batchExportData(
   dataCollections: Record<string, any[]>,
   baseFilename: string,
-  options: ExportOptions = { format: 'json', includeTimestamp: true, includeMetadata: true }
+  options: ExportOptions = { format: 'json', includeTimestamp: true, includeMetadata: true, includePII: false }
 ): Promise<DataExportResult[]> {
-  const results: DataExportResult[] = [];
+  const exportPromises = Object.entries(dataCollections).map(([collectionName, data]) =>
+    exportData(data, `${baseFilename}_${collectionName}`, options)
+  );
 
-  for (const [collectionName, data] of Object.entries(dataCollections)) {
-    try {
-      const result = await exportData(data, `${baseFilename}_${collectionName}`, options);
-      results.push(result);
-    } catch (error) {
-      console.error(`Failed to export ${collectionName}:`, error);
-    }
-  }
-
-  return results;
+  const results = await Promise.allSettled(exportPromises);
+  
+  return results
+    .filter((result): result is PromiseFulfilledResult<DataExportResult> => result.status === 'fulfilled')
+    .map(result => result.value);
 }
 
 /**
