@@ -781,44 +781,7 @@ export default function HangmanGamePage() {
     return displayValue;
   };
 
-  // STEP 4: Polaroid Image Decryption Background Effect (moved to background, non-blocking)
-  const PolaroidDecryption = ({ word, displayWord }: { word: string; displayWord: string[] }) => {
-    const revealPercentage = (displayWord.filter(l => l !== '_').length / word.length) * 100;
-    
-    return (
-      <motion.div
-        className="fixed inset-0 pointer-events-none z-5"
-        style={{
-          background: 'linear-gradient(135deg, rgba(255,215,0,0.05), rgba(255,215,0,0.02))',
-        }}
-      >
-        {/* Pixelated/Encrypted background */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-slate-900/30 to-black/20"
-          animate={{ opacity: [0.3, 0.15, 0.3] }}
-          transition={{ duration: 3, repeat: Infinity }}
-        />
-        
-        {/* Reveal effect based on guessed letters - subtle glow */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-t from-yellow-300/10 to-transparent"
-          animate={{ scaleY: revealPercentage / 100 }}
-          transition={{ duration: 0.5 }}
-          style={{ transformOrigin: 'bottom' }}
-        />
-        
-        {/* Subtle corner accent */}
-        <motion.div
-          className="absolute bottom-0 right-0 w-64 h-64 opacity-20"
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 4, repeat: Infinity }}
-          style={{
-            background: `radial-gradient(circle, rgba(255,215,0,0.3), transparent)`,
-          }}
-        />
-      </motion.div>
-    );
-  };
+
 
   // STEP 5: Double-Down High-Stakes Panel with Countdown
   const [doubleDownActive, setDoubleDownActive] = useState(false);
@@ -968,10 +931,7 @@ export default function HangmanGamePage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-black to-slate-900 overflow-hidden relative">
-      {/* Polaroid Decryption Background - Non-blocking */}
-      {selectedCategory && gameState.word && (
-        <PolaroidDecryption word={gameState.word} displayWord={gameState.displayWord} />
-      )}
+
 
       {/* Enhanced CRT Scanline + Holographic Overlay */}
       <div className="fixed inset-0 pointer-events-none z-40">
