@@ -2,68 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Zap, Trophy, Target, Flame } from 'lucide-react';
 
-// STEP 2: Custom SVG Icons for all categories
-const CameraIcon = () => (
-  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
-    <rect x="15" y="25" width="70" height="50" rx="8" />
-    <circle cx="50" cy="50" r="18" />
-    <circle cx="75" cy="30" r="5" fill="currentColor" />
-    <path d="M 20 50 L 30 40" strokeLinecap="round" />
-  </svg>
-);
-
-const ScissorsIcon = () => (
-  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
-    <circle cx="30" cy="30" r="12" />
-    <circle cx="30" cy="70" r="12" />
-    <path d="M 42 42 L 70 70" strokeLinecap="round" />
-    <path d="M 42 58 L 70 30" strokeLinecap="round" />
-    <line x1="30" y1="42" x2="30" y2="58" strokeLinecap="round" />
-  </svg>
-);
-
-const CrownIcon = () => (
-  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
-    <path d="M 15 70 L 25 40 L 40 55 L 50 30 L 60 55 L 75 40 L 85 70 Z" fill="currentColor" opacity="0.3" />
-    <path d="M 15 70 L 25 40 L 40 55 L 50 30 L 60 55 L 75 40 L 85 70" strokeLinecap="round" strokeLinejoin="round" />
-    <line x1="20" y1="70" x2="80" y2="70" strokeLinecap="round" />
-    <circle cx="25" cy="35" r="4" fill="currentColor" />
-    <circle cx="50" cy="20" r="5" fill="currentColor" />
-    <circle cx="75" cy="35" r="4" fill="currentColor" />
-  </svg>
-);
-
-const StarIcon = () => (
-  <svg viewBox="0 0 100 100" fill="currentColor" className="w-16 h-16">
-    <path d="M 50 15 L 61 40 L 88 40 L 67 58 L 78 83 L 50 65 L 22 83 L 33 58 L 12 40 L 39 40 Z" />
-  </svg>
-);
-
-const BuildingIcon = () => (
-  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
-    <rect x="20" y="30" width="60" height="55" />
-    <line x1="35" y1="30" x2="35" y2="85" />
-    <line x1="50" y1="30" x2="50" y2="85" />
-    <line x1="65" y1="30" x2="65" y2="85" />
-    <line x1="20" y1="45" x2="80" y2="45" />
-    <line x1="20" y1="60" x2="80" y2="60" />
-    <line x1="20" y1="75" x2="80" y2="75" />
-    <rect x="25" y="35" width="8" height="8" />
-    <rect x="40" y="35" width="8" height="8" />
-    <rect x="55" y="35" width="8" height="8" />
-    <rect x="70" y="35" width="8" height="8" />
-  </svg>
-);
-
-const LipstickIcon = () => (
-  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
-    <rect x="35" y="20" width="30" height="50" rx="8" fill="currentColor" opacity="0.4" />
-    <rect x="35" y="20" width="30" height="50" rx="8" />
-    <circle cx="50" cy="15" r="6" fill="currentColor" />
-    <path d="M 40 75 Q 50 85 60 75" strokeLinecap="round" />
-  </svg>
-);
-
 interface LeaderboardEntry {
   initials: string;
   score: number;
@@ -126,7 +64,7 @@ export default function HangmanGamePage() {
     'SUPER_MODELS': {
       name: 'SUPER MODELS',
       tagline: 'Iconic Runway Legends & Fashion Icons',
-      icon: 'crown',
+      icon: '👑',
       justification: 'Celebrate the legendary supermodels who revolutionized the fashion industry. Every word is a name of an iconic model who graced runways and became cultural phenomena.',
       words: [
         'NAOMI', 'CINDY', 'CLAUDIA', 'GISELE', 'TYRA', 'HEIDI', 'KATE', 'GIGI', 'BELLA', 'KENDALL',
@@ -149,7 +87,7 @@ export default function HangmanGamePage() {
     'CAMERAS': {
       name: 'CAMERAS',
       tagline: 'Photography Equipment & Optical Technology',
-      icon: 'camera',
+      icon: '📸',
       justification: 'Master the art of photography. Every word relates to cameras, lenses, optics, and the technical equipment used to capture stunning images.',
       words: [
         'CAMERA', 'LENS', 'APERTURE', 'SHUTTER', 'EXPOSURE', 'FOCUS', 'SENSOR', 'PIXEL', 'RESOLUTION', 'MEGAPIXEL',
@@ -181,7 +119,7 @@ export default function HangmanGamePage() {
     'HOLLYWOOD_STARS': {
       name: 'HOLLYWOOD STARS',
       tagline: 'Celebrities, Actors & Entertainment Icons',
-      icon: 'star',
+      icon: '🌟',
       justification: 'Recognize the brightest stars of Hollywood. Every word is a name of a famous actor, actress, or celebrity who captivated audiences on screen.',
       words: [
         'TOMHANKS', 'MERYLSTREEP', 'DENZELWASHINGTON', 'KATEWINSLET', 'LEONARDODICAPRIO', 'OPRAHWINFREY', 'TOMCRUISE', 'ANGELINAJOLIE', 'BRADPITT', 'JOHNNYDEP',
@@ -199,7 +137,7 @@ export default function HangmanGamePage() {
     'MODELING_AGENCIES': {
       name: 'MODELING AGENCIES',
       tagline: 'Fashion Industry & Talent Management',
-      icon: 'building',
+      icon: '🏢',
       justification: 'Explore the world of modeling agencies and fashion industry. Every word relates to the business, management, and professional aspects of the modeling world.',
       words: [
         'AGENCY', 'AGENT', 'BOOKER', 'SCOUT', 'TALENT', 'MANAGER', 'COACH', 'TRAINER', 'DIRECTOR', 'PHOTOGRAPHER',
@@ -226,7 +164,7 @@ export default function HangmanGamePage() {
     'CLOTHING_DESIGNERS': {
       name: 'CLOTHING DESIGNERS',
       tagline: 'Fashion Visionaries & Style Revolutionaries',
-      icon: 'scissors',
+      icon: '✂️',
       justification: 'Celebrate the legendary fashion designers who shaped the world of style. Every word is a name of an iconic designer or fashion house that defined eras and inspired millions.',
       words: [
         'COCO', 'CHANEL', 'VALENTINO', 'VERSACE', 'ARMANI', 'GUCCI', 'PRADA', 'DIOR', 'HERMES', 'LOUISVUITTON',
@@ -253,7 +191,7 @@ export default function HangmanGamePage() {
     'MAKEUP_COMPANIES': {
       name: 'MAKEUP COMPANIES',
       tagline: 'Beauty Brands & Cosmetic Innovators',
-      icon: 'lipstick',
+      icon: '💄',
       justification: 'Discover the world\'s most iconic makeup brands and beauty companies. Every word is a name of a legendary cosmetics house that revolutionized beauty and self-expression.',
       words: [
         'MAC', 'MAYBELLINE', 'LOREAL', 'ESTEE', 'LAUDER', 'CLINIQUE', 'BOBBIBROWN', 'NARS', 'URBANDECAY', 'TOOFACED',
@@ -751,102 +689,6 @@ export default function HangmanGamePage() {
     }
   };
 
-  // STEP 3: rollStats function for slot machine counter effect
-  const rollStats = (value: number, duration: number = 1) => {
-    const [displayValue, setDisplayValue] = useState(0);
-
-    useEffect(() => {
-      let startTime: number;
-      let animationId: number;
-
-      const animate = (currentTime: number) => {
-        if (!startTime) startTime = currentTime;
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / (duration * 1000), 1);
-
-        // Easing function for smooth deceleration
-        const easeOutQuad = 1 - Math.pow(1 - progress, 2);
-        const newValue = Math.floor(value * easeOutQuad);
-        setDisplayValue(newValue);
-
-        if (progress < 1) {
-          animationId = requestAnimationFrame(animate);
-        }
-      };
-
-      animationId = requestAnimationFrame(animate);
-      return () => cancelAnimationFrame(animationId);
-    }, [value, duration]);
-
-    return displayValue;
-  };
-
-
-
-  // STEP 5: Double-Down High-Stakes Panel with Countdown
-  const [doubleDownActive, setDoubleDownActive] = useState(false);
-  const [countdownTime, setCountdownTime] = useState(30);
-
-  useEffect(() => {
-    if (!doubleDownActive) return;
-    
-    const interval = setInterval(() => {
-      setCountdownTime(prev => {
-        if (prev <= 1) {
-          setDoubleDownActive(false);
-          return 30;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [doubleDownActive]);
-
-  const DoubleDownPanel = () => {
-    if (!doubleDownActive) return null;
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        className="fixed bottom-8 right-8 z-40 max-w-xs"
-      >
-        <motion.div
-          className="bg-gradient-to-br from-red-900/80 via-black to-red-900/80 border-4 border-red-500 rounded-xl p-6 backdrop-blur-sm"
-          animate={{
-            boxShadow: [
-              '0 0 20px rgba(239,68,68,0.6), inset 0 0 15px rgba(239,68,68,0.2)',
-              '0 0 40px rgba(239,68,68,0.9), inset 0 0 25px rgba(239,68,68,0.4)',
-              '0 0 20px rgba(239,68,68,0.6), inset 0 0 15px rgba(239,68,68,0.2)',
-            ]
-          }}
-          transition={{ duration: 1, repeat: Infinity }}
-        >
-          <div className="text-center space-y-3">
-            <p className="text-sm font-mono text-red-300 uppercase tracking-widest font-bold">⚡ DOUBLE DOWN ⚡</p>
-            <p className="text-4xl font-heading font-black text-red-400">
-              {countdownTime}s
-            </p>
-            <motion.div
-              className="h-2 bg-red-900/50 rounded-full overflow-hidden"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              <motion.div
-                className="h-full bg-gradient-to-r from-red-500 to-red-300"
-                animate={{ width: `${(countdownTime / 30) * 100}%` }}
-                transition={{ duration: 0.5 }}
-              />
-            </motion.div>
-            <p className="text-xs font-paragraph text-red-200">High-stakes mode active!</p>
-          </div>
-        </motion.div>
-      </motion.div>
-    );
-  };
-
   // Slot reel letter reveal effect
   const SlotReelLetter = ({ letter, isRevealed }: { letter: string; isRevealed: boolean }) => {
     return (
@@ -931,8 +773,6 @@ export default function HangmanGamePage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-black to-slate-900 overflow-hidden relative">
-
-
       {/* Enhanced CRT Scanline + Holographic Overlay */}
       <div className="fixed inset-0 pointer-events-none z-40">
         <div className="absolute inset-0" style={{
@@ -1601,20 +1441,7 @@ export default function HangmanGamePage() {
                 transition={{ duration: 2.5, repeat: Infinity }}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-                  {Object.entries(categoriesData).map(([key, meta], idx) => {
-                    const getIconComponent = (iconType: string) => {
-                      switch(iconType) {
-                        case 'crown': return <CrownIcon />;
-                        case 'camera': return <CameraIcon />;
-                        case 'star': return <StarIcon />;
-                        case 'building': return <BuildingIcon />;
-                        case 'scissors': return <ScissorsIcon />;
-                        case 'lipstick': return <LipstickIcon />;
-                        default: return null;
-                      }
-                    };
-                    
-                    return (
+                  {Object.entries(categoriesData).map(([key, meta], idx) => (
                     <motion.button
                       key={key}
                       onClick={() => startGame(key)}
@@ -1635,11 +1462,11 @@ export default function HangmanGamePage() {
                       />
                       <div className="relative z-10 space-y-4 flex flex-col items-center text-center">
                         <motion.div 
-                          className="text-cyan-300 group-hover:text-cyan-200 transition-colors"
+                          className="text-6xl md:text-7xl font-heading font-black text-cyan-300 group-hover:text-cyan-200 transition-colors"
                           animate={{ scale: [1, 1.1, 1] }}
                           transition={{ duration: 2, repeat: Infinity, delay: idx * 0.2 }}
                         >
-                          {getIconComponent(meta.icon)}
+                          {meta.icon}
                         </motion.div>
                         <p className="text-xl md:text-2xl font-heading font-black text-cyan-400 group-hover:text-cyan-300 transition-colors uppercase tracking-wider">
                           {meta.name}
@@ -1656,8 +1483,7 @@ export default function HangmanGamePage() {
                         </motion.p>
                       </div>
                     </motion.button>
-                    );
-                  })}
+                  ))}
                 </div>
               </motion.div>
             </motion.div>
