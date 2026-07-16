@@ -2,19 +2,65 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Zap, Trophy, Target, Flame } from 'lucide-react';
 
-// STEP 2: Custom SVG Icons for Camera and Scissors
+// STEP 2: Custom SVG Icons for all categories
 const CameraIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8">
-    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-    <circle cx="12" cy="13" r="4" />
+  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
+    <rect x="15" y="25" width="70" height="50" rx="8" />
+    <circle cx="50" cy="50" r="18" />
+    <circle cx="75" cy="30" r="5" fill="currentColor" />
+    <path d="M 20 50 L 30 40" strokeLinecap="round" />
   </svg>
 );
 
 const ScissorsIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8">
-    <circle cx="6" cy="6" r="3" />
-    <circle cx="6" cy="18" r="3" />
-    <path d="M20 4l-8.5 8m0 0l8.5 8M11.5 12l8.5 8m0-16l-8.5 8" />
+  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
+    <circle cx="30" cy="30" r="12" />
+    <circle cx="30" cy="70" r="12" />
+    <path d="M 42 42 L 70 70" strokeLinecap="round" />
+    <path d="M 42 58 L 70 30" strokeLinecap="round" />
+    <line x1="30" y1="42" x2="30" y2="58" strokeLinecap="round" />
+  </svg>
+);
+
+const CrownIcon = () => (
+  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
+    <path d="M 15 70 L 25 40 L 40 55 L 50 30 L 60 55 L 75 40 L 85 70 Z" fill="currentColor" opacity="0.3" />
+    <path d="M 15 70 L 25 40 L 40 55 L 50 30 L 60 55 L 75 40 L 85 70" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="20" y1="70" x2="80" y2="70" strokeLinecap="round" />
+    <circle cx="25" cy="35" r="4" fill="currentColor" />
+    <circle cx="50" cy="20" r="5" fill="currentColor" />
+    <circle cx="75" cy="35" r="4" fill="currentColor" />
+  </svg>
+);
+
+const StarIcon = () => (
+  <svg viewBox="0 0 100 100" fill="currentColor" className="w-16 h-16">
+    <path d="M 50 15 L 61 40 L 88 40 L 67 58 L 78 83 L 50 65 L 22 83 L 33 58 L 12 40 L 39 40 Z" />
+  </svg>
+);
+
+const BuildingIcon = () => (
+  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
+    <rect x="20" y="30" width="60" height="55" />
+    <line x1="35" y1="30" x2="35" y2="85" />
+    <line x1="50" y1="30" x2="50" y2="85" />
+    <line x1="65" y1="30" x2="65" y2="85" />
+    <line x1="20" y1="45" x2="80" y2="45" />
+    <line x1="20" y1="60" x2="80" y2="60" />
+    <line x1="20" y1="75" x2="80" y2="75" />
+    <rect x="25" y="35" width="8" height="8" />
+    <rect x="40" y="35" width="8" height="8" />
+    <rect x="55" y="35" width="8" height="8" />
+    <rect x="70" y="35" width="8" height="8" />
+  </svg>
+);
+
+const LipstickIcon = () => (
+  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16">
+    <rect x="35" y="20" width="30" height="50" rx="8" fill="currentColor" opacity="0.4" />
+    <rect x="35" y="20" width="30" height="50" rx="8" />
+    <circle cx="50" cy="15" r="6" fill="currentColor" />
+    <path d="M 40 75 Q 50 85 60 75" strokeLinecap="round" />
   </svg>
 );
 
@@ -80,7 +126,7 @@ export default function HangmanGamePage() {
     'SUPER_MODELS': {
       name: 'SUPER MODELS',
       tagline: 'Iconic Runway Legends & Fashion Icons',
-      icon: '👑',
+      icon: 'crown',
       justification: 'Celebrate the legendary supermodels who revolutionized the fashion industry. Every word is a name of an iconic model who graced runways and became cultural phenomena.',
       words: [
         'NAOMI', 'CINDY', 'CLAUDIA', 'GISELE', 'TYRA', 'HEIDI', 'KATE', 'GIGI', 'BELLA', 'KENDALL',
@@ -135,7 +181,7 @@ export default function HangmanGamePage() {
     'HOLLYWOOD_STARS': {
       name: 'HOLLYWOOD STARS',
       tagline: 'Celebrities, Actors & Entertainment Icons',
-      icon: '🌟',
+      icon: 'star',
       justification: 'Recognize the brightest stars of Hollywood. Every word is a name of a famous actor, actress, or celebrity who captivated audiences on screen.',
       words: [
         'TOMHANKS', 'MERYLSTREEP', 'DENZELWASHINGTON', 'KATEWINSLET', 'LEONARDODICAPRIO', 'OPRAHWINFREY', 'TOMCRUISE', 'ANGELINAJOLIE', 'BRADPITT', 'JOHNNYDEP',
@@ -153,7 +199,7 @@ export default function HangmanGamePage() {
     'MODELING_AGENCIES': {
       name: 'MODELING AGENCIES',
       tagline: 'Fashion Industry & Talent Management',
-      icon: '🏢',
+      icon: 'building',
       justification: 'Explore the world of modeling agencies and fashion industry. Every word relates to the business, management, and professional aspects of the modeling world.',
       words: [
         'AGENCY', 'AGENT', 'BOOKER', 'SCOUT', 'TALENT', 'MANAGER', 'COACH', 'TRAINER', 'DIRECTOR', 'PHOTOGRAPHER',
@@ -207,7 +253,7 @@ export default function HangmanGamePage() {
     'MAKEUP_COMPANIES': {
       name: 'MAKEUP COMPANIES',
       tagline: 'Beauty Brands & Cosmetic Innovators',
-      icon: '💄',
+      icon: 'lipstick',
       justification: 'Discover the world\'s most iconic makeup brands and beauty companies. Every word is a name of a legendary cosmetics house that revolutionized beauty and self-expression.',
       words: [
         'MAC', 'MAYBELLINE', 'LOREAL', 'ESTEE', 'LAUDER', 'CLINIQUE', 'BOBBIBROWN', 'NARS', 'URBANDECAY', 'TOOFACED',
@@ -735,53 +781,41 @@ export default function HangmanGamePage() {
     return displayValue;
   };
 
-  // STEP 4: Polaroid Image Decryption Viewport
+  // STEP 4: Polaroid Image Decryption Background Effect (moved to background, non-blocking)
   const PolaroidDecryption = ({ word, displayWord }: { word: string; displayWord: string[] }) => {
     const revealPercentage = (displayWord.filter(l => l !== '_').length / word.length) * 100;
     
     return (
       <motion.div
-        className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border-4 border-yellow-300 shadow-2xl"
+        className="fixed inset-0 pointer-events-none z-5"
         style={{
-          background: 'linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05))',
-          boxShadow: '0 0 30px rgba(255,215,0,0.4), inset 0 0 20px rgba(255,215,0,0.1)'
+          background: 'linear-gradient(135deg, rgba(255,215,0,0.05), rgba(255,215,0,0.02))',
         }}
       >
         {/* Pixelated/Encrypted background */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-slate-900 to-black"
-          animate={{ opacity: [0.8, 0.6, 0.8] }}
-          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute inset-0 bg-gradient-to-br from-slate-900/30 to-black/20"
+          animate={{ opacity: [0.3, 0.15, 0.3] }}
+          transition={{ duration: 3, repeat: Infinity }}
         />
         
-        {/* Reveal effect based on guessed letters */}
+        {/* Reveal effect based on guessed letters - subtle glow */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-t from-yellow-300/20 to-transparent"
+          className="absolute inset-0 bg-gradient-to-t from-yellow-300/10 to-transparent"
           animate={{ scaleY: revealPercentage / 100 }}
           transition={{ duration: 0.5 }}
           style={{ transformOrigin: 'bottom' }}
         />
         
-        {/* Polaroid text overlay */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 z-10">
-          <motion.div
-            className="text-center"
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            <p className="text-sm font-mono text-yellow-300/60 mb-2">DECRYPTING...</p>
-            <p className="text-3xl font-mono font-black text-yellow-300 tracking-widest mb-4">
-              {revealPercentage.toFixed(0)}%
-            </p>
-            <div className="w-32 h-1 bg-yellow-300/20 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-yellow-300 to-yellow-500"
-                animate={{ width: `${revealPercentage}%` }}
-                transition={{ duration: 0.5 }}
-              />
-            </div>
-          </motion.div>
-        </div>
+        {/* Subtle corner accent */}
+        <motion.div
+          className="absolute bottom-0 right-0 w-64 h-64 opacity-20"
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 4, repeat: Infinity }}
+          style={{
+            background: `radial-gradient(circle, rgba(255,215,0,0.3), transparent)`,
+          }}
+        />
       </motion.div>
     );
   };
@@ -934,6 +968,11 @@ export default function HangmanGamePage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-black to-slate-900 overflow-hidden relative">
+      {/* Polaroid Decryption Background - Non-blocking */}
+      {selectedCategory && gameState.word && (
+        <PolaroidDecryption word={gameState.word} displayWord={gameState.displayWord} />
+      )}
+
       {/* Enhanced CRT Scanline + Holographic Overlay */}
       <div className="fixed inset-0 pointer-events-none z-40">
         <div className="absolute inset-0" style={{
@@ -1602,7 +1641,20 @@ export default function HangmanGamePage() {
                 transition={{ duration: 2.5, repeat: Infinity }}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-                  {Object.entries(categoriesData).map(([key, meta], idx) => (
+                  {Object.entries(categoriesData).map(([key, meta], idx) => {
+                    const getIconComponent = (iconType: string) => {
+                      switch(iconType) {
+                        case 'crown': return <CrownIcon />;
+                        case 'camera': return <CameraIcon />;
+                        case 'star': return <StarIcon />;
+                        case 'building': return <BuildingIcon />;
+                        case 'scissors': return <ScissorsIcon />;
+                        case 'lipstick': return <LipstickIcon />;
+                        default: return null;
+                      }
+                    };
+                    
+                    return (
                     <motion.button
                       key={key}
                       onClick={() => startGame(key)}
@@ -1623,11 +1675,11 @@ export default function HangmanGamePage() {
                       />
                       <div className="relative z-10 space-y-4 flex flex-col items-center text-center">
                         <motion.div 
-                          className="text-6xl md:text-7xl font-heading font-black text-cyan-300 group-hover:text-cyan-200 transition-colors"
+                          className="text-cyan-300 group-hover:text-cyan-200 transition-colors"
                           animate={{ scale: [1, 1.1, 1] }}
                           transition={{ duration: 2, repeat: Infinity, delay: idx * 0.2 }}
                         >
-                          {meta.icon}
+                          {getIconComponent(meta.icon)}
                         </motion.div>
                         <p className="text-xl md:text-2xl font-heading font-black text-cyan-400 group-hover:text-cyan-300 transition-colors uppercase tracking-wider">
                           {meta.name}
@@ -1644,7 +1696,8 @@ export default function HangmanGamePage() {
                         </motion.p>
                       </div>
                     </motion.button>
-                  ))}
+                    );
+                  })}
                 </div>
               </motion.div>
             </motion.div>
