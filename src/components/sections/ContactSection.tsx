@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, AlertCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
 
 export default function ContactSection() {
@@ -13,33 +13,52 @@ export default function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
+  const statusTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const clearStatusMessage = useCallback(() => {
+    if (statusTimeoutRef.current) {
+      clearTimeout(statusTimeoutRef.current);
+    }
+  }, []);
+
+  const showStatus = useCallback((status: 'success' | 'error', message: string) => {
+    clearStatusMessage();
+    setSubmitStatus(status);
+    setStatusMessage(message);
+    statusTimeoutRef.current = setTimeout(() => {
+      setSubmitStatus('idle');
+      setStatusMessage('');
+    }, 4000);
+  }, [clearStatusMessage]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     playClickSound();
+    
+    // Prevent double submission
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
+    clearStatusMessage();
 
     try {
       // Basic validation
-      if (!formData.name || !formData.email || !formData.message) {
-        setSubmitStatus('error');
-        setStatusMessage('Please fill in all required fields');
-        setTimeout(() => setSubmitStatus('idle'), 3000);
+      if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+        showStatus('error', 'Please fill in all required fields');
         setIsSubmitting(false);
         return;
       }
 
       // Simple email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        setSubmitStatus('error');
-        setStatusMessage('Please enter a valid email address');
-        setTimeout(() => setSubmitStatus('idle'), 3000);
+      if (!emailRegex.test(formData.email.trim())) {
+        showStatus('error', 'Please enter a valid email address');
         setIsSubmitting(false);
         return;
       }
@@ -47,19 +66,20 @@ export default function ContactSection() {
       // Simulate form submission (in production, this would send to a backend)
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      setSubmitStatus('success');
-      setStatusMessage('Thank you for your message! We will get back to you soon.');
+      showStatus('success', 'Thank you for your message! We will get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
-      setTimeout(() => setSubmitStatus('idle'), 3000);
+      
+      // Reset form if ref exists
+      if (formRef.current) {
+        formRef.current.reset();
+      }
     } catch (error) {
       console.error('[ContactSection] Form submission error:', error);
-      setSubmitStatus('error');
-      setStatusMessage('An error occurred. Please try again.');
-      setTimeout(() => setSubmitStatus('idle'), 3000);
+      showStatus('error', 'An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [formData, isSubmitting, clearStatusMessage, showStatus]);
 
   return (
     <section id="contact" className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden">
@@ -179,7 +199,7 @@ export default function ContactSection() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
               {[
                 { id: 'name', label: 'Full Name', placeholder: 'Your name', type: 'text' },
                 { id: 'email', label: 'Email Address', placeholder: 'your@email.com', type: 'email' },
