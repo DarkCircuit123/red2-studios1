@@ -583,7 +583,6 @@ export default function HangmanGamePage() {
         }
       }
       playSuccessSound();
-      playSlotWinSound();
     } else {
       // Wrong guess
       newWrongGuesses++;
