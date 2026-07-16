@@ -5,6 +5,168 @@ import { CameraIcon, ScissorsIcon, PolaroidIcon } from '@/components/CinemaIcons
 import { generateRollSequence, easings, formatNumber } from '@/lib/rollStats';
 import '@/styles/cinema.css';
 
+// Slot machine counter component with rolling animation
+const SlotMachineCounter = ({ value, label }: { value: number; label: string }) => {
+  const [displayValue, setDisplayValue] = useState(value);
+  const prevValueRef = useRef(value);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    if (value !== prevValueRef.current) {\n      // Play mechanical ticking sound
+      playTickingSound();
+      
+      // Animate the counter roll
+      const startValue = prevValueRef.current;
+      const diff = value - startValue;
+      const steps = Math.min(Math.abs(diff), 20);
+      const stepValue = diff / steps;
+      let currentStep = 0;
+
+      const interval = setInterval(() => {
+        currentStep++;
+        const newValue = Math.round(startValue + stepValue * currentStep);
+        setDisplayValue(newValue);
+
+        if (currentStep >= steps) {
+          setDisplayValue(value);
+          prevValueRef.current = value;
+          clearInterval(interval);
+        }
+      }, 30);
+
+      return () => clearInterval(interval);
+    }
+  }, [value]);
+
+  const playTickingSound = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    const ctx = audioContextRef.current;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    for (let i = 0; i < 8; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.frequency.setValueAtTime(800 + i * 50, now + i * 0.04);
+      gain.gain.setValueAtTime(0.08, now + i * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.04 + 0.08);
+
+      osc.start(now + i * 0.04);
+      osc.stop(now + i * 0.04 + 0.08);
+    }
+  };
+
+  return (
+    <motion.div
+      animate={{ scale: [1, 1.05, 1] }}
+      transition={{ duration: 0.3 }}
+      className=\"text-center\"
+    >
+      <p className=\"text-xs font-mono text-cyan-300 uppercase tracking-widest mb-1 font-bold\">{label}</p>
+      <motion.p
+        key={displayValue}
+        initial={{ y: 10, opacity: 0.5 }}
+        animate={{ y: 0, opacity: 1 }}
+        className=\"text-2xl md:text-3xl font-heading font-black text-white\"
+      >
+        {displayValue.toLocaleString()}
+      </motion.p>
+    </motion.div>
+  );
+};
+
+// Screen shake effect component
+const ScreenShake = ({ trigger }: { trigger: boolean }) => {
+  return (
+    <motion.div
+      className=\"fixed inset-0 pointer-events-none z-40\"
+      animate={trigger ? {
+        x: [0, -8, 8, -8, 8, -4, 4, 0],
+        y: [0, -6, 6, -6, 6, -3, 3, 0],
+      } : {}}
+      transition={{ duration: 0.4, ease: 'easeInOut' }}
+    />
+  );
+};
+
+// Chromatic aberration glitch effect
+const ChromaticAberrationGlitch = ({ trigger }: { trigger: boolean }) => {
+  return (
+    <motion.div
+      className=\"fixed inset-0 pointer-events-none z-40\"
+      animate={trigger ? {
+        opacity: [0, 1, 0.8, 0.6, 0],
+      } : {}}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    >
+      <div
+        className=\"absolute inset-0\"
+        style={{
+          background: 'linear-gradient(90deg, rgba(255,0,0,0.3) 0%, transparent 50%, rgba(0,0,255,0.3) 100%)',
+          mixBlendMode: 'screen',
+          animation: trigger ? 'chromatic-glitch 0.5s ease-out' : 'none',
+        }}
+      />
+      <style>{`
+        @keyframes chromatic-glitch {
+          0% { transform: translate(-2px, 0); }
+          20% { transform: translate(2px, -2px); }
+          40% { transform: translate(-2px, 2px); }
+          60% { transform: translate(1px, -1px); }
+          80% { transform: translate(-1px, 1px); }
+          100% { transform: translate(0, 0); }
+        }
+      `}</style>
+    </motion.div>
+  );
+};
+
+// Particle explosion effect
+const ParticleExplosion = ({ trigger, targetPosition }: { trigger: boolean; targetPosition: { x: number; y: number } }) => {
+  if (!trigger) return null;
+
+  return (
+    <motion.div className=\"fixed inset-0 pointer-events-none z-40\">
+      {[...Array(30)].map((_, i) => {
+        const angle = (i / 30) * Math.PI * 2;
+        const distance = 150 + Math.random() * 100;
+        const endX = targetPosition.x + Math.cos(angle) * distance;
+        const endY = targetPosition.y + Math.sin(angle) * distance;
+
+        return (
+          <motion.div
+            key={i}
+            className=\"absolute w-3 h-3 rounded-full\"
+            style={{
+              background: `hsl(${Math.random() * 60 + 180}, 100%, 50%)`,
+              left: targetPosition.x,
+              top: targetPosition.y,
+              boxShadow: `0 0 10px hsl(${Math.random() * 60 + 180}, 100%, 50%)`,
+            }}
+            initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+            animate={{
+              x: endX - targetPosition.x,
+              y: endY - targetPosition.y,
+              opacity: 0,
+              scale: 0,
+            }}
+            transition={{
+              duration: 1.2 + Math.random() * 0.6,
+              ease: 'easeOut',
+              delay: i * 0.02,
+            }}
+          />
+        );
+      })}
+    </motion.div>
+  );
+};
+
 interface LeaderboardEntry {
   initials: string;
   score: number;
@@ -54,6 +216,13 @@ export default function HangmanGamePage() {
   const [showDoubleDown, setShowDoubleDown] = useState(false);
   const [doubleDownCountdown, setDoubleDownCountdown] = useState(10);
   const [polaroidReveal, setPolaroidReveal] = useState(0); // 0-100% reveal
+  
+  // New effect states
+  const [screenShakeTrigger, setScreenShakeTrigger] = useState(false);
+  const [chromaticGlitchTrigger, setChromaticGlitchTrigger] = useState(false);
+  const [particleExplosionTrigger, setParticleExplosionTrigger] = useState(false);
+  const [particleExplosionPos, setParticleExplosionPos] = useState({ x: 0, y: 0 });
+  
   const audioContextRef = useRef<AudioContext | null>(null);
   const coinDropCountRef = useRef(0);
   const ambientOscRef = useRef<OscillatorNode | null>(null);
@@ -559,6 +728,14 @@ export default function HangmanGamePage() {
       // Wrong guess
       newWrongGuesses++;
       playWrongSound();
+      
+      // Trigger screen shake and chromatic aberration on wrong guess
+      setScreenShakeTrigger(true);
+      setChromaticGlitchTrigger(true);
+      setTimeout(() => {
+        setScreenShakeTrigger(false);
+        setChromaticGlitchTrigger(false);
+      }, 500);
     }
 
     const isWon = !newDisplayWord.includes('_');
@@ -572,6 +749,12 @@ export default function HangmanGamePage() {
       const score = calculateScore(newWrongGuesses);
       setCurrentScore(score);
       playMegaJackpotSound();
+      
+      // Trigger particle explosion from word to credits counter
+      setParticleExplosionPos({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+      setParticleExplosionTrigger(true);
+      setTimeout(() => setParticleExplosionTrigger(false), 1500);
+      
       setShowMegaJackpot(true);
       setTimeout(() => setShowMegaJackpot(false), 6000);
       setTimeout(() => setShowInitialsPrompt(true), 1000);
@@ -780,6 +963,15 @@ export default function HangmanGamePage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-black to-slate-900 overflow-hidden relative">
+      {/* Screen Shake Effect */}
+      <ScreenShake trigger={screenShakeTrigger} />
+      
+      {/* Chromatic Aberration Glitch Effect */}
+      <ChromaticAberrationGlitch trigger={chromaticGlitchTrigger} />
+      
+      {/* Particle Explosion Effect */}
+      <ParticleExplosion trigger={particleExplosionTrigger} targetPosition={particleExplosionPos} />
+      
       {/* Enhanced CRT Scanline + Holographic Overlay */}
       <div className="fixed inset-0 pointer-events-none z-40">
         <div className="absolute inset-0" style={{
