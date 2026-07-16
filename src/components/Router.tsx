@@ -7,15 +7,12 @@ import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import PortfolioDetailPage from './pages/PortfolioDetailPage';
 import BookingPage from './pages/BookingPage';
-import ClientGalleriesPage from './pages/ClientGalleriesPage';
 import BlogPage from './pages/BlogPage';
 import BlogDetailPage from './pages/BlogDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import PrivatePage from './pages/PrivatePage';
 import HangmanGamePage from './pages/HangmanGamePage';
 import ClientRegisterPage from './pages/ClientRegisterPage';
-import ClientGalleryViewPage from './pages/ClientGalleryViewPage';
-import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
 import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
@@ -55,10 +52,6 @@ const router = createBrowserRouter([
         element: <BookingPage />,
       },
       {
-        path: "galleries",
-        element: <ClientGalleriesPage />,
-      },
-      {
         path: "blog",
         element: <BlogPage />,
       },
@@ -85,14 +78,6 @@ const router = createBrowserRouter([
       {
         path: "client-register",
         element: <ClientRegisterPage />,
-      },
-      {
-        path: "client-gallery-dashboard",
-        element: <ClientGalleryDashboardPage />,
-      },
-      {
-        path: "client-gallery/:id",
-        element: <ClientGalleryViewPage />,
       },
       {
         path: "work",

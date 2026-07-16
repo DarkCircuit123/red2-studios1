@@ -4,17 +4,10 @@ import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import {
-  HeroCampaignViewer,
-  EditorialLayout,
-  ImmersiveViewer,
-} from '@/components/CinematicGallery';
 
 export default function WorkPage() {
   const [projects, setProjects] = useState<Portfolio[]>([]);;
   const [isLoading, setIsLoading] = useState(true);
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerStartIndex, setViewerStartIndex] = useState(0);
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -31,85 +24,77 @@ export default function WorkPage() {
     loadProjects();
   }, []);
 
-  // Prepare hero images (first 5 projects)
-  const heroImages = projects.slice(0, 5).map((p) => p.mainImage || '').filter(Boolean);
-  const heroTitles = projects.slice(0, 5).map((p) => p.projectName || '');
-
-  // Prepare editorial items (all projects)
-  const editorialItems = projects.map((p) => ({
-    id: p._id,
-    image: p.mainImage || '',
-    title: p.projectName,
-  }));
-
-  // Prepare all images for viewer (flatten all gallery images)
-  const allViewerImages = projects
-    .flatMap((p) => [p.mainImage, p.galleryImage1, p.galleryImage2, p.galleryImage3])
-    .filter(Boolean) as string[];
-
-  const allViewerTitles = projects
-    .flatMap((p) => [p.projectName, p.projectName, p.projectName, p.projectName])
-    .slice(0, allViewerImages.length);
-
-  const handleHeroImageClick = (index: number) => {
-    // Find the index in the full viewer array
-    const startImage = projects[index]?.mainImage;
-    const viewerIndex = allViewerImages.indexOf(startImage || '');
-    setViewerStartIndex(Math.max(0, viewerIndex));
-    setViewerOpen(true);
-  };
-
-  const handleEditorialImageClick = (index: number) => {
-    setViewerStartIndex(index);
-    setViewerOpen(true);
-  };
-
   return (
     <div className="min-h-screen bg-black">
       <Header />
 
-      <main className="w-full">
-        {/* Hero Campaign Viewer */}
-        {!isLoading && heroImages.length > 0 && (
-          <HeroCampaignViewer
-            images={heroImages}
-            titles={heroTitles}
-            onImageClick={handleHeroImageClick}
-          />
-        )}
+      <main className="w-full max-w-[100rem] mx-auto px-6 md:px-8 py-20">
+        {/* Page Title */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="mb-20"
+        >
+          <h1 className="text-6xl md:text-7xl font-heading font-bold text-white tracking-tight mb-6">
+            Our Work
+          </h1>
+          <p className="text-lg font-paragraph text-white/60 max-w-2xl">
+            Explore our portfolio of projects and creative endeavors
+          </p>
+        </motion.div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="w-full h-screen bg-black flex items-center justify-center">
+          <div className="w-full h-96 bg-black flex items-center justify-center">
             <motion.div
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 2, repeat: Infinity }}
               className="text-white/50 text-sm tracking-widest uppercase"
             >
-              Loading gallery...
+              Loading projects...
             </motion.div>
           </div>
         )}
 
-        {/* Editorial Layout Section */}
-        {!isLoading && editorialItems.length > 0 && (
-          <section className="relative w-full bg-black">
-            {/* Section Divider */}
-            <div className="h-24 md:h-32 flex items-center justify-center">
+        {/* Projects Grid */}
+        {!isLoading && projects.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {projects.map((project, index) => (
               <motion.div
-                initial={{ scaleX: 0 }}
-                whileInView={{ scaleX: 1 }}
-                transition={{ duration: 1 }}
-                className="h-px w-32 bg-gradient-to-r from-transparent via-red-900/50 to-transparent"
-              />
-            </div>
-
-            {/* Editorial Grid */}
-            <EditorialLayout
-              items={editorialItems}
-              onImageClick={handleEditorialImageClick}
-            />
-          </section>
+                key={project._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="group cursor-pointer"
+              >
+                <div className="overflow-hidden bg-white/5 hover:bg-white/10 transition-colors">
+                  {project.mainImage && (
+                    <img
+                      src={project.mainImage}
+                      alt={project.projectName || 'Project'}
+                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  )}
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-lg font-heading font-bold text-white group-hover:text-primary transition-colors">
+                    {project.projectName}
+                  </h3>
+                  {project.shortDescription && (
+                    <p className="text-sm font-paragraph text-white/60 mt-2 line-clamp-2">
+                      {project.shortDescription}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
         )}
 
         {/* Empty State */}
@@ -117,25 +102,16 @@ export default function WorkPage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full h-screen flex items-center justify-center"
+            className="w-full h-96 flex items-center justify-center"
           >
             <div className="text-center">
-              <p className="text-base font-paragraph text-white/50 mb-8">
+              <p className="text-base font-paragraph text-white/50">
                 No projects available yet
               </p>
             </div>
           </motion.div>
         )}
       </main>
-
-      {/* Immersive Viewer */}
-      <ImmersiveViewer
-        images={allViewerImages}
-        titles={allViewerTitles}
-        isOpen={viewerOpen}
-        onClose={() => setViewerOpen(false)}
-        initialIndex={viewerStartIndex}
-      />
 
       <Footer />
     </div>

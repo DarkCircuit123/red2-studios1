@@ -26,7 +26,6 @@ export function DataManagementTab() {
   const collections = [
     { id: 'blogposts', name: 'Blog Posts' },
     { id: 'bookingavailability', name: 'Bookings' },
-    { id: 'clientgalleries', name: 'Client Galleries' },
     { id: 'clientspress', name: 'Clients & Press' },
     { id: 'portfolio', name: 'Portfolio' },
     { id: 'services', name: 'Services' },

@@ -7,11 +7,10 @@ import Footer from '@/components/Footer';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Download, FileJson, FileText, AlertCircle } from 'lucide-react';
-import { exportData, prepareClientDataForExport, prepareBookingDataForExport, prepareGalleryDataForExport } from '@/lib/data-export';
+import { exportData, prepareClientDataForExport, prepareBookingDataForExport } from '@/lib/data-export';
 import {
   BlogPosts,
   BookingAvailability,
-  ClientProofingGalleries,
   ClientsPress,
   Portfolio,
   Services,
@@ -28,10 +27,9 @@ function DataExportPageContent() {
   useEffect(() => {
     const loadDataStats = async () => {
       try {
-        const [blogs, bookings, galleries, clients, portfolio, services, team] = await Promise.all([
+        const [blogs, bookings, clients, portfolio, services, team] = await Promise.all([
           BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 1 }),
           BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { limit: 1 }),
-          BaseCrudService.getAll<ClientProofingGalleries>('clientgalleries', {}, { limit: 1 }),
           BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 1 }),
           BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 1 }),
           BaseCrudService.getAll<Services>('services', {}, { limit: 1 }),
@@ -41,7 +39,6 @@ function DataExportPageContent() {
         setDataStats({
           'Blog Posts': blogs.totalCount || 0,
           'Bookings': bookings.totalCount || 0,
-          'Client Galleries': galleries.totalCount || 0,
           'Clients & Press': clients.totalCount || 0,
           'Portfolio': portfolio.totalCount || 0,
           'Services': services.totalCount || 0,
@@ -94,7 +91,6 @@ function DataExportPageContent() {
       const collections = [
         'blogposts',
         'bookingavailability',
-        'clientgalleries',
         'clientspress',
         'portfolio',
         'services',
@@ -195,7 +191,6 @@ function DataExportPageContent() {
                 const collectionMap: Record<string, string> = {
                   'Blog Posts': 'blogposts',
                   'Bookings': 'bookingavailability',
-                  'Client Galleries': 'clientgalleries',
                   'Clients & Press': 'clientspress',
                   'Portfolio': 'portfolio',
                   'Services': 'services',
