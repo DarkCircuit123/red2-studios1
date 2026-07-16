@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
+import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
 
 export default function Header() {
@@ -14,26 +15,15 @@ export default function Header() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
-  const throttleTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Throttled scroll handler
-  const handleScroll = useCallback(() => {
-    if (throttleTimeoutRef.current) return;
-    
+  // Optimized throttled scroll handler with useThrottleCallback
+  const handleScroll = useThrottleCallback(() => {
     setScrolled(window.scrollY > 50);
-    throttleTimeoutRef.current = setTimeout(() => {
-      throttleTimeoutRef.current = undefined;
-    }, 100);
-  }, []);
+  }, 100);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (throttleTimeoutRef.current) {
-        clearTimeout(throttleTimeoutRef.current);
-      }
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
   const handleLinkClick = useCallback(() => {

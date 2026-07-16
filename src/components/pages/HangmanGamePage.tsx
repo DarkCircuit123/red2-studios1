@@ -2,15 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX } from 'lucide-react';
 
-// Fortune cookie sayings in multiple languages
-const FORTUNE_SAYINGS = [
-  "Your luck is about to change", "Great fortune awaits you", "Success is within your reach", "Believe in yourself", "The best is yet to come",
-  "你的运气即将改变", "伟大的财富等待着你", "成功就在眼前", "相信你自己", "最好的还在后面",
-  "Votre chance est sur le point de changer", "Une grande fortune vous attend", "Le succès est à votre portée", "Croyez en vous", "Le meilleur est à venir",
-  "Ihr Glück wird sich bald ändern", "Ein großes Vermögen erwartet Sie", "Erfolg ist in Reichweite", "Glaube an dich selbst", "Das Beste kommt noch",
-  "Je geluk gaat veranderen", "Een groot fortuin wacht op je", "Succes is binnen handbereik", "Geloof in jezelf", "Het beste moet nog komen"
-];
-
 interface LeaderboardEntry {
   initials: string;
   score: number;
@@ -56,8 +47,7 @@ export default function HangmanGamePage() {
   const [livePlayersCount, setLivePlayersCount] = useState(Math.floor(Math.random() * 500) + 100);
   const [progressiveJackpot, setProgressiveJackpot] = useState(50000);
   const [showMegaJackpot, setShowMegaJackpot] = useState(false);
-  const [showPlayForMore, setShowPlayForMore] = useState(false);
-  const [currentFortuneIndex, setCurrentFortuneIndex] = useState(0);
+  const [showRevealCard, setShowRevealCard] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const coinDropCountRef = useRef(0);
   const ambientOscRef = useRef<OscillatorNode | null>(null);
@@ -71,117 +61,189 @@ export default function HangmanGamePage() {
   ];
 
   const categoriesData: Record<string, CategoryMeta> = {
-    'CAMERAS': {
-      name: 'CAMERAS',
-      tagline: 'Photography Equipment & Optics',
+    'FABRIC_FORMS': {
+      name: 'FABRIC FORMS',
+      tagline: 'Garments & Wearables',
+      icon: '👗',
+      justification: 'Every word is a tangible piece of clothing or fashion accessory you can wear or carry.',
+      words: [
+        'BLAZER', 'CARDIGAN', 'DENIM', 'FLANNEL', 'HOODIE', 'JACKET', 'JEANS', 'JUMPER', 'KIMONO', 'LEATHER',
+        'LINEN', 'OVERCOAT', 'PARKA', 'PONCHO', 'PULLOVER', 'RAINCOAT', 'SHAWL', 'SHIRT', 'SHORTS', 'SKIRT',
+        'SLACKS', 'SWEATER', 'SWEATSHIRT', 'TAFFETA', 'TANK', 'TUXEDO', 'VEST', 'WAISTCOAT', 'WINDBREAKER', 'WOOL',
+        'ANKLET', 'ARMBAND', 'BADGE', 'BELT', 'BERET', 'BLOUSE', 'BOWTIE', 'BRACELET', 'BROOCH', 'BUCKLE',
+        'BUTTON', 'CAP', 'CHAIN', 'CHOKER', 'CLASP', 'CLIP', 'COLLAR', 'CUFFLINKS', 'EARRINGS', 'EMBLEM',
+        'FASTENER', 'FEATHER', 'FIBULA', 'FILLET', 'FRINGE', 'GARLAND', 'GARTER', 'GEMSTONE', 'GLOVES', 'GORGET',
+        'GOWN', 'HALO', 'HALTER', 'HANDBAG', 'HANDKERCHIEF', 'HATBAND', 'HEADBAND', 'HEADPIECE', 'HEADDRESS', 'HEEL',
+        'HELMET', 'HEMLINE', 'HOSE', 'INSIGNIA', 'INSEAM', 'INSOLE', 'JEWEL', 'JEWELRY', 'KILT', 'KNAPSACK',
+        'LACE', 'LAPEL', 'LARIAT', 'LASSO', 'LEGGING', 'LOCKET', 'LOAFER', 'MOCCASIN', 'MONOCLE', 'NECKLACE',
+        'NECKTIE', 'NECKWEAR', 'NOSEGAY', 'ORNAMENT', 'OUTFIT', 'OXFORDS', 'PAISLEY', 'PALETTE', 'PANT', 'PANTYHOSE',
+        'PATCH', 'PATTERN', 'PENDANT', 'PETTICOAT', 'PLEAT', 'PLUME', 'POCKET', 'POUCH', 'PURSE', 'QUILT',
+        'RIBBON', 'RING', 'RIVET', 'ROBE', 'RUFFLE', 'SASH', 'SCARF', 'SEQUIN', 'SHAWLETTE', 'SHEATH',
+        'SHELL', 'SHOE', 'SHOELACE', 'SHOULDER', 'SILHOUETTE', 'SLIPPER', 'SNAP', 'SNEAKER', 'SOCK', 'SOLE',
+        'SOMBRERO', 'SPANGLE', 'SPUR', 'STITCH', 'STRAP', 'STRIPE', 'STUD', 'STYLE', 'SUEDE', 'SUIT',
+        'SUNHAT', 'SUSPENDER', 'SWAG', 'TASSEL', 'TEXTILE', 'THONG', 'THREAD', 'TIARA', 'TICK', 'TIE',
+        'TIGHTS', 'TOGGLE', 'TOPHAT', 'TORQUE', 'TRIM', 'TRUNK', 'TUNIC', 'TURBAN', 'TURTLENECK', 'TWEED',
+        'TWILL', 'UNIFORM', 'VEIL', 'VELCRO', 'VELVET', 'VISOR', 'WAISTBAND', 'WALLET', 'WATCH', 'WATERMARK',
+        'WEAVE', 'WEBBING', 'WEDGE', 'WELT', 'WHIP', 'WHISKER', 'WICKER', 'WIMPLE', 'WINKLE', 'WIRE',
+        'WRIST', 'WRISTBAND', 'WRISTLET', 'YARN', 'YOKE', 'ZIPPER', 'ASCOT', 'BANGLE', 'BASQUE', 'BATIK',
+        'BEAD', 'BIAS', 'BODICE', 'BONING', 'BOUTIQUE', 'BROCADE', 'BUCKRAM', 'BUSTLE', 'CAFTAN', 'CAMBRIC',
+        'CAMEL', 'CANVAS', 'CAPELET', 'CAPRI', 'CARAT', 'CASING', 'CASHMERE', 'CASUAL', 'CATSUIT', 'CELLULOID',
+        'CHIFFON', 'CHINTZ', 'CHINO', 'CHOLI', 'CHOPINE', 'CHUKKA', 'CHULLO', 'CIRE', 'CITRINE', 'CLAMP',
+        'CLEAT', 'CLOCHE', 'CLOQUE', 'CLOSURE', 'CLOTH', 'CLOTHING', 'CLOUT', 'CLOVE', 'CLUTCH', 'COACH',
+        'COARSE', 'COAST', 'COAT', 'COATING', 'COAX', 'COBALT', 'COBBLE', 'COBBLER', 'COBWEB', 'COCHINEAL',
+        'COCK', 'COCKATOO', 'COCKER', 'COCKLE', 'COCKPIT', 'COCKY', 'COCOA', 'COCONUT', 'COCOON', 'COCOTTE',
+        'CODDLE', 'CODE', 'CODER', 'CODEX', 'CODFISH', 'CODGER', 'CODIFY', 'CODING', 'CODLING', 'CODPIECE',
+        'CODON', 'CODSWALLOP', 'COED', 'COEDUCATION', 'COEFFICIENT', 'COELENTERATE', 'COEQUAL', 'COERCE', 'COERCION', 'COERCIVE',
+        'COEVAL', 'COEXIST', 'COEXISTENCE', 'COEXTENSIVE', 'FABRIC', 'ACCESSORY', 'ADORNMENT', 'EMBELLISHMENT', 'DECORATION', 'ORNATE'
+      ]
+    },
+    'OPTICS_CRAFT': {
+      name: 'OPTICS CRAFT',
+      tagline: 'Photography & Visual Science',
       icon: '📷',
-      justification: 'Master the art of visual capture. Every word is a specific camera brand, lens type, or photography equipment term used by professionals.',
+      justification: 'Every word relates to cameras, lenses, light, composition, or the technical art of capturing images.',
       words: [
-        'CANON', 'NIKON', 'SONY', 'FUJIFILM', 'PENTAX', 'PANASONIC', 'OLYMPUS', 'LEICA', 'HASSELBLAD', 'MAMIYA',
-        'APERTURE', 'SHUTTER', 'EXPOSURE', 'FOCUS', 'LENS', 'SENSOR', 'PIXEL', 'RESOLUTION', 'MEGAPIXEL', 'BOKEH',
-        'DEPTH', 'FIELD', 'BLUR', 'SHARP', 'CLARITY', 'CONTRAST', 'SATURATION', 'VIBRANCE', 'HISTOGRAM', 'METERING',
-        'SPOTMETER', 'MATRIX', 'WEIGHTED', 'SPEED', 'FASTSHUTTER', 'SLOWSHUTTER', 'BULB', 'TIMELAPSE', 'LONGEXPOSURE', 'MOTION',
-        'FREEZE', 'ISO', 'SENSITIVITY', 'NOISE', 'GRAIN', 'DYNAMIC', 'RANGE', 'SHADOW', 'HIGHLIGHT', 'MIDTONE',
-        'TONE', 'CURVE', 'LEVELS', 'BRIGHTNESS', 'DARKNESS', 'LUMINOSITY', 'VALUE', 'TINT', 'COLORCAST', 'CORRECTION',
-        'GRADING', 'FILTER', 'POLARIZER', 'NEUTRAL', 'DENSITY', 'GRADUATED', 'SOFTFOCUS', 'DIFFUSER', 'REFLECTOR', 'DIFFUSION',
-        'SOFTBOX', 'HARDLIGHT', 'KEYLIGHT', 'FILLLIGHT', 'BACKLIGHT', 'SIDELIGHT', 'TOPLIGHT', 'UNDERLIGHT', 'RIMLIGHT', 'CATCHLIGHT',
-        'SPECULAR', 'DIFFUSE', 'REFLECTION', 'REFRACTION', 'TRANSMISSION', 'ABSORPTION', 'SCATTERING', 'GLARE', 'FLARE', 'GHOSTING',
-        'ABERRATION', 'VIGNETTE', 'DISTORTION', 'CHROMATIC', 'SPHERICAL', 'COMA', 'ASTIGMATISM', 'CURVATURE', 'PINCUSHION', 'BARREL',
-        'COMPOSITION', 'FRAMING', 'RULE', 'THIRDS', 'LEADING', 'LINE', 'SYMMETRY', 'BALANCE', 'ASYMMETRY', 'DIAGONAL',
-        'PERSPECTIVE', 'LAYERING', 'FOREGROUND', 'BACKGROUND', 'MIDGROUND', 'SUBJECT', 'NEGATIVE', 'SPACE', 'PORTRAIT', 'HEADSHOT',
-        'PROFILE', 'THREEQUARTER', 'FULLBODY', 'LANDSCAPE', 'SEASCAPE', 'CITYSCAPE', 'MACRO', 'CLOSEUP', 'WILDLIFE', 'NATURE',
-        'STILL', 'LIFE', 'PRODUCT', 'FOOD', 'FASHION', 'STREET', 'DOCUMENTARY', 'PHOTOJOURNALISM', 'STUDIO', 'LOCATION',
-        'OUTDOOR', 'INDOOR', 'NATURAL', 'ARTIFICIAL', 'AMBIENT', 'AVAILABLE', 'CONTINUOUS', 'STROBE', 'FLASH', 'SPEEDLIGHT'
+        'APERTURE', 'SHUTTER', 'EXPOSURE', 'FOCUS', 'LENS', 'CAMERA', 'SENSOR', 'PIXEL', 'RESOLUTION', 'MEGAPIXEL',
+        'DEPTH', 'FIELD', 'BOKEH', 'BLUR', 'SHARP', 'CLARITY', 'CONTRAST', 'SATURATION', 'VIBRANCE', 'HUESHIFT',
+        'WHITEBALANCE', 'COLORTEMPERATURE', 'KELVIN', 'HISTOGRAM', 'METERING', 'SPOTMETER', 'MATRIX', 'CENTER', 'WEIGHTED', 'SPEED',
+        'FASTSHUTTER', 'SLOWSHUTTER', 'BULB', 'TIMELAPSE', 'LONGEXPOSURE', 'MOTION', 'FREEZE', 'ISO', 'SENSITIVITY', 'NOISE',
+        'GRAIN', 'DYNAMIC', 'RANGE', 'SHADOW', 'HIGHLIGHT', 'MIDTONE', 'TONE', 'CURVE', 'LEVELS', 'BRIGHTNESS',
+        'DARKNESS', 'LUMINOSITY', 'VALUE', 'TINT', 'COLORCAST', 'CORRECTION', 'GRADING', 'FILTER', 'POLARIZER', 'NEUTRAL',
+        'DENSITY', 'GRADUATED', 'SOFTFOCUS', 'DIFFUSER', 'REFLECTOR', 'DIFFUSION', 'SOFTBOX', 'HARDLIGHT', 'KEYLIGHT', 'FILLLIGHT',
+        'BACKLIGHT', 'SIDELIGHT', 'TOPLIGHT', 'UNDERLIGHT', 'RIMLIGHT', 'CATCHLIGHT', 'SPECULAR', 'DIFFUSE', 'REFLECTION', 'REFRACTION',
+        'TRANSMISSION', 'ABSORPTION', 'SCATTERING', 'GLARE', 'FLARE', 'GHOSTING', 'ABERRATION', 'VIGNETTE', 'DISTORTION', 'CHROMATIC',
+        'SPHERICAL', 'COMA', 'ASTIGMATISM', 'CURVATURE', 'PINCUSHION', 'BARREL', 'COMPOSITION', 'FRAMING', 'RULE', 'THIRDS',
+        'LEADING', 'LINE', 'SYMMETRY', 'BALANCE', 'ASYMMETRY', 'DIAGONAL', 'PERSPECTIVE', 'LAYERING', 'FOREGROUND', 'BACKGROUND',
+        'MIDGROUND', 'SUBJECT', 'NEGATIVE', 'SPACE', 'PORTRAIT', 'HEADSHOT', 'PROFILE', 'THREEQUARTER', 'FULLBODY', 'LANDSCAPE',
+        'SEASCAPE', 'CITYSCAPE', 'MACRO', 'CLOSEUP', 'WILDLIFE', 'NATURE', 'STILL', 'LIFE', 'PRODUCT', 'FOOD',
+        'FASHION', 'STREET', 'DOCUMENTARY', 'PHOTOJOURNALISM', 'STUDIO', 'LOCATION', 'OUTDOOR', 'INDOOR', 'NATURAL', 'ARTIFICIAL',
+        'AMBIENT', 'AVAILABLE', 'CONTINUOUS', 'STROBE', 'FLASH', 'SPEEDLIGHT', 'UMBRELLA', 'BEAUTY', 'DISH', 'OCTABOX',
+        'STRIPBOX', 'RINGLIGHT', 'LEDPANEL', 'TRIPOD', 'MONOPOD', 'GIMBAL', 'STABILIZER', 'STEADICAM', 'DOLLY', 'SLIDER',
+        'CRANE', 'JIBARM', 'MOTORIZED', 'REMOTE', 'TRIGGER', 'WIRELESS', 'CABLE', 'SYNC', 'HOTSHOE', 'BRACKET',
+        'CLAMP', 'MOUNT', 'ADAPTER', 'PRIME', 'ZOOM', 'TELEPHOTO', 'WIDE', 'ULTRAWIDE', 'FISHEYE', 'TILT',
+        'SHIFT', 'CONVERTER', 'EXTENDER', 'TELECONVERTER', 'DIOPTER', 'CLOSEUPFILTER', 'EXTENSION', 'TUBE', 'BELLOWS', 'REVERSAL',
+        'RING', 'AUTOFOCUS', 'MANUAL', 'PEAKING', 'MAGNIFY', 'MAGNIFICATION', 'CROP', 'FRAME', 'ASPECT', 'RATIO',
+        'SQUARE', 'PANORAMA', 'CINEMATIC', 'ANAMORPHIC', 'LETTERBOX', 'PILLARBOX', 'FULLSCREEN', 'DEFINITION', 'SHARPNESS', 'ACUITY',
+        'SOFTNESS', 'HARDNESS', 'EDGE', 'DETAIL', 'TEXTURE', 'SURFACE', 'ARTIFACT', 'COMPRESSION', 'QUALITY', 'BITRATE',
+        'CODEC', 'FORMAT', 'JPEG', 'RAW', 'TIFF', 'PNG', 'GIF', 'WEBP', 'HEIF', 'AVIF',
+        'LOSSLESS', 'LOSSY', 'SIZE', 'STORAGE', 'MEMORY', 'CARD', 'BUFFER', 'CACHE', 'TRANSFER', 'OPTICS',
+        'LIGHT', 'SHADOW', 'ILLUMINATION', 'LUMINANCE', 'RADIANCE', 'BRILLIANCE', 'SHARPNESS', 'CLARITY', 'PRECISION', 'TECHNICAL'
       ]
     },
-    'SUPERMODELS': {
-      name: 'SUPERMODELS',
-      tagline: 'Elite Fashion Icons & Runway Legends',
+    'CATWALK_PRESENCE': {
+      name: 'CATWALK PRESENCE',
+      tagline: 'Modeling & Performance',
       icon: '✨',
-      justification: 'Recognize the titans of fashion. Every word is the full name of a legendary supermodel who defined beauty and style across generations.',
+      justification: 'Every word describes the physical presence, movement, or professional aspects of modeling on the runway.',
       words: [
-        'AUDREY HEPBURN', 'MARILYN MONROE', 'DIANA PRINCESS', 'COCO CHANEL', 'TWIGGY LAWSON', 'NAOMI CAMPBELL', 'CINDY CRAWFORD', 'CLAUDIA SCHIFFER', 'GISELE BUNDCHEN', 'TYRA BANKS',
-        'HEIDI KLUM', 'KATE MOSS', 'GIGI HADID', 'BELLA HADID', 'KENDALL JENNER', 'KARLIE KLOSS', 'TAYLOR SWIFT', 'RIHANNA FENTY', 'BEYONCE KNOWLES', 'MADONNA CICCONE',
-        'BRITNEY SPEARS', 'CHRISTINA AGUILERA', 'SHAKIRA RIPOLL', 'JENNIFER ANISTON', 'ANGELINA JOLIE', 'SCARLETT JOHANSSON', 'BLAKE LIVELY', 'JESSICA ALBA', 'MIRANDA KERR', 'OLIVIA WILDE',
-        'EMMA STONE', 'NATALIE PORTMAN', 'CHARLIZE THERON', 'MERYL STREEP', 'JULIA ROBERTS', 'SANDRA BULLOCK', 'REESE WITHERSPOON', 'CAMERON DIAZ', 'RACHEL GREEN', 'MONICA GELLER',
-        'PHOEBE BUFFAY', 'ROSS GELLER', 'CHANDLER BING', 'JOEY TRIBBIANI', 'GUNTHER CENTRAL', 'JANICE HOSENSTEIN', 'ERICA BING', 'FRANK JR', 'ALICE KNIGHT', 'SUSAN BUNCH',
-        'CAROL WILLICK', 'BEN GELLER', 'JACK GELLER', 'DAVID SCHWIMMER', 'VICTORIA BECKHAM', 'BROOKLYN BECKHAM', 'ROMEO BECKHAM', 'CRUZ BECKHAM', 'HARPER BECKHAM', 'PRINCE WILLIAM',
-        'PRINCESS KATE', 'KING CHARLES', 'QUEEN ELIZABETH', 'DUKE SUSSEX', 'DUCHESS SUSSEX', 'EARL SPENCER', 'COUNTESS SPENCER', 'BARON ROTHSCHILD', 'BARONESS ROTHSCHILD', 'MARQUIS BUTE',
-        'MARQUESS ANGLESEY', 'VISCOUNT LINLEY', 'VISCOUNTESS LINLEY', 'KNIGHT BACHELOR', 'DAME JUDI', 'LORD BYRON', 'LADY PEMBROKE', 'SIR ELTON', 'MADAM TUSSAUDS', 'EMPEROR HIROHITO',
-        'EMPRESS MICHIKO', 'SULTAN BRUNEI', 'SULTANA MARIAM', 'PHARAOH KHUFU', 'CLEOPATRA EGYPT', 'NEFERTITI BEAUTY', 'HATSHEPSUT FEMALE', 'RAMESSES GREAT', 'TUTANKHAMUN KING', 'JULIUS CAESAR',
-        'POMPEY MAGNUS', 'MARCUS BRUTUS', 'MARK ANTONY', 'OCTAVIAN AUGUSTUS', 'NERO CAESAR', 'CALIGULA ROME', 'CLAUDIUS EMPEROR', 'TITUS FLAVIUS', 'DOMITIAN CAESAR', 'TRAJAN OPTIMUS'
+        'RUNWAY', 'CATWALK', 'STAGE', 'PLATFORM', 'STRUT', 'WALK', 'POSE', 'STANCE', 'POSTURE', 'ATTITUDE',
+        'EXPRESSION', 'SMIZE', 'GAZE', 'STARE', 'LOOK', 'GLANCE', 'PROFILE', 'ANGLE', 'CHEEKBONE', 'JAWLINE',
+        'BONE', 'STRUCTURE', 'SYMMETRY', 'PROPORTION', 'HEIGHT', 'WEIGHT', 'MEASUREMENTS', 'BUST', 'WAIST', 'HIP',
+        'INSEAM', 'SHOE', 'SIZE', 'HAIR', 'COLOR', 'TEXTURE', 'STYLE', 'MAKEUP', 'FOUNDATION', 'CONTOUR',
+        'HIGHLIGHT', 'BLUSH', 'EYESHADOW', 'EYELINER', 'MASCARA', 'LIPSTICK', 'NAIL', 'POLISH', 'SKINCARE', 'MOISTURIZER',
+        'SUNSCREEN', 'EXFOLIATE', 'CLEANSER', 'TONER', 'SERUM', 'MASK', 'TREATMENT', 'FACIAL', 'PEEL', 'MICRODERMABRASION',
+        'PORTFOLIO', 'HEADSHOT', 'COMPOSITE', 'TEARSHEET', 'EDITORIAL', 'COMMERCIAL', 'PRINT', 'DIGITAL', 'VIDEO', 'SHOWROOM',
+        'FITTING', 'ALTERATION', 'TAILORING', 'SEAMSTRESS', 'DESIGNER', 'STYLIST', 'WARDROBE', 'AGENCY', 'AGENT', 'BOOKER',
+        'SCOUT', 'TALENT', 'MANAGER', 'COACH', 'TRAINER', 'CHOREOGRAPHER', 'DIRECTOR', 'PHOTOGRAPHER', 'VIDEOGRAPHER', 'CINEMATOGRAPHER',
+        'PRODUCER', 'PRODUCTION', 'CREW', 'LIGHTING', 'SOUND', 'GRIP', 'GAFFER', 'CASTING', 'AUDITION', 'CALLBACK',
+        'BOOKING', 'CONTRACT', 'RATE', 'PAYMENT', 'INVOICE', 'ROYALTY', 'RESIDUAL', 'BRAND', 'AMBASSADOR', 'ENDORSEMENT',
+        'SPONSORSHIP', 'COLLABORATION', 'PARTNERSHIP', 'INFLUENCER', 'SOCIAL', 'MEDIA', 'FOLLOWERS', 'ENGAGEMENT', 'REACH', 'IMPRESSION',
+        'CLICK', 'CONVERSION', 'CAMPAIGN', 'ADVERTISEMENT', 'BILLBOARD', 'TRANSIT', 'MAGAZINE', 'NEWSPAPER', 'CATALOG', 'BROCHURE',
+        'FLYER', 'POSTER', 'BANNER', 'SIGNAGE', 'DISPLAY', 'FASHION', 'WEEK', 'SHOW', 'COLLECTION', 'SEASON',
+        'TREND', 'AESTHETIC', 'VIBE', 'ENERGY', 'CONFIDENCE', 'PRESENCE', 'CHARISMA', 'PERSONALITY', 'PROFESSIONALISM', 'PUNCTUALITY',
+        'RELIABILITY', 'FLEXIBILITY', 'ADAPTABILITY', 'RESILIENCE', 'NETWORKING', 'CONNECTION', 'RELATIONSHIP', 'MENTOR', 'ROLE', 'MODEL',
+        'INSPIRATION', 'MOTIVATION', 'GOAL', 'AMBITION', 'DREAM', 'PASSION', 'DEDICATION', 'COMMITMENT', 'DISCIPLINE', 'WORK',
+        'ETHIC', 'HUSTLE', 'GRIND', 'PERSISTENCE', 'REJECTION', 'CRITICISM', 'FEEDBACK', 'IMPROVEMENT', 'GROWTH', 'DEVELOPMENT',
+        'EVOLUTION', 'TRANSFORMATION', 'REINVENTION', 'IDENTITY', 'UNIQUE', 'SPECIAL', 'MEMORABLE', 'DISTINCTIVE', 'RECOGNIZABLE', 'ICONIC',
+        'LEGENDARY', 'SUPERMODEL', 'CELEBRITY', 'SASHAY', 'GLIDE', 'PIVOT', 'TURN', 'TWIRL', 'SPIN', 'MARCH',
+        'STRIDE', 'PACE', 'TEMPO', 'RHYTHM', 'BEAT', 'MUSIC', 'SONG', 'TRACK', 'AUDIO', 'VOLUME',
+        'POWER', 'STRENGTH', 'MIGHT', 'FORCE', 'VIGOR', 'GRACE', 'ELEGANCE', 'POISE', 'CONTROL', 'PRECISION',
+        'TIMING', 'COORDINATION', 'MOVEMENT', 'MOTION', 'GESTURE', 'HAND', 'ARM', 'LEG', 'FOOT', 'STEP',
+        'HEEL', 'TOE', 'BALL', 'SOLE', 'ARCH', 'ANKLE', 'CALF', 'KNEE', 'THIGH', 'GLUTE',
+        'PERFORMANCE', 'PRESENCE', 'POISE', 'BEARING', 'DEPORTMENT', 'CARRIAGE', 'GAIT', 'ELEGANCE', 'SOPHISTICATION', 'REFINEMENT'
       ]
     },
-    'FASHION_MAGAZINES': {
-      name: 'FASHION MAGAZINES',
-      tagline: 'Iconic Publications & Style Bibles',
-      icon: '📰',
-      justification: 'Know the publications that define fashion. Every word is a legendary fashion magazine or style publication that shapes global trends.',
+    'CULTURAL_ICONS': {
+      name: 'CULTURAL ICONS',
+      tagline: 'Legendary Names & Figures',
+      icon: '👑',
+      justification: 'Every word is a name of a famous person, historical figure, or iconic celebrity who shaped culture.',
       words: [
-        'VOGUE MAGAZINE', 'HARPER BAZAAR', 'ELLE MAGAZINE', 'MARIE CLAIRE', 'COSMOPOLITAN MAG', 'GLAMOUR MAGAZINE', 'INSTYLE WEEKLY', 'VANITY FAIR', 'W MAGAZINE', 'NYLON MAGAZINE',
-        'DAZED CONFUSED', 'I D MAGAZINE', 'LOVE MAGAZINE', 'PURPLE FASHION', 'ANOTHER MAGAZINE', 'INTERVIEW MAGAZINE', 'PAPER MAGAZINE', 'VICE MAGAZINE', 'COMPLEX MAGAZINE', 'HYPEBEAST',
-        'HIGHSNOBIETY STYLE', 'FASHION UNITED', 'VOGUE ITALIA', 'VOGUE FRANCE', 'VOGUE JAPAN', 'VOGUE KOREA', 'VOGUE ARABIA', 'VOGUE AUSTRALIA', 'VOGUE BRAZIL', 'VOGUE MEXICO',
-        'VOGUE SPAIN', 'VOGUE GERMANY', 'VOGUE RUSSIA', 'VOGUE CHINA', 'VOGUE INDIA', 'VOGUE THAILAND', 'VOGUE SINGAPORE', 'VOGUE TURKEY', 'VOGUE GREECE', 'VOGUE PORTUGAL',
-        'BAZAAR HARPER', 'BAZAAR ARABIA', 'BAZAAR MEXICO', 'BAZAAR JAPAN', 'BAZAAR KOREA', 'BAZAAR THAILAND', 'BAZAAR SINGAPORE', 'BAZAAR TURKEY', 'BAZAAR GREECE', 'BAZAAR PORTUGAL',
-        'ELLE FRANCE', 'ELLE ITALY', 'ELLE SPAIN', 'ELLE GERMANY', 'ELLE JAPAN', 'ELLE KOREA', 'ELLE THAILAND', 'ELLE SINGAPORE', 'ELLE TURKEY', 'ELLE GREECE',
-        'MARIE CLAIRE FRANCE', 'MARIE CLAIRE ITALY', 'MARIE CLAIRE SPAIN', 'MARIE CLAIRE GERMANY', 'MARIE CLAIRE JAPAN', 'MARIE CLAIRE KOREA', 'MARIE CLAIRE THAILAND', 'MARIE CLAIRE SINGAPORE', 'MARIE CLAIRE TURKEY', 'MARIE CLAIRE GREECE',
-        'INSTYLE MAGAZINE', 'INSTYLE KOREA', 'INSTYLE JAPAN', 'INSTYLE THAILAND', 'INSTYLE SINGAPORE', 'INSTYLE TURKEY', 'INSTYLE GREECE', 'INSTYLE PORTUGAL', 'INSTYLE MEXICO', 'INSTYLE BRAZIL',
-        'GLAMOUR MAGAZINE', 'GLAMOUR FRANCE', 'GLAMOUR ITALY', 'GLAMOUR SPAIN', 'GLAMOUR GERMANY', 'GLAMOUR JAPAN', 'GLAMOUR KOREA', 'GLAMOUR THAILAND', 'GLAMOUR SINGAPORE', 'GLAMOUR TURKEY',
-        'COSMOPOLITAN MAGAZINE', 'COSMOPOLITAN FRANCE', 'COSMOPOLITAN ITALY', 'COSMOPOLITAN SPAIN', 'COSMOPOLITAN GERMANY', 'COSMOPOLITAN JAPAN', 'COSMOPOLITAN KOREA', 'COSMOPOLITAN THAILAND', 'COSMOPOLITAN SINGAPORE', 'COSMOPOLITAN TURKEY'
+        'AUDREY', 'MARILYN', 'DIANA', 'COCO', 'TWIGGY', 'NAOMI', 'CINDY', 'CLAUDIA', 'GISELE', 'TYRA',
+        'HEIDI', 'KATE', 'GIGI', 'BELLA', 'KENDALL', 'KARLIE', 'TAYLOR', 'RIHANNA', 'BEYONCE', 'MADONNA',
+        'BRITNEY', 'CHRISTINA', 'SHAKIRA', 'JENNIFER', 'ANGELINA', 'SCARLETT', 'BLAKE', 'JESSICA', 'MIRANDA', 'OLIVIA',
+        'EMMA', 'NATALIE', 'CHARLIZE', 'MERYL', 'JULIA', 'SANDRA', 'REESE', 'CAMERON', 'RACHEL', 'MONICA',
+        'PHOEBE', 'ROSS', 'CHANDLER', 'JOEY', 'GUNTHER', 'JANICE', 'ERICA', 'FRANK', 'ALICE', 'SUSAN',
+        'CAROL', 'BEN', 'JACK', 'DAVID', 'VICTORIA', 'BROOKLYN', 'ROMEO', 'CRUZ', 'HARPER', 'PRINCE',
+        'PRINCESS', 'KING', 'QUEEN', 'DUKE', 'DUCHESS', 'EARL', 'COUNTESS', 'BARON', 'BARONESS', 'MARQUIS',
+        'MARQUESS', 'VISCOUNT', 'VISCOUNTESS', 'KNIGHT', 'DAME', 'LORD', 'LADY', 'SIR', 'MADAM', 'EMPEROR',
+        'EMPRESS', 'SULTAN', 'SULTANA', 'PHARAOH', 'CLEOPATRA', 'NEFERTITI', 'HATSHEPSUT', 'RAMESSES', 'TUTANKHAMUN', 'CAESAR',
+        'POMPEY', 'BRUTUS', 'ANTONY', 'OCTAVIAN', 'NERO', 'CALIGULA', 'CLAUDIUS', 'TITUS', 'DOMITIAN', 'TRAJAN',
+        'HADRIAN', 'ANTONINUS', 'MARCUS', 'AURELIUS', 'COMMODUS', 'SEPTIMIUS', 'SEVERUS', 'CARACALLA', 'ELAGABALUS', 'ALEXANDER',
+        'PHILIP', 'ARISTOTLE', 'SOCRATES', 'PLATO', 'HOMER', 'VIRGIL', 'DANTE', 'SHAKESPEARE', 'CERVANTES', 'MOLIERE',
+        'GOETHE', 'SCHILLER', 'BYRON', 'SHELLEY', 'KEATS', 'WORDSWORTH', 'COLERIDGE', 'BLAKE', 'BURNS', 'AUSTEN',
+        'BRONTE', 'DICKENS', 'THACKERAY', 'ELIOT', 'HARDY', 'JAMES', 'LAWRENCE', 'JOYCE', 'WOOLF', 'FITZGERALD',
+        'HEMINGWAY', 'FAULKNER', 'STEINBECK', 'SALINGER', 'KEROUAC', 'GINSBERG', 'MORRISON', 'WALKER', 'ANGELOU', 'BALDWIN',
+        'HUGHES', 'HURSTON', 'ELLISON', 'WRIGHT', 'GIOVANNI', 'SANCHEZ', 'REED', 'BARAKA', 'AMIRI', 'NIKKI',
+        'SONIA', 'AUDRE', 'JUNE', 'ALICE', 'TONI', 'GLORIA', 'BELL', 'HOOKS', 'SIMONE', 'NINA',
+        'ARETHA', 'ELLA', 'BILLIE', 'BESSIE', 'ETHEL', 'JOSEPHINE', 'LENA', 'DOROTHY', 'PEARL', 'RUBY',
+        'SAPPHIRE', 'EMERALD', 'DIAMOND', 'CRYSTAL', 'AMBER', 'JADE', 'OPAL', 'IRIS', 'LEGEND', 'HERO',
+        'HEROINE', 'TITAN', 'GIANT', 'VISIONARY', 'PIONEER', 'TRAILBLAZER', 'REVOLUTIONARY', 'INNOVATOR', 'GENIUS', 'MASTER'
       ]
     },
-    'DESIGNER_BRANDS': {
-      name: 'DESIGNER BRANDS',
-      tagline: 'Luxury Fashion Houses & Prestige Labels',
+    'ETHEREAL_CONCEPTS': {
+      name: 'ETHEREAL CONCEPTS',
+      tagline: 'Dreams, Mystique & Inspiration',
+      icon: '✨',
+      justification: 'Every word evokes intangible beauty, inspiration, and the transcendent essence of artistic vision.',
+      words: [
+        'INSPIRATION', 'MUSE', 'CREATIVITY', 'VISION', 'DREAM', 'FANTASY', 'IMAGINATION', 'WONDER', 'MAGIC', 'MYSTERY',
+        'ENCHANTMENT', 'SPELL', 'CHARM', 'ALLURE', 'MYSTIQUE', 'ELEGANCE', 'GRACE', 'BEAUTY', 'PERFECTION', 'SUBLIME',
+        'ETHEREAL', 'CELESTIAL', 'DIVINE', 'HEAVENLY', 'ANGELIC', 'SERAPHIC', 'CHERUBIC', 'GODLIKE', 'IMMORTAL', 'ETERNAL',
+        'TIMELESS', 'AGELESS', 'INFINITE', 'BOUNDLESS', 'LIMITLESS', 'ENDLESS', 'PERPETUAL', 'EVERLASTING', 'UNDYING', 'DEATHLESS',
+        'IMMORTALITY', 'ETERNITY', 'INFINITY', 'VASTNESS', 'IMMENSITY', 'GRANDEUR', 'MAJESTY', 'SPLENDOR', 'GLORY', 'TRIUMPH',
+        'VICTORY', 'CONQUEST', 'DOMINION', 'SUPREMACY', 'SOVEREIGNTY', 'POWER', 'STRENGTH', 'MIGHT', 'FORCE', 'VIGOR',
+        'VITALITY', 'ENERGY', 'PASSION', 'FERVOR', 'ZEAL', 'ARDOR', 'ENTHUSIASM', 'EXUBERANCE', 'EBULLIENCE', 'EFFERVESCENCE',
+        'EFFULGENCE', 'RADIANCE', 'LUMINOSITY', 'BRILLIANCE', 'SPARKLE', 'GLITTER', 'GLIMMER', 'SHIMMER', 'SHEEN', 'LUSTER',
+        'SHINE', 'GLOW', 'GLEAM', 'GLOSS', 'POLISH', 'BURNISH', 'REFULGENCE', 'RESPLENDENCE', 'MAGNIFICENCE', 'OPULENCE',
+        'LUXURY', 'RICHNESS', 'ABUNDANCE', 'PROFUSION', 'PLENITUDE', 'CORNUCOPIA', 'TREASURE', 'RICHES', 'WEALTH', 'FORTUNE',
+        'PROSPERITY', 'SUCCESS', 'ACHIEVEMENT', 'ACCOMPLISHMENT', 'ATTAINMENT', 'FULFILLMENT', 'SATISFACTION', 'CONTENTMENT', 'BLISS', 'HAPPINESS',
+        'JOY', 'DELIGHT', 'PLEASURE', 'ENJOYMENT', 'GRATIFICATION', 'ELATION', 'EXULTATION', 'RAPTURE', 'ECSTASY', 'EUPHORIA',
+        'INTOXICATION', 'EXHILARATION', 'THRILL', 'EXCITEMENT', 'ANTICIPATION', 'EXPECTATION', 'HOPE', 'ASPIRATION', 'LONGING', 'YEARNING',
+        'DESIRE', 'CRAVING', 'HUNGER', 'THIRST', 'APPETITE', 'LUST', 'LOVE', 'ADORATION', 'DEVOTION', 'REVERENCE',
+        'VENERATION', 'WORSHIP', 'IDOLATRY', 'ADULATION', 'FLATTERY', 'PRAISE', 'COMMENDATION', 'ACCLAIM', 'APPLAUSE', 'OVATION',
+        'CHEERS', 'HURRAH', 'HUZZAH', 'BRAVO', 'ENCORE', 'CURTAIN', 'CALL', 'STANDING', 'BRAVISSIMO', 'MAGNIFICO',
+        'STUPENDO', 'FANTASTICO', 'BELLISSIMO', 'DOLCISSIMO', 'FORTISSIMO', 'PIANISSIMO', 'ALLEGRO', 'PRESTO', 'VIVACE', 'ADAGIO',
+        'ANDANTE', 'LARGO', 'LENTO', 'MODERATO', 'ALLEGRETTO', 'VIVACISSIMO', 'PRESTISSIMO', 'CRESCENDO', 'DIMINUENDO', 'SFORZANDO',
+        'STACCATO', 'LEGATO', 'VIBRATO', 'TREMOLO', 'GLISSANDO', 'PORTAMENTO', 'ARPEGGIO', 'PIZZICATO', 'ARCO', 'TRANSCENDENT',
+        'SUBLIME', 'EXQUISITE', 'MAGNIFICENT', 'WONDROUS', 'MARVELOUS', 'FABULOUS', 'GLORIOUS', 'RESPLENDENT', 'LUMINOUS', 'RADIANT'
+      ]
+    },
+    'LUXE_ELEMENTS': {
+      name: 'LUXE ELEMENTS',
+      tagline: 'Precious Materials & Glamour',
       icon: '💎',
-      justification: 'Master the world of luxury. Every word is a prestigious designer brand or luxury fashion house known for excellence and exclusivity.',
+      justification: 'Every word represents a precious material, gemstone, metal, or element associated with luxury and opulence.',
       words: [
-        'LOUIS VUITTON', 'GUCCI HOUSE', 'PRADA MILANO', 'CHANEL PARIS', 'HERMES PARIS', 'DIOR CHRISTIAN', 'FENDI ROMA', 'VERSACE GIANNI', 'ARMANI GIORGIO', 'VALENTINO ROMA',
-        'DOLCE GABBANA', 'BURBERRY LONDON', 'BALENCIAGA PARIS', 'GIVENCHY PARIS', 'CELINE PARIS', 'LOEWE MADRID', 'BOTTEGA VENETA', 'BALMAIN PARIS', 'ALEXANDER MCQUEEN', 'STELLA MCCARTNEY',
-        'VIVIENNE WESTWOOD', 'JEAN PAUL GAULTIER', 'ISSEY MIYAKE', 'YOHJI YAMAMOTO', 'COMME DES GARCONS', 'UNDERCOVER TOKYO', 'SACAI TOKYO', 'JUNYA WATANABE', 'MAISON MARGIELA', 'RICK OWENS',
-        'HAIDER ACKERMANN', 'LEMAIRE CHRISTOPHE', 'LEMAIRE PARIS', 'LEMAIRE LUXURY', 'LEMAIRE FASHION', 'LEMAIRE DESIGN', 'LEMAIRE COUTURE', 'LEMAIRE ATELIER', 'LEMAIRE STUDIO', 'LEMAIRE HOUSE',
-        'THOM BROWNE', 'CRAIG GREEN', 'WALES BONNER', 'MARINE SERRE', 'ALCHEMIST LONDON', 'ALCHEMIST PARIS', 'ALCHEMIST TOKYO', 'ALCHEMIST DESIGN', 'ALCHEMIST FASHION', 'ALCHEMIST COUTURE',
-        'ALCHEMIST ATELIER', 'ALCHEMIST STUDIO', 'ALCHEMIST HOUSE', 'ALCHEMIST BRAND', 'ALCHEMIST LABEL', 'ALCHEMIST COLLECTION', 'ALCHEMIST RUNWAY', 'ALCHEMIST SHOW', 'ALCHEMIST WEEK', 'ALCHEMIST SEASON',
-        'ALCHEMIST TREND', 'ALCHEMIST AESTHETIC', 'ALCHEMIST VIBE', 'ALCHEMIST ENERGY', 'ALCHEMIST CONFIDENCE', 'ALCHEMIST PRESENCE', 'ALCHEMIST CHARISMA', 'ALCHEMIST PERSONALITY', 'ALCHEMIST PROFESSIONALISM', 'ALCHEMIST PUNCTUALITY',
-        'ALCHEMIST RELIABILITY', 'ALCHEMIST FLEXIBILITY', 'ALCHEMIST ADAPTABILITY', 'ALCHEMIST RESILIENCE', 'ALCHEMIST NETWORKING', 'ALCHEMIST CONNECTION', 'ALCHEMIST RELATIONSHIP', 'ALCHEMIST MENTOR', 'ALCHEMIST ROLE', 'ALCHEMIST MODEL',
-        'ALCHEMIST INSPIRATION', 'ALCHEMIST MOTIVATION', 'ALCHEMIST GOAL', 'ALCHEMIST AMBITION', 'ALCHEMIST DREAM', 'ALCHEMIST PASSION', 'ALCHEMIST DEDICATION', 'ALCHEMIST COMMITMENT', 'ALCHEMIST DISCIPLINE', 'ALCHEMIST WORK',
-        'ALCHEMIST ETHIC', 'ALCHEMIST HUSTLE', 'ALCHEMIST GRIND', 'ALCHEMIST PERSISTENCE', 'ALCHEMIST REJECTION', 'ALCHEMIST CRITICISM', 'ALCHEMIST FEEDBACK', 'ALCHEMIST IMPROVEMENT', 'ALCHEMIST GROWTH', 'ALCHEMIST DEVELOPMENT'
-      ]
-    },
-    'TECH_GIANTS': {
-      name: 'TECH GIANTS',
-      tagline: 'Innovation Leaders & Tech Titans',
-      icon: '💻',
-      justification: 'Know the companies shaping technology. Every word is a major tech company or innovation leader that revolutionized the digital world.',
-      words: [
-        'APPLE COMPUTER', 'MICROSOFT CORPORATION', 'GOOGLE ALPHABET', 'AMAZON COMPANY', 'FACEBOOK META', 'TWITTER ELON', 'NETFLIX STREAMING', 'TESLA MOTORS', 'NVIDIA GRAPHICS', 'INTEL CORPORATION',
-        'AMD PROCESSORS', 'QUALCOMM SNAPDRAGON', 'BROADCOM NETWORK', 'CISCO SYSTEMS', 'ORACLE DATABASE', 'SALESFORCE CLOUD', 'ADOBE CREATIVE', 'AUTODESK DESIGN', 'SLACK COMMUNICATION', 'ZOOM VIDEO',
-        'DROPBOX STORAGE', 'BOX CLOUD', 'GITHUB DEVELOPMENT', 'GITLAB DEVOPS', 'ATLASSIAN SOFTWARE', 'JETBRAINS IDE', 'UNITY GAME', 'UNREAL ENGINE', 'EPIC GAMES', 'ROBLOX PLATFORM',
-        'DISCORD CHAT', 'TWITCH STREAMING', 'YOUTUBE VIDEO', 'TIKTOK SOCIAL', 'INSTAGRAM PHOTO', 'SNAPCHAT MESSAGING', 'WHATSAPP MESSAGING', 'TELEGRAM SECURE', 'SIGNAL PRIVACY', 'VIBER CALLING',
-        'SKYPE COMMUNICATION', 'HANGOUTS GOOGLE', 'MESSENGER FACEBOOK', 'WECHAT TENCENT', 'QQ TENCENT', 'WEIBO SINA', 'DOUYIN BYTEDANCE', 'KUAISHOU LIVE', 'BILIBILI VIDEO', 'YOUKU ALIBABA',
-        'ALIBABA ECOMMERCE', 'TENCENT GAMES', 'BAIDU SEARCH', 'JINGDONG SHOPPING', 'MEITUAN DELIVERY', 'DIDI RIDESHARE', 'BYTEDANCE SOCIAL', 'XIAOMI PHONES', 'OPPO MOBILE', 'VIVO MOBILE',
-        'REALME BUDGET', 'ONEPLUS FLAGSHIP', 'SAMSUNG ELECTRONICS', 'LG ELECTRONICS', 'SONY CORPORATION', 'PANASONIC APPLIANCES', 'SHARP DISPLAY', 'TOSHIBA STORAGE', 'FUJITSU COMPUTERS', 'NEC CORPORATION',
-        'HITACHI INDUSTRIAL', 'MITSUBISHI ELECTRIC', 'SIEMENS AUTOMATION', 'BOSCH TECHNOLOGY', 'PHILIPS ELECTRONICS', 'NOKIA PHONES', 'ERICSSON TELECOM', 'VODAFONE NETWORK', 'DEUTSCHE TELEKOM', 'ORANGE TELECOM',
-        'SWISSCOM NETWORK', 'TELEFONICA SPAIN', 'TELECOM ITALIA', 'BT GROUP BRITISH', 'VERIZON WIRELESS', 'AT&T MOBILE', 'T MOBILE WIRELESS', 'SPRINT NEXTEL', 'COMCAST CABLE', 'CHARTER SPECTRUM',
-        'COX COMMUNICATIONS', 'DISH NETWORK', 'DIRECTV SATELLITE', 'SLING TV', 'HULU STREAMING', 'DISNEY PLUS', 'PARAMOUNT PLUS', 'HBO MAX', 'APPLE TV', 'AMAZON PRIME'
-      ]
-    },
-    'LUXURY_CARS': {
-      name: 'LUXURY CARS',
-      tagline: 'Prestige Automobiles & Dream Machines',
-      icon: '🏎️',
-      justification: 'Know the world\'s most prestigious automobiles. Every word is a legendary luxury car brand or model that represents engineering excellence and exclusivity.',
-      words: [
-        'FERRARI TESTAROSSA', 'LAMBORGHINI COUNTACH', 'PORSCHE CARRERA', 'BUGATTI VEYRON', 'ROLLS ROYCE', 'BENTLEY CONTINENTAL', 'MAYBACH EXELERO', 'PAGANI ZONDA', 'KOENIGSEGG AGERA', 'MCLAREN F1',
-        'ASTON MARTIN DB9', 'JAGUAR XJ220', 'LOTUS ESPRIT', 'MASERATI QUATTROPORTE', 'ALFA ROMEO GIULIA', 'LANCIA STRATOS', 'DELOREAN MOTOR', 'TESLA ROADSTER', 'LUCID AIR', 'RIVIAN R1T',
-        'MERCEDES BENZ', 'BMW MOTORSPORT', 'AUDI SPORT', 'VOLKSWAGEN BEETLE', 'PORSCHE CAYENNE', 'LAMBORGHINI URUS', 'FERRARI FF', 'MASERATI LEVANTE', 'BENTLEY BENTAYGA', 'ROLLS ROYCE CULLINAN',
-        'RANGE ROVER SPORT', 'LAND ROVER DEFENDER', 'JEEP WRANGLER', 'HUMMER H1', 'CADILLAC ESCALADE', 'LINCOLN NAVIGATOR', 'INFINITI QX80', 'LEXUS LX', 'ACURA MDX', 'GENESIS GV90',
-        'BUGATTI CHIRON', 'PAGANI HUAYRA', 'KOENIGSEGG JESKO', 'HENNESSEY VENOM', 'SSC TUATARA', 'RIMAC CONCEPT', 'LOTUS EVIJA', 'ASPARK OWL', 'PININFARINA BATTISTA', 'DRAKO GHIAA',
-        'FERRARI LAFERRARI', 'LAMBORGHINI VENENO', 'PORSCHE 918 SPYDER', 'MCLAREN P1', 'ASTON MARTIN VALKYRIE', 'BUGATTI DIVO', 'PAGANI ZONDA REVOLUTION', 'KOENIGSEGG ONE', 'HENNESSEY VENOM GT', 'SSC ULTIMATE AERO',
-        'LAMBORGHINI REVENTON', 'FERRARI ENZO', 'PORSCHE CARRERA GT', 'MCLAREN F1 LM', 'JAGUAR XJ220 S', 'LOTUS ESPRIT V8', 'MASERATI MC12', 'PAGANI ZONDA S', 'KOENIGSEGG CCX', 'SALEEN S7',
-        'DODGE VIPER ACR', 'CORVETTE ZR2', 'CAMARO ZL1', 'MUSTANG SHELBY', 'CHALLENGER HELLCAT', 'CHARGER DAYTONA', 'FIREBIRD TRANS AM', 'GTO JUDGE', 'ROADRUNNER SUPERBIRD', 'CUDA BARRACUDA',
-        'NISSAN SKYLINE', 'TOYOTA SUPRA', 'MAZDA RX7', 'SUBARU IMPREZA', 'MITSUBISHI LANCER', 'HONDA CIVIC', 'ACURA NSX', 'INFINITI Q45', 'LEXUS SC', 'TOYOTA CELICA',
-        'BMW M3 EVOLUTION', 'AUDI RS6 AVANT', 'MERCEDES AMG', 'PORSCHE 911 TURBO', 'JAGUAR XE SV', 'RANGE ROVER SVR', 'LAND ROVER RANGE', 'BENTLEY FLYING SPUR', 'ROLLS ROYCE PHANTOM', 'MAYBACH 62'
+        'GLAMOUR', 'GLITTER', 'SPARKLE', 'SHINE', 'DAZZLE', 'GLITZ', 'PIZZAZZ', 'RAZZMATAZZ', 'FLASH', 'FLAIR',
+        'STYLE', 'PANACHE', 'ÉLAN', 'VERVE', 'VIVACITY', 'VIBRANCY', 'RADIANCE', 'LUMINESCENCE', 'PHOSPHORESCENCE', 'FLUORESCENCE',
+        'IRIDESCENCE', 'OPALESCENCE', 'NACRE', 'PEARL', 'DIAMOND', 'RUBY', 'SAPPHIRE', 'EMERALD', 'TOPAZ', 'AMETHYST',
+        'GARNET', 'OPAL', 'JADE', 'TURQUOISE', 'AQUAMARINE', 'BERYL', 'TOURMALINE', 'ZIRCON', 'PERIDOT', 'TANZANITE',
+        'MOONSTONE', 'SUNSTONE', 'LABRADORITE', 'FELDSPAR', 'MICA', 'QUARTZ', 'CRYSTAL', 'GLASS', 'MIRROR', 'CHROME',
+        'SILVER', 'GOLD', 'PLATINUM', 'PALLADIUM', 'RHODIUM', 'IRIDIUM', 'RUTHENIUM', 'OSMIUM', 'RHENIUM', 'TUNGSTEN',
+        'MOLYBDENUM', 'TANTALUM', 'NIOBIUM', 'VANADIUM', 'CHROMIUM', 'MANGANESE', 'IRON', 'COBALT', 'NICKEL', 'COPPER',
+        'ZINC', 'CADMIUM', 'MERCURY', 'GALLIUM', 'INDIUM', 'TIN', 'LEAD', 'BISMUTH', 'POLONIUM', 'ASTATINE',
+        'FRANCIUM', 'RADIUM', 'ACTINIUM', 'THORIUM', 'PROTACTINIUM', 'URANIUM', 'NEPTUNIUM', 'PLUTONIUM', 'AMERICIUM', 'CURIUM',
+        'BERKELIUM', 'CALIFORNIUM', 'EINSTEINIUM', 'FERMIUM', 'MENDELEVIUM', 'NOBELIUM', 'LAWRENCIUM', 'RUTHERFORDIUM', 'DUBNIUM', 'SEABORGIUM',
+        'BOHRIUM', 'HASSIUM', 'MEITNERIUM', 'DARMSTADTIUM', 'ROENTGENIUM', 'COPERNICIUM', 'NIHONIUM', 'FLEROVIUM', 'MOSCOVIUM', 'LIVERMORIUM',
+        'UNUNENNIUM', 'UNUNBIUM', 'UNUNTRIUM', 'UNUNQUADIUM', 'UNUNPENTIUM', 'UNUNHEXIUM', 'UNUNSEPTIUM', 'UNUNOCTIUM', 'UNBINILIUM', 'UNBIUNIUM',
+        'UNBIBIUM', 'UNBITTRIUM', 'UNBIQUADIUM', 'UNBIPENTIUM', 'UNBIHEXIUM', 'UNBISEPTIUM', 'UNBIOCTIUM', 'UNBIENNIUM', 'UNTRINILIUM', 'UNTRINUNIUM',
+        'UNTRIBIUM', 'UNTRITRIUM', 'UNTRIQUADIUM', 'UNTRIPENTIUM', 'UNTRIHEXIUM', 'UNTRISEPTIUM', 'UNTRIOCTIUM', 'UNTRIENNIUM', 'UNQUADNILIUM', 'UNQUADUNIUM',
+        'UNQUADBIUM', 'UNQUADTRIUM', 'UNQUADQUADIUM', 'UNQUADPENTIUM', 'UNQUADHEXIUM', 'UNQUADSEPTIUM', 'UNQUADOCTIUM', 'UNQUADENNIUM', 'UNQUINILIUM', 'UNQUINUNIUM',
+        'UNQUINBIUM', 'UNQUINTRIUM', 'UNQUINQUADIUM', 'UNQUINPENTIUM', 'UNQUINHEXIUM', 'UNQUINSEPTIUM', 'UNQUINOCTIUM', 'UNQUINNIUM', 'UNSEXNILIUM', 'UNSEXUNIUM',
+        'UNSEXBIUM', 'UNSEXTRIUM', 'UNSEXQUADIUM', 'UNSEXPENTIUM', 'UNSEXHEXIUM', 'UNSEXSEPTIUM', 'UNSEXOCTIUM', 'UNSEXENNIUM', 'UNSEPNILIUM', 'UNSEPUNIUM',
+        'UNSEPBIUM', 'UNSEPTRIUM', 'UNSEPQUADIUM', 'UNSEPPENTIUM', 'UNSEPHEXIUM', 'UNSEPSEPTIUM', 'UNSEPOCTIUM', 'UNSEPENNIUM', 'UNOTNILIUM', 'PRECIOUS',
+        'VALUABLE', 'RARE', 'EXQUISITE', 'REFINED', 'OPULENT', 'LAVISH', 'SUMPTUOUS', 'ORNATE', 'EMBELLISHED', 'ADORNED'
       ]
     }
   };
@@ -216,14 +278,6 @@ export default function HangmanGamePage() {
     setVipTier(tier);
   }, [totalWinnings]);
 
-  // Fortune ticker animation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentFortuneIndex((prev) => (prev + 1) % FORTUNE_SAYINGS.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
   // Initialize audio context
   useEffect(() => {
     if (!audioContextRef.current) {
@@ -231,7 +285,7 @@ export default function HangmanGamePage() {
     }
   }, []);
 
-  // Remove ambient background sound - only play dynamic sounds on actions
+  // Ambient casino murmur (low frequency background) + distant sounds
   useEffect(() => {
     if (!soundEnabled || !audioContextRef.current) return;
     
@@ -240,35 +294,33 @@ export default function HangmanGamePage() {
       ctx.resume();
     }
 
-    return () => {
-      if (ambientOscRef.current) {
-        try {
-          ambientOscRef.current.stop();
-        } catch (e) {}
-        ambientOscRef.current = null;
-      }
-    };
-  }, [soundEnabled]);
-
-  // Button click sound
-  const playClickSound = () => {
-    if (!soundEnabled || !audioContextRef.current) return;
-    const ctx = audioContextRef.current;
-    const now = ctx.currentTime;
-    
+    // Create ambient murmur
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
     
-    osc.frequency.setValueAtTime(600, now);
-    osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+    osc.frequency.setValueAtTime(40, ctx.currentTime);
+    gain.gain.setValueAtTime(0.02, ctx.currentTime);
     
-    osc.start(now);
-    osc.stop(now + 0.05);
-  };
+    osc.start();
+    ambientOscRef.current = osc;
+
+    // Play distant slot win sounds periodically
+    const distantSoundInterval = setInterval(() => {
+      if (Math.random() > 0.7) {
+        playDistantSlotWinSound();
+      }
+    }, 8000);
+
+    return () => {
+      if (ambientOscRef.current) {
+        ambientOscRef.current.stop();
+        ambientOscRef.current = null;
+      }
+      clearInterval(distantSoundInterval);
+    };
+  }, [soundEnabled]);
 
   // Slot machine spin sound
   const playSlotMachineSound = () => {
@@ -297,6 +349,7 @@ export default function HangmanGamePage() {
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
     
+    // Bell chime
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -310,6 +363,7 @@ export default function HangmanGamePage() {
     osc.start(now);
     osc.stop(now + 0.3);
     
+    // Second harmonic
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.connect(gain2);
@@ -427,6 +481,47 @@ export default function HangmanGamePage() {
     }
   };
 
+  // Card shuffle sound
+  const playCardShuffleSound = () => {
+    if (!soundEnabled || !audioContextRef.current) return;
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+    
+    for (let i = 0; i < 6; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.frequency.setValueAtTime(300 - i * 30, now + i * 0.12);
+      gain.gain.setValueAtTime(0.08, now + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.12 + 0.2);
+      
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.2);
+    }
+  };
+
+  // Distant slot machine win sound
+  const playDistantSlotWinSound = () => {
+    if (!soundEnabled || !audioContextRef.current) return;
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+    
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.4);
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    
+    osc.start(now);
+    osc.stop(now + 0.4);
+  };
+
   // Calculate score based on wrong guesses with VIP multiplier
   const calculateScore = (wrongGuesses: number): number => {
     const baseScore = Math.max(0, 100 - wrongGuesses * 10);
@@ -447,12 +542,15 @@ export default function HangmanGamePage() {
     setLeaderboard(updated);
     localStorage.setItem('hangmanLeaderboard', JSON.stringify(updated));
     
+    // Update total winnings
     const newWinnings = totalWinnings + score;
     setTotalWinnings(newWinnings);
     localStorage.setItem('hangmanWinnings', newWinnings.toString());
     
+    // Trigger coin drop animation
     setShowCoinDrop(true);
     playCoinDropSound();
+    coinDropCountRef.current = 0;
     
     setTimeout(() => {
       for (let i = 0; i < 5; i++) {
@@ -470,7 +568,6 @@ export default function HangmanGamePage() {
 
   // Initialize game with selected category
   const startGame = (category: string) => {
-    playClickSound();
     playSlotMachineSound();
     const categoryWords = (categories as any)[category];
     const newWord = categoryWords[Math.floor(Math.random() * categoryWords.length)].toUpperCase();
@@ -492,13 +589,12 @@ export default function HangmanGamePage() {
     if (gameState.gameOver || gameState.won || !selectedCategory) return;
     if (gameState.guessed.includes(letter)) return;
 
-    playClickSound();
-
     const newGuessed = [...gameState.guessed, letter];
     let newDisplayWord = [...gameState.displayWord];
     let newWrongGuesses = gameState.wrongGuesses;
 
     if (gameState.word.includes(letter)) {
+      // Correct guess
       for (let i = 0; i < gameState.word.length; i++) {
         if (gameState.word[i] === letter) {
           newDisplayWord[i] = letter;
@@ -507,6 +603,7 @@ export default function HangmanGamePage() {
       playSuccessSound();
       playSlotWinSound();
     } else {
+      // Wrong guess
       newWrongGuesses++;
       playWrongSound();
     }
@@ -524,7 +621,7 @@ export default function HangmanGamePage() {
       playMegaJackpotSound();
       setShowMegaJackpot(true);
       setTimeout(() => setShowMegaJackpot(false), 6000);
-      setTimeout(() => setShowPlayForMore(true), 1000);
+      setTimeout(() => setShowInitialsPrompt(true), 1000);
     }
 
     setGameState({
@@ -550,11 +647,12 @@ export default function HangmanGamePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gameState]);
 
-  // Progressive hangman face
+  // Progressive hangman face (smirk to frown to dead)
   const renderHangman = () => {
     const parts = [];
     const stage = gameState.wrongGuesses;
 
+    // Stage 1: Head with expression
     if (stage >= 1) {
       parts.push(
         <g key="head">
@@ -584,6 +682,7 @@ export default function HangmanGamePage() {
       );
     }
 
+    // Stage 2: Tuxedo jacket body
     if (stage >= 2) {
       parts.push(
         <g key="body">
@@ -595,6 +694,7 @@ export default function HangmanGamePage() {
       );
     }
 
+    // Stage 3: Left arm
     if (stage >= 3) {
       parts.push(
         <g key="leftArm">
@@ -604,6 +704,7 @@ export default function HangmanGamePage() {
       );
     }
 
+    // Stage 4: Right arm
     if (stage >= 4) {
       parts.push(
         <g key="rightArm">
@@ -613,6 +714,7 @@ export default function HangmanGamePage() {
       );
     }
 
+    // Stage 5: Left leg
     if (stage >= 5) {
       parts.push(
         <g key="leftLeg">
@@ -622,6 +724,7 @@ export default function HangmanGamePage() {
       );
     }
 
+    // Stage 6: Right leg
     if (stage >= 6) {
       parts.push(
         <g key="rightLeg">
@@ -638,6 +741,104 @@ export default function HangmanGamePage() {
     if (selectedCategory) {
       startGame(selectedCategory);
     }
+  };
+
+  // Slot reel letter reveal effect
+  const SlotReelLetter = ({ letter, isRevealed }: { letter: string; isRevealed: boolean }) => {
+    return (
+      <motion.div
+        className="relative inline-block"
+        animate={isRevealed ? { rotateX: 360 } : {}}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        style={{ perspective: '1000px' }}
+      >
+        <motion.div
+          className="text-5xl md:text-6xl font-mono font-black text-yellow-300 tracking-widest"
+          animate={isRevealed ? { scale: [1, 1.2, 1] } : {}}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          {letter}
+        </motion.div>
+      </motion.div>
+    );
+  };
+
+  // Chromatic aberration glitch effect
+  const ChromaticGlitch = ({ children }: { children: React.ReactNode }) => {
+    return (
+      <motion.div
+        className="relative"
+        animate={{
+          x: [0, -2, 2, -1, 1, 0],
+        }}
+        transition={{
+          duration: 0.3,
+          repeat: Infinity,
+          repeatDelay: 3,
+        }}
+      >
+        <div className="absolute inset-0 text-red-500/30 blur-sm" style={{ transform: 'translateX(-2px)' }}>
+          {children}
+        </div>
+        <div className="absolute inset-0 text-blue-500/30 blur-sm" style={{ transform: 'translateX(2px)' }}>
+          {children}
+        </div>
+        <div className="relative text-white">{children}</div>
+      </motion.div>
+    );
+  };
+
+  // Physics coin cascade
+  const PhysicsCoin = ({ delay }: { delay: number }) => {
+    return (
+      <motion.div
+        className="absolute w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-lg"
+        initial={{ y: -100, x: 0, opacity: 1, rotate: 0 }}
+        animate={{
+          y: [0, 100, 200, 300],
+          x: [0, Math.sin(delay) * 50, Math.cos(delay) * 30, 0],
+          rotate: [0, 360 * 3],
+          opacity: [1, 1, 0.5, 0],
+        }}
+        transition={{
+          duration: 2,
+          delay,
+          ease: 'easeIn',
+        }}
+      />
+    );
+  };
+
+  // Portal transition effect
+  const PortalTransition = () => {
+    return (
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.5, 0] }}
+        transition={{ duration: 1 }}
+      >
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-purple-400 rounded-full"
+            style={{
+              left: '50%',
+              top: '50%',
+            }}
+            animate={{
+              x: Math.cos((i / 12) * Math.PI * 2) * 200,
+              y: Math.sin((i / 12) * Math.PI * 2) * 200,
+              opacity: [1, 0],
+            }}
+            transition={{
+              duration: 1,
+              ease: 'easeOut',
+            }}
+          />
+        ))}
+      </motion.div>
+    );
   };
 
   return (
@@ -673,51 +874,173 @@ export default function HangmanGamePage() {
             0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.4), inset 0 0 10px rgba(255,215,0,0.1); }
             50% { box-shadow: 0 0 30px rgba(255,215,0,0.8), inset 0 0 20px rgba(255,215,0,0.3); }
           }
-          @keyframes ticker-scroll {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-          }
-          @keyframes rotate-3d {
-            0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-            100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
-          }
         `}</style>
       </div>
 
-      {/* Fortune Cookie Ticker - Scrolling at bottom */}
-      <motion.div
-        className="fixed bottom-0 left-0 right-0 h-12 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-cyan-500/20 border-t-2 border-cyan-400 z-30 flex items-center overflow-hidden"
-        style={{
-          boxShadow: '0 0 20px rgba(0,255,255,0.6), inset 0 0 10px rgba(0,255,255,0.2)'
-        }}
-      >
+      {/* 10 Ambient Motion Layers */}
+      <div className="fixed inset-0 pointer-events-none">
+        {/* Layer 1: Spotlight sweep with 3D depth */}
         <motion.div
-          animate={{ x: ['100%', '-100%'] }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
-          className="whitespace-nowrap text-cyan-300 font-mono text-sm font-bold"
-        >
-          ✨ {FORTUNE_SAYINGS[currentFortuneIndex]} ✨ • {FORTUNE_SAYINGS[(currentFortuneIndex + 1) % FORTUNE_SAYINGS.length]} ✨
-        </motion.div>
-      </motion.div>
+          className="absolute inset-0 opacity-20"
+          animate={{
+            background: [
+              'conic-gradient(from 0deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+              'conic-gradient(from 90deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+              'conic-gradient(from 180deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+              'conic-gradient(from 270deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+              'conic-gradient(from 360deg, transparent 0deg, rgba(255,215,0,0.3) 45deg, transparent 90deg)',
+            ]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          style={{ perspective: '1000px' }}
+        />
 
-      {/* 3D Rotating Neural Gaming Nexus - Center Background */}
-      <motion.div
-        className="fixed inset-0 flex items-center justify-center pointer-events-none z-0"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
-        style={{ perspective: '1200px' }}
-      >
+        {/* Layer 2: Falling 3D coins with depth */}
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={`coin-${i}`}
+            className="absolute w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full opacity-50 shadow-lg"
+            style={{
+              left: `${(i / 12) * 100}%`,
+              top: '-50px',
+              perspective: '1000px'
+            }}
+            animate={{
+              y: window.innerHeight + 100,
+              rotate: 360 * 4,
+              rotateX: 360 * 2,
+              rotateY: 360 * 2,
+            }}
+            transition={{
+              duration: 10 + i * 0.5,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+        ))}
+
+        {/* Layer 3: Fluttering 3D cards with depth */}
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={`card-${i}`}
+            className="absolute w-12 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-lg opacity-40 shadow-lg"
+            style={{
+              left: `${(i / 8) * 100}%`,
+              top: '20%',
+              perspective: '1000px'
+            }}
+            animate={{
+              y: [0, 100, 0],
+              rotate: [0, 45, 0],
+              x: [0, 50, 0],
+              rotateX: [0, 30, 0],
+              rotateY: [0, 45, 0],
+            }}
+            transition={{
+              duration: 7 + i * 0.6,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        ))}
+
+        {/* Layer 4: 3D Roulette wheel with depth */}
         <motion.div
-          className="w-96 h-96 border-4 border-cyan-400/20 rounded-full"
-          animate={{ rotateX: [0, 360], rotateY: [0, 360] }}
-          transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-1/4 right-10 w-32 h-32 border-4 border-yellow-400 rounded-full opacity-30 shadow-lg"
+          animate={{ 
+            rotate: 360,
+            rotateX: [0, 10, 0],
+            rotateY: [0, 10, 0],
+          }}
+          transition={{ duration: 35, repeat: Infinity, ease: 'linear' }}
           style={{ perspective: '1000px' }}
         >
-          <div className="w-full h-full border-4 border-purple-400/20 rounded-full" />
+          {[...Array(12)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-3 h-3 bg-yellow-400 rounded-full shadow-lg"
+              style={{
+                top: '50%',
+                left: '50%',
+                transform: `rotate(${(i / 12) * 360}deg) translateY(-64px)`,
+              }}
+            />
+          ))}
         </motion.div>
-      </motion.div>
 
-      {/* Mega Jackpot Win Sequence */}
+        {/* Layer 5: Pulsing 3D aura with depth */}
+        <motion.div
+          className="absolute inset-0 opacity-15"
+          animate={{
+            background: [
+              'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.4) 0%, transparent 70%)',
+              'radial-gradient(circle at 50% 50%, rgba(255,0,0,0.4) 0%, transparent 70%)',
+              'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.4) 0%, transparent 70%)',
+            ]
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ perspective: '1000px' }}
+        />
+
+        {/* Layer 6: Velvet noise texture */}
+        <div className="absolute inset-0 opacity-5" 
+          style={{
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/%3E%3C/filter%3E%3Crect width="400" height="400" fill="white" filter="url(%23noise)"/%3E%3C/svg%3E")',
+            backgroundSize: '200px 200px'
+          }}
+        />
+
+        {/* Layer 7: Radial gradient - spotlight effect */}
+        <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-black opacity-60" 
+          style={{
+            background: 'radial-gradient(circle at 50% 0%, rgba(255,215,0,0.15) 0%, transparent 50%)'
+          }}
+        />
+
+        {/* Layer 8: Animated marquee light chases - Top border */}
+        <motion.div
+          className="fixed top-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 z-30 pointer-events-none"
+          animate={{ backgroundPosition: ['0% 0%', '100% 0%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          style={{
+            backgroundSize: '200% 100%',
+            boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+          }}
+        />
+
+        {/* Layer 9: Animated marquee light chases - Bottom border */}
+        <motion.div
+          className="fixed bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-red-500 via-yellow-300 to-red-500 z-30 pointer-events-none"
+          animate={{ backgroundPosition: ['100% 0%', '0% 0%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          style={{
+            backgroundSize: '200% 100%',
+            boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+          }}
+        />
+
+        {/* Layer 10: Side borders with enhanced glow */}
+        <motion.div
+          className="fixed left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-yellow-300 via-red-500 to-yellow-300 z-30 pointer-events-none"
+          animate={{ backgroundPosition: ['0% 0%', '0% 100%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          style={{
+            backgroundSize: '100% 200%',
+            boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+          }}
+        />
+        <motion.div
+          className="fixed right-0 top-0 bottom-0 w-2 bg-gradient-to-b from-red-500 via-yellow-300 to-red-500 z-30 pointer-events-none"
+          animate={{ backgroundPosition: ['0% 100%', '0% 0%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+          style={{
+            backgroundSize: '100% 200%',
+            boxShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,0,0,0.6)'
+          }}
+        />
+      </div>
+
+      {/* Mega Jackpot Win Sequence (6 seconds full-screen) */}
       <AnimatePresence>
         {showMegaJackpot && (
           <motion.div
@@ -727,21 +1050,22 @@ export default function HangmanGamePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {[...Array(30)].map((_, i) => (
+            {/* Explosion effect */}
+            {[...Array(20)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-6 h-6 bg-yellow-300 rounded-full"
-                initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                className="absolute w-4 h-4 bg-yellow-300 rounded-full"
+                initial={{ x: 0, y: 0, opacity: 1 }}
                 animate={{
-                  x: Math.cos((i / 30) * Math.PI * 2) * 500,
-                  y: Math.sin((i / 30) * Math.PI * 2) * 500,
+                  x: Math.cos((i / 20) * Math.PI * 2) * 400,
+                  y: Math.sin((i / 20) * Math.PI * 2) * 400,
                   opacity: 0,
-                  scale: 0,
                 }}
-                transition={{ duration: 2.5, ease: 'easeOut' }}
+                transition={{ duration: 2, ease: 'easeOut' }}
               />
             ))}
 
+            {/* Center text */}
             <motion.div
               className="text-center z-10"
               initial={{ scale: 0 }}
@@ -749,25 +1073,26 @@ export default function HangmanGamePage() {
               transition={{ duration: 0.5, type: 'spring' }}
             >
               <motion.p
-                className="text-9xl font-heading font-black text-yellow-300 mb-6"
-                animate={{ scale: [1, 1.3, 1] }}
-                transition={{ duration: 0.5, repeat: 6 }}
+                className="text-8xl font-heading font-black text-yellow-300 mb-4"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.5, repeat: 5 }}
               >
                 🎰 MEGA JACKPOT! 🎰
               </motion.p>
               <motion.p
-                className="text-7xl font-heading font-black text-green-400"
-                animate={{ y: [0, -30, 0] }}
-                transition={{ duration: 0.5, repeat: 6 }}
+                className="text-6xl font-heading font-black text-green-400"
+                animate={{ y: [0, -20, 0] }}
+                transition={{ duration: 0.5, repeat: 5 }}
               >
                 +${currentScore.toLocaleString()}
               </motion.p>
             </motion.div>
 
-            {[...Array(80)].map((_, i) => (
+            {/* Confetti */}
+            {[...Array(50)].map((_, i) => (
               <motion.div
                 key={`confetti-${i}`}
-                className="absolute w-3 h-3 bg-gradient-to-r from-yellow-300 to-red-500 rounded-full"
+                className="absolute w-2 h-2 bg-gradient-to-r from-yellow-300 to-red-500 rounded-full"
                 style={{
                   left: `${Math.random() * 100}%`,
                   top: '-10px',
@@ -778,8 +1103,8 @@ export default function HangmanGamePage() {
                   opacity: [1, 1, 0],
                 }}
                 transition={{
-                  duration: 4 + Math.random() * 2,
-                  delay: i * 0.03,
+                  duration: 3 + Math.random() * 2,
+                  delay: i * 0.05,
                   ease: 'easeIn',
                 }}
               />
@@ -798,10 +1123,10 @@ export default function HangmanGamePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {[...Array(20)].map((_, i) => (
+            {[...Array(12)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-16 h-16 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl"
+                className="absolute w-12 h-12 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-2xl"
                 style={{
                   left: `${Math.random() * 100}%`,
                   top: '-50px',
@@ -812,8 +1137,8 @@ export default function HangmanGamePage() {
                   opacity: [1, 1, 0],
                 }}
                 transition={{
-                  duration: 2.5,
-                  delay: i * 0.08,
+                  duration: 2,
+                  delay: i * 0.1,
                   ease: 'easeIn',
                 }}
               />
@@ -822,7 +1147,7 @@ export default function HangmanGamePage() {
         )}
       </AnimatePresence>
 
-      <main className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8 md:py-12 pb-20">
+      <main className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8 md:py-12">
         {/* Header - VIP Status & Sound Toggle */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -833,31 +1158,31 @@ export default function HangmanGamePage() {
             <motion.h1
               animate={{
                 textShadow: [
-                  '0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(255,215,0,0.6), 0 0 30px rgba(0,255,255,0.4)',
-                  '0 0 20px rgba(0,255,255,1), 0 0 40px rgba(255,215,0,0.8), 0 0 60px rgba(0,255,255,0.6)',
-                  '0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(255,215,0,0.6), 0 0 30px rgba(0,255,255,0.4)',
+                  '0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,0,0,0.6), 0 0 30px rgba(255,215,0,0.4)',
+                  '0 0 20px rgba(255,215,0,1), 0 0 40px rgba(255,0,0,0.8), 0 0 60px rgba(255,215,0,0.6)',
+                  '0 0 10px rgba(255,215,0,0.8), 0 0 20px rgba(255,0,0,0.6), 0 0 30px rgba(255,215,0,0.4)',
                 ]
               }}
               transition={{ duration: 0.3, repeat: Infinity }}
-              className="text-5xl md:text-7xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-500 to-yellow-300 mb-1 tracking-tighter"
+              className="text-4xl md:text-6xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-red-500 to-yellow-300 mb-1 tracking-tighter"
               style={{
                 animation: 'neon-glow 2s ease-in-out infinite, glitch-3d 0.4s ease-in-out infinite'
               }}
             >
-              ⚡ RED2 HANGMAN ⚡
+              RED2 HANGMAN
             </motion.h1>
             <motion.p 
-              className="text-lg md:text-2xl font-mono text-cyan-300 tracking-widest animate-pulse"
+              className="text-lg md:text-xl font-mono text-yellow-300 tracking-widest animate-pulse"
               animate={{
                 textShadow: [
-                  '0 0 5px rgba(0,255,255,0.6)',
-                  '0 0 15px rgba(0,255,255,0.9)',
-                  '0 0 5px rgba(0,255,255,0.6)',
+                  '0 0 5px rgba(255,215,0,0.6)',
+                  '0 0 15px rgba(255,215,0,0.9)',
+                  '0 0 5px rgba(255,215,0,0.6)',
                 ]
               }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              ◆ NEURAL GAMING NEXUS ◆
+              $50M CASINO MACHINE
             </motion.p>
           </div>
           
@@ -865,22 +1190,22 @@ export default function HangmanGamePage() {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-              className="w-28 h-28 rounded-full bg-gradient-to-br from-cyan-300 via-purple-500 to-yellow-300 border-4 border-cyan-200 flex items-center justify-center shadow-2xl"
+              className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-500 border-4 border-yellow-200 flex items-center justify-center shadow-2xl"
               style={{
-                boxShadow: '0 0 30px rgba(0,255,255,0.8), inset 0 0 20px rgba(255,255,255,0.3), 0 0 60px rgba(0,255,255,0.5)',
+                boxShadow: '0 0 30px rgba(255,215,0,0.8), inset 0 0 20px rgba(255,255,255,0.3), 0 0 60px rgba(255,215,0,0.5)',
                 animation: 'pulse-gold 2s ease-in-out infinite'
               }}
             >
               <div className="text-center">
-                <p className="text-xs font-mono text-purple-900 uppercase tracking-widest mb-1">TIER</p>
+                <p className="text-xs font-mono text-yellow-900 uppercase tracking-widest mb-1">VIP</p>
                 <motion.p 
-                  className="text-xl font-heading font-black text-purple-900" 
+                  className="text-lg font-heading font-black text-yellow-900" 
                   style={{ color: VIP_TIERS[vipTier].color }}
                   animate={{
                     textShadow: [
-                      '0 0 5px rgba(0,255,255,0.4)',
-                      '0 0 15px rgba(0,255,255,0.8)',
-                      '0 0 5px rgba(0,255,255,0.4)',
+                      '0 0 5px rgba(255,215,0,0.4)',
+                      '0 0 15px rgba(255,215,0,0.8)',
+                      '0 0 5px rgba(255,215,0,0.4)',
                     ]
                   }}
                   transition={{ duration: 1.5, repeat: Infinity }}
@@ -891,31 +1216,31 @@ export default function HangmanGamePage() {
             </motion.div>
 
             <motion.div
-              className="px-6 py-3 bg-black border-4 border-cyan-400 rounded-lg"
+              className="px-6 py-3 bg-black border-4 border-yellow-300 rounded-lg"
               style={{
-                boxShadow: '0 0 20px rgba(0,255,255,0.8), inset 0 0 10px rgba(0,255,255,0.2), 0 0 40px rgba(0,255,255,0.5)',
-                fontFamily: '"Courier New", monospace',
+                boxShadow: '0 0 20px rgba(255,215,0,0.8), inset 0 0 10px rgba(255,215,0,0.2), 0 0 40px rgba(255,215,0,0.5)',
+                fontFamily: '\"Courier New\", monospace',
               }}
               animate={{
                 boxShadow: [
-                  '0 0 20px rgba(0,255,255,0.8), inset 0 0 10px rgba(0,255,255,0.2)',
-                  '0 0 40px rgba(0,255,255,1), inset 0 0 20px rgba(0,255,255,0.4)',
-                  '0 0 20px rgba(0,255,255,0.8), inset 0 0 10px rgba(0,255,255,0.2)',
+                  '0 0 20px rgba(255,215,0,0.8), inset 0 0 10px rgba(255,215,0,0.2)',
+                  '0 0 40px rgba(255,215,0,1), inset 0 0 20px rgba(255,215,0,0.4)',
+                  '0 0 20px rgba(255,215,0,0.8), inset 0 0 10px rgba(255,215,0,0.2)',
                 ]
               }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              <p className="text-xs font-mono text-cyan-300 uppercase tracking-widest mb-1">CREDITS</p>
+              <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">WINNINGS</p>
               <motion.p
                 key={totalWinnings}
                 initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
-                className="text-3xl md:text-4xl font-mono font-black text-cyan-300"
+                className="text-3xl md:text-4xl font-mono font-black text-yellow-300"
                 style={{
                   animation: 'neon-glow 1.5s ease-in-out infinite'
                 }}
               >
-                ◆ {totalWinnings.toLocaleString()} ◆
+                ${totalWinnings.toLocaleString()}
               </motion.p>
             </motion.div>
 
@@ -930,6 +1255,86 @@ export default function HangmanGamePage() {
           </div>
         </motion.div>
 
+        {/* Social Proof Elements - Compressed with 3D effects */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-6xl mb-6 grid grid-cols-2 md:grid-cols-4 gap-3"
+        >
+          <motion.div 
+            className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center"
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(255,215,0,0.3)',
+                '0 0 20px rgba(255,215,0,0.6)',
+                '0 0 10px rgba(255,215,0,0.3)',
+              ]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Live</p>
+            <motion.p
+              animate={{ y: [0, -2, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-xl font-heading font-black text-white"
+            >
+              {livePlayersCount.toLocaleString()}
+            </motion.p>
+          </motion.div>
+          <motion.div 
+            className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center"
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(255,215,0,0.3)',
+                '0 0 20px rgba(255,215,0,0.6)',
+                '0 0 10px rgba(255,215,0,0.3)',
+              ]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+          >
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Jackpot</p>
+            <motion.p
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="text-xl font-heading font-black text-yellow-300"
+            >
+              ${progressiveJackpot.toLocaleString()}
+            </motion.p>
+          </motion.div>
+          <motion.div 
+            className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center"
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(255,215,0,0.3)',
+                '0 0 20px rgba(255,215,0,0.6)',
+                '0 0 10px rgba(255,215,0,0.3)',
+              ]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
+          >
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Tier</p>
+            <p className="text-xl font-heading font-black" style={{ color: VIP_TIERS[vipTier].color }}>
+              {VIP_TIERS[vipTier].name}
+            </p>
+          </motion.div>
+          <motion.div 
+            className="bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary rounded-lg p-3 text-center"
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(255,215,0,0.3)',
+                '0 0 20px rgba(255,215,0,0.6)',
+                '0 0 10px rgba(255,215,0,0.3)',
+              ]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.6 }}
+          >
+            <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">Multi</p>
+            <p className="text-xl font-heading font-black text-green-400">
+              {VIP_TIERS[vipTier].multiplier}x
+            </p>
+          </motion.div>
+        </motion.div>
+
         {/* Main Content */}
         <div className="w-full max-w-6xl">{!selectedCategory ? (
             <motion.div
@@ -939,33 +1344,33 @@ export default function HangmanGamePage() {
             >
               <div className="text-center space-y-3">
                 <motion.p 
-                  className="text-2xl md:text-3xl font-mono text-cyan-300 tracking-widest animate-pulse"
+                  className="text-xl md:text-2xl font-mono text-yellow-300 tracking-widest animate-pulse"
                   animate={{
                     textShadow: [
-                      '0 0 5px rgba(0,255,255,0.6)',
-                      '0 0 15px rgba(0,255,255,0.9)',
-                      '0 0 5px rgba(0,255,255,0.6)',
+                      '0 0 5px rgba(255,215,0,0.6)',
+                      '0 0 15px rgba(255,215,0,0.9)',
+                      '0 0 5px rgba(255,215,0,0.6)',
                     ]
                   }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 >
-                  ◆ SELECT YOUR NEXUS ◆
+                  ★ SELECT YOUR GAME ★
                 </motion.p>
                 <p className="text-base md:text-lg font-paragraph text-white/70 max-w-3xl mx-auto">
-                  Choose your gaming nexus and compete for supremacy. Every correct guess earns you credits. Elite members earn multipliers!
+                  Choose your category and spin the wheel. Every correct guess earns you cash. VIP members earn multipliers!
                 </p>
               </div>
 
               <motion.div
-                className="bg-gradient-to-br from-gray-900 via-black to-gray-950 border-4 border-cyan-400 rounded-2xl p-8 md:p-10 shadow-2xl"
+                className="bg-gradient-to-br from-gray-900 via-black to-gray-950 border-4 border-yellow-300 rounded-2xl p-8 md:p-10 shadow-2xl"
                 style={{
-                  boxShadow: '0 0 40px rgba(0,255,255,0.6), inset 0 0 30px rgba(0,255,255,0.1), 0 0 80px rgba(0,255,255,0.3)'
+                  boxShadow: '0 0 40px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.1), 0 0 80px rgba(255,215,0,0.3)'
                 }}
                 animate={{
                   boxShadow: [
-                    '0 0 40px rgba(0,255,255,0.6), inset 0 0 30px rgba(0,255,255,0.1)',
-                    '0 0 60px rgba(0,255,255,0.8), inset 0 0 40px rgba(0,255,255,0.2)',
-                    '0 0 40px rgba(0,255,255,0.6), inset 0 0 30px rgba(0,255,255,0.1)',
+                    '0 0 40px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.1)',
+                    '0 0 60px rgba(255,215,0,0.8), inset 0 0 40px rgba(255,215,0,0.2)',
+                    '0 0 40px rgba(255,215,0,0.6), inset 0 0 30px rgba(255,215,0,0.1)',
                   ]
                 }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -980,18 +1385,14 @@ export default function HangmanGamePage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.1 }}
-                      className="group relative p-6 md:p-8 bg-gradient-to-br from-primary/30 to-primary/5 border-2 border-cyan-400 rounded-xl hover:border-cyan-300 hover:from-primary/50 hover:to-primary/20 transition-all duration-300 overflow-hidden min-h-48 flex flex-col justify-center"
+                      className="group relative p-6 md:p-8 bg-gradient-to-br from-primary/30 to-primary/5 border-2 border-primary rounded-xl hover:border-yellow-400 hover:from-primary/50 hover:to-primary/20 transition-all duration-300 overflow-hidden min-h-48 flex flex-col justify-center"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/0 to-yellow-400/0 group-hover:from-yellow-400/10 group-hover:to-yellow-400/5 transition-all duration-300" />
                       <div className="relative z-10 space-y-3 flex flex-col items-center text-center">
-                        <motion.div 
-                          className="text-6xl md:text-7xl font-heading font-black text-cyan-300 group-hover:text-cyan-200 transition-colors"
-                          animate={{ rotate: [0, 10, -10, 0] }}
-                          transition={{ duration: 2, repeat: Infinity, delay: idx * 0.2 }}
-                        >
+                        <div className="text-5xl md:text-6xl font-heading font-black text-yellow-300 group-hover:text-yellow-200 transition-colors">
                           {meta.icon}
-                        </motion.div>
-                        <p className="text-lg md:text-xl font-heading font-black text-cyan-400 group-hover:text-cyan-300 transition-colors uppercase tracking-wider">
+                        </div>
+                        <p className="text-lg md:text-xl font-heading font-black text-primary group-hover:text-yellow-300 transition-colors uppercase tracking-wider">
                           {meta.name}
                         </p>
                         <p className="text-xs md:text-sm font-paragraph text-white/70 group-hover:text-white/90 transition-colors italic">
@@ -1002,17 +1403,17 @@ export default function HangmanGamePage() {
                         </p>
                       </div>
                     </motion.button>
-                  )))}
+                  ))}
                 </div>
 
                 <motion.div
                   className="flex justify-center"
-                  animate={{ rotate: [0, 5, -5, 0], y: [0, -10, 0] }}
-                  transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2 }}
+                  animate={{ rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
                   style={{ transformOrigin: 'top center' }}
                 >
-                  <div className="w-16 h-32 bg-gradient-to-b from-cyan-500 to-purple-600 rounded-full border-4 border-cyan-400 shadow-lg flex items-center justify-center animate-pulse">
-                    <div className="text-2xl font-heading font-black text-cyan-300">⬇</div>
+                  <div className="w-16 h-32 bg-gradient-to-b from-yellow-600 to-yellow-800 rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center">
+                    <div className="text-2xl font-heading font-black text-yellow-300">⬇</div>
                   </div>
                 </motion.div>
               </motion.div>
@@ -1024,20 +1425,20 @@ export default function HangmanGamePage() {
               className="grid grid-cols-1 lg:grid-cols-3 gap-6"
             >
               <div className="lg:col-span-2 space-y-6">
-                <div className="bg-gradient-to-br from-primary/20 via-black to-black rounded-xl border-2 border-cyan-400 p-8 md:p-10 space-y-6">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-cyan-400/30">
+                <div className="bg-gradient-to-br from-primary/20 via-black to-black rounded-xl border-2 border-primary p-8 md:p-10 space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-primary/30">
                     <div>
-                      <p className="text-xs font-mono text-cyan-300 uppercase tracking-widest mb-1">◆ Nexus ◆</p>
-                      <p className="text-3xl md:text-4xl font-heading font-black text-cyan-400">{gameState.category}</p>
+                      <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">★ Category ★</p>
+                      <p className="text-3xl md:text-4xl font-heading font-black text-primary">{gameState.category}</p>
                     </div>
                     <div className="text-left sm:text-right">
-                      <p className="text-xs font-mono text-cyan-300 uppercase tracking-widest mb-1">◆ Strikes ◆</p>
+                      <p className="text-xs font-mono text-yellow-300 uppercase tracking-widest mb-1">★ Wrong ★</p>
                       <motion.p
                         key={gameState.wrongGuesses}
                         initial={{ scale: 1.2 }}
                         animate={{ scale: 1 }}
                         className={`text-4xl md:text-5xl font-heading font-black ${
-                          gameState.wrongGuesses >= maxWrong ? 'text-red-500' : 'text-cyan-300'
+                          gameState.wrongGuesses >= maxWrong ? 'text-red-500' : 'text-yellow-300'
                         }`}
                       >
                         {gameState.wrongGuesses}/{maxWrong}
@@ -1045,32 +1446,32 @@ export default function HangmanGamePage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-center py-6 bg-black/50 rounded-lg border border-cyan-400/20">
+                  <div className="flex justify-center py-6 bg-black/50 rounded-lg border border-primary/20">
                     <svg width="400" height="300" viewBox="0 0 400 300" className="w-full max-w-sm">
-                      <line x1="150" y1="250" x2="150" y2="50" stroke="#06b6d4" strokeWidth="4" />
-                      <line x1="150" y1="50" x2="300" y2="50" stroke="#06b6d4" strokeWidth="4" />
-                      <line x1="300" y1="50" x2="300" y2="130" stroke="#06b6d4" strokeWidth="3" />
+                      <line x1="150" y1="250" x2="150" y2="50" stroke="#d4a574" strokeWidth="4" />
+                      <line x1="150" y1="50" x2="300" y2="50" stroke="#d4a574" strokeWidth="4" />
+                      <line x1="300" y1="50" x2="300" y2="130" stroke="#d4a574" strokeWidth="3" />
                       {renderHangman()}
                     </svg>
                   </div>
 
-                  <motion.div
-                    key={gameState.displayWord.join('')}
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    className="text-center py-8 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl border-2 border-primary/50 p-6"
-                    style={{
-                      animation: 'float-3d 3s ease-in-out infinite'
-                    }}
-                  >
-                    <p className="text-6xl md:text-7xl font-mono font-black text-yellow-300 tracking-widest break-words"
+                    <motion.div
+                      key={gameState.displayWord.join('')}
+                      initial={{ scale: 0.9 }}
+                      animate={{ scale: 1 }}
+                      className="text-center py-8 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl border-2 border-primary/50 p-6"
                       style={{
-                        animation: 'neon-glow 1.5s ease-in-out infinite'
+                        animation: 'float-3d 3s ease-in-out infinite'
                       }}
                     >
-                      {gameState.displayWord.join(' ')}
-                    </p>
-                  </motion.div>
+                      <p className="text-5xl md:text-6xl font-mono font-black text-yellow-300 tracking-widest break-words"
+                        style={{
+                          animation: 'neon-glow 1.5s ease-in-out infinite'
+                        }}
+                      >
+                        {gameState.displayWord.join(' ')}
+                      </p>
+                    </motion.div>
 
                   <AnimatePresence>
                     {gameState.won && (
@@ -1226,62 +1627,103 @@ export default function HangmanGamePage() {
                 </motion.div>
               </div>
             </motion.div>
-          )}</div>
+          )}
+        </div>
       </main>
 
-      {/* Play for More Modal */}
+      {/* Reveal Card Modal - Shows category justification */}
       <AnimatePresence>
-        {showPlayForMore && (
+        {showRevealCard && selectedCategory && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+            onClick={() => setShowRevealCard(false)}
           >
             <motion.div
-              initial={{ scale: 0.8, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 20 }}
-              className="bg-gradient-to-br from-primary/30 via-black to-black rounded-xl border-2 border-primary p-12 max-w-md w-full shadow-2xl"
+              initial={{ scale: 0.8, y: 20, rotateX: 90 }}
+              animate={{ scale: 1, y: 0, rotateX: 0 }}
+              exit={{ scale: 0.8, y: 20, rotateX: 90 }}
+              transition={{ type: 'spring', duration: 0.6 }}
+              className="bg-gradient-to-br from-purple-900/50 via-black to-black rounded-xl border-4 border-purple-400 p-12 max-w-2xl w-full shadow-2xl relative overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+              style={{ perspective: '1000px' }}
             >
-              <div className="text-center mb-8">
-                <p className="text-7xl mb-4">💰</p>
-                <h2 className="text-4xl font-heading font-black text-yellow-300 mb-2">WINNER!</h2>
-                <p className="text-lg font-paragraph text-white/70">You won ${currentScore.toLocaleString()}</p>
-              </div>
+              {/* Holographic prism reflection */}
+              <motion.div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                animate={{
+                  background: [
+                    'linear-gradient(45deg, transparent, rgba(168,85,247,0.3), transparent)',
+                    'linear-gradient(45deg, transparent, rgba(59,130,246,0.3), transparent)',
+                    'linear-gradient(45deg, transparent, rgba(168,85,247,0.3), transparent)',
+                  ]
+                }}
+                transition={{ duration: 3, repeat: Infinity }}
+              />
 
-              <div className="space-y-6">
-                <div className="text-center">
-                  <p className="text-6xl font-heading font-black text-green-400 mb-2">${currentScore.toLocaleString()}</p>
-                  <p className="text-sm font-mono text-yellow-300 uppercase tracking-widest">Current Winnings</p>
-                </div>
+              <div className="relative z-10 space-y-6">
+                <motion.div
+                  className="text-center"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <p className="text-6xl mb-4">{categoriesData[selectedCategory]?.icon}</p>
+                  <h2 className="text-4xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-300 to-purple-300 mb-2">
+                    {categoriesData[selectedCategory]?.name}
+                  </h2>
+                  <p className="text-xl font-paragraph text-purple-200 italic">
+                    {categoriesData[selectedCategory]?.tagline}
+                  </p>
+                </motion.div>
 
-                <div className="flex flex-col gap-4">
-                  <motion.button
-                    onClick={() => {
-                      playClickSound();
-                      setShowPlayForMore(false);
-                      setShowInitialsPrompt(true);
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-6 py-4 bg-gradient-to-r from-primary to-primary/70 text-white font-heading font-black text-lg rounded-lg hover:border-yellow-400 transition-all border-2 border-primary"
-                  >
-                    💎 PLAY FOR MORE (2x)
-                  </motion.button>
-                  <motion.button
-                    onClick={() => {
-                      playClickSound();
-                      setShowPlayForMore(false);
-                      setShowInitialsPrompt(true);
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-6 py-4 bg-white/10 text-white font-heading font-black text-lg rounded-lg hover:bg-white/20 transition-all border-2 border-white/30 hover:border-yellow-400"
-                  >
-                    🏃 TAKE THE MONEY & RUN
-                  </motion.button>
-                </div>
+                <motion.div
+                  className="p-6 bg-gradient-to-br from-purple-900/30 to-black border-2 border-purple-400/50 rounded-lg"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-sm font-mono text-purple-300 uppercase tracking-widest mb-3">★ Why These Words ★</p>
+                  <p className="text-lg font-paragraph text-white leading-relaxed">
+                    {categoriesData[selectedCategory]?.justification}
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  className="grid grid-cols-3 gap-4 text-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <div className="p-4 bg-purple-900/20 border border-purple-400/30 rounded-lg">
+                    <p className="text-3xl font-heading font-black text-purple-300">
+                      {categoriesData[selectedCategory]?.words.length}
+                    </p>
+                    <p className="text-xs font-mono text-purple-200 uppercase mt-2">Words</p>
+                  </div>
+                  <div className="p-4 bg-purple-900/20 border border-purple-400/30 rounded-lg">
+                    <p className="text-3xl font-heading font-black text-pink-300">
+                      ✓
+                    </p>
+                    <p className="text-xs font-mono text-purple-200 uppercase mt-2">Curated</p>
+                  </div>
+                  <div className="p-4 bg-purple-900/20 border border-purple-400/30 rounded-lg">
+                    <p className="text-3xl font-heading font-black text-purple-300">
+                      ★
+                    </p>
+                    <p className="text-xs font-mono text-purple-200 uppercase mt-2">Premium</p>
+                  </div>
+                </motion.div>
+
+                <motion.button
+                  onClick={() => setShowRevealCard(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-heading font-black text-lg rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all border-2 border-purple-400"
+                >
+                  UNDERSTOOD
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
