@@ -2,6 +2,22 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Zap, Trophy, Target, Flame } from 'lucide-react';
 
+// STEP 2: Custom SVG Icons for Camera and Scissors
+const CameraIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+    <circle cx="12" cy="13" r="4" />
+  </svg>
+);
+
+const ScissorsIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8">
+    <circle cx="6" cy="6" r="3" />
+    <circle cx="6" cy="18" r="3" />
+    <path d="M20 4l-8.5 8m0 0l8.5 8M11.5 12l8.5 8m0-16l-8.5 8" />
+  </svg>
+);
+
 interface LeaderboardEntry {
   initials: string;
   score: number;
@@ -87,7 +103,7 @@ export default function HangmanGamePage() {
     'CAMERAS': {
       name: 'CAMERAS',
       tagline: 'Photography Equipment & Optical Technology',
-      icon: '📸',
+      icon: 'camera',
       justification: 'Master the art of photography. Every word relates to cameras, lenses, optics, and the technical equipment used to capture stunning images.',
       words: [
         'CAMERA', 'LENS', 'APERTURE', 'SHUTTER', 'EXPOSURE', 'FOCUS', 'SENSOR', 'PIXEL', 'RESOLUTION', 'MEGAPIXEL',
@@ -164,7 +180,7 @@ export default function HangmanGamePage() {
     'CLOTHING_DESIGNERS': {
       name: 'CLOTHING DESIGNERS',
       tagline: 'Fashion Visionaries & Style Revolutionaries',
-      icon: '✂️',
+      icon: 'scissors',
       justification: 'Celebrate the legendary fashion designers who shaped the world of style. Every word is a name of an iconic designer or fashion house that defined eras and inspired millions.',
       words: [
         'COCO', 'CHANEL', 'VALENTINO', 'VERSACE', 'ARMANI', 'GUCCI', 'PRADA', 'DIOR', 'HERMES', 'LOUISVUITTON',
@@ -687,6 +703,151 @@ export default function HangmanGamePage() {
     if (selectedCategory) {
       startGame(selectedCategory);
     }
+  };
+
+  // STEP 3: rollStats function for slot machine counter effect
+  const rollStats = (value: number, duration: number = 1) => {
+    const [displayValue, setDisplayValue] = useState(0);
+
+    useEffect(() => {
+      let startTime: number;
+      let animationId: number;
+
+      const animate = (currentTime: number) => {
+        if (!startTime) startTime = currentTime;
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / (duration * 1000), 1);
+
+        // Easing function for smooth deceleration
+        const easeOutQuad = 1 - Math.pow(1 - progress, 2);
+        const newValue = Math.floor(value * easeOutQuad);
+        setDisplayValue(newValue);
+
+        if (progress < 1) {
+          animationId = requestAnimationFrame(animate);
+        }
+      };
+
+      animationId = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(animationId);
+    }, [value, duration]);
+
+    return displayValue;
+  };
+
+  // STEP 4: Polaroid Image Decryption Viewport
+  const PolaroidDecryption = ({ word, displayWord }: { word: string; displayWord: string[] }) => {
+    const revealPercentage = (displayWord.filter(l => l !== '_').length / word.length) * 100;
+    
+    return (
+      <motion.div
+        className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border-4 border-yellow-300 shadow-2xl"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05))',
+          boxShadow: '0 0 30px rgba(255,215,0,0.4), inset 0 0 20px rgba(255,215,0,0.1)'
+        }}
+      >
+        {/* Pixelated/Encrypted background */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-br from-slate-900 to-black"
+          animate={{ opacity: [0.8, 0.6, 0.8] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+        
+        {/* Reveal effect based on guessed letters */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-t from-yellow-300/20 to-transparent"
+          animate={{ scaleY: revealPercentage / 100 }}
+          transition={{ duration: 0.5 }}
+          style={{ transformOrigin: 'bottom' }}
+        />
+        
+        {/* Polaroid text overlay */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 z-10">
+          <motion.div
+            className="text-center"
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <p className="text-sm font-mono text-yellow-300/60 mb-2">DECRYPTING...</p>
+            <p className="text-3xl font-mono font-black text-yellow-300 tracking-widest mb-4">
+              {revealPercentage.toFixed(0)}%
+            </p>
+            <div className="w-32 h-1 bg-yellow-300/20 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-yellow-300 to-yellow-500"
+                animate={{ width: `${revealPercentage}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // STEP 5: Double-Down High-Stakes Panel with Countdown
+  const [doubleDownActive, setDoubleDownActive] = useState(false);
+  const [countdownTime, setCountdownTime] = useState(30);
+
+  useEffect(() => {
+    if (!doubleDownActive) return;
+    
+    const interval = setInterval(() => {
+      setCountdownTime(prev => {
+        if (prev <= 1) {
+          setDoubleDownActive(false);
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [doubleDownActive]);
+
+  const DoubleDownPanel = () => {
+    if (!doubleDownActive) return null;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        className="fixed bottom-8 right-8 z-40 max-w-xs"
+      >
+        <motion.div
+          className="bg-gradient-to-br from-red-900/80 via-black to-red-900/80 border-4 border-red-500 rounded-xl p-6 backdrop-blur-sm"
+          animate={{
+            boxShadow: [
+              '0 0 20px rgba(239,68,68,0.6), inset 0 0 15px rgba(239,68,68,0.2)',
+              '0 0 40px rgba(239,68,68,0.9), inset 0 0 25px rgba(239,68,68,0.4)',
+              '0 0 20px rgba(239,68,68,0.6), inset 0 0 15px rgba(239,68,68,0.2)',
+            ]
+          }}
+          transition={{ duration: 1, repeat: Infinity }}
+        >
+          <div className="text-center space-y-3">
+            <p className="text-sm font-mono text-red-300 uppercase tracking-widest font-bold">⚡ DOUBLE DOWN ⚡</p>
+            <p className="text-4xl font-heading font-black text-red-400">
+              {countdownTime}s
+            </p>
+            <motion.div
+              className="h-2 bg-red-900/50 rounded-full overflow-hidden"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              <motion.div
+                className="h-full bg-gradient-to-r from-red-500 to-red-300"
+                animate={{ width: `${(countdownTime / 30) * 100}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </motion.div>
+            <p className="text-xs font-paragraph text-red-200">High-stakes mode active!</p>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
   };
 
   // Slot reel letter reveal effect
