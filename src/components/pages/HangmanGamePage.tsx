@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Zap, Trophy, Target, Flame } from 'lucide-react';
+import { CameraIcon, ScissorsIcon, PolaroidIcon } from '@/components/CinemaIcons';
+import { generateRollSequence, easings, formatNumber } from '@/lib/rollStats';
+import '@/styles/cinema.css';
 
 interface LeaderboardEntry {
   initials: string;
@@ -48,9 +51,13 @@ export default function HangmanGamePage() {
   const [progressiveJackpot, setProgressiveJackpot] = useState(50000);
   const [showMegaJackpot, setShowMegaJackpot] = useState(false);
   const [showRevealCard, setShowRevealCard] = useState(false);
+  const [showDoubleDown, setShowDoubleDown] = useState(false);
+  const [doubleDownCountdown, setDoubleDownCountdown] = useState(10);
+  const [polaroidReveal, setPolaroidReveal] = useState(0); // 0-100% reveal
   const audioContextRef = useRef<AudioContext | null>(null);
   const coinDropCountRef = useRef(0);
   const ambientOscRef = useRef<OscillatorNode | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const VIP_TIERS: VIPTier[] = [
     { level: 0, name: 'PLAYER', minScore: 0, color: '#888888', multiplier: 1 },
