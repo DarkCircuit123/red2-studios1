@@ -42,7 +42,7 @@ export default function HangmanGamePage() {
   const [currentScore, setCurrentScore] = useState(0);
   const [totalWinnings, setTotalWinnings] = useState(0);
   const [vipTier, setVipTier] = useState(0);
-  const [showCoinDrop, setShowCoinDrop] = useState(false);
+
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [livePlayersCount, setLivePlayersCount] = useState(Math.floor(Math.random() * 500) + 100);
   const [progressiveJackpot, setProgressiveJackpot] = useState(50000);
@@ -418,25 +418,7 @@ export default function HangmanGamePage() {
     osc.stop(now + 0.6);
   };
 
-  // Play coin drop sound
-  const playCoinDropSound = () => {
-    if (!soundEnabled || !audioContextRef.current) return;
-    const ctx = audioContextRef.current;
-    const now = ctx.currentTime;
-    
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    osc.frequency.setValueAtTime(800, now);
-    osc.frequency.exponentialRampToValueAtTime(400, now + 0.2);
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-    
-    osc.start(now);
-    osc.stop(now + 0.2);
-  };
+
 
   // Mega jackpot fanfare sound
   const playMegaJackpotSound = () => {
@@ -548,19 +530,19 @@ export default function HangmanGamePage() {
     localStorage.setItem('hangmanWinnings', newWinnings.toString());
     
     // Trigger coin drop animation
-    setShowCoinDrop(true);
-    playCoinDropSound();
+    // setShowCoinDrop(true);
+    // playCoinDropSound();
     coinDropCountRef.current = 0;
     
     setTimeout(() => {
       for (let i = 0; i < 5; i++) {
         setTimeout(() => {
-          playCoinDropSound();
+          // playCoinDropSound();
         }, i * 150);
       }
     }, 200);
     
-    setTimeout(() => setShowCoinDrop(false), 2000);
+    // setTimeout(() => setShowCoinDrop(false), 2000);
     
     setShowInitialsPrompt(false);
     setPlayerInitials('');
@@ -790,23 +772,7 @@ export default function HangmanGamePage() {
 
   // Physics coin cascade
   const PhysicsCoin = ({ delay }: { delay: number }) => {
-    return (
-      <motion.div
-        className="absolute w-8 h-8 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full shadow-lg"
-        initial={{ y: -100, x: 0, opacity: 1, rotate: 0 }}
-        animate={{
-          y: [0, 100, 200, 300],
-          x: [0, Math.sin(delay) * 50, Math.cos(delay) * 30, 0],
-          rotate: [0, 360 * 3],
-          opacity: [1, 1, 0.5, 0],
-        }}
-        transition={{
-          duration: 2,
-          delay,
-          ease: 'easeIn',
-        }}
-      />
-    );
+    return null;
   };
 
   // Portal transition effect
@@ -1234,7 +1200,7 @@ export default function HangmanGamePage() {
 
       {/* Coin drop animation */}
       <AnimatePresence>
-        {showCoinDrop && (
+        {false && (
           <motion.div
             key="coin-drop"
             className="fixed inset-0 pointer-events-none z-50"
