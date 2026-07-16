@@ -1483,17 +1483,6 @@ export default function HangmanGamePage() {
                     </motion.button>
                   ))}
                 </div>
-
-                <motion.div
-                  className="flex justify-center"
-                  animate={{ rotate: [0, 5, -5, 0], y: [0, -10, 0] }}
-                  transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2 }}
-                  style={{ transformOrigin: 'top center' }}
-                >
-                  <div className="w-16 h-32 bg-gradient-to-b from-cyan-500 to-purple-600 rounded-full border-4 border-cyan-400 shadow-lg flex items-center justify-center animate-pulse">
-                    <div className="text-2xl font-heading font-black text-cyan-300">⬇</div>
-                  </div>
-                </motion.div>
               </motion.div>
             </motion.div>
           ) : (
