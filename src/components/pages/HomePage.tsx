@@ -14,32 +14,42 @@ function SectionFallback() {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white scroll-smooth" style={{ scrollBehavior: 'smooth', scrollSnapType: 'y mandatory' }}>
       <Header />
 
       {/* Hero Section */}
       <Suspense fallback={<SectionFallback />}>
-        <HeroSection />
+        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
+          <HeroSection />
+        </div>
       </Suspense>
 
       {/* About / Vision */}
       <Suspense fallback={<SectionFallback />}>
-        <AboutSection />
+        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
+          <AboutSection />
+        </div>
       </Suspense>
 
       {/* Rubber Band Carousel */}
       <Suspense fallback={<SectionFallback />}>
-        <RubberBandCarouselSection />
+        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
+          <RubberBandCarouselSection />
+        </div>
       </Suspense>
 
       {/* Sponsored By */}
       <Suspense fallback={<SectionFallback />}>
-        <SponsorsSection />
+        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
+          <SponsorsSection />
+        </div>
       </Suspense>
 
       {/* Contact / Booking */}
       <Suspense fallback={<SectionFallback />}>
-        <ContactSection />
+        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
+          <ContactSection />
+        </div>
       </Suspense>
 
       <Footer />
