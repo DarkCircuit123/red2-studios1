@@ -195,14 +195,13 @@ export default function ContactSection() {
                   <label htmlFor={field.id} className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3 group-hover:text-primary transition-colors">
                     {field.label} *
                   </label>
-                  <motion.input
+                  <input
                     type={field.type}
                     id={field.id}
                     name={field.id}
                     value={formData[field.id as keyof typeof formData]}
                     onChange={handleChange}
                     required
-                    whileFocus={{ borderColor: '#4A0820' }}
                     className="w-full px-0 py-3 border-b-2 border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors duration-300"
                     placeholder={field.placeholder}
                   />
@@ -218,14 +217,13 @@ export default function ContactSection() {
                 <label htmlFor="message" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
                   Message *
                 </label>
-                <motion.textarea
+                <textarea
                   id="message"
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
                   required
                   rows={6}
-                  whileFocus={{ borderColor: '#4A0820' }}
                   className="w-full px-0 py-3 border-b-2 border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors duration-300 resize-none"
                   placeholder="Tell me about your project..."
                 />
