@@ -1363,14 +1363,7 @@ export default function HangmanGamePage() {
               </motion.p>
             </motion.div>
 
-            <motion.button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-3 bg-gradient-to-r from-primary to-primary/70 text-white rounded-lg border-2 border-primary hover:border-yellow-400 transition-all"
-            >
-              {soundEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
-            </motion.button>
+
           </div>
         </motion.div>
 
