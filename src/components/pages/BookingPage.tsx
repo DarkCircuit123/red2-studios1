@@ -126,6 +126,17 @@ export default function BookingPage() {
             <p className="text-lg text-white/60 max-w-2xl">
               Select your preferred date and time for your photography session.
             </p>
+            <div className="mt-6 p-4 bg-white/5 border border-white/10 rounded-lg inline-block">
+              <p className="text-sm text-white/60">Today's Date</p>
+              <p className="text-xl font-heading font-bold text-white">
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </p>
+            </div>
           </motion.div>
 
           {/* Success Message */}
