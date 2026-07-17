@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Zap, Trophy, Target, Flame } from 'lucide-react';
 import { CameraIcon, ScissorsIcon, PolaroidIcon } from '@/components/CinemaIcons';
+import PremiumCasinoIcon from '@/components/CasinoIcons/PremiumCasinoIcon';
 import { generateRollSequence, easings, formatNumber } from '@/lib/rollStats';
 import '@/styles/cinema.css';
 import '@/styles/ballys-premium.css';
@@ -224,20 +225,18 @@ class BallysProCasinoSlot {
     
     this.ctx.scale(scale, scale - reel.squashAmount * 0.1);
     
-    // 3D metallic beveling
+    // 3D metallic beveling - base circle
     const metalGradient = this.ctx.createRadialGradient(-15, -15, 0, 0, 0, 40);
     metalGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
     metalGradient.addColorStop(0.3, 'rgba(255, 215, 0, 0.8)');
     metalGradient.addColorStop(0.7, 'rgba(200, 170, 0, 0.6)');
     metalGradient.addColorStop(1, 'rgba(100, 80, 0, 0.4)');
     
-    this.ctx.fillStyle = metalGradient;
-    this.ctx.beginPath();
+    this.ctx.fillStyle = metalGradient;\n    this.ctx.beginPath();
     this.ctx.arc(0, 0, 35, 0, Math.PI * 2);
     this.ctx.fill();
     
-    // Specular sweep (glint of light)
-    const sweepPhase = (this.time * 0.02 + reelIndex * 0.3) % (Math.PI * 2);
+    // Specular sweep (glint of light)\n    const sweepPhase = (this.time * 0.02 + reelIndex * 0.3) % (Math.PI * 2);
     const sweepX = Math.cos(sweepPhase) * 30;
     const sweepY = Math.sin(sweepPhase) * 30;
     
@@ -250,21 +249,183 @@ class BallysProCasinoSlot {
     this.ctx.arc(sweepX, sweepY, 15, 0, Math.PI * 2);
     this.ctx.fill();
     
-    // Symbol text with glow
-    this.ctx.font = 'bold 40px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
-    
-    // Glow effect
-    this.ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-    this.ctx.shadowBlur = 20;
-    this.ctx.shadowOffsetX = 0;
-    this.ctx.shadowOffsetY = 0;
-    
-    this.ctx.fillStyle = '#FFD700';
-    this.ctx.fillText(symbol, 0, 0);
+    // Draw premium casino icon using SVG-like rendering
+    this.drawPremiumIcon(symbol, 0, 0);
     
     this.ctx.restore();
+  }
+
+  drawPremiumIcon(type: string, x: number, y: number) {
+    if (!this.ctx) return;
+    
+    this.ctx.save();
+    this.ctx.translate(x, y);
+    
+    // Icon rendering based on type
+    switch(type) {
+      case 'crown':
+        this.drawCrownIcon();
+        break;
+      case 'diamond':
+        this.drawDiamondIcon();
+        break;
+      case 'cherry':
+        this.drawCherryIcon();
+        break;
+      case 'bell':
+        this.drawBellIcon();
+        break;
+      case 'seven':
+        this.drawSevenIcon();
+        break;
+    }
+    
+    this.ctx.restore();
+  }
+
+  drawCrownIcon() {
+    if (!this.ctx) return;
+    
+    // Base band
+    this.ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+    this.ctx.beginPath();
+    this.ctx.ellipse(0, 12, 14, 4, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Left point
+    this.ctx.beginPath();
+    this.ctx.moveTo(-10, 12);
+    this.ctx.lineTo(-14, -8);
+    this.ctx.lineTo(-6, 4);
+    this.ctx.closePath();
+    this.ctx.fill();
+    
+    // Center point (tallest)
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, 12);
+    this.ctx.lineTo(0, -16);
+    this.ctx.lineTo(2, 4);
+    this.ctx.closePath();
+    this.ctx.fill();
+    
+    // Right point
+    this.ctx.beginPath();
+    this.ctx.moveTo(10, 12);
+    this.ctx.lineTo(14, -8);
+    this.ctx.lineTo(6, 4);
+    this.ctx.closePath();
+    this.ctx.fill();
+    
+    // Jewels
+    this.ctx.fillStyle = 'rgba(255, 20, 147, 0.9)';
+    this.ctx.beginPath();
+    this.ctx.arc(0, -10, 2.5, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    this.ctx.beginPath();
+    this.ctx.arc(-9, -4, 2, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    this.ctx.beginPath();
+    this.ctx.arc(9, -4, 2, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
+  drawDiamondIcon() {
+    if (!this.ctx) return;
+    
+    this.ctx.fillStyle = 'rgba(0, 255, 255, 0.9)';
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, -14);
+    this.ctx.lineTo(10, 0);
+    this.ctx.lineTo(0, 14);
+    this.ctx.lineTo(-10, 0);
+    this.ctx.closePath();
+    this.ctx.fill();
+    
+    // Highlight
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, -14);
+    this.ctx.lineTo(6, -4);
+    this.ctx.lineTo(0, 0);
+    this.ctx.lineTo(-4, -4);
+    this.ctx.closePath();
+    this.ctx.fill();
+  }
+
+  drawCherryIcon() {
+    if (!this.ctx) return;
+    
+    // Left cherry
+    this.ctx.fillStyle = 'rgba(255, 68, 68, 0.9)';
+    this.ctx.beginPath();
+    this.ctx.arc(-7, 0, 7, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Right cherry
+    this.ctx.beginPath();
+    this.ctx.arc(7, 0, 7, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Stem
+    this.ctx.strokeStyle = 'rgba(34, 139, 34, 0.9)';
+    this.ctx.lineWidth = 1.5;
+    this.ctx.beginPath();
+    this.ctx.moveTo(-7, -7);
+    this.ctx.quadraticCurveTo(0, -12, 7, -7);
+    this.ctx.stroke();
+    
+    // Leaf
+    this.ctx.fillStyle = 'rgba(34, 139, 34, 0.8)';
+    this.ctx.beginPath();
+    this.ctx.ellipse(2, -10, 3, 4, -0.5, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
+  drawBellIcon() {
+    if (!this.ctx) return;
+    
+    // Bell body
+    this.ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+    this.ctx.beginPath();
+    this.ctx.moveTo(-8, -4);
+    this.ctx.quadraticCurveTo(-10, 4, -8, 10);
+    this.ctx.lineTo(8, 10);
+    this.ctx.quadraticCurveTo(10, 4, 8, -4);
+    this.ctx.closePath();
+    this.ctx.fill();
+    
+    // Bell rim
+    this.ctx.beginPath();
+    this.ctx.ellipse(0, -4, 9, 3, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Clapper\n    this.ctx.fillStyle = 'rgba(139, 69, 19, 0.9)';
+    this.ctx.beginPath();
+    this.ctx.arc(0, 8, 2.5, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Top loop
+    this.ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+    this.ctx.fillRect(-2, -10, 4, 6);
+  }
+
+  drawSevenIcon() {
+    if (!this.ctx) return;
+    
+    this.ctx.fillStyle = 'rgba(255, 107, 107, 0.9)';
+    
+    // Top horizontal bar
+    this.ctx.fillRect(-8, -10, 16, 5);
+    
+    // Diagonal stroke
+    this.ctx.beginPath();
+    this.ctx.moveTo(8, -5);
+    this.ctx.lineTo(-8, 12);
+    this.ctx.lineWidth = 4;
+    this.ctx.lineCap = 'round';
+    this.ctx.stroke();
   }
 
   drawNeonPaylines() {
