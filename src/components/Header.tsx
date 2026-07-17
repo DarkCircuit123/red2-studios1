@@ -82,6 +82,12 @@ export default function Header() {
     };
   }, [prefersReducedMotion, navigate]);
 
+  const handlePageLinkClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    e.preventDefault();
+    playClickSound();
+    navigate(path);
+  }, [navigate]);
+
   return (
     <>
       <header
@@ -113,7 +119,7 @@ export default function Header() {
           {[
             { href: '#about', label: 'About', isAnchor: true },
             { href: '/portfolio', label: 'Work', isLink: true },
-            { href: '/booking', label: 'Booking', isLink: true },
+            { href: '/booking', label: 'Booking', isLink: true, scrollTo: '#booking-form' },
             { href: '/contact', label: 'Contact', isLink: true, isPage: true },
             { href: '/play', label: 'Play', isLink: true },
           ].map((item, i) => (
@@ -122,24 +128,40 @@ export default function Header() {
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
             >
-              {item.isLink ? (
-                <Link
-                  to={item.href}
-                  onClick={handleLinkClick}
-                  onMouseEnter={playHoverSound}
-                  className="text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
-                >
-                  {item.label}
-                </Link>
-              ) : (
+              {item.isAnchor ? (
                 <a
                   href={item.href}
                   onClick={(e) => handleAnchorClick(e, item.href)}
                   onMouseEnter={playHoverSound}
-                  className="text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest"
+                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest rounded-lg hover:bg-white/5 block"
                 >
                   {item.label}
                 </a>
+              ) : (
+                <Link
+                  to={item.href}
+                  onClick={(e) => {
+                    handleLinkClick();
+                    // If this is a page link with a scroll target, handle the scroll after navigation
+                    if (item.scrollTo) {
+                      setTimeout(() => {
+                        const element = document.querySelector(item.scrollTo);
+                        if (element) {
+                          const headerHeight = 80;
+                          const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+                          window.scrollTo({
+                            top: elementPosition,
+                            behavior: prefersReducedMotion ? 'auto' : 'smooth'
+                          });
+                        }
+                      }, 100);
+                    }
+                  }}
+                  onMouseEnter={playHoverSound}
+                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest rounded-lg hover:bg-white/5 block"
+                >
+                  {item.label}
+                </Link>
               )}
             </motion.div>
           ))}
@@ -188,7 +210,7 @@ export default function Header() {
             {[
               { href: '#about', label: 'About', isAnchor: true },
               { href: '/portfolio', label: 'Work', isLink: true },
-              { href: '/booking', label: 'Booking', isLink: true },
+              { href: '/booking', label: 'Booking', isLink: true, scrollTo: '#booking-form' },
               { href: '/contact', label: 'Contact', isLink: true },
               { href: '/play', label: 'Play', isLink: true },
             ].map((item, i) => (
@@ -198,22 +220,10 @@ export default function Header() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                {item.isLink ? (
-                  <Link
-                    to={item.href}
-                    className="text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest"
-                    onMouseEnter={playHoverSound}
-                    onClick={() => {
-                      handleLinkClick();
-                      setIsOpen(false);
-                    }}
-                  >
-                    {item.label}
-                  </Link>
-                ) : (
+                {item.isAnchor ? (
                   <a
                     href={item.href}
-                    className="text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest"
+                    className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 block"
                     onMouseEnter={playHoverSound}
                     onClick={(e) => {
                       handleAnchorClick(e, item.href);
@@ -222,6 +232,32 @@ export default function Header() {
                   >
                     {item.label}
                   </a>
+                ) : (
+                  <Link
+                    to={item.href}
+                    className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 block"
+                    onMouseEnter={playHoverSound}
+                    onClick={() => {
+                      handleLinkClick();
+                      setIsOpen(false);
+                      // If this is a page link with a scroll target, handle the scroll after navigation
+                      if (item.scrollTo) {
+                        setTimeout(() => {
+                          const element = document.querySelector(item.scrollTo);
+                          if (element) {
+                            const headerHeight = 80;
+                            const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+                            window.scrollTo({
+                              top: elementPosition,
+                              behavior: prefersReducedMotion ? 'auto' : 'smooth'
+                            });
+                          }
+                        }, 100);
+                      }
+                    }}
+                  >
+                    {item.label}
+                  </Link>
                 )}
               </motion.div>
             ))}

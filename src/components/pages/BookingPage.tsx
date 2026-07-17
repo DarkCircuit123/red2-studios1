@@ -112,7 +112,7 @@ export default function BookingPage() {
     <div className="min-h-screen bg-black text-white">
       <Header />
 
-      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20">
+      <section id="booking-form" className="relative w-full min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20">
         <div className="max-w-[100rem] mx-auto px-8 w-full">
           {/* Header */}
           <motion.div
