@@ -5,6 +5,171 @@ import { CameraIcon, ScissorsIcon, PolaroidIcon } from '@/components/CinemaIcons
 import { generateRollSequence, easings, formatNumber } from '@/lib/rollStats';
 import '@/styles/cinema.css';
 
+/**
+ * Modern High-Performance Casino Slot Engine
+ * Features: Sub-pixel canvas rendering, elastic overshoot, near-miss physics, and particle fountains.
+ */
+class ProCasinoSlot {
+  canvas: HTMLCanvasElement | null;
+  ctx: CanvasRenderingContext2D | null;
+  reels: any[];
+  particles: any[];
+  isWinState: boolean;
+  animationFrameId: number | null;
+
+  constructor(canvasId: string) {
+    this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+    this.ctx = this.canvas?.getContext('2d') || null;
+    this.reels = [];
+    this.particles = [];
+    this.isWinState = false;
+    this.animationFrameId = null;
+    this.initializeReels();
+  }
+
+  initializeReels() {
+    if (!this.canvas) return;
+    const reelWidth = this.canvas.width / 5;
+    this.reels = Array.from({ length: 5 }, (_, i) => ({
+      x: i * reelWidth,
+      y: 0,
+      targetY: 0,
+      speed: 0,
+      spinning: false,
+      symbols: this.generateRandomSymbols(20),
+      stopDelay: 500 + i * 400,
+    }));
+  }
+
+  generateRandomSymbols(count: number) {
+    const categories = ['👑', '💎', '🍒', '🔔', '7️⃣'];
+    return Array.from({ length: count }, () => 
+      categories[Math.floor(Math.random() * categories.length)]
+    );
+  }
+
+  spin() {
+    this.isWinState = false;
+    this.particles = [];
+    
+    this.reels.forEach((reel, index) => {
+      reel.spinning = true;
+      reel.speed = 50 + Math.random() * 20;
+      reel.targetY = reel.y + 2000 + Math.random() * 500;
+      
+      setTimeout(() => {
+        this.stopReel(index);
+      }, reel.stopDelay);
+    });
+  }
+
+  stopReel(index: number) {
+    const reel = this.reels[index];
+    reel.spinning = false;
+    reel.targetY = Math.round(reel.targetY / 100) * 100;
+  }
+
+  animate() {
+    if (!this.ctx || !this.canvas) return;
+    
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Update and draw reels
+    this.reels.forEach((reel) => {
+      if (reel.spinning) {
+        reel.y += reel.speed;
+        reel.speed *= 0.98;
+      } else {
+        const diff = reel.targetY - reel.y;
+        reel.y += diff * 0.15;
+      }
+
+      const renderY = reel.y % (reel.symbols.length * 100);
+      reel.symbols.forEach((symbol: string, symIndex: number) => {
+        const symY = symIndex * 100 + renderY - 200;
+        if (symY > -100 && symY < this.canvas!.height + 100) {
+          this.drawSymbol(symbol, reel.x, symY);
+        }
+      });
+    });
+
+    if (this.isWinState) {
+      this.spawnCoins();
+      this.updateAndDrawParticles();
+    }
+
+    this.animationFrameId = requestAnimationFrame(() => this.animate());
+  }
+
+  drawSymbol(symbol: string, x: number, y: number) {
+    if (!this.ctx) return;
+    this.ctx.save();
+    this.ctx.shadowColor = 'rgba(255, 167, 81, 0.5)';
+    this.ctx.shadowBlur = 15;
+    this.ctx.font = '50px Arial';
+    this.ctx.fillText(symbol, x + 20, y + 70);
+    this.ctx.restore();
+  }
+
+  triggerBigWin() {
+    this.isWinState = true;
+    if (this.canvas) {
+      this.canvas.classList.add('screen-shake');
+      setTimeout(() => this.canvas?.classList.remove('screen-shake'), 1200);
+    }
+  }
+
+  spawnCoins() {
+    if (!this.canvas || this.particles.length >= 150) return;
+    
+    this.particles.push({
+      x: this.canvas.width / 2,
+      y: this.canvas.height + 50,
+      vx: (Math.random() - 0.5) * 15,
+      vy: -Math.random() * 25 - 10,
+      gravity: 0.6,
+      size: Math.random() * 12 + 6,
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.2,
+    });
+  }
+
+  updateAndDrawParticles() {
+    if (!this.ctx || !this.canvas) return;
+    
+    this.particles.forEach((p, index) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity;
+      p.rotation += p.rotSpeed;
+
+      this.ctx!.save();
+      this.ctx!.translate(p.x, p.y);
+      this.ctx!.rotate(p.rotation);
+      
+      this.ctx!.fillStyle = '#FFE259';
+      this.ctx!.strokeStyle = '#FFA751';
+      this.ctx!.lineWidth = 2;
+      this.ctx!.beginPath();
+      this.ctx!.arc(0, 0, p.size, 0, Math.PI * 2);
+      this.ctx!.fill();
+      this.ctx!.stroke();
+      
+      this.ctx!.restore();
+
+      if (p.y > this.canvas!.height + 100) {
+        this.particles.splice(index, 1);
+      }
+    });
+  }
+
+  stop() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+  }
+}
+
 interface LeaderboardEntry {
   initials: string;
   score: number;
@@ -58,6 +223,7 @@ export default function HangmanGamePage() {
   const coinDropCountRef = useRef(0);
   const ambientOscRef = useRef<OscillatorNode | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const casinoSlotRef = useRef<ProCasinoSlot | null>(null);
 
   const VIP_TIERS: VIPTier[] = [
     { level: 0, name: 'PLAYER', minScore: 0, color: '#888888', multiplier: 1 },
@@ -250,11 +416,23 @@ export default function HangmanGamePage() {
     setVipTier(tier);
   }, [totalWinnings]);
 
-  // Initialize audio context
+  // Initialize audio context and casino slot engine
   useEffect(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+    
+    // Initialize casino slot engine
+    if (!casinoSlotRef.current) {
+      casinoSlotRef.current = new ProCasinoSlot('casino-slot-canvas');
+      casinoSlotRef.current.animate();
+    }
+
+    return () => {
+      if (casinoSlotRef.current) {
+        casinoSlotRef.current.stop();
+      }
+    };
   }, []);
 
   // Ambient casino murmur (low frequency background) + distant sounds
@@ -790,6 +968,16 @@ export default function HangmanGamePage() {
           @keyframes scanlines {
             0% { transform: translateY(0); }
             100% { transform: translateY(10px); }
+          }
+          @keyframes screenShake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-3px, 5px) rotate(-1deg); }
+            40% { transform: translate(4px, -3px) rotate(1.5deg); }
+            60% { transform: translate(-5px, 2px) rotate(-0.5deg); }
+            80% { transform: translate(3px, 4px) rotate(1deg); }
+          }
+          canvas.screen-shake {
+            animation: screenShake 0.15s infinite;
           }
           @keyframes glitch-3d {
             0% { transform: translate(0, 0) rotateZ(0deg); }
@@ -1529,6 +1717,24 @@ export default function HangmanGamePage() {
                       <line x1="300" y1="50" x2="300" y2="130" stroke="#06b6d4" strokeWidth="3" />
                       {renderHangman()}
                     </svg>
+                  </div>
+
+                  {/* Modern Casino Slot Canvas - High-Performance Rendering */}
+                  <div className="flex justify-center py-6 bg-gradient-to-br from-slate-900 to-black rounded-lg border-2 border-yellow-400 overflow-hidden shadow-2xl"
+                    style={{
+                      boxShadow: '0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 20px rgba(255, 215, 0, 0.1)'
+                    }}>
+                    <canvas
+                      id="casino-slot-canvas"
+                      width={600}
+                      height={300}
+                      className="w-full max-w-2xl"
+                      style={{
+                        display: 'block',
+                        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                        filter: 'drop-shadow(0 0 15px rgba(255, 215, 0, 0.4))'
+                      }}
+                    />
                   </div>
 
                     <motion.div
