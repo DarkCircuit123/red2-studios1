@@ -47,11 +47,11 @@ export default function Header() {
     const scrollToElement = () => {
       const element = document.querySelector(hash);
       if (element) {
-        // Add extra offset for fixed header
-        const headerHeight = 80;
+        // Add extra offset for fixed header (100px for better visibility)
+        const headerHeight = 100;
         const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
         window.scrollTo({
-          top: elementPosition,
+          top: Math.max(0, elementPosition),
           behavior: prefersReducedMotion ? 'auto' : 'smooth'
         });
       }
@@ -62,7 +62,7 @@ export default function Header() {
     if (!isHomePage) {
       // Navigate to homepage using React Router (no full page reload)
       navigate('/');
-      // Schedule scroll after navigation completes
+      // Schedule scroll after navigation completes with multiple attempts
       setTimeout(() => {
         scrollToElement();
         setTimeout(scrollToElement, 100);

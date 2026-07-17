@@ -12,13 +12,24 @@ export function ScrollToTop() {
 
     // Check if the URL has a hash
     if (location.hash) {
-      // URL with hash: Wait 150ms and then call scrollIntoView() to the target element
-      setTimeout(() => {
+      // URL with hash: Scroll to the target element with fixed header offset
+      const scrollToElement = () => {
         const element = document.getElementById(location.hash.slice(1));
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
+          // Account for fixed header (80px) + extra padding for better visibility
+          const headerHeight = 100;
+          const elementPosition = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+          window.scrollTo({
+            top: Math.max(0, elementPosition),
+            behavior: 'smooth'
+          });
         }
-      }, 150);
+      };
+      
+      // Multiple attempts to ensure scroll happens after page renders
+      setTimeout(scrollToElement, 100);
+      setTimeout(scrollToElement, 300);
+      setTimeout(scrollToElement, 600);
     } else {
       // URL without hash: Scroll to the top of the page
       // Use smooth animation if same page, auto if different page
