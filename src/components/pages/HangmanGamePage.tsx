@@ -4,435 +4,6 @@ import { Volume2, VolumeX, Zap, Trophy, Target, Flame } from 'lucide-react';
 import { CameraIcon, ScissorsIcon, PolaroidIcon } from '@/components/CinemaIcons';
 import { generateRollSequence, easings, formatNumber } from '@/lib/rollStats';
 import '@/styles/cinema.css';
-import '@/styles/ballys-premium.css';
-
-/**
- * BALLY'S PREMIUM CASINO SLOT ENGINE
- * Features: Volumetric 3D symbols, metallic textures, specular sweeps, physics-based coins,
- * neon glow casts, HDR bloom, shattering glass transitions, and tiered win celebrations.
- */
-class BallysProCasinoSlot {
-  canvas: HTMLCanvasElement | null;
-  ctx: CanvasRenderingContext2D | null;
-  reels: any[];
-  particles: any[];
-  coins: any[];
-  isWinState: boolean;
-  animationFrameId: number | null;
-  time: number;
-  paylineGlow: number;
-
-  constructor(canvasId: string) {
-    this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
-    this.ctx = this.canvas?.getContext('2d', { alpha: true }) || null;
-    this.reels = [];
-    this.particles = [];
-    this.coins = [];
-    this.isWinState = false;
-    this.animationFrameId = null;
-    this.time = 0;
-    this.paylineGlow = 0;
-    this.initializeReels();
-  }
-
-  initializeReels() {
-    if (!this.canvas) return;
-    const reelWidth = this.canvas.width / 5;
-    this.reels = Array.from({ length: 5 }, (_, i) => ({
-      x: i * reelWidth,
-      y: 0,
-      targetY: 0,
-      speed: 0,
-      spinning: false,
-      symbols: this.generateRandomSymbols(20),
-      stopDelay: 500 + i * 400,
-      breathePhase: Math.random() * Math.PI * 2,
-      squashAmount: 0,
-    }));
-  }
-
-  generateRandomSymbols(count: number) {
-    const categories = ['👑', '💎', '🍒', '🔔', '7️⃣'];
-    return Array.from({ length: count }, () => 
-      categories[Math.floor(Math.random() * categories.length)]
-    );
-  }
-
-  spin() {
-    this.isWinState = false;
-    this.particles = [];
-    this.coins = [];
-    
-    this.reels.forEach((reel, index) => {
-      reel.spinning = true;
-      reel.speed = 50 + Math.random() * 20;
-      reel.targetY = reel.y + 2000 + Math.random() * 500;
-      
-      setTimeout(() => {
-        this.stopReel(index);
-      }, reel.stopDelay);
-    });
-  }
-
-  stopReel(index: number) {
-    const reel = this.reels[index];
-    reel.spinning = false;
-    reel.targetY = Math.round(reel.targetY / 100) * 100;
-    reel.squashAmount = 1;
-  }
-
-  animate() {
-    if (!this.ctx || !this.canvas) return;
-    
-    this.time += 1;
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Draw parallax backdrop
-    this.drawParallaxBackdrop();
-    
-    // Draw chrome bezels with ambient occlusion
-    this.drawChromeBezels();
-    
-    // Draw top vignette
-    this.drawTopVignette();
-    
-    // Update and draw reels
-    this.reels.forEach((reel, reelIndex) => {
-      if (reel.spinning) {
-        reel.y += reel.speed;
-        reel.speed *= 0.98;
-      } else {
-        const diff = reel.targetY - reel.y;
-        reel.y += diff * 0.15;
-        
-        // Squash & stretch physics
-        if (reel.squashAmount > 0) {
-          reel.squashAmount *= 0.92;
-        }
-      }
-
-      const renderY = reel.y % (reel.symbols.length * 100);
-      reel.symbols.forEach((symbol: string, symIndex: number) => {
-        const symY = symIndex * 100 + renderY - 200;
-        if (symY > -100 && symY < this.canvas!.height + 100) {
-          this.drawVolumetricSymbol(symbol, reel.x, symY, reelIndex, reel);
-        }
-      });
-    });
-
-    // Draw dynamic neon paylines
-    this.drawNeonPaylines();
-    
-    // Draw bottom vignette
-    this.drawBottomVignette();
-
-    if (this.isWinState) {
-      this.spawnPhysicsCoins();
-      this.updateAndDrawCoins();
-      this.updateAndDrawParticles();
-    }
-
-    this.animationFrameId = requestAnimationFrame(() => this.animate());
-  }
-
-  drawParallaxBackdrop() {
-    if (!this.ctx || !this.canvas) return;
-    
-    // Cosmic nebula backdrop with parallax
-    const gradient = this.ctx.createRadialGradient(
-      this.canvas.width / 2, this.canvas.height / 2, 0,
-      this.canvas.width / 2, this.canvas.height / 2, this.canvas.width
-    );
-    gradient.addColorStop(0, 'rgba(100, 50, 150, 0.3)');
-    gradient.addColorStop(0.5, 'rgba(50, 100, 150, 0.15)');
-    gradient.addColorStop(1, 'rgba(20, 20, 40, 0.1)');
-    
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Parallax dust particles
-    for (let i = 0; i < 15; i++) {
-      const x = (i * 80 + this.time * 0.5) % this.canvas.width;
-      const y = (i * 60 + Math.sin(this.time * 0.01 + i) * 30) % this.canvas.height;
-      const size = 1 + Math.sin(this.time * 0.02 + i) * 0.5;
-      
-      this.ctx.fillStyle = `rgba(255, 215, 0, ${0.1 + Math.sin(this.time * 0.01 + i) * 0.1})`;
-      this.ctx.beginPath();
-      this.ctx.arc(x, y, size, 0, Math.PI * 2);
-      this.ctx.fill();
-    }
-  }
-
-  drawChromeBezels() {
-    if (!this.ctx || !this.canvas) return;
-    
-    const reelWidth = this.canvas.width / 5;
-    
-    for (let i = 1; i < 5; i++) {
-      const x = i * reelWidth;
-      
-      // Chrome bezel with 3D effect
-      const bezelGradient = this.ctx.createLinearGradient(x - 4, 0, x + 4, 0);
-      bezelGradient.addColorStop(0, 'rgba(200, 200, 200, 0.8)');
-      bezelGradient.addColorStop(0.5, 'rgba(255, 255, 255, 1)');
-      bezelGradient.addColorStop(1, 'rgba(150, 150, 150, 0.8)');
-      
-      this.ctx.fillStyle = bezelGradient;
-      this.ctx.fillRect(x - 2, 0, 4, this.canvas.height);
-      
-      // Ambient occlusion shadow
-      const shadowGradient = this.ctx.createLinearGradient(x, 0, x + 8, 0);
-      shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
-      shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      
-      this.ctx.fillStyle = shadowGradient;
-      this.ctx.fillRect(x, 0, 8, this.canvas.height);
-    }
-  }
-
-  drawTopVignette() {
-    if (!this.ctx || !this.canvas) return;
-    
-    const gradient = this.ctx.createLinearGradient(0, 0, 0, 60);
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, 0, this.canvas.width, 60);
-  }
-
-  drawBottomVignette() {
-    if (!this.ctx || !this.canvas) return;
-    
-    const gradient = this.ctx.createLinearGradient(0, this.canvas.height - 60, 0, this.canvas.height);
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
-    
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, this.canvas.height - 60, this.canvas.width, 60);
-  }
-
-  drawVolumetricSymbol(symbol: string, x: number, y: number, reelIndex: number, reel: any) {
-    if (!this.ctx) return;
-    
-    this.ctx.save();
-    this.ctx.translate(x + 60, y + 50);
-    
-    // Idle breathing animation
-    const breathe = Math.sin(this.time * 0.03 + reel.breathePhase) * 0.08;
-    const scale = 1 + breathe + reel.squashAmount * 0.15;
-    
-    this.ctx.scale(scale, scale - reel.squashAmount * 0.1);
-    
-    // 3D metallic beveling
-    const metalGradient = this.ctx.createRadialGradient(-15, -15, 0, 0, 0, 40);
-    metalGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
-    metalGradient.addColorStop(0.3, 'rgba(255, 215, 0, 0.8)');
-    metalGradient.addColorStop(0.7, 'rgba(200, 170, 0, 0.6)');
-    metalGradient.addColorStop(1, 'rgba(100, 80, 0, 0.4)');
-    
-    this.ctx.fillStyle = metalGradient;
-    this.ctx.beginPath();
-    this.ctx.arc(0, 0, 35, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    // Specular sweep (glint of light)
-    const sweepPhase = (this.time * 0.02 + reelIndex * 0.3) % (Math.PI * 2);
-    const sweepX = Math.cos(sweepPhase) * 30;
-    const sweepY = Math.sin(sweepPhase) * 30;
-    
-    const sweepGradient = this.ctx.createRadialGradient(sweepX, sweepY, 0, sweepX, sweepY, 15);
-    sweepGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-    sweepGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    
-    this.ctx.fillStyle = sweepGradient;
-    this.ctx.beginPath();
-    this.ctx.arc(sweepX, sweepY, 15, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    // Symbol text with glow
-    this.ctx.font = 'bold 40px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
-    
-    // Glow effect
-    this.ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-    this.ctx.shadowBlur = 20;
-    this.ctx.shadowOffsetX = 0;
-    this.ctx.shadowOffsetY = 0;
-    
-    this.ctx.fillStyle = '#FFD700';
-    this.ctx.fillText(symbol, 0, 0);
-    
-    this.ctx.restore();
-  }
-
-  drawNeonPaylines() {
-    if (!this.ctx || !this.canvas) return;
-    
-    this.paylineGlow = (this.paylineGlow + 0.02) % (Math.PI * 2);
-    const glowIntensity = Math.sin(this.paylineGlow) * 0.5 + 0.5;
-    
-    // Horizontal paylines with neon glow
-    const paylineY = this.canvas.height / 2;
-    
-    // Draw payline with additive blending
-    this.ctx.globalCompositeOperation = 'screen';
-    
-    const lineGradient = this.ctx.createLinearGradient(0, paylineY - 5, 0, paylineY + 5);
-    lineGradient.addColorStop(0, `rgba(255, 0, 255, 0)`);
-    lineGradient.addColorStop(0.5, `rgba(255, 0, 255, ${0.6 * glowIntensity})`);
-    lineGradient.addColorStop(1, `rgba(255, 0, 255, 0)`);
-    
-    this.ctx.fillStyle = lineGradient;
-    this.ctx.fillRect(0, paylineY - 5, this.canvas.width, 10);
-    
-    // Neon cast on symbols above and below
-    this.reels.forEach((reel) => {
-      const renderY = reel.y % (reel.symbols.length * 100);
-      reel.symbols.forEach((symbol: string, symIndex: number) => {
-        const symY = symIndex * 100 + renderY - 200;
-        if (Math.abs(symY + 50 - paylineY) < 80) {
-          const distance = Math.abs(symY + 50 - paylineY);
-          const tint = Math.max(0, 1 - distance / 80);
-          
-          this.ctx!.globalCompositeOperation = 'multiply';
-          this.ctx!.fillStyle = `rgba(255, 0, 255, ${0.2 * tint * glowIntensity})`;
-          this.ctx!.fillRect(reel.x, symY, 120, 100);
-        }
-      });
-    });
-    
-    this.ctx.globalCompositeOperation = 'source-over';
-  }
-
-  spawnPhysicsCoins() {
-    if (!this.canvas || this.coins.length >= 200) return;
-    
-    for (let i = 0; i < 3; i++) {
-      this.coins.push({
-        x: this.canvas.width / 2 + (Math.random() - 0.5) * 100,
-        y: -50,
-        vx: (Math.random() - 0.5) * 20,
-        vy: -Math.random() * 15 - 5,
-        vz: (Math.random() - 0.5) * 10,
-        gravity: 0.8,
-        size: Math.random() * 8 + 6,
-        rotX: Math.random() * Math.PI * 2,
-        rotY: Math.random() * Math.PI * 2,
-        rotZ: Math.random() * Math.PI * 2,
-        rotSpeedX: (Math.random() - 0.5) * 0.15,
-        rotSpeedY: (Math.random() - 0.5) * 0.15,
-        rotSpeedZ: (Math.random() - 0.5) * 0.15,
-        bounce: 0.6,
-        friction: 0.98,
-      });
-    }
-  }
-
-  updateAndDrawCoins() {
-    if (!this.ctx || !this.canvas) return;
-    
-    this.coins.forEach((coin, index) => {
-      coin.x += coin.vx;
-      coin.y += coin.vy;
-      coin.vy += coin.gravity;
-      coin.vx *= coin.friction;
-      coin.vz *= coin.friction;
-      
-      coin.rotX += coin.rotSpeedX;
-      coin.rotY += coin.rotSpeedY;
-      coin.rotZ += coin.rotSpeedZ;
-      
-      // Collision with bottom
-      if (coin.y > this.canvas!.height - coin.size) {
-        coin.y = this.canvas!.height - coin.size;
-        coin.vy *= -coin.bounce;
-        coin.vx *= 0.8;
-      }
-      
-      // Collision with sides
-      if (coin.x < coin.size) {
-        coin.x = coin.size;
-        coin.vx *= -coin.bounce;
-      }
-      if (coin.x > this.canvas!.width - coin.size) {
-        coin.x = this.canvas!.width - coin.size;
-        coin.vx *= -coin.bounce;
-      }
-      
-      // Draw 3D coin
-      this.ctx!.save();
-      this.ctx!.translate(coin.x, coin.y);
-      this.ctx!.rotate(coin.rotZ);
-      
-      // Coin gradient (3D effect)
-      const coinGradient = this.ctx!.createRadialGradient(-5, -5, 0, 0, 0, coin.size);
-      coinGradient.addColorStop(0, 'rgba(255, 255, 200, 0.9)');
-      coinGradient.addColorStop(0.5, 'rgba(255, 215, 0, 0.8)');
-      coinGradient.addColorStop(1, 'rgba(200, 170, 0, 0.7)');
-      
-      this.ctx!.fillStyle = coinGradient;
-      this.ctx!.beginPath();
-      this.ctx!.arc(0, 0, coin.size, 0, Math.PI * 2);
-      this.ctx!.fill();
-      
-      // Coin border
-      this.ctx!.strokeStyle = 'rgba(100, 80, 0, 0.8)';
-      this.ctx!.lineWidth = 1;
-      this.ctx!.stroke();
-      
-      this.ctx!.restore();
-      
-      if (coin.y > this.canvas!.height + 50) {
-        this.coins.splice(index, 1);
-      }
-    });
-  }
-
-  updateAndDrawParticles() {
-    if (!this.ctx || !this.canvas) return;
-    
-    this.particles.forEach((p, index) => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += p.gravity;
-      p.rotation += p.rotSpeed;
-
-      this.ctx!.save();
-      this.ctx!.translate(p.x, p.y);
-      this.ctx!.rotate(p.rotation);
-      
-      this.ctx!.fillStyle = '#FFE259';
-      this.ctx!.strokeStyle = '#FFA751';
-      this.ctx!.lineWidth = 2;
-      this.ctx!.beginPath();
-      this.ctx!.arc(0, 0, p.size, 0, Math.PI * 2);
-      this.ctx!.fill();
-      this.ctx!.stroke();
-      
-      this.ctx!.restore();
-
-      if (p.y > this.canvas!.height + 100) {
-        this.particles.splice(index, 1);
-      }
-    });
-  }
-
-  triggerBigWin() {
-    this.isWinState = true;
-    if (this.canvas) {
-      this.canvas.classList.add('screen-shake');
-      setTimeout(() => this.canvas?.classList.remove('screen-shake'), 1200);
-    }
-  }
-
-  stop() {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
-  }
-}
 
 interface LeaderboardEntry {
   initials: string;
@@ -487,7 +58,6 @@ export default function HangmanGamePage() {
   const coinDropCountRef = useRef(0);
   const ambientOscRef = useRef<OscillatorNode | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const casinoSlotRef = useRef<ProCasinoSlot | null>(null);
 
   const VIP_TIERS: VIPTier[] = [
     { level: 0, name: 'PLAYER', minScore: 0, color: '#888888', multiplier: 1 },
@@ -680,23 +250,11 @@ export default function HangmanGamePage() {
     setVipTier(tier);
   }, [totalWinnings]);
 
-  // Initialize audio context and casino slot engine
+  // Initialize audio context
   useEffect(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    
-    // Initialize Bally's Premium casino slot engine
-    if (!casinoSlotRef.current) {
-      casinoSlotRef.current = new BallysProCasinoSlot('casino-slot-canvas');
-      casinoSlotRef.current.animate();
-    }
-
-    return () => {
-      if (casinoSlotRef.current) {
-        casinoSlotRef.current.stop();
-      }
-    };
   }, []);
 
   // Ambient casino murmur (low frequency background) + distant sounds
@@ -1138,92 +696,6 @@ export default function HangmanGamePage() {
     }
   };
 
-  // Volumetric 3D Typography - MEGA WIN text
-  const VolumetricMegaWinText = () => {
-    return (
-      <motion.div
-        className="relative inline-block"
-        animate={{ scale: [1, 1.15, 1] }}
-        transition={{ duration: 0.6, repeat: Infinity }}
-      >
-        <motion.div
-          className="text-8xl md:text-9xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600"
-          style={{
-            textShadow: `
-              3px 3px 0px rgba(255, 215, 0, 0.8),
-              6px 6px 0px rgba(200, 170, 0, 0.6),
-              9px 9px 0px rgba(100, 80, 0, 0.4),
-              -2px -2px 8px rgba(255, 255, 255, 0.5)
-            `,
-            filter: 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.9))',
-          }}
-          animate={{
-            textShadow: [
-              `3px 3px 0px rgba(255, 215, 0, 0.8), 6px 6px 0px rgba(200, 170, 0, 0.6), 9px 9px 0px rgba(100, 80, 0, 0.4), -2px -2px 8px rgba(255, 255, 255, 0.5)`,
-              `3px 3px 0px rgba(255, 215, 0, 1), 6px 6px 0px rgba(200, 170, 0, 0.8), 9px 9px 0px rgba(100, 80, 0, 0.6), -2px -2px 15px rgba(255, 255, 255, 0.8)`,
-              `3px 3px 0px rgba(255, 215, 0, 0.8), 6px 6px 0px rgba(200, 170, 0, 0.6), 9px 9px 0px rgba(100, 80, 0, 0.4), -2px -2px 8px rgba(255, 255, 255, 0.5)`,
-            ]
-          }}
-          transition={{ duration: 0.8, repeat: Infinity }}
-        >
-          MEGA WIN
-        </motion.div>
-      </motion.div>
-    );
-  };
-
-  // Odometer-style credit roll with motion blur and sparks
-  const OdometerCreditRoll = ({ value }: { value: number }) => {
-    const digits = value.toString().padStart(6, '0').split('');
-    
-    return (
-      <div className="flex gap-1 justify-center items-center">
-        {digits.map((digit, idx) => (
-          <motion.div
-            key={idx}
-            className="relative w-12 h-16 md:w-16 md:h-20 bg-gradient-to-b from-yellow-900 to-yellow-950 border-2 border-yellow-600 rounded-lg flex items-center justify-center overflow-hidden"
-            style={{
-              boxShadow: '0 0 15px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 215, 0, 0.2)',
-            }}
-          >
-            {/* Motion blur effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-b from-transparent via-yellow-300/20 to-transparent"
-              animate={{ y: [0, 20, 0] }}
-              transition={{ duration: 0.4, repeat: Infinity }}
-            />
-            
-            {/* Digit with vertical roll */}
-            <motion.div
-              className="text-3xl md:text-4xl font-mono font-black text-yellow-300 relative z-10"
-              animate={{ y: [0, -20, 0] }}
-              transition={{ duration: 0.4, repeat: Infinity, delay: idx * 0.05 }}
-            >
-              {digit}
-            </motion.div>
-            
-            {/* Spark particles */}
-            {Math.random() > 0.7 && (
-              <motion.div
-                className="absolute w-1 h-1 bg-yellow-200 rounded-full"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                }}
-                animate={{
-                  opacity: [1, 0],
-                  y: [0, -20],
-                  x: [(Math.random() - 0.5) * 20, 0],
-                }}
-                transition={{ duration: 0.6 }}
-              />
-            )}
-          </motion.div>
-        ))}
-      </div>
-    );
-  };
-
   // Slot reel letter reveal effect
   const SlotReelLetter = ({ letter, isRevealed }: { letter: string; isRevealed: boolean }) => {
     return (
@@ -1318,16 +790,6 @@ export default function HangmanGamePage() {
           @keyframes scanlines {
             0% { transform: translateY(0); }
             100% { transform: translateY(10px); }
-          }
-          @keyframes screenShake {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            20% { transform: translate(-3px, 5px) rotate(-1deg); }
-            40% { transform: translate(4px, -3px) rotate(1.5deg); }
-            60% { transform: translate(-5px, 2px) rotate(-0.5deg); }
-            80% { transform: translate(3px, 4px) rotate(1deg); }
-          }
-          canvas.screen-shake {
-            animation: screenShake 0.15s infinite;
           }
           @keyframes glitch-3d {
             0% { transform: translate(0, 0) rotateZ(0deg); }
@@ -1644,107 +1106,75 @@ export default function HangmanGamePage() {
         />
       </div>
 
-      {/* Shattering Glass Transition - Mega Jackpot Win Sequence */}
+      {/* Mega Jackpot Win Sequence (6 seconds full-screen) */}
       <AnimatePresence>
         {showMegaJackpot && (
           <motion.div
             key="mega-jackpot"
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden"
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* Shattering glass shards */}
-            {[...Array(30)].map((_, i) => (
+            {/* Explosion effect */}
+            {[...Array(20)].map((_, i) => (
               <motion.div
-                key={`shard-${i}`}
-                className="absolute bg-gradient-to-br from-cyan-300 to-cyan-600 opacity-80"
-                style={{
-                  width: Math.random() * 40 + 20,
-                  height: Math.random() * 40 + 20,
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  clipPath: 'polygon(0 0, 100% 0, 85% 100%, 0 90%)',
-                  boxShadow: '0 0 10px rgba(0, 255, 255, 0.8)',
-                }}
-                initial={{ opacity: 1, scale: 1 }}
+                key={i}
+                className="absolute w-4 h-4 bg-yellow-300 rounded-full"
+                initial={{ x: 0, y: 0, opacity: 1 }}
                 animate={{
-                  opacity: [1, 0.5, 0],
-                  scale: [1, 0.8, 0],
-                  x: (Math.random() - 0.5) * 600,
-                  y: (Math.random() - 0.5) * 600,
-                  rotate: Math.random() * 360,
+                  x: Math.cos((i / 20) * Math.PI * 2) * 400,
+                  y: Math.sin((i / 20) * Math.PI * 2) * 400,
+                  opacity: 0,
                 }}
-                transition={{ duration: 1.2, ease: 'easeOut' }}
+                transition={{ duration: 2, ease: 'easeOut' }}
               />
             ))}
 
-            {/* Volumetric MEGA WIN text */}
+            {/* Center text */}
             <motion.div
               className="text-center z-10"
-              initial={{ scale: 0, rotateZ: -45 }}
-              animate={{ scale: 1, rotateZ: 0 }}
-              transition={{ duration: 0.6, type: 'spring', stiffness: 100 }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, type: 'spring' }}
             >
-              <VolumetricMegaWinText />
-              
-              {/* Odometer credit roll */}
-              <motion.div
-                className="mt-8 mb-8"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <OdometerCreditRoll value={currentScore} />
-              </motion.div>
-              
               <motion.p
-                className="text-4xl md:text-5xl font-heading font-black text-green-400 mt-6"
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 0.6, repeat: 5 }}
+                className="text-8xl font-heading font-black text-yellow-300 mb-4"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.5, repeat: 5 }}
               >
-                ✦ JACKPOT TRIGGERED ✦
+                🎰 MEGA JACKPOT! 🎰
+              </motion.p>
+              <motion.p
+                className="text-6xl font-heading font-black text-green-400"
+                animate={{ y: [0, -20, 0] }}
+                transition={{ duration: 0.5, repeat: 5 }}
+              >
+                +${currentScore.toLocaleString()}
               </motion.p>
             </motion.div>
 
-            {/* Physics-based 3D coin cascade */}
-            {[...Array(80)].map((_, i) => (
+            {/* Confetti */}
+            {[...Array(50)].map((_, i) => (
               <motion.div
-                key={`coin-${i}`}
-                className="absolute w-6 h-6 md:w-8 md:h-8 rounded-full"
+                key={`confetti-${i}`}
+                className="absolute w-2 h-2 bg-gradient-to-r from-yellow-300 to-red-500 rounded-full"
                 style={{
-                  background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 200, 0.9), rgba(255, 215, 0, 0.8), rgba(200, 170, 0, 0.7))',
-                  boxShadow: '0 0 12px rgba(255, 215, 0, 0.8), inset -2px -2px 4px rgba(100, 80, 0, 0.6)',
                   left: `${Math.random() * 100}%`,
-                  top: '-50px',
+                  top: '-10px',
                 }}
                 animate={{
                   y: window.innerHeight + 100,
-                  x: (Math.random() - 0.5) * 400,
-                  rotate: 360 * (Math.random() + 1),
+                  rotate: 360 * Math.random(),
                   opacity: [1, 1, 0],
                 }}
                 transition={{
-                  duration: 2.5 + Math.random() * 1.5,
-                  delay: i * 0.04,
+                  duration: 3 + Math.random() * 2,
+                  delay: i * 0.05,
                   ease: 'easeIn',
                 }}
               />
             ))}
-
-            {/* Additive blend HDR bloom effect */}
-            <motion.div
-              className="absolute inset-0 pointer-events-none"
-              style={{ mixBlendMode: 'screen' }}
-              animate={{
-                background: [
-                  'radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.4) 0%, transparent 70%)',
-                  'radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.8) 0%, transparent 70%)',
-                  'radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.4) 0%, transparent 70%)',
-                ]
-              }}
-              transition={{ duration: 0.8, repeat: Infinity }}
-            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -2099,24 +1529,6 @@ export default function HangmanGamePage() {
                       <line x1="300" y1="50" x2="300" y2="130" stroke="#06b6d4" strokeWidth="3" />
                       {renderHangman()}
                     </svg>
-                  </div>
-
-                  {/* Modern Casino Slot Canvas - High-Performance Rendering */}
-                  <div className="flex justify-center py-6 bg-gradient-to-br from-slate-900 to-black rounded-lg border-2 border-yellow-400 overflow-hidden shadow-2xl"
-                    style={{
-                      boxShadow: '0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 20px rgba(255, 215, 0, 0.1)'
-                    }}>
-                    <canvas
-                      id="casino-slot-canvas"
-                      width={600}
-                      height={300}
-                      className="w-full max-w-2xl"
-                      style={{
-                        display: 'block',
-                        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-                        filter: 'drop-shadow(0 0 15px rgba(255, 215, 0, 0.4))'
-                      }}
-                    />
                   </div>
 
                     <motion.div
