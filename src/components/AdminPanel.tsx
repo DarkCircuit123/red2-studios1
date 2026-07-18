@@ -175,6 +175,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             setHomepageImages({ ...homepageImages, heroImage: url });
                           }
                         }}
+                        onImageDelete={() => {
+                          if (homepageImages) {
+                            setHomepageImages({ ...homepageImages, heroImage: undefined });
+                          }
+                        }}
                       />
                     </div>
 
@@ -194,6 +199,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             setHomepageImages({ ...homepageImages, aboutSectionImage: url });
                           }
                         }}
+                        onImageDelete={() => {
+                          if (homepageImages) {
+                            setHomepageImages({ ...homepageImages, aboutSectionImage: undefined });
+                          }
+                        }}
                       />
                     </div>
 
@@ -211,6 +221,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         onImageUpload={(url) => {
                           if (homepageImages) {
                             setHomepageImages({ ...homepageImages, contactBackgroundImage: url });
+                          }
+                        }}
+                        onImageDelete={() => {
+                          if (homepageImages) {
+                            setHomepageImages({ ...homepageImages, contactBackgroundImage: undefined });
                           }
                         }}
                       />
@@ -251,6 +266,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                     p._id === item._id ? { ...p, mainImage: url } : p
                                   ));
                                 }}
+                                onImageDelete={() => {
+                                  setPortfolioItems(portfolioItems.map(p => 
+                                    p._id === item._id ? { ...p, mainImage: undefined } : p
+                                  ));
+                                }}
                               />
                             </div>
 
@@ -268,6 +288,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 onImageUpload={(url) => {
                                   setPortfolioItems(portfolioItems.map(p => 
                                     p._id === item._id ? { ...p, galleryImage1: url } : p
+                                  ));
+                                }}
+                                onImageDelete={() => {
+                                  setPortfolioItems(portfolioItems.map(p => 
+                                    p._id === item._id ? { ...p, galleryImage1: undefined } : p
                                   ));
                                 }}
                               />
@@ -288,6 +313,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                     p._id === item._id ? { ...p, galleryImage2: url } : p
                                   ));
                                 }}
+                                onImageDelete={() => {
+                                  setPortfolioItems(portfolioItems.map(p => 
+                                    p._id === item._id ? { ...p, galleryImage2: undefined } : p
+                                  ));
+                                }}
                               />
                             </div>
 
@@ -304,6 +334,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 onImageUpload={(url) => {
                                   setPortfolioItems(portfolioItems.map(p => 
                                     p._id === item._id ? { ...p, galleryImage3: url } : p
+                                  ));
+                                }}
+                                onImageDelete={() => {
+                                  setPortfolioItems(portfolioItems.map(p => 
+                                    p._id === item._id ? { ...p, galleryImage3: undefined } : p
                                   ));
                                 }}
                               />
@@ -369,6 +404,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 onImageUpload={(url) => {
                                   setSponsors(sponsors.map(s => 
                                     s._id === sponsor._id ? { ...s, clientLogo: url } : s
+                                  ));
+                                }}
+                                onImageDelete={() => {
+                                  setSponsors(sponsors.map(s => 
+                                    s._id === sponsor._id ? { ...s, clientLogo: undefined } : s
                                   ));
                                 }}
                               />

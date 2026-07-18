@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react';
-import { Upload, X, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 
 interface ImageUploadManagerProps {
   onImageUpload: (imageUrl: string) => void;
+  onImageDelete?: () => void;
   currentImage?: string;
   label?: string;
   collectionId?: string;
@@ -31,6 +32,7 @@ const SUPPORTED_FORMATS = {
 
 export default function ImageUploadManager({
   onImageUpload,
+  onImageDelete,
   currentImage,
   label = 'Upload Image',
   collectionId,
@@ -40,6 +42,7 @@ export default function ImageUploadManager({
 }: ImageUploadManagerProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -153,6 +156,35 @@ export default function ImageUploadManager({
     }
   };
 
+  const handleDeleteImage = async () => {
+    if (!currentImage) return;
+    
+    setIsDeleting(true);
+    try {
+      // If collection info provided, delete from CMS
+      if (collectionId && itemId && fieldName) {
+        await BaseCrudService.update(collectionId, {
+          _id: itemId,
+          [fieldName]: null
+        });
+      }
+      
+      // Call the callback to update parent state
+      if (onImageDelete) {
+        onImageDelete();
+      }
+      
+      setUploadStatus('success');
+      setTimeout(() => setUploadStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      setErrorMessage('Failed to delete image. Please try again.');
+      setUploadStatus('error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="w-full space-y-3">
       <motion.div
@@ -199,6 +231,19 @@ export default function ImageUploadManager({
             <Image src={currentImage} alt="Preview" className="w-24 h-24 object-cover rounded" />
             <p className="text-xs text-white/60">{label}</p>
             <p className="text-xs text-white/40">Click to replace</p>
+            {currentImage && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteImage();
+                }}
+                disabled={isDeleting}
+                className="mt-2 px-3 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded text-xs text-red-400 transition-all duration-200 flex items-center gap-1 disabled:opacity-50"
+              >
+                <Trash2 className="w-3 h-3" />
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
