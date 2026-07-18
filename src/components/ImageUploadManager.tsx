@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, X, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
@@ -230,19 +230,32 @@ export default function ImageUploadManager({
           <div className="flex flex-col items-center gap-3">
             <Image src={currentImage} alt="Preview" className="w-24 h-24 object-cover rounded" />
             <p className="text-xs text-white/60">{label}</p>
-            <p className="text-xs text-white/40">Click to replace</p>
+            <p className="text-xs text-white/40">Current image</p>
             {currentImage && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteImage();
-                }}
-                disabled={isDeleting}
-                className="mt-2 px-3 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded text-xs text-red-400 transition-all duration-200 flex items-center gap-1 disabled:opacity-50"
-              >
-                <Trash2 className="w-3 h-3" />
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
+              <div className="mt-2 flex gap-2 flex-wrap justify-center">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  disabled={isProcessing}
+                  className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/40 rounded text-xs text-blue-400 transition-all duration-200 flex items-center gap-1 disabled:opacity-50"
+                >
+                  <Edit3 className="w-3 h-3" />
+                  {isProcessing ? 'Uploading...' : 'Replace'}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteImage();
+                  }}
+                  disabled={isDeleting}
+                  className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded text-xs text-red-400 transition-all duration-200 flex items-center gap-1 disabled:opacity-50"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
             )}
           </div>
         ) : (
