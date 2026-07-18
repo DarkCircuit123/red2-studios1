@@ -4,6 +4,15 @@ import { Volume2, VolumeX, Zap, Trophy, Target, Flame } from 'lucide-react';
 import { CameraIcon, ScissorsIcon, PolaroidIcon } from '@/components/CinemaIcons';
 import { generateRollSequence, easings, formatNumber } from '@/lib/rollStats';
 import AdvancedCasinoEffects from '@/components/AdvancedCasinoEffects';
+import NextGenGraphicsLayer from '@/components/NextGenGraphicsLayer';
+import {
+  AtelierIcon,
+  DarkroomIcon,
+  CatwalkIcon,
+  RedCarpetIcon,
+  SupermodelVaultIcon,
+  VanityIcon,
+} from '@/components/CategoryIconSVGs';
 import {
   playSlotReelSound,
   playGlitchSound,
@@ -1470,11 +1479,16 @@ export default function HangmanGamePage() {
                       />
                       <div className="relative z-10 space-y-4 flex flex-col items-center text-center">
                         <motion.div 
-                          className="text-6xl md:text-7xl font-heading font-black text-cyan-300 group-hover:text-cyan-200 transition-colors"
+                          className="w-24 h-24 md:w-28 md:h-28 text-cyan-300 group-hover:text-cyan-200 transition-colors"
                           animate={{ scale: [1, 1.1, 1] }}
                           transition={{ duration: 2, repeat: Infinity, delay: idx * 0.2 }}
                         >
-                          {meta.icon}
+                          {meta.icon === 'atelier' && <AtelierIcon />}
+                          {meta.icon === 'darkroom' && <DarkroomIcon />}
+                          {meta.icon === 'catwalk' && <CatwalkIcon />}
+                          {meta.icon === 'redcarpet' && <RedCarpetIcon />}
+                          {meta.icon === 'supermodel' && <SupermodelVaultIcon />}
+                          {meta.icon === 'vanity' && <VanityIcon />}
                         </motion.div>
                         <p className="text-xl md:text-2xl font-heading font-black text-cyan-400 group-hover:text-cyan-300 transition-colors uppercase tracking-wider">
                           {meta.name}
