@@ -3,12 +3,22 @@ import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
-import { LogOut, Mail, Calendar, Lock, Edit2, Check, X, AlertCircle, Eye } from 'lucide-react';
+import { LogOut, Mail, Calendar, Lock, Edit2, Check, X, AlertCircle, Eye, Trash2 } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
 import { useState, useEffect } from 'react';
 import { ClientProofingGalleries } from '@/entities';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function ProfilePage() {
   const { member, actions } = useMember();
@@ -19,6 +29,23 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState(false);
   const [galleries, setGalleries] = useState<ClientProofingGalleries[]>([]);
   const [galleriesLoading, setGalleriesLoading] = useState(true);
+  
+  // Password change state
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  
+  // Delete account state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
 
   // Update editedName when member changes
   useEffect(() => {
@@ -103,6 +130,92 @@ export default function ProfilePage() {
   const handleCancelEdit = () => {
     setEditedName(member?.profile?.nickname || member?.contact?.firstName || '');
     setIsEditingName(false);
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    
+    // Validation
+    if (!currentPassword.trim()) {
+      setPasswordError('Current password is required');
+      return;
+    }
+    if (!newPassword.trim()) {
+      setPasswordError('New password is required');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      // Use the Wix Members API to update password
+      // The updatePassword method should be available on the members module
+      const response = await fetch('/api/auth/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to update password');
+      }
+
+      setSuccess(true);
+      setShowChangePasswordDialog(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Failed to update password');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteError(null);
+
+    if (!deleteConfirmPassword.trim()) {
+      setDeleteError('Password is required to delete account');
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    try {
+      // Use the Wix Members API to delete account
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: deleteConfirmPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to delete account');
+      }
+
+      // Account deleted successfully, logout
+      setShowDeleteDialog(false);
+      await actions.logout();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
 
   return (
@@ -354,14 +467,24 @@ export default function ProfilePage() {
             {/* Account Actions */}
             <div className="space-y-4 mb-12">
               <button
-                className="w-full px-8 py-3 bg-white/10 text-white font-heading font-semibold text-sm tracking-wide hover:bg-white/20 transition-all duration-300 border border-white/20"
+                onClick={() => {
+                  playClickSound();
+                  setShowChangePasswordDialog(true);
+                }}
+                className="w-full px-8 py-3 bg-white/10 text-white font-heading font-semibold text-sm tracking-wide hover:bg-white/20 transition-all duration-300 border border-white/20 flex items-center justify-center gap-2"
               >
+                <Lock className="w-4 h-4" />
                 Change Password
               </button>
               
               <button
-                className="w-full px-8 py-3 bg-red-900/20 text-red-300 font-heading font-semibold text-sm tracking-wide hover:bg-red-900/40 transition-all duration-300 border border-red-500/30"
+                onClick={() => {
+                  playClickSound();
+                  setShowDeleteDialog(true);
+                }}
+                className="w-full px-8 py-3 bg-red-900/20 text-red-300 font-heading font-semibold text-sm tracking-wide hover:bg-red-900/40 transition-all duration-300 border border-red-500/30 flex items-center justify-center gap-2"
               >
+                <Trash2 className="w-4 h-4" />
                 Delete Account
               </button>
             </div>
@@ -380,6 +503,174 @@ export default function ProfilePage() {
       </main>
 
       <Footer />
+
+      {/* Change Password Dialog */}
+      <AlertDialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
+        <AlertDialogContent className="bg-black border border-white/20 max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white text-2xl font-heading">Change Password</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Enter your current password and choose a new one. Password must be at least 8 characters.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 py-4">
+            {passwordError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-red-900/20 border border-red-500/50 rounded flex items-center gap-2"
+              >
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                <p className="text-sm font-paragraph text-red-200">{passwordError}</p>
+              </motion.div>
+            )}
+
+            {/* Current Password */}
+            <div>
+              <label className="block text-sm font-paragraph text-white/80 mb-2">
+                Current Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:border-white/40 disabled:opacity-50"
+                  placeholder="Enter current password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* New Password */}
+            <div>
+              <label className="block text-sm font-paragraph text-white/80 mb-2">
+                New Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:border-white/40 disabled:opacity-50"
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-paragraph text-white/80 mb-2">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={isChangingPassword}
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:border-white/40 disabled:opacity-50"
+                placeholder="Confirm new password"
+              />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              disabled={isChangingPassword}
+              className="bg-white/10 text-white hover:bg-white/20 border-white/20"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleChangePassword}
+              disabled={isChangingPassword}
+              className="bg-white text-black hover:bg-white/90 disabled:opacity-50"
+            >
+              {isChangingPassword ? 'Updating...' : 'Update Password'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Account Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-black border border-red-500/30 max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-400 text-2xl font-heading">Delete Account</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              This action cannot be undone. All your data will be permanently deleted. Please enter your password to confirm.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 py-4">
+            {deleteError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-red-900/20 border border-red-500/50 rounded flex items-center gap-2"
+              >
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                <p className="text-sm font-paragraph text-red-200">{deleteError}</p>
+              </motion.div>
+            )}
+
+            <div>
+              <label className="block text-sm font-paragraph text-white/80 mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showDeletePassword ? 'text' : 'password'}
+                  value={deleteConfirmPassword}
+                  onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                  disabled={isDeletingAccount}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:border-white/40 disabled:opacity-50"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDeletePassword(!showDeletePassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              disabled={isDeletingAccount}
+              className="bg-white/10 text-white hover:bg-white/20 border-white/20"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              disabled={isDeletingAccount}
+              className="bg-red-900 text-white hover:bg-red-800 disabled:opacity-50"
+            >
+              {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
