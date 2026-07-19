@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
-import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 export default function WorkPage() {
-  const [projects, setProjects] = useState<Portfolio[]>([]);
+  const [projects, setProjects] = useState<Portfolio[]>([]);;
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -17,7 +15,7 @@ export default function WorkPage() {
         const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 100 });
         setProjects(data.items || []);
       } catch (error) {
-        console.error('Error loading projects:', error);
+        // Silently fail
       } finally {
         setIsLoading(false);
       }
@@ -27,10 +25,10 @@ export default function WorkPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black">
       <Header />
 
-      <main className="w-full max-w-[100rem] mx-auto px-6 md:px-8 py-20 pt-32">
+      <main className="w-full max-w-[100rem] mx-auto px-6 md:px-8 py-20">
         {/* Page Title */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -68,38 +66,33 @@ export default function WorkPage() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
             {projects.map((project, index) => (
-              <Link
+              <motion.div
                 key={project._id}
-                to={`/portfolio/${project._id}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="group cursor-pointer"
               >
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="group cursor-pointer h-full"
-                >
-                  <div className="overflow-hidden bg-white/5 hover:bg-white/10 transition-colors rounded-lg h-64">
-                    {project.mainImage && (
-                      <Image
-                        src={project.mainImage}
-                        alt={project.imageAltText || project.projectName || 'Project'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        width={400}
-                      />
-                    )}
-                  </div>
-                  <div className="mt-4">
-                    <h3 className="text-lg font-heading font-bold text-white group-hover:text-primary transition-colors">
-                      {project.projectName}
-                    </h3>
-                    {project.shortDescription && (
-                      <p className="text-sm font-paragraph text-white/60 mt-2 line-clamp-2">
-                        {project.shortDescription}
-                      </p>
-                    )}
-                  </div>
-                </motion.div>
-              </Link>
+                <div className="overflow-hidden bg-white/5 hover:bg-white/10 transition-colors">
+                  {project.mainImage && (
+                    <img
+                      src={project.mainImage}
+                      alt={project.projectName || 'Project'}
+                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  )}
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-lg font-heading font-bold text-white group-hover:text-primary transition-colors">
+                    {project.projectName}
+                  </h3>
+                  {project.shortDescription && (
+                    <p className="text-sm font-paragraph text-white/60 mt-2 line-clamp-2">
+                      {project.shortDescription}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
             ))}
           </motion.div>
         )}
