@@ -4,6 +4,29 @@
  */
 
 /**
+ * Collection ID: apiratelimits
+ * Interface for APIRateLimits
+ */
+export interface APIRateLimits {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  identifier?: string;
+  /** @wixFieldType text */
+  endpoint?: string;
+  /** @wixFieldType datetime */
+  attemptedAt?: Date | string;
+  /** @wixFieldType boolean */
+  success?: boolean;
+  /** @wixFieldType text */
+  ipAddress?: string;
+  /** @wixFieldType text */
+  userAgent?: string;
+}
+
+
+/**
  * Collection ID: blogposts
  * Interface for BlogPosts
  */
@@ -154,6 +177,27 @@ export interface HomepageImages {
   lastUpdated?: Date | string;
   /** @wixFieldType boolean */
   isActive?: boolean;
+}
+
+
+/**
+ * Collection ID: passwordchangelog
+ * Interface for PasswordChangeLog
+ */
+export interface PasswordChangeLog {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  memberId?: string;
+  /** @wixFieldType datetime */
+  attemptedAt?: Date | string;
+  /** @wixFieldType boolean */
+  success?: boolean;
+  /** @wixFieldType text */
+  userAgent?: string;
+  /** @wixFieldType text */
+  ipAddress?: string;
 }
 
 
