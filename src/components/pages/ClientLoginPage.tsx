@@ -1,88 +1,66 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { useMember } from '@/integrations';
-import { useSessionRateLimit } from '@/hooks/useSessionRateLimit';
+import { Lock, Mail, AlertCircle } from 'lucide-react';
+import { BaseCrudService } from '@/integrations';
+import { useAuthStore } from '@/lib/clientAuthStore';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { SEOHead } from '@/components/SEOHead';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ClientProofingGalleries } from '@/entities';
 
-export default function ClientLoginPageContent() {
+export default function ClientLoginPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { actions } = useMember();
-  const { recordAttempt, isLocked, remainingLockoutSec } = useSessionRateLimit('login', 5, 300000, 900000);
-  
+  const { setClientSession } = useAuthStore();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [honeypot, setHoneypot] = useState('');
+  const [accessCode, setAccessCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [errorType, setErrorType] = useState<'network' | 'credentials' | 'rate-limited' | 'unknown' | null>(null);
-
-  // Check for action=change-password in URL
-  const isChangePasswordFlow = searchParams.get('action') === 'change-password';
-  const returnTo = searchParams.get('returnTo') || '/profile';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setErrorType(null);
-
-    // Honeypot check
-    if (honeypot) {
-      console.warn('[ClientLogin] Honeypot triggered');
-      return;
-    }
-
-    // Rate limit check
-    if (isLocked) {
-      setError(`Too many attempts. Please wait ${remainingLockoutSec} seconds.`);
-      setErrorType('rate-limited');
-      return;
-    }
-
-    recordAttempt();
     setIsLoading(true);
 
     try {
-      // If this is a change-password flow, use the backend endpoint
-      if (isChangePasswordFlow) {
-        // Call backend endpoint to authenticate and generate token
-        const tokenResponse = await fetch('/api/auth/login-for-change-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
+      const result = await BaseCrudService.getAll<ClientProofingGalleries>('clientgalleries', {}, { limit: 100 });
+      const galleries = result.items || [];
 
-        if (!tokenResponse.ok) {
-          const errorData = await tokenResponse.json();
-          throw new Error(errorData.message || 'Authentication failed');
-        }
+      const gallery = galleries.find(
+        (g) =>
+          g.clientEmail?.toLowerCase() === email.toLowerCase() &&
+          g.galleryAccessCode === accessCode.toUpperCase()
+      );
 
-        const tokenData = await tokenResponse.json();
-        
-        // Store token in sessionStorage for ProfilePage to retrieve
-        sessionStorage.setItem('pending_password_change_token', tokenData.token);
-        
-        // Redirect to profile
-        navigate(returnTo);
-      } else {
-        // Standard login flow - use Wix Members login via the integration
-        await actions.login(email, password);
-        
-        // Redirect to returnTo URL (usually /profile)
-        navigate(returnTo);
+      if (!gallery) {
+        setError('Invalid email or access code. Please try again.');
+        setIsLoading(false);
+        return;
       }
+
+      // Check if gallery is expired
+      if (gallery.galleryExpirationDate) {
+        const expirationDate = new Date(gallery.galleryExpirationDate);
+        if (expirationDate < new Date()) {
+          setError('This gallery has expired. Please contact the photographer.');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Set client session
+      setClientSession({
+        clientEmail: gallery.clientEmail || '',
+        galleryId: gallery._id,
+        clientName: gallery.clientName || '',
+      });
+
+      // Redirect to client gallery view
+      navigate(`/client-gallery/${gallery._id}`);
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Login error:', err);
       }
-      setError('Invalid email or password. Please try again.');
-      setErrorType('credentials');
+      setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +68,6 @@ export default function ClientLoginPageContent() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <SEOHead title="Client Access" description="Sign in to view your gallery" noindex nofollow />
       <Header />
 
       <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20">
@@ -111,7 +88,7 @@ export default function ClientLoginPageContent() {
                 Client Access
               </h1>
               <p className="text-lg text-white/60">
-                {isChangePasswordFlow ? 'Confirm your password to make account changes' : 'Sign in to view your gallery'}
+                Sign in to view your gallery
               </p>
             </motion.div>
 
@@ -131,12 +108,7 @@ export default function ClientLoginPageContent() {
                   className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3"
                 >
                   <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-red-300">
-                    <p>{error}</p>
-                    {errorType === 'rate-limited' && (
-                      <p className="text-xs text-red-400 mt-1">Please wait before trying again.</p>
-                    )}
-                  </div>
+                  <p className="text-sm text-red-300">{error}</p>
                 </motion.div>
               )}
 
@@ -152,56 +124,40 @@ export default function ClientLoginPageContent() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    autoComplete="email"
                     required
                     className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300"
                   />
                 </div>
               </div>
 
-              {/* Password Input */}
+              {/* Access Code Input */}
               <div>
                 <label className="block text-sm font-heading font-bold text-white mb-2 uppercase tracking-wide">
-                  Password
+                  Access Code
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                   <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    autoComplete="current-password"
+                    type="text"
+                    value={accessCode}
+                    onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                    placeholder="Enter your code"
                     required
-                    className="w-full pl-12 pr-12 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300"
+                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300 font-mono tracking-widest"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
                 </div>
+                <p className="text-xs text-white/40 mt-2">
+                  Check your email for your unique access code
+                </p>
               </div>
-
-              {/* Honeypot (hidden) */}
-              <input
-                type="text"
-                value={honeypot}
-                onChange={(e) => setHoneypot(e.target.value)}
-                style={{ display: 'none' }}
-                tabIndex={-1}
-                autoComplete="off"
-              />
 
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isLoading || isLocked || !email || !password}
+                disabled={isLoading || !email || !accessCode}
                 className="w-full py-3 bg-white text-black font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
               >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {isLoading ? 'Verifying...' : 'Sign In'}
               </button>
             </motion.form>
 
@@ -213,9 +169,9 @@ export default function ClientLoginPageContent() {
               className="mt-8 p-4 bg-white/5 border border-white/10 rounded-lg text-center"
             >
               <p className="text-sm text-white/60">
-                Don't have an account?{' '}
-                <a href="/client-register" className="text-white hover:text-white/80 transition-colors font-bold">
-                  Create one
+                Don't have an access code?{' '}
+                <a href="#contact" className="text-white hover:text-white/80 transition-colors font-bold">
+                  Contact us
                 </a>
               </p>
             </motion.div>
@@ -225,13 +181,5 @@ export default function ClientLoginPageContent() {
 
       <Footer />
     </div>
-  );
-}
-
-export default function ClientLoginPage() {
-  return (
-    <ErrorBoundary>
-      <ClientLoginPageContent />
-    </ErrorBoundary>
   );
 }

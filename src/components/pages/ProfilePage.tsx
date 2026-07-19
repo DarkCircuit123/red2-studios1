@@ -1,98 +1,25 @@
 import { useMember } from '@/integrations';
-import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
-import { LogOut, Mail, Calendar, Lock, Edit2, Check, X, AlertCircle, Eye, Trash2 } from 'lucide-react';
+import { LogOut, Mail, Calendar, MapPin, Edit2, Check, X, AlertCircle } from 'lucide-react';
 import { Image } from '@/components/ui/image';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
 import { useState, useEffect } from 'react';
-import { ClientProofingGalleries } from '@/entities';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 export default function ProfilePage() {
   const { member, actions } = useMember();
-  const navigate = useNavigate();
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(member?.profile?.nickname || member?.contact?.firstName || '');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [galleries, setGalleries] = useState<ClientProofingGalleries[]>([]);
-  const [galleriesLoading, setGalleriesLoading] = useState(true);
-  
-  // Password change state - NEW FLOW: only new password fields, no current password
-  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [pendingToken, setPendingToken] = useState<string | null>(null);
-  
-  // Delete account state
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [showDeletePassword, setShowDeletePassword] = useState(false);
 
   // Update editedName when member changes
   useEffect(() => {
     setEditedName(member?.profile?.nickname || member?.contact?.firstName || '');
   }, [member?.profile?.nickname, member?.contact?.firstName]);
-
-  // Check for pending password change token in sessionStorage on mount
-  // This token is set by ClientLoginPage after successful login with action=change-password
-  useEffect(() => {
-    const token = sessionStorage.getItem('pending_password_change_token');
-    if (token) {
-      setPendingToken(token);
-      setShowChangePasswordDialog(true);
-      // Clear the token from sessionStorage so it's not reused
-      sessionStorage.removeItem('pending_password_change_token');
-    }
-  }, []);
-
-  // Load galleries for this member
-  useEffect(() => {
-    const loadGalleries = async () => {
-      if (!member?.loginEmail) {
-        setGalleriesLoading(false);
-        return;
-      }
-
-      try {
-        const result = await BaseCrudService.getAll<ClientProofingGalleries>(
-          'clientgalleries',
-          {},
-          { limit: 100 }
-        );
-
-        const memberGalleries = (result.items || []).filter(
-          (g) => g.clientEmail?.toLowerCase() === member.loginEmail.toLowerCase()
-        );
-
-        setGalleries(memberGalleries);
-      } catch (err) {
-        console.error('Failed to load galleries:', err);
-      } finally {
-        setGalleriesLoading(false);
-      }
-    };
-
-    loadGalleries();
-  }, [member?.loginEmail]);
 
   const handleLogout = () => {
     playClickSound();
@@ -142,99 +69,6 @@ export default function ProfilePage() {
   const handleCancelEdit = () => {
     setEditedName(member?.profile?.nickname || member?.contact?.firstName || '');
     setIsEditingName(false);
-  };
-
-  // NEW FLOW: Password change only requires new password (no current password field)
-  // The current password was already verified via real Wix login in ClientLoginPage
-  const handleChangePassword = async () => {
-    setPasswordError(null);
-    
-    // Validation
-    if (!newPassword.trim()) {
-      setPasswordError('New password is required');
-      return;
-    }
-    if (newPassword.length < 8) {
-      setPasswordError('New password must be at least 8 characters');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError('Passwords do not match');
-      return;
-    }
-
-    if (!pendingToken) {
-      setPasswordError('Authentication token missing. Please log in again.');
-      return;
-    }
-
-    setIsChangingPassword(true);
-    try {
-      // POST to /api/auth/update-password with token and new password
-      const updateResponse = await fetch('/api/auth/update-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: pendingToken,
-          newPassword,
-        }),
-      });
-
-      if (!updateResponse.ok) {
-        const updateData = await updateResponse.json();
-        throw new Error(updateData.message || 'Failed to update password');
-      }
-
-      setSuccess(true);
-      setShowChangePasswordDialog(false);
-      setNewPassword('');
-      setConfirmPassword('');
-      setPendingToken(null);
-      
-      // Force re-login after password change
-      setTimeout(() => {
-        setSuccess(false);
-        actions.logout();
-      }, 2000);
-    } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to update password');
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    setDeleteError(null);
-
-    if (!deleteConfirmPassword.trim()) {
-      setDeleteError('Password is required to delete account');
-      return;
-    }
-
-    setIsDeletingAccount(true);
-    try {
-      // Use the Wix Members API to delete account
-      const response = await fetch('/api/auth/delete-account', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          password: deleteConfirmPassword,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to delete account');
-      }
-
-      // Account deleted successfully, logout
-      setShowDeleteDialog(false);
-      await actions.logout();
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
-    } finally {
-      setIsDeletingAccount(false);
-    }
   };
 
   return (
@@ -385,6 +219,19 @@ export default function ProfilePage() {
             {/* Quick Links */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
               <Link
+                to="/galleries"
+                onClick={playClickSound}
+                className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors block"
+              >
+                <h3 className="text-lg font-heading font-bold text-white mb-2">
+                  My Galleries
+                </h3>
+                <p className="text-sm font-paragraph text-white/60">
+                  Access your proofing galleries and approved images
+                </p>
+              </Link>
+
+              <Link
                 to="/booking"
                 onClick={playClickSound}
                 className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors block"
@@ -396,118 +243,6 @@ export default function ProfilePage() {
                   Schedule your next photography session
                 </p>
               </Link>
-
-              <Link
-                to="/contact"
-                onClick={playClickSound}
-                className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors block"
-              >
-                <h3 className="text-lg font-heading font-bold text-white mb-2">
-                  Contact Support
-                </h3>
-                <p className="text-sm font-paragraph text-white/60">
-                  Get help or ask questions
-                </p>
-              </Link>
-            </div>
-
-            {/* Your Galleries Section */}
-            <div className="mb-12">
-              <h2 className="text-3xl font-heading font-bold text-white mb-6">Your Galleries</h2>
-              
-              {galleriesLoading ? (
-                <div className="p-8 bg-white/5 border border-white/10 text-center">
-                  <p className="text-white/60">Loading galleries...</p>
-                </div>
-              ) : galleries.length === 0 ? (
-                <div className="p-8 bg-white/5 border border-white/10 text-center">
-                  <p className="text-white/60">No galleries available yet. Check back soon!</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {galleries.map((gallery) => {
-                    const isExpired = gallery.galleryExpirationDate 
-                      ? new Date(gallery.galleryExpirationDate) < new Date()
-                      : false;
-                    
-                    return (
-                      <motion.div
-                        key={gallery._id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-6 bg-white/5 border border-white/10 hover:border-white/30 transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-lg font-heading font-bold text-white">
-                                {gallery.clientName || 'Gallery'}
-                              </h3>
-                              {gallery.requiresPin && (
-                                <Lock className="w-4 h-4 text-yellow-400" title="PIN required" />
-                              )}
-                            </div>
-                            
-                            <div className="space-y-2 text-sm text-white/60">
-                              {gallery.galleryExpirationDate && (
-                                <p>
-                                  Expires: {new Date(gallery.galleryExpirationDate).toLocaleDateString()}
-                                </p>
-                              )}
-                              <p>
-                                Status:{' '}
-                                <span className={`font-semibold ${
-                                  isExpired ? 'text-red-400' : 'text-green-400'
-                                }`}>
-                                  {isExpired ? 'Expired' : gallery.approvalStatus || 'Active'}
-                                </span>
-                              </p>
-                            </div>
-                          </div>
-
-                          {!isExpired && (
-                            <Link
-                              to={`/gallery/${gallery._id}`}
-                              onClick={playClickSound}
-                              className="px-6 py-2 bg-white text-black font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
-                            >
-                              <Eye className="w-4 h-4" />
-                              View
-                            </Link>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Account Actions */}
-            <div className="space-y-4 mb-12">
-              <button
-                onClick={() => {
-                  playClickSound();
-                  // Navigate to login with change-password action
-                  // This redirects to login page where user proves identity via real Wix login
-                  navigate('/client-login?returnTo=/profile&action=change-password');
-                }}
-                className="w-full px-8 py-3 bg-white/10 text-white font-heading font-semibold text-sm tracking-wide hover:bg-white/20 transition-all duration-300 border border-white/20 flex items-center justify-center gap-2"
-              >
-                <Lock className="w-4 h-4" />
-                Change Password
-              </button>
-              
-              <button
-                onClick={() => {
-                  playClickSound();
-                  setShowDeleteDialog(true);
-                }}
-                className="w-full px-8 py-3 bg-red-900/20 text-red-300 font-heading font-semibold text-sm tracking-wide hover:bg-red-900/40 transition-all duration-300 border border-red-500/30 flex items-center justify-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Account
-              </button>
             </div>
 
             {/* Logout Button */}
@@ -524,150 +259,6 @@ export default function ProfilePage() {
       </main>
 
       <Footer />
-
-      {/* Change Password Dialog - NEW FLOW: Only new password fields */}
-      <AlertDialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
-        <AlertDialogContent className="bg-black border border-white/20 max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white text-2xl font-heading">Set New Password</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
-              You've confirmed your identity. Now choose a new password. Must be at least 8 characters.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <div className="space-y-4 py-4">
-            {passwordError && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-red-900/20 border border-red-500/50 rounded flex items-center gap-2"
-              >
-                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <p className="text-sm font-paragraph text-red-200">{passwordError}</p>
-              </motion.div>
-            )}
-
-            {/* New Password */}
-            <div>
-              <label className="block text-sm font-paragraph text-white/80 mb-2">
-                New Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  disabled={isChangingPassword}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:border-white/40 disabled:opacity-50"
-                  placeholder="Enter new password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label className="block text-sm font-paragraph text-white/80 mb-2">
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={isChangingPassword}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:border-white/40 disabled:opacity-50"
-                placeholder="Confirm new password"
-              />
-            </div>
-          </div>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel 
-              disabled={isChangingPassword}
-              className="bg-white/10 text-white hover:bg-white/20 border-white/20"
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleChangePassword}
-              disabled={isChangingPassword}
-              className="bg-white text-black hover:bg-white/90 disabled:opacity-50"
-            >
-              {isChangingPassword ? 'Updating...' : 'Update Password'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete Account Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-black border border-red-500/30 max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-red-400 text-2xl font-heading">Delete Account</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
-              This action cannot be undone. All your data will be permanently deleted. Please enter your password to confirm.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <div className="space-y-4 py-4">
-            {deleteError && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-red-900/20 border border-red-500/50 rounded flex items-center gap-2"
-              >
-                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <p className="text-sm font-paragraph text-red-200">{deleteError}</p>
-              </motion.div>
-            )}
-
-            <div>
-              <label className="block text-sm font-paragraph text-white/80 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showDeletePassword ? 'text' : 'password'}
-                  value={deleteConfirmPassword}
-                  onChange={(e) => setDeleteConfirmPassword(e.target.value)}
-                  disabled={isDeletingAccount}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:border-white/40 disabled:opacity-50"
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowDeletePassword(!showDeletePassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel 
-              disabled={isDeletingAccount}
-              className="bg-white/10 text-white hover:bg-white/20 border-white/20"
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteAccount}
-              disabled={isDeletingAccount}
-              className="bg-red-900 text-white hover:bg-red-800 disabled:opacity-50"
-            >
-              {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

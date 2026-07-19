@@ -1,127 +1,118 @@
-import React, { useMemo } from 'react';
-import {
-  detectVideoPlatform,
-  extractYouTubeId,
-  extractVimeoId,
-  getPlatformName,
-  getCanonicalVideoUrl,
-} from '@/lib/videoPlatform';
+import { useState, useEffect, useMemo } from 'react';
 
 interface VideoPlayerProps {
   url: string;
   poster?: string;
   title?: string;
-  autoplay?: boolean;
-  className?: string;
 }
 
-export default function VideoPlayer({
-  url,
-  poster,
-  title = 'Video',
-  autoplay = false,
-  className = '',
-}: VideoPlayerProps) {
-  const platform = useMemo(() => detectVideoPlatform(url), [url]);
+/**
+ * Robust VideoPlayer component supporting YouTube, Vimeo, and HTML5 video
+ * Uses regex patterns for reliable URL parsing and includes poster support
+ */
+export default function VideoPlayer({ url, poster, title = 'Video player' }: VideoPlayerProps) {
+  const [playerType, setPlayerType] = useState<'youtube' | 'vimeo' | 'html5' | null>(null);
+  const [videoId, setVideoId] = useState<string | null>(null);
 
-  if (platform === 'youtube') {
-    const videoId = extractYouTubeId(url);
-    if (!videoId) {
-      return (
-        <div className={`bg-black rounded-lg flex items-center justify-center ${className}`}>
-          <p className="text-white text-sm">Invalid YouTube URL</p>
-        </div>
-      );
+  // Robust regex patterns for video URL parsing
+  const YOUTUBE_REGEX = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?([a-zA-Z0-9_-]{11})/;
+  const VIMEO_REGEX = /(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(\d+)/;
+  const HTML5_VIDEO_REGEX = /\.(mp4|webm|ogg|mov|avi)$/i;
+
+  useEffect(() => {
+    if (!url) {
+      setPlayerType(null);
+      setVideoId(null);
+      return;
     }
 
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?${autoplay ? 'autoplay=1' : ''}`;
+    // YouTube detection and ID extraction
+    const youtubeMatch = url.match(YOUTUBE_REGEX);
+    if (youtubeMatch && youtubeMatch[1]) {
+      setPlayerType('youtube');
+      setVideoId(youtubeMatch[1]);
+      return;
+    }
 
+    // Vimeo detection and ID extraction
+    const vimeoMatch = url.match(VIMEO_REGEX);
+    if (vimeoMatch && vimeoMatch[1]) {
+      setPlayerType('vimeo');
+      setVideoId(vimeoMatch[1]);
+      return;
+    }
+
+    // HTML5 video detection
+    if (HTML5_VIDEO_REGEX.test(url)) {
+      setPlayerType('html5');
+      setVideoId(null);
+      return;
+    }
+
+    // Fallback: treat as HTML5 if it looks like a URL
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      setPlayerType('html5');
+      setVideoId(null);
+      return;
+    }
+
+    setPlayerType(null);
+    setVideoId(null);
+  }, [url]);
+
+  const iframeAttrs = useMemo(
+    () => ({
+      allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+      allowFullScreen: true,
+      loading: 'lazy' as const,
+      referrerPolicy: 'strict-origin-when-cross-origin' as const,
+    }),
+    []
+  );
+
+  if (!playerType || !url) return null;
+
+  if (playerType === 'youtube' && videoId) {
     return (
-      <div className={`relative w-full bg-black rounded-lg overflow-hidden ${className}`}>
-        <div className="aspect-video">
-          <iframe
-            src={embedUrl}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full border-0"
-          />
-        </div>
+      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden mb-12">
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+          title={title}
+          className="w-full h-full"
+          {...iframeAttrs}
+        />
       </div>
     );
   }
 
-  if (platform === 'vimeo') {
-    const videoId = extractVimeoId(url);
-    if (!videoId) {
-      return (
-        <div className={`bg-black rounded-lg flex items-center justify-center ${className}`}>
-          <p className="text-white text-sm">Invalid Vimeo URL</p>
-        </div>
-      );
-    }
-
-    const embedUrl = `https://player.vimeo.com/video/${videoId}?${autoplay ? 'autoplay=1' : ''}`;
-
+  if (playerType === 'vimeo' && videoId) {
     return (
-      <div className={`relative w-full bg-black rounded-lg overflow-hidden ${className}`}>
-        <div className="aspect-video">
-          <iframe
-            src={embedUrl}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full border-0"
-          />
-        </div>
+      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden mb-12">
+        <iframe
+          src={`https://player.vimeo.com/video/${videoId}`}
+          title={title}
+          className="w-full h-full"
+          {...iframeAttrs}
+        />
       </div>
     );
   }
 
-  // HTML5 video
-  if (platform === 'html5') {
-    const getMimeType = (url: string): string => {
-      if (url.endsWith('.mp4')) return 'video/mp4';
-      if (url.endsWith('.webm')) return 'video/webm';
-      if (url.endsWith('.ogg')) return 'video/ogg';
-      if (url.endsWith('.mov')) return 'video/quicktime';
-      return 'video/mp4';
-    };
-
+  if (playerType === 'html5') {
     return (
-      <div className={`relative w-full bg-black rounded-lg overflow-hidden ${className}`}>
+      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden mb-12">
         <video
           controls
-          preload="metadata"
-          poster={poster}
-          autoPlay={autoplay}
           className="w-full h-full"
+          poster={poster}
+          title={title}
         >
-          <source src={url} type={getMimeType(url)} />
+          <source src={url} type={url.endsWith('.webm') ? 'video/webm' : url.endsWith('.ogg') ? 'video/ogg' : 'video/mp4'} />
           Your browser does not support the video tag.
         </video>
       </div>
     );
   }
 
-  // Unknown platform
-  return (
-    <div className={`bg-black rounded-lg flex items-center justify-center ${className}`}>
-      <p className="text-white text-sm">Unsupported video format</p>
-    </div>
-  );
-}
-
-/**
- * Get canonical URL for a video (useful for "Watch on X" links)
- */
-export function getCanonicalUrl(url: string): string | null {
-  return getCanonicalVideoUrl(url);
-}
-
-/**
- * Get platform name for display
- */
-export function getPlatformDisplayName(url: string): string {
-  return getPlatformName(url);
+  return null;
 }

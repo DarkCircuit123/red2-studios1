@@ -13,8 +13,6 @@ import ProfilePage from './pages/ProfilePage';
 import PrivatePage from './pages/PrivatePage';
 import HangmanGamePage from './pages/HangmanGamePage';
 import ClientRegisterPage from './pages/ClientRegisterPage';
-import ClientLoginPage from './pages/ClientLoginPage';
-import ClientGalleryDashboardPage from './pages/ClientGalleryDashboardPage';
 import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
@@ -80,18 +78,6 @@ const router = createBrowserRouter([
       {
         path: "client-register",
         element: <ClientRegisterPage />,
-      },
-      {
-        path: "client-login",
-        element: <ClientLoginPage />,
-      },
-      {
-        path: "client-gallery-dashboard",
-        element: (
-          <MemberProtectedRoute>
-            <ClientGalleryDashboardPage />
-          </MemberProtectedRoute>
-        ),
       },
       {
         path: "work",

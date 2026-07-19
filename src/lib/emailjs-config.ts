@@ -1,150 +1,77 @@
 /**
- * EmailJS configuration and typed send helpers
- * Single source of truth for EmailJS keys and service methods
+ * EmailJS Configuration
+ * 
+ * SETUP INSTRUCTIONS:
+ * 1. Go to https://www.emailjs.com/
+ * 2. Sign up for a free account
+ * 3. Add a new Email Service (Gmail, Outlook, or custom SMTP)
+ * 4. Create two Email Templates:
+ *    - Template ID: "booking_admin_notification"
+ *    - Template ID: "booking_customer_confirmation"
+ * 5. Copy your Service ID, Public Key, and Template IDs below
+ * 
+ * PLACEHOLDER VALUES - REPLACE WITH YOUR ACTUAL CREDENTIALS
  */
 
-// EmailJS configuration
-const EMAILJS_SERVICE_ID = process.env.REACT_APP_EMAILJS_SERVICE_ID || '';
-const EMAILJS_PUBLIC_KEY = process.env.REACT_APP_EMAILJS_PUBLIC_KEY || '';
-const EMAILJS_BOOKING_ADMIN_TEMPLATE = process.env.REACT_APP_EMAILJS_BOOKING_ADMIN_TEMPLATE || '';
-const EMAILJS_BOOKING_CUSTOMER_TEMPLATE = process.env.REACT_APP_EMAILJS_BOOKING_CUSTOMER_TEMPLATE || '';
-const EMAILJS_MEMBER_VERIFICATION_TEMPLATE = process.env.REACT_APP_EMAILJS_MEMBER_VERIFICATION_TEMPLATE || '';
-
-// Validate configuration on load
-if (!EMAILJS_SERVICE_ID || !EMAILJS_PUBLIC_KEY) {
-  console.warn('[emailjs-config] Missing EmailJS configuration. Email features will be disabled.');
-}
-
-interface EmailPayload {
-  [key: string]: any;
-}
-
-/**
- * Send booking confirmation email to admin
- */
-export async function sendBookingAdminEmail(payload: EmailPayload): Promise<boolean> {
-  if (!EMAILJS_SERVICE_ID || !EMAILJS_PUBLIC_KEY || !EMAILJS_BOOKING_ADMIN_TEMPLATE) {
-    console.warn('[emailjs] Booking admin email skipped - missing configuration');
-    return false;
-  }
-
-  try {
-    // Dynamic import to avoid issues if emailjs is not available
-    const emailjs = await import('@emailjs/browser');
+export const EMAILJS_CONFIG = {
+  // Your EmailJS Public Key (found in Account > API Keys)
+  PUBLIC_KEY: 'pvYRte4VcD3xgNO_B',
+  
+  // Your EmailJS Service ID (found in Email Services)
+  SERVICE_ID: 'service_hfiysjg',
+  
+  // Template IDs for booking emails
+  TEMPLATES: {
+    // Admin notification when booking is submitted
+    ADMIN_NOTIFICATION: 'booking_admin_notification',
     
-    if (!emailjs.default.init) {
-      emailjs.default.init(EMAILJS_PUBLIC_KEY);
-    }
-
-    await emailjs.default.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_BOOKING_ADMIN_TEMPLATE,
-      payload
-    );
-
-    return true;
-  } catch (err) {
-    console.error('[emailjs] Failed to send booking admin email:', err);
-    return false;
-  }
-}
-
-/**
- * Send booking confirmation email to customer
- */
-export async function sendBookingCustomerEmail(payload: EmailPayload): Promise<boolean> {
-  if (!EMAILJS_SERVICE_ID || !EMAILJS_PUBLIC_KEY || !EMAILJS_BOOKING_CUSTOMER_TEMPLATE) {
-    console.warn('[emailjs] Booking customer email skipped - missing configuration');
-    return false;
-  }
-
-  try {
-    const emailjs = await import('@emailjs/browser');
-    
-    if (!emailjs.default.init) {
-      emailjs.default.init(EMAILJS_PUBLIC_KEY);
-    }
-
-    await emailjs.default.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_BOOKING_CUSTOMER_TEMPLATE,
-      payload
-    );
-
-    return true;
-  } catch (err) {
-    console.error('[emailjs] Failed to send booking customer email:', err);
-    return false;
-  }
-}
-
-/**
- * Send member verification email
- */
-export async function sendMemberVerificationEmail(payload: EmailPayload): Promise<boolean> {
-  if (!EMAILJS_SERVICE_ID || !EMAILJS_PUBLIC_KEY || !EMAILJS_MEMBER_VERIFICATION_TEMPLATE) {
-    console.warn('[emailjs] Member verification email skipped - missing configuration');
-    return false;
-  }
-
-  try {
-    const emailjs = await import('@emailjs/browser');
-    
-    if (!emailjs.default.init) {
-      emailjs.default.init(EMAILJS_PUBLIC_KEY);
-    }
-
-    await emailjs.default.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_MEMBER_VERIFICATION_TEMPLATE,
-      payload
-    );
-
-    return true;
-  } catch (err) {
-    console.error('[emailjs] Failed to send member verification email:', err);
-    return false;
-  }
-}
-
-/**
- * Generic email send function
- */
-export async function sendEmail(
-  templateId: string,
-  payload: EmailPayload
-): Promise<boolean> {
-  if (!EMAILJS_SERVICE_ID || !EMAILJS_PUBLIC_KEY) {
-    console.warn('[emailjs] Email send skipped - missing configuration');
-    return false;
-  }
-
-  try {
-    const emailjs = await import('@emailjs/browser');
-    
-    if (!emailjs.default.init) {
-      emailjs.default.init(EMAILJS_PUBLIC_KEY);
-    }
-
-    await emailjs.default.send(
-      EMAILJS_SERVICE_ID,
-      templateId,
-      payload
-    );
-
-    return true;
-  } catch (err) {
-    console.error('[emailjs] Failed to send email:', err);
-    return false;
-  }
-}
-
-export const emailjsConfig = {
-  serviceId: EMAILJS_SERVICE_ID,
-  publicKey: EMAILJS_PUBLIC_KEY,
-  templates: {
-    bookingAdmin: EMAILJS_BOOKING_ADMIN_TEMPLATE,
-    bookingCustomer: EMAILJS_BOOKING_CUSTOMER_TEMPLATE,
-    memberVerification: EMAILJS_MEMBER_VERIFICATION_TEMPLATE,
+    // Customer confirmation email
+    CUSTOMER_CONFIRMATION: 'booking_customer_confirmation',
   },
+  
+  // Admin email address (where booking notifications are sent)
+  ADMIN_EMAIL: 'admin@red2photography.com',
+  
+  // From email (should match your EmailJS service)
+  FROM_EMAIL: 'noreply@red2photography.com',
+  
+  // From name
+  FROM_NAME: 'RED² Photography',
+};
+
+/**
+ * Email Template Variables Reference
+ * 
+ * ADMIN NOTIFICATION TEMPLATE should use:
+ * - {{client_name}} - Customer's full name
+ * - {{client_email}} - Customer's email
+ * - {{client_phone}} - Customer's phone
+ * - {{booking_date}} - Formatted date (e.g., "Monday, July 13, 2026")
+ * - {{booking_time}} - Time slot (e.g., "10:00 AM - 12:00 PM")
+ * - {{session_type}} - Type of session (e.g., "Portrait Session")
+ * - {{notes}} - Additional notes from customer
+ * - {{submission_time}} - When booking was submitted
+ * 
+ * CUSTOMER CONFIRMATION TEMPLATE should use:
+ * - {{client_name}} - Customer's full name
+ * - {{booking_date}} - Formatted date
+ * - {{booking_time}} - Time slot
+ * - {{session_type}} - Type of session
+ * - {{confirmation_number}} - Unique booking reference
+ * - {{admin_email}} - Admin contact email
+ */
+
+export const validateEmailJSConfig = (): boolean => {
+  const { PUBLIC_KEY, SERVICE_ID } = EMAILJS_CONFIG;
+  
+  if (PUBLIC_KEY === 'YOUR_EMAILJS_PUBLIC_KEY_HERE' || 
+      SERVICE_ID === 'YOUR_EMAILJS_SERVICE_ID_HERE') {
+    console.warn(
+      '⚠️ EmailJS credentials not configured. Bookings will not send emails.\n' +
+      'See src/lib/emailjs-config.ts for setup instructions.'
+    );
+    return false;
+  }
+  
+  return true;
 };
