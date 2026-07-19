@@ -8,6 +8,7 @@ interface SEOHeadProps {
   url?: string;
   type?: 'website' | 'article' | 'video.other' | 'profile';
   noindex?: boolean;
+  nofollow?: boolean;
   schema?: Record<string, any>;
   canonical?: string;
 }
@@ -19,17 +20,22 @@ export default function SEOHead({
   url,
   type = 'website',
   noindex = false,
+  nofollow = false,
   schema,
   canonical,
 }: SEOHeadProps) {
   const siteUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+  
+  let robotsContent = '';
+  if (noindex) robotsContent += 'noindex';
+  if (nofollow) robotsContent += (robotsContent ? ', ' : '') + 'nofollow';
 
   return (
     <Helmet>
       {/* Basic Meta Tags */}
       <title>{title}</title>
       <meta name="description" content={description || ''} />
-      {noindex && <meta name="robots" content="noindex, nofollow" />}
+      {robotsContent && <meta name="robots" content={robotsContent} />}
       {canonical && <link rel="canonical" href={canonical} />}
 
       {/* Open Graph */}

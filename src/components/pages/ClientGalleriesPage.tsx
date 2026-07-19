@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, Mail, AlertCircle } from 'lucide-react';
+import { Lock, AlertCircle } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { useSessionRateLimit } from '@/hooks/useSessionRateLimit';
 import { useAuthStore } from '@/lib/clientAuthStore';
@@ -11,33 +11,26 @@ import { SEOHead } from '@/components/SEOHead';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ClientProofingGalleries } from '@/entities';
 
-export default function ClientLoginPageContent() {
+export default function ClientGalleriesPageContent() {
   const navigate = useNavigate();
-  const { setClientSession } = useAuthStore();
-  const { recordAttempt, isLocked, remainingLockoutSec } = useSessionRateLimit('login', 5, 300000, 900000);
+  const { clientSession } = useAuthStore();
+  const { recordAttempt, isLocked, remainingLockoutSec } = useSessionRateLimit('gallery-access', 5, 60000, 60000);
   
-  const [email, setEmail] = useState('');
   const [accessCode, setAccessCode] = useState('');
-  const [honeypot, setHoneypot] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [errorType, setErrorType] = useState<'network' | 'credentials' | 'expired' | 'rate-limited' | 'unknown' | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAccessGallery = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setErrorType(null);
 
-    // Honeypot check
-    if (honeypot) {
-      console.warn('[ClientLogin] Honeypot triggered');
+    if (isLocked) {
+      setError(`Too many attempts. Please wait ${remainingLockoutSec} seconds.`);
       return;
     }
 
-    // Rate limit check
-    if (isLocked) {
-      setError(`Too many attempts. Please wait ${remainingLockoutSec} seconds.`);
-      setErrorType('rate-limited');
+    if (!clientSession?.clientEmail) {
+      setError('Session expired. Please sign in again.');
       return;
     }
 
@@ -45,7 +38,7 @@ export default function ClientLoginPageContent() {
     setIsLoading(true);
 
     try {
-      // Server-side filtered query: fetch galleries for this email only
+      // Server-side filtered query: return at most one row
       const result = await BaseCrudService.getAll<ClientProofingGalleries>(
         'clientgalleries',
         {},
@@ -56,64 +49,42 @@ export default function ClientLoginPageContent() {
       
       // Log warning if more than expected rows returned
       if (galleries.length > 50) {
-        console.warn(`[ClientLogin] Unexpected gallery count: ${galleries.length}. CMS permissions may need lockdown.`);
+        console.warn(`[ClientGalleries] Unexpected gallery count: ${galleries.length}. CMS permissions may need lockdown.`);
       }
 
       // Filter by email and access code
-      const matchingGalleries = galleries.filter(
+      const gallery = galleries.find(
         (g) =>
-          g.clientEmail?.toLowerCase() === email.toLowerCase() &&
+          g.clientEmail?.toLowerCase() === clientSession.clientEmail.toLowerCase() &&
           g.galleryAccessCode === accessCode.toUpperCase()
       );
 
-      if (matchingGalleries.length === 0) {
-        setError('Invalid email or access code. Please try again.');
-        setErrorType('credentials');
+      if (!gallery) {
+        setError('Invalid access code. Please try again.');
         setIsLoading(false);
         return;
       }
 
-      // Check expiration on all matching galleries
-      const now = new Date();
-      const validGalleries = matchingGalleries.filter((g) => {
-        if (!g.galleryExpirationDate) return true;
-        const expirationDate = new Date(g.galleryExpirationDate);
-        return expirationDate >= now;
-      });
-
-      if (validGalleries.length === 0) {
-        setError('This gallery has expired. Please contact the photographer.');
-        setErrorType('expired');
-        setIsLoading(false);
-        return;
+      // Check expiration
+      if (gallery.galleryExpirationDate) {
+        const expirationDate = new Date(gallery.galleryExpirationDate);
+        if (expirationDate < new Date()) {
+          setError('This gallery has expired. Please contact the photographer.');
+          setIsLoading(false);
+          return;
+        }
       }
 
-      // Create session with full shape and multi-gallery support
-      const sessionId = crypto.randomUUID();
-      const sessionIssuedAt = Date.now();
-      const sessionExpiresAt = sessionIssuedAt + 7 * 24 * 60 * 60 * 1000; // 7 days
-
-      setClientSession({
-        clientEmail: email.toLowerCase(),
-        clientName: validGalleries[0].clientName || '',
-        isAccountLogin: false,
-        galleryIds: validGalleries.map((g) => g._id),
-        sessionIssuedAt,
-        sessionExpiresAt,
-        sessionId,
-      });
-
-      // Store access code in sessionStorage for gallery access
+      // Store access code in sessionStorage
       sessionStorage.setItem('galleryAccessCode', accessCode.toUpperCase());
 
-      // Redirect to gallery access page
-      navigate('/client-gallery-access');
+      // Redirect to gallery dashboard
+      navigate('/client-gallery-dashboard');
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Login error:', err);
+        console.error('Gallery access error:', err);
       }
       setError('An error occurred. Please try again.');
-      setErrorType('network');
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +92,7 @@ export default function ClientLoginPageContent() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <SEOHead title="Client Access" description="Sign in to view your gallery" noindex nofollow />
+      <SEOHead title="Gallery Access" description="Enter your access code" noindex nofollow />
       <Header />
 
       <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20">
@@ -139,19 +110,19 @@ export default function ClientLoginPageContent() {
                 </div>
               </div>
               <h1 className="text-4xl md:text-5xl font-heading font-black text-white mb-4 uppercase">
-                Client Access
+                Gallery Access
               </h1>
               <p className="text-lg text-white/60">
-                Sign in to view your gallery
+                Enter your access code to view your gallery
               </p>
             </motion.div>
 
-            {/* Login Form */}
+            {/* Access Form */}
             <motion.form
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              onSubmit={handleLogin}
+              onSubmit={handleAccessGallery}
               className="space-y-6"
             >
               {/* Error Message */}
@@ -162,36 +133,9 @@ export default function ClientLoginPageContent() {
                   className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3"
                 >
                   <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-red-300">
-                    <p>{error}</p>
-                    {errorType === 'rate-limited' && (
-                      <p className="text-xs text-red-400 mt-1">Please wait before trying again.</p>
-                    )}
-                    {errorType === 'expired' && (
-                      <p className="text-xs text-red-400 mt-1">Contact the photographer for a new access code.</p>
-                    )}
-                  </div>
+                  <p className="text-sm text-red-300">{error}</p>
                 </motion.div>
               )}
-
-              {/* Email Input */}
-              <div>
-                <label className="block text-sm font-heading font-bold text-white mb-2 uppercase tracking-wide">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    autoComplete="email"
-                    required
-                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300"
-                  />
-                </div>
-              </div>
 
               {/* Access Code Input */}
               <div>
@@ -214,23 +158,13 @@ export default function ClientLoginPageContent() {
                 </p>
               </div>
 
-              {/* Honeypot (hidden) */}
-              <input
-                type="text"
-                value={honeypot}
-                onChange={(e) => setHoneypot(e.target.value)}
-                style={{ display: 'none' }}
-                tabIndex={-1}
-                autoComplete="off"
-              />
-
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isLoading || isLocked || !email || !accessCode}
+                disabled={isLoading || isLocked || !accessCode}
                 className="w-full py-3 bg-white text-black font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
               >
-                {isLoading ? 'Verifying...' : 'Sign In'}
+                {isLoading ? 'Verifying...' : 'Access Gallery'}
               </button>
             </motion.form>
 
@@ -242,7 +176,7 @@ export default function ClientLoginPageContent() {
               className="mt-8 p-4 bg-white/5 border border-white/10 rounded-lg text-center"
             >
               <p className="text-sm text-white/60">
-                Don't have an access code?{' '}
+                Need help?{' '}
                 <a href="/contact" className="text-white hover:text-white/80 transition-colors font-bold">
                   Contact us
                 </a>
@@ -257,10 +191,10 @@ export default function ClientLoginPageContent() {
   );
 }
 
-export default function ClientLoginPage() {
+export default function ClientGalleriesPage() {
   return (
     <ErrorBoundary>
-      <ClientLoginPageContent />
+      <ClientGalleriesPageContent />
     </ErrorBoundary>
   );
 }

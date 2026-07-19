@@ -2,10 +2,13 @@ import { create } from 'zustand';
 
 interface ClientSession {
   clientEmail: string;
-  galleryId?: string;
   clientName: string;
   accountId?: string;
   isAccountLogin?: boolean;
+  galleryIds?: string[];
+  sessionIssuedAt: number;
+  sessionExpiresAt: number;
+  sessionId: string;
 }
 
 interface AdminSession {
@@ -54,6 +57,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   logout: () => {
     localStorage.removeItem('clientSession');
     localStorage.removeItem('adminSession');
+    sessionStorage.removeItem('galleryAccessCode');
     set({ clientSession: null, adminSession: null });
   },
 }));
