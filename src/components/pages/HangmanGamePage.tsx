@@ -3,6 +3,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Zap, Trophy, Target, Flame } from 'lucide-react';
 import { CameraIcon, ScissorsIcon, PolaroidIcon } from '@/components/CinemaIcons';
 import { generateRollSequence, easings, formatNumber } from '@/lib/rollStats';
+import AdvancedCasinoEffects from '@/components/AdvancedCasinoEffects';
+import NextGenGraphicsLayer from '@/components/NextGenGraphicsLayer';
+import {
+  AtelierIcon,
+  DarkroomIcon,
+  CatwalkIcon,
+  RedCarpetIcon,
+  SupermodelVaultIcon,
+  VanityIcon,
+} from '@/components/CategoryIconSVGs';
+import {
+  playSlotReelSound,
+  playGlitchSound,
+  playSlowMotionEffect,
+  playNeonExplosionSound,
+  playGoldDustExplosion,
+  playScreenCrumpleSound,
+  playRibbonUnfurlSound,
+  playRhythmicRevealSound,
+  createAudioContext,
+} from '@/lib/advanced-casino-effects';
 import '@/styles/cinema.css';
 
 interface LeaderboardEntry {
@@ -58,6 +79,17 @@ export default function HangmanGamePage() {
   const coinDropCountRef = useRef(0);
   const ambientOscRef = useRef<OscillatorNode | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Advanced casino effects triggers
+  const [triggerSlotReel, setTriggerSlotReel] = useState(false);
+  const [triggerChromatic, setTriggerChromatic] = useState(false);
+  const [triggerSlowMo, setTriggerSlowMo] = useState(false);
+  const [triggerPortal, setTriggerPortal] = useState(false);
+  const [triggerCoinCascade, setTriggerCoinCascade] = useState(false);
+  const [triggerNeonExplosion, setTriggerNeonExplosion] = useState(false);
+  const [triggerGoldDust, setTriggerGoldDust] = useState(false);
+  const [triggerScreenCrumple, setTriggerScreenCrumple] = useState(false);
+  const [triggerRibbon, setTriggerRibbon] = useState(false);
 
   const VIP_TIERS: VIPTier[] = [
     { level: 0, name: 'PLAYER', minScore: 0, color: '#888888', multiplier: 1 },
@@ -191,7 +223,7 @@ export default function HangmanGamePage() {
   // Initialize audio context
   useEffect(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = createAudioContext();
     }
   }, []);
 
@@ -486,17 +518,26 @@ export default function HangmanGamePage() {
     let newWrongGuesses = gameState.wrongGuesses;
 
     if (gameState.word.includes(letter)) {
-      // Correct guess
+      // Correct guess - trigger slot reel effect
+      setTriggerSlotReel(true);
       for (let i = 0; i < gameState.word.length; i++) {
         if (gameState.word[i] === letter) {
           newDisplayWord[i] = letter;
         }
       }
       playSuccessSound();
+      if (audioContextRef.current && soundEnabled) {
+        playSlotReelSound(audioContextRef.current);
+        playRhythmicRevealSound(audioContextRef.current, newGuessed.length);
+      }
     } else {
-      // Wrong guess
+      // Wrong guess - trigger chromatic glitch
+      setTriggerChromatic(true);
       newWrongGuesses++;
       playWrongSound();
+      if (audioContextRef.current && soundEnabled) {
+        playGlitchSound(audioContextRef.current);
+      }
     }
 
     const isWon = !newDisplayWord.includes('_');
@@ -504,12 +545,31 @@ export default function HangmanGamePage() {
 
     if (isLost) {
       playFunnyLosingSound();
+      setTriggerScreenCrumple(true);
+      if (audioContextRef.current && soundEnabled) {
+        playScreenCrumpleSound(audioContextRef.current);
+      }
     }
 
     if (isWon) {
       const score = calculateScore(newWrongGuesses);
       setCurrentScore(score);
       playMegaJackpotSound();
+      
+      // Trigger all celebration effects
+      setTriggerSlowMo(true);
+      setTriggerNeonExplosion(true);
+      setTriggerGoldDust(true);
+      setTriggerRibbon(true);
+      setTriggerCoinCascade(true);
+      
+      if (audioContextRef.current && soundEnabled) {
+        playSlowMotionEffect(audioContextRef.current);
+        playNeonExplosionSound(audioContextRef.current);
+        playGoldDustExplosion(audioContextRef.current);
+        playRibbonUnfurlSound(audioContextRef.current);
+      }
+      
       setShowMegaJackpot(true);
       setTimeout(() => setShowMegaJackpot(false), 6000);
       setTimeout(() => setShowInitialsPrompt(true), 1000);
@@ -718,6 +778,18 @@ export default function HangmanGamePage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-black to-slate-900 overflow-hidden relative">
+      {/* Advanced Casino Effects System */}
+      <AdvancedCasinoEffects
+        triggerSlotReel={triggerSlotReel}
+        triggerChromatic={triggerChromatic}
+        triggerSlowMo={triggerSlowMo}
+        triggerPortal={triggerPortal}
+        triggerCoinCascade={triggerCoinCascade}
+        triggerNeonExplosion={triggerNeonExplosion}
+        triggerGoldDust={triggerGoldDust}
+        triggerScreenCrumple={triggerScreenCrumple}
+        triggerRibbon={triggerRibbon}
+      />
       {/* Enhanced CRT Scanline + Holographic Overlay */}
       <div className="fixed inset-0 pointer-events-none z-40">
         <div className="absolute inset-0" style={{
@@ -1407,11 +1479,16 @@ export default function HangmanGamePage() {
                       />
                       <div className="relative z-10 space-y-4 flex flex-col items-center text-center">
                         <motion.div 
-                          className="text-6xl md:text-7xl font-heading font-black text-cyan-300 group-hover:text-cyan-200 transition-colors"
+                          className="w-24 h-24 md:w-28 md:h-28 text-cyan-300 group-hover:text-cyan-200 transition-colors"
                           animate={{ scale: [1, 1.1, 1] }}
                           transition={{ duration: 2, repeat: Infinity, delay: idx * 0.2 }}
                         >
-                          {meta.icon}
+                          {meta.icon === 'atelier' && <AtelierIcon />}
+                          {meta.icon === 'darkroom' && <DarkroomIcon />}
+                          {meta.icon === 'catwalk' && <CatwalkIcon />}
+                          {meta.icon === 'redcarpet' && <RedCarpetIcon />}
+                          {meta.icon === 'supermodel' && <SupermodelVaultIcon />}
+                          {meta.icon === 'vanity' && <VanityIcon />}
                         </motion.div>
                         <p className="text-xl md:text-2xl font-heading font-black text-cyan-400 group-hover:text-cyan-300 transition-colors uppercase tracking-wider">
                           {meta.name}
