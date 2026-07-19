@@ -59,6 +59,14 @@ export interface ClientProofingGalleries {
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;
+  /** @wixFieldType datetime */
+  pinLastRotatedAt?: Date | string;
+  /** @wixFieldType number */
+  pinRotationCount?: number;
+  /** @wixFieldType text */
+  currentPin?: string;
+  /** @wixFieldType boolean */
+  requiresPin?: boolean;
   /** @wixFieldType text */
   clientName?: string;
   /** @wixFieldType text */
@@ -146,6 +154,27 @@ export interface HomepageImages {
   lastUpdated?: Date | string;
   /** @wixFieldType boolean */
   isActive?: boolean;
+}
+
+
+/**
+ * Collection ID: pinaccesslog
+ * Interface for PINAccessLog
+ */
+export interface PINAccessLog {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  galleryId?: string;
+  /** @wixFieldType text */
+  memberEmail?: string;
+  /** @wixFieldType datetime */
+  attemptedAt?: Date | string;
+  /** @wixFieldType boolean */
+  success?: boolean;
+  /** @wixFieldType text */
+  userAgent?: string;
 }
 
 

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, Mail, User, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { useMember } from '@/integrations';
 import { useSessionRateLimit } from '@/hooks/useSessionRateLimit';
-import { useAuthStore } from '@/lib/clientAuthStore';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { SEOHead } from '@/components/SEOHead';
@@ -11,10 +11,9 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function ClientRegisterPageContent() {
   const navigate = useNavigate();
-  const { setClientSession } = useAuthStore();
+  const { actions } = useMember();
   const { recordAttempt, isLocked, remainingLockoutSec } = useSessionRateLimit('register', 3, 300000, 900000);
   
-  const [clientName, setClientName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -45,11 +44,6 @@ export default function ClientRegisterPageContent() {
     }
 
     // Validation
-    if (!clientName.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-
     if (!email.includes('@')) {
       setError('Please enter a valid email address');
       return;
@@ -74,28 +68,14 @@ export default function ClientRegisterPageContent() {
     setIsLoading(true);
 
     try {
-      // Create session with proper timestamps
-      const sessionId = crypto.randomUUID();
-      const sessionIssuedAt = Date.now();
-      const sessionExpiresAt = sessionIssuedAt + 7 * 24 * 60 * 60 * 1000; // 7 days
-
-      // Set client session with full shape
-      setClientSession({
-        clientEmail: email.toLowerCase(),
-        clientName: clientName.trim(),
-        accountId: sessionId,
-        isAccountLogin: true,
-        galleryIds: [],
-        sessionIssuedAt,
-        sessionExpiresAt,
-        sessionId,
-      });
-
+      // Use Wix Members register via the integration
+      await actions.register(email, password);
+      
       setSuccess(true);
 
       // Redirect after success
       setTimeout(() => {
-        navigate('/client-gallery-access');
+        navigate('/profile');
       }, 1500);
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
@@ -177,25 +157,6 @@ export default function ClientRegisterPageContent() {
                   <p className="text-sm text-red-300">{error}</p>
                 </motion.div>
               )}
-
-              {/* Name Input */}
-              <div>
-                <label className="block text-sm font-heading font-bold text-white mb-2 uppercase tracking-wide">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                  <input
-                    type="text"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Your full name"
-                    autoComplete="name"
-                    required
-                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:bg-white/10 transition-all duration-300"
-                  />
-                </div>
-              </div>
 
               {/* Email Input */}
               <div>
@@ -315,7 +276,7 @@ export default function ClientRegisterPageContent() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isLoading || isLocked || !clientName || !email || !password || !confirmPassword || !tosAccepted || !privacyAccepted}
+                disabled={isLoading || isLocked || !email || !password || !confirmPassword || !tosAccepted || !privacyAccepted}
                 className="w-full py-3 bg-white text-black font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
               >
                 {isLoading ? 'Creating Account...' : 'Create Account'}

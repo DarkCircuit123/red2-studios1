@@ -1,12 +1,14 @@
 import { useMember } from '@/integrations';
+import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
-import { LogOut, Mail, Calendar, MapPin, Edit2, Check, X, AlertCircle } from 'lucide-react';
+import { LogOut, Mail, Calendar, Lock, Edit2, Check, X, AlertCircle, Eye } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
 import { useState, useEffect } from 'react';
+import { ClientProofingGalleries } from '@/entities';
 
 export default function ProfilePage() {
   const { member, actions } = useMember();
@@ -15,11 +17,43 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [galleries, setGalleries] = useState<ClientProofingGalleries[]>([]);
+  const [galleriesLoading, setGalleriesLoading] = useState(true);
 
   // Update editedName when member changes
   useEffect(() => {
     setEditedName(member?.profile?.nickname || member?.contact?.firstName || '');
   }, [member?.profile?.nickname, member?.contact?.firstName]);
+
+  // Load galleries for this member
+  useEffect(() => {
+    const loadGalleries = async () => {
+      if (!member?.loginEmail) {
+        setGalleriesLoading(false);
+        return;
+      }
+
+      try {
+        const result = await BaseCrudService.getAll<ClientProofingGalleries>(
+          'clientgalleries',
+          {},
+          { limit: 100 }
+        );
+
+        const memberGalleries = (result.items || []).filter(
+          (g) => g.clientEmail?.toLowerCase() === member.loginEmail.toLowerCase()
+        );
+
+        setGalleries(memberGalleries);
+      } catch (err) {
+        console.error('Failed to load galleries:', err);
+      } finally {
+        setGalleriesLoading(false);
+      }
+    };
+
+    loadGalleries();
+  }, [member?.loginEmail]);
 
   const handleLogout = () => {
     playClickSound();
@@ -219,19 +253,6 @@ export default function ProfilePage() {
             {/* Quick Links */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
               <Link
-                to="/galleries"
-                onClick={playClickSound}
-                className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors block"
-              >
-                <h3 className="text-lg font-heading font-bold text-white mb-2">
-                  My Galleries
-                </h3>
-                <p className="text-sm font-paragraph text-white/60">
-                  Access your proofing galleries and approved images
-                </p>
-              </Link>
-
-              <Link
                 to="/booking"
                 onClick={playClickSound}
                 className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors block"
@@ -243,6 +264,106 @@ export default function ProfilePage() {
                   Schedule your next photography session
                 </p>
               </Link>
+
+              <Link
+                to="/contact"
+                onClick={playClickSound}
+                className="p-8 bg-white/5 border border-white/10 hover:border-white/30 transition-colors block"
+              >
+                <h3 className="text-lg font-heading font-bold text-white mb-2">
+                  Contact Support
+                </h3>
+                <p className="text-sm font-paragraph text-white/60">
+                  Get help or ask questions
+                </p>
+              </Link>
+            </div>
+
+            {/* Your Galleries Section */}
+            <div className="mb-12">
+              <h2 className="text-3xl font-heading font-bold text-white mb-6">Your Galleries</h2>
+              
+              {galleriesLoading ? (
+                <div className="p-8 bg-white/5 border border-white/10 text-center">
+                  <p className="text-white/60">Loading galleries...</p>
+                </div>
+              ) : galleries.length === 0 ? (
+                <div className="p-8 bg-white/5 border border-white/10 text-center">
+                  <p className="text-white/60">No galleries available yet. Check back soon!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {galleries.map((gallery) => {
+                    const isExpired = gallery.galleryExpirationDate 
+                      ? new Date(gallery.galleryExpirationDate) < new Date()
+                      : false;
+                    
+                    return (
+                      <motion.div
+                        key={gallery._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-6 bg-white/5 border border-white/10 hover:border-white/30 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg font-heading font-bold text-white">
+                                {gallery.clientName || 'Gallery'}
+                              </h3>
+                              {gallery.requiresPin && (
+                                <Lock className="w-4 h-4 text-yellow-400" title="PIN required" />
+                              )}
+                            </div>
+                            
+                            <div className="space-y-2 text-sm text-white/60">
+                              {gallery.galleryExpirationDate && (
+                                <p>
+                                  Expires: {new Date(gallery.galleryExpirationDate).toLocaleDateString()}
+                                </p>
+                              )}
+                              <p>
+                                Status:{' '}
+                                <span className={`font-semibold ${
+                                  isExpired ? 'text-red-400' : 'text-green-400'
+                                }`}>
+                                  {isExpired ? 'Expired' : gallery.approvalStatus || 'Active'}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+
+                          {!isExpired && (
+                            <Link
+                              to={`/gallery/${gallery._id}`}
+                              onClick={playClickSound}
+                              className="px-6 py-2 bg-white text-black font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </Link>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Account Actions */}
+            <div className="space-y-4 mb-12">
+              <button
+                className="w-full px-8 py-3 bg-white/10 text-white font-heading font-semibold text-sm tracking-wide hover:bg-white/20 transition-all duration-300 border border-white/20"
+              >
+                Change Password
+              </button>
+              
+              <button
+                className="w-full px-8 py-3 bg-red-900/20 text-red-300 font-heading font-semibold text-sm tracking-wide hover:bg-red-900/40 transition-all duration-300 border border-red-500/30"
+              >
+                Delete Account
+              </button>
             </div>
 
             {/* Logout Button */}
