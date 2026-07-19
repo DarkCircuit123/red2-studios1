@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useMember } from '@/integrations';
 import { useSessionRateLimit } from '@/hooks/useSessionRateLimit';
-import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { SEOHead } from '@/components/SEOHead';
@@ -50,39 +49,34 @@ export default function ClientLoginPageContent() {
     setIsLoading(true);
 
     try {
-      // Use Wix Members login via the integration - REAL PASSWORD VERIFICATION
-      await actions.login(email, password);
-      
-      // If this is a change-password flow, generate authorization token
+      // If this is a change-password flow, use the backend endpoint
       if (isChangePasswordFlow) {
-        const token = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
-        const createdAt = new Date();
+        // Call backend endpoint to authenticate and generate token
+        const tokenResponse = await fetch('/api/auth/login-for-change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
 
-        // Get current member to get memberId
-        const context = await import('@wix/sdk').then(m => m.getSecureContext());
-        const membersClient = await import('@wix/members').then(m => m.members(context));
-        const currentMember = await membersClient.getCurrentMember({ fieldsets: ['FULL'] });
-        const memberId = currentMember?.member?._id;
-
-        if (memberId) {
-          // Store token in password_change_authorizations collection
-          await BaseCrudService.create('passwordchangeauthorizations', {
-            _id: crypto.randomUUID(),
-            memberId,
-            token,
-            expiresAt,
-            used: false,
-            createdAt,
-          });
-
-          // Store token in sessionStorage for ProfilePage to retrieve
-          sessionStorage.setItem('pending_password_change_token', token);
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json();
+          throw new Error(errorData.message || 'Authentication failed');
         }
+
+        const tokenData = await tokenResponse.json();
+        
+        // Store token in sessionStorage for ProfilePage to retrieve
+        sessionStorage.setItem('pending_password_change_token', tokenData.token);
+        
+        // Redirect to profile
+        navigate(returnTo);
+      } else {
+        // Standard login flow - use Wix Members login via the integration
+        await actions.login(email, password);
+        
+        // Redirect to returnTo URL (usually /profile)
+        navigate(returnTo);
       }
-      
-      // Redirect to returnTo URL (usually /profile)
-      navigate(returnTo);
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Login error:', err);
