@@ -181,6 +181,27 @@ export interface HomepageImages {
 
 
 /**
+ * Collection ID: passwordchangeauthorizations
+ * Interface for PasswordChangeAuthorizations
+ */
+export interface PasswordChangeAuthorizations {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  memberId?: string;
+  /** @wixFieldType text */
+  token?: string;
+  /** @wixFieldType datetime */
+  expiresAt?: Date | string;
+  /** @wixFieldType boolean */
+  used?: boolean;
+  /** @wixFieldType datetime */
+  createdAt?: Date | string;
+}
+
+
+/**
  * Collection ID: passwordchangelog
  * Interface for PasswordChangeLog
  */

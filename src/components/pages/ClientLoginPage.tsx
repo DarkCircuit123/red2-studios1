@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useMember } from '@/integrations';
 import { useSessionRateLimit } from '@/hooks/useSessionRateLimit';
+import { BaseCrudService } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { SEOHead } from '@/components/SEOHead';
@@ -11,6 +12,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function ClientLoginPageContent() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { actions } = useMember();
   const { recordAttempt, isLocked, remainingLockoutSec } = useSessionRateLimit('login', 5, 300000, 900000);
   
@@ -21,6 +23,10 @@ export default function ClientLoginPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [errorType, setErrorType] = useState<'network' | 'credentials' | 'rate-limited' | 'unknown' | null>(null);
+
+  // Check for action=change-password in URL
+  const isChangePasswordFlow = searchParams.get('action') === 'change-password';
+  const returnTo = searchParams.get('returnTo') || '/profile';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,11 +50,39 @@ export default function ClientLoginPageContent() {
     setIsLoading(true);
 
     try {
-      // Use Wix Members login via the integration
+      // Use Wix Members login via the integration - REAL PASSWORD VERIFICATION
       await actions.login(email, password);
       
-      // Redirect to profile/galleries page on success
-      navigate('/profile');
+      // If this is a change-password flow, generate authorization token
+      if (isChangePasswordFlow) {
+        const token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+        const createdAt = new Date();
+
+        // Get current member to get memberId
+        const context = await import('@wix/sdk').then(m => m.getSecureContext());
+        const membersClient = await import('@wix/members').then(m => m.members(context));
+        const currentMember = await membersClient.getCurrentMember({ fieldsets: ['FULL'] });
+        const memberId = currentMember?.member?._id;
+
+        if (memberId) {
+          // Store token in password_change_authorizations collection
+          await BaseCrudService.create('passwordchangeauthorizations', {
+            _id: crypto.randomUUID(),
+            memberId,
+            token,
+            expiresAt,
+            used: false,
+            createdAt,
+          });
+
+          // Store token in sessionStorage for ProfilePage to retrieve
+          sessionStorage.setItem('pending_password_change_token', token);
+        }
+      }
+      
+      // Redirect to returnTo URL (usually /profile)
+      navigate(returnTo);
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Login error:', err);
@@ -83,7 +117,7 @@ export default function ClientLoginPageContent() {
                 Client Access
               </h1>
               <p className="text-lg text-white/60">
-                Sign in to view your gallery
+                {isChangePasswordFlow ? 'Confirm your password to make account changes' : 'Sign in to view your gallery'}
               </p>
             </motion.div>
 

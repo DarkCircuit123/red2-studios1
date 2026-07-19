@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
 import { LogOut, Mail, Calendar, Lock, Edit2, Check, X, AlertCircle, Eye, Trash2 } from 'lucide-react';
 import { Image } from '@/components/ui/image';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
 import { useState, useEffect } from 'react';
 import { ClientProofingGalleries } from '@/entities';
@@ -22,6 +22,7 @@ import {
 
 export default function ProfilePage() {
   const { member, actions } = useMember();
+  const navigate = useNavigate();
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(member?.profile?.nickname || member?.contact?.firstName || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -30,15 +31,14 @@ export default function ProfilePage() {
   const [galleries, setGalleries] = useState<ClientProofingGalleries[]>([]);
   const [galleriesLoading, setGalleriesLoading] = useState(true);
   
-  // Password change state
+  // Password change state - NEW FLOW: only new password fields, no current password
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
   
   // Delete account state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -51,6 +51,18 @@ export default function ProfilePage() {
   useEffect(() => {
     setEditedName(member?.profile?.nickname || member?.contact?.firstName || '');
   }, [member?.profile?.nickname, member?.contact?.firstName]);
+
+  // Check for pending password change token in sessionStorage on mount
+  // This token is set by ClientLoginPage after successful login with action=change-password
+  useEffect(() => {
+    const token = sessionStorage.getItem('pending_password_change_token');
+    if (token) {
+      setPendingToken(token);
+      setShowChangePasswordDialog(true);
+      // Clear the token from sessionStorage so it's not reused
+      sessionStorage.removeItem('pending_password_change_token');
+    }
+  }, []);
 
   // Load galleries for this member
   useEffect(() => {
@@ -132,14 +144,12 @@ export default function ProfilePage() {
     setIsEditingName(false);
   };
 
+  // NEW FLOW: Password change only requires new password (no current password field)
+  // The current password was already verified via real Wix login in ClientLoginPage
   const handleChangePassword = async () => {
     setPasswordError(null);
     
     // Validation
-    if (!currentPassword.trim()) {
-      setPasswordError('Current password is required');
-      return;
-    }
     if (!newPassword.trim()) {
       setPasswordError('New password is required');
       return;
@@ -153,33 +163,19 @@ export default function ProfilePage() {
       return;
     }
 
+    if (!pendingToken) {
+      setPasswordError('Authentication token missing. Please log in again.');
+      return;
+    }
+
     setIsChangingPassword(true);
     try {
-      // STEP 1: Request a password change token by verifying current password
-      // LINE 135: POST to /api/auth/request-password-change-token with current password
-      const tokenResponse = await fetch('/api/auth/request-password-change-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          password: currentPassword,
-        }),
-      });
-
-      if (!tokenResponse.ok) {
-        const tokenData = await tokenResponse.json();
-        throw new Error(tokenData.message || 'Current password is incorrect');
-      }
-
-      const tokenData = await tokenResponse.json();
-      const passwordChangeAuthToken = tokenData.token;
-
-      // STEP 2: Use the token to update the password
-      // LINE 155: POST to /api/auth/update-password with token and new password
+      // POST to /api/auth/update-password with token and new password
       const updateResponse = await fetch('/api/auth/update-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          passwordChangeAuthToken,
+          token: pendingToken,
           newPassword,
         }),
       });
@@ -191,9 +187,9 @@ export default function ProfilePage() {
 
       setSuccess(true);
       setShowChangePasswordDialog(false);
-      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setPendingToken(null);
       
       // Force re-login after password change
       setTimeout(() => {
@@ -492,7 +488,9 @@ export default function ProfilePage() {
               <button
                 onClick={() => {
                   playClickSound();
-                  setShowChangePasswordDialog(true);
+                  // Navigate to login with change-password action
+                  // This redirects to login page where user proves identity via real Wix login
+                  navigate('/client-login?returnTo=/profile&action=change-password');
                 }}
                 className="w-full px-8 py-3 bg-white/10 text-white font-heading font-semibold text-sm tracking-wide hover:bg-white/20 transition-all duration-300 border border-white/20 flex items-center justify-center gap-2"
               >
@@ -527,13 +525,13 @@ export default function ProfilePage() {
 
       <Footer />
 
-      {/* Change Password Dialog */}
+      {/* Change Password Dialog - NEW FLOW: Only new password fields */}
       <AlertDialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
         <AlertDialogContent className="bg-black border border-white/20 max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white text-2xl font-heading">Change Password</AlertDialogTitle>
+            <AlertDialogTitle className="text-white text-2xl font-heading">Set New Password</AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
-              Enter your current password and choose a new one. Password must be at least 8 characters.
+              You've confirmed your identity. Now choose a new password. Must be at least 8 characters.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -548,30 +546,6 @@ export default function ProfilePage() {
                 <p className="text-sm font-paragraph text-red-200">{passwordError}</p>
               </motion.div>
             )}
-
-            {/* Current Password */}
-            <div>
-              <label className="block text-sm font-paragraph text-white/80 mb-2">
-                Current Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showCurrentPassword ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  disabled={isChangingPassword}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 text-white rounded focus:outline-none focus:border-white/40 disabled:opacity-50"
-                  placeholder="Enter current password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
 
             {/* New Password */}
             <div>

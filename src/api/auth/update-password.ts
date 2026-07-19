@@ -97,11 +97,11 @@ export async function POST(request: Request) {
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
   try {
-    const { passwordChangeAuthToken, newPassword } = await request.json();
+    const { token, newPassword } = await request.json();
 
-    if (!passwordChangeAuthToken || !newPassword) {
+    if (!token || !newPassword) {
       return new Response(
-        JSON.stringify({ message: 'Password change token and new password are required' }),
+        JSON.stringify({ message: 'Authorization token and new password are required' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
 
     const memberId = currentMember.member._id;
 
-    // LINE 72: RATE LIMIT CHECK - Update password: 10 attempts per member per hour
+    // RATE LIMIT CHECK - Update password: 10 attempts per member per hour
     const rateLimitWindow = 60 * 60 * 1000; // 1 hour
     const rateLimitCheck = await checkRateLimit(memberId, '/api/auth/update-password', 10, rateLimitWindow);
     
@@ -144,14 +144,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // LINE 85: VALIDATE PASSWORD CHANGE TOKEN
+    // VALIDATE AUTHORIZATION TOKEN
     // Verify that the token exists, is not expired, has not been used, and belongs to the current member
+    // NO PASSWORD VERIFICATION HERE - verification happened via real Wix login in ClientLoginPage
     let tokenValid = false;
+    let tokenRecord: any = null;
     try {
-      // Query the password_change_tokens collection for the token
-      const { items } = await BaseCrudService.getAll('passwordchangetokens', {}, { limit: 100 });
+      // Query the password_change_authorizations collection for the token
+      const { items } = await BaseCrudService.getAll('passwordchangeauthorizations', {}, { limit: 100 });
       
-      const tokenRecord = items.find((item: any) => item.token === passwordChangeAuthToken);
+      tokenRecord = items.find((item: any) => item.token === token);
       
       if (!tokenRecord) {
         await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
@@ -208,19 +210,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // LINE 155: MARK TOKEN AS USED AND UPDATE PASSWORD
+    // MARK TOKEN AS USED AND UPDATE PASSWORD
     // Update password using the Wix Members API
     try {
-      // First, mark the token as used to prevent replay attacks
-      // Get the token record again to ensure we have the latest _id
-      const { items: tokenItems } = await BaseCrudService.getAll('passwordchangetokens', {}, { limit: 100 });
-      const tokenRecord = tokenItems.find((item: any) => item.token === passwordChangeAuthToken);
-      if (tokenRecord) {
-        await BaseCrudService.update('passwordchangetokens', {
-          _id: tokenRecord._id,
-          used: true,
-        });
-      }
+      // Mark the token as used to prevent replay attacks
+      await BaseCrudService.update('passwordchangeauthorizations', {
+        _id: tokenRecord._id,
+        used: true,
+      });
 
       // Update the password
       await membersClient.updateMember(currentMember.member._id, {
