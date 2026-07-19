@@ -68,14 +68,30 @@ export default function ClientRegisterPageContent() {
     setIsLoading(true);
 
     try {
-      // Use Wix Members register via the integration
-      await actions.register(email, password);
-      
+      // Call the register API endpoint
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          clientName: email.split('@')[0],
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || 'Registration failed. Please try again.');
+        return;
+      }
+
+      // Success - show success message and redirect to login
       setSuccess(true);
 
-      // Redirect after success
+      // Redirect to login after success
       setTimeout(() => {
-        navigate('/profile');
+        navigate('/client-login');
       }, 1500);
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {

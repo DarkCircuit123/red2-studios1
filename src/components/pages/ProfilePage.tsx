@@ -176,7 +176,12 @@ export default function ProfilePage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setTimeout(() => setSuccess(false), 3000);
+      
+      // Force re-login after password change
+      setTimeout(() => {
+        setSuccess(false);
+        actions.logout();
+      }, 2000);
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Failed to update password');
     } finally {
