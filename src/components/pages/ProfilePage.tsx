@@ -155,20 +155,38 @@ export default function ProfilePage() {
 
     setIsChangingPassword(true);
     try {
-      // Use the Wix Members API to update password
-      // The updatePassword method should be available on the members module
-      const response = await fetch('/api/auth/update-password', {
+      // STEP 1: Request a password change token by verifying current password
+      // LINE 135: POST to /api/auth/request-password-change-token with current password
+      const tokenResponse = await fetch('/api/auth/request-password-change-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          currentPassword,
+          password: currentPassword,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        const tokenData = await tokenResponse.json();
+        throw new Error(tokenData.message || 'Current password is incorrect');
+      }
+
+      const tokenData = await tokenResponse.json();
+      const passwordChangeAuthToken = tokenData.token;
+
+      // STEP 2: Use the token to update the password
+      // LINE 155: POST to /api/auth/update-password with token and new password
+      const updateResponse = await fetch('/api/auth/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passwordChangeAuthToken,
           newPassword,
         }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to update password');
+      if (!updateResponse.ok) {
+        const updateData = await updateResponse.json();
+        throw new Error(updateData.message || 'Failed to update password');
       }
 
       setSuccess(true);
