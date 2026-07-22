@@ -4,6 +4,29 @@
  */
 
 /**
+ * Collection ID: apiratelimits
+ * Interface for APIRateLimits
+ */
+export interface APIRateLimits {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  identifier?: string;
+  /** @wixFieldType text */
+  endpoint?: string;
+  /** @wixFieldType datetime */
+  attemptedAt?: Date | string;
+  /** @wixFieldType boolean */
+  success?: boolean;
+  /** @wixFieldType text */
+  ipAddress?: string;
+  /** @wixFieldType text */
+  userAgent?: string;
+}
+
+
+/**
  * Collection ID: blogposts
  * Interface for BlogPosts
  */
@@ -59,6 +82,14 @@ export interface ClientProofingGalleries {
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;
+  /** @wixFieldType datetime */
+  pinLastRotatedAt?: Date | string;
+  /** @wixFieldType number */
+  pinRotationCount?: number;
+  /** @wixFieldType text */
+  currentPin?: string;
+  /** @wixFieldType boolean */
+  requiresPin?: boolean;
   /** @wixFieldType text */
   clientName?: string;
   /** @wixFieldType text */
@@ -146,6 +177,90 @@ export interface HomepageImages {
   lastUpdated?: Date | string;
   /** @wixFieldType boolean */
   isActive?: boolean;
+}
+
+
+/**
+ * Collection ID: passwordchangeauthorizations
+ * Interface for PasswordChangeAuthorizations
+ */
+export interface PasswordChangeAuthorizations {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  memberId?: string;
+  /** @wixFieldType text */
+  token?: string;
+  /** @wixFieldType datetime */
+  expiresAt?: Date | string;
+  /** @wixFieldType boolean */
+  used?: boolean;
+  /** @wixFieldType datetime */
+  createdAt?: Date | string;
+}
+
+
+/**
+ * Collection ID: passwordchangelog
+ * Interface for PasswordChangeLog
+ */
+export interface PasswordChangeLog {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  memberId?: string;
+  /** @wixFieldType datetime */
+  attemptedAt?: Date | string;
+  /** @wixFieldType boolean */
+  success?: boolean;
+  /** @wixFieldType text */
+  userAgent?: string;
+  /** @wixFieldType text */
+  ipAddress?: string;
+}
+
+
+/**
+ * Collection ID: passwordchangetokens
+ * Interface for PasswordChangeTokens
+ */
+export interface PasswordChangeTokens {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  memberId?: string;
+  /** @wixFieldType text */
+  token?: string;
+  /** @wixFieldType datetime */
+  expiresAt?: Date | string;
+  /** @wixFieldType boolean */
+  used?: boolean;
+  /** @wixFieldType datetime */
+  createdAt?: Date | string;
+}
+
+
+/**
+ * Collection ID: pinaccesslog
+ * Interface for PINAccessLog
+ */
+export interface PINAccessLog {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  galleryId?: string;
+  /** @wixFieldType text */
+  memberEmail?: string;
+  /** @wixFieldType datetime */
+  attemptedAt?: Date | string;
+  /** @wixFieldType boolean */
+  success?: boolean;
+  /** @wixFieldType text */
+  userAgent?: string;
 }
 
 
