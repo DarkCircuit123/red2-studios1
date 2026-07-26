@@ -48,7 +48,6 @@ export default function AboutSection() {
       <div className="relative z-20">
         <FashionTicker />
       </div>
-
       {/* Main content with reduced padding */}
       <div className="py-12 md:py-16 lg:py-20 relative">
         {/* Animated background */}
@@ -85,9 +84,7 @@ export default function AboutSection() {
                     className="text-primary"
                     animate={{ opacity: [1, 0.8, 1] }}
                     transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    Jordan
-                  </motion.span>
+                  >Jordan</motion.span>
                 </h2>
                 <motion.div
                   initial={{ width: 0 }}
