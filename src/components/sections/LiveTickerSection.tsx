@@ -10,6 +10,40 @@ interface RSSStory {
   videoUrl?: string;
 }
 
+// Fallback stories to show if RSS feeds fail
+const FALLBACK_STORIES: RSSStory[] = [
+  {
+    title: 'Fashion Week Highlights: Spring/Summer 2025 Collections',
+    link: 'https://www.vogue.com',
+    source: 'Vogue',
+    pubDate: new Date().toISOString(),
+  },
+  {
+    title: 'Photography Trends: Mastering Natural Light',
+    link: 'https://www.sonyalpharumors.com',
+    source: 'Sony Alpha',
+    pubDate: new Date().toISOString(),
+  },
+  {
+    title: 'Sustainable Fashion: The Future of the Industry',
+    link: 'https://www.fashionnetwork.com',
+    source: 'Fashion Network',
+    pubDate: new Date().toISOString(),
+  },
+  {
+    title: 'Celebrity Style: Red Carpet Moments',
+    link: 'https://www.thefashionspot.com',
+    source: 'The Fashion Spot',
+    pubDate: new Date().toISOString(),
+  },
+  {
+    title: 'New Camera Gear: Latest Releases',
+    link: 'https://www.sonyalpharumors.com',
+    source: 'Sony Alpha',
+    pubDate: new Date().toISOString(),
+  },
+];
+
 export default function LiveTickerSection() {
   const [stories, setStories] = useState<RSSStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,10 +65,14 @@ export default function LiveTickerSection() {
         ];
 
         const allStories: RSSStory[] = [];
+        let successCount = 0;
 
         for (const feed of feeds) {
           try {
-            const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
+            const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`, {
+              signal: AbortSignal.timeout(8000), // 8 second timeout per feed
+            });
+            
             if (response.ok) {
               const data = await response.json();
               if (data.items && Array.isArray(data.items)) {
@@ -46,19 +84,28 @@ export default function LiveTickerSection() {
                   videoUrl: item.videoUrl || item.media?.content?.[0]?.url,
                 }));
                 allStories.push(...feedStories);
+                successCount++;
               }
             }
           } catch (err) {
-            console.error(`Error fetching ${feed.source} feed:`, err);
+            console.warn(`Error fetching ${feed.source} feed:`, err);
+            // Continue with other feeds even if one fails
           }
         }
 
+        // If we got some stories, use them; otherwise use fallback
+        let finalStories = allStories;
+        if (allStories.length === 0) {
+          console.warn('No RSS feeds succeeded, using fallback stories');
+          finalStories = FALLBACK_STORIES;
+        }
+
         // Shuffle and limit to 20 stories
-        const shuffled = allStories.sort(() => Math.random() - 0.5).slice(0, 20);
-        setStories(shuffled.length > 0 ? shuffled : []);
+        const shuffled = finalStories.sort(() => Math.random() - 0.5).slice(0, 20);
+        setStories(shuffled);
       } catch (err) {
         console.error('Error fetching RSS feeds:', err);
-        setStories([]);
+        setStories(FALLBACK_STORIES);
       } finally {
         setIsLoading(false);
       }
@@ -100,7 +147,8 @@ export default function LiveTickerSection() {
 
   // ... keep existing code (handleWatchVideo and handleStoryClick removed - using anchor tags instead) ...
 
-  if (isLoading || stories.length === 0) {
+  // Always show if we have stories (even during loading or with fallback)
+  if (stories.length === 0) {
     return null;
   }
 

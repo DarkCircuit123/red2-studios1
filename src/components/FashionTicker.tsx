@@ -9,14 +9,55 @@ interface FashionNews {
   source: string;
 }
 
+// Fallback stories to show if RSS feeds fail
+const FALLBACK_NEWS: FashionNews[] = [
+  {
+    id: 'fallback-1',
+    title: 'Fashion Week Highlights: Spring/Summer 2025 Collections',
+    link: 'https://www.vogue.com',
+    source: 'Vogue',
+    pubDate: new Date().toISOString(),
+  },
+  {
+    id: 'fallback-2',
+    title: 'Photography Trends: Mastering Natural Light',
+    link: 'https://www.sonyalpharumors.com',
+    source: 'Sony Alpha',
+    pubDate: new Date().toISOString(),
+  },
+  {
+    id: 'fallback-3',
+    title: 'Sustainable Fashion: The Future of the Industry',
+    link: 'https://www.fashionnetwork.com',
+    source: 'Fashion Network',
+    pubDate: new Date().toISOString(),
+  },
+  {
+    id: 'fallback-4',
+    title: 'Celebrity Style: Red Carpet Moments',
+    link: 'https://www.thefashionspot.com',
+    source: 'The Fashion Spot',
+    pubDate: new Date().toISOString(),
+  },
+  {
+    id: 'fallback-5',
+    title: 'New Camera Gear: Latest Releases',
+    link: 'https://www.sonyalpharumors.com',
+    source: 'Sony Alpha',
+    pubDate: new Date().toISOString(),
+  },
+];
+
 export default function FashionTicker() {
   const [news, setNews] = useState<FashionNews[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const fetchFashionNews = async () => {
       try {
         setIsLoading(true);
+        setHasError(false);
 
         // RSS feeds from real fashion and media sources
         const feeds = [
@@ -27,34 +68,49 @@ export default function FashionTicker() {
         ];
 
         const allNews: FashionNews[] = [];
+        let successCount = 0;
 
         for (const feed of feeds) {
           try {
-            const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
+            const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`, {
+              signal: AbortSignal.timeout(8000), // 8 second timeout per feed
+            });
+            
             if (response.ok) {
               const data = await response.json();
               if (data.items && Array.isArray(data.items)) {
                 const feedNews = data.items.slice(0, 5).map((item: any, idx: number) => ({
-                  id: `${feed.source}-${idx}`,
+                  id: `${feed.source}-${idx}-${Date.now()}`,
                   title: item.title || 'Untitled',
                   link: item.link || item.url || '#',
                   pubDate: item.pubDate || item.published || new Date().toISOString(),
                   source: feed.source,
                 }));
                 allNews.push(...feedNews);
+                successCount++;
               }
             }
           } catch (err) {
-            console.error(`Error fetching ${feed.source} feed:`, err);
+            console.warn(`Error fetching ${feed.source} feed:`, err);
+            // Continue with other feeds even if one fails
           }
         }
 
+        // If we got some stories, use them; otherwise use fallback
+        let finalNews = allNews;
+        if (allNews.length === 0) {
+          console.warn('No RSS feeds succeeded, using fallback stories');
+          finalNews = FALLBACK_NEWS;
+          setHasError(true);
+        }
+
         // Shuffle and limit to 30 stories for the ticker
-        const shuffled = allNews.sort(() => Math.random() - 0.5).slice(0, 30);
-        setNews(shuffled.length > 0 ? shuffled : []);
+        const shuffled = finalNews.sort(() => Math.random() - 0.5).slice(0, 30);
+        setNews(shuffled);
       } catch (err) {
         console.error('Error fetching fashion news:', err);
-        setNews([]);
+        setNews(FALLBACK_NEWS);
+        setHasError(true);
       } finally {
         setIsLoading(false);
       }
@@ -67,26 +123,9 @@ export default function FashionTicker() {
     return () => clearInterval(interval);
   }, []);
 
-  if (isLoading && news.length === 0) {
+  // Always show the ticker if we have news (even if loading or error)
+  if (news.length === 0) {
     return null;
-  }
-
-  // Show message if no articles
-  if (!isLoading && news.length === 0) {
-    return (
-      <div className="w-full bg-black border-t border-b border-gray-800 py-2 overflow-hidden">
-        <div className="flex items-center gap-4 px-4">
-          <div className="flex-shrink-0">
-            <span className="text-xs font-heading font-bold text-primary tracking-widest uppercase whitespace-nowrap">
-              Live News
-            </span>
-          </div>
-          <div className="flex-1 text-xs text-gray-500">
-            Loading stories...
-          </div>
-        </div>
-      </div>
-    );
   }
 
   const duplicatedNews = [...news, ...news]; // Duplicate for seamless loop
