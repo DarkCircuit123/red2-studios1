@@ -14,40 +14,23 @@ export default function AboutSection() {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
-    let isMounted = true;
-
     const loadAboutImage = async () => {
       try {
         // Load from HomepageImages collection first
-        const homepageImages = await Promise.race([
-          BaseCrudService.getAll('homepageimages', {}, { limit: 1 }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-        ]);
-        
-        if (!isMounted) return;
-        
-        if (homepageImages?.items && Array.isArray(homepageImages.items) && homepageImages.items.length > 0) {
+        const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+        if (homepageImages?.items && homepageImages.items.length > 0) {
           const images = homepageImages.items[0] as any;
-          if (images && typeof images === 'object' && images.aboutSectionImage && typeof images.aboutSectionImage === 'string') {
+          if (images?.aboutSectionImage) {
             setAboutImage(images.aboutSectionImage);
           }
         }
       } catch (error) {
-        if (isMounted) {
-          console.error('[AboutSection] Error loading about image:', error);
-        }
+        console.error('[AboutSection] Error loading about image:', error);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
-    
     loadAboutImage();
-    
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   const statVariants = {

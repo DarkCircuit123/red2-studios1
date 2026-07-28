@@ -20,30 +20,16 @@ export default function PortfolioDetailPage() {
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-
     const loadData = async () => {
       try {
         if (!id) return;
 
         // Load all projects for navigation
-        const allData = await Promise.race([
-          BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-        ]);
-        
-        if (!isMounted) return;
-        
+        const allData = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
         setAllProjects(allData.items || []);
 
         // Load specific project
-        const projectData = await Promise.race([
-          BaseCrudService.getById<Portfolio>('portfolio', id),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-        ]);
-        
-        if (!isMounted) return;
-        
+        const projectData = await BaseCrudService.getById<Portfolio>('portfolio', id);
         setProject(projectData);
         
         // Preload gallery images
@@ -56,21 +42,13 @@ export default function PortfolioDetailPage() {
           img.src = projectData.galleryImage1;
         }
       } catch (error) {
-        if (isMounted) {
-          // Silently fail
-        }
+        // Silently fail
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
     loadData();
-    
-    return () => {
-      isMounted = false;
-    };
   }, [id]);
 
   // Load image dimensions when selected image changes

@@ -9,40 +9,23 @@ export default function BrandsSection() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
     const loadBrands = async () => {
       try {
         setIsLoading(true);
-        const clientsData = await Promise.race([
-          BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-        ]);
-        
-        if (!isMounted) return;
-        
-        if (clientsData?.items && Array.isArray(clientsData.items) && clientsData.items.length > 0) {
+        const clientsData = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
+        if (clientsData.items && clientsData.items.length > 0) {
           setBrands(clientsData.items);
         } else {
           setBrands([]);
         }
       } catch (error) {
-        if (isMounted) {
-          console.error('Error loading brands:', error);
-          setBrands([]);
-        }
+        console.error('Error loading brands:', error);
+        setBrands([]);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
-    
     loadBrands();
-    
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   return (

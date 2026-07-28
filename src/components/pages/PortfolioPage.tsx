@@ -18,17 +18,9 @@ export default function PortfolioPage() {
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-
     const loadProjects = async () => {
       try {
-        const data = await Promise.race([
-          BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-        ]);
-        
-        if (!isMounted) return;
-        
+        const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
         const projects = data.items || [];
         setProjects(projects);
         setFilteredProjects(projects);
@@ -41,21 +33,13 @@ export default function PortfolioPage() {
           }
         });
       } catch (error) {
-        if (isMounted) {
-          // Silently fail
-        }
+        // Silently fail
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
     loadProjects();
-    
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   // Load image dimensions when selected image changes

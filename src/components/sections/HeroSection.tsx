@@ -11,73 +11,41 @@ export default function HeroSection() {
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
-
     const loadHeroImage = async () => {
       try {
-        const homepageImages = await Promise.race([
-          BaseCrudService.getAll('homepageimages', {}, { limit: 1 }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-        ]);
-        
-        if (!isMounted) return;
-        
-        if (homepageImages?.items && Array.isArray(homepageImages.items) && homepageImages.items.length > 0) {
+        const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+        if (homepageImages?.items && homepageImages.items.length > 0) {
           const images = homepageImages.items[0] as any;
-          if (images && typeof images === 'object' && images.heroImage && typeof images.heroImage === 'string') {
+          if (images?.heroImage) {
             setHeroImage(images.heroImage);
           }
         }
       } catch (error) {
-        if (isMounted) {
-          console.error('[HeroSection] Failed to load hero image:', error);
-          // Use default image
-        }
+        console.error('[HeroSection] Failed to load hero image:', error);
+        // Use default image
       }
     };
-    
     loadHeroImage();
-    
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   // Parallax effect with passive listener
   useEffect(() => {
     const handleScroll = () => {
-      try {
-        setScrollY(window.scrollY * 0.5);
-      } catch (err) {
-        console.error('[HeroSection] Error in scroll handler:', err);
-      }
+      setScrollY(window.scrollY * 0.5);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const scrollToGallery = useCallback(() => {
-    try {
-      playClickSound();
-      const element = document.getElementById('portfolio');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    } catch (err) {
-      console.error('[HeroSection] Error scrolling to gallery:', err);
-    }
+    playClickSound();
+    const element = document.getElementById('portfolio');
+    element?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   const handleContactClick = useCallback(() => {
-    try {
-      playClickSound();
-      const element = document.getElementById('contact');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    } catch (err) {
-      console.error('[HeroSection] Error scrolling to contact:', err);
-    }
+    playClickSound();
+    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   return (

@@ -1,15 +1,13 @@
-import { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
+import AdminPanel from './AdminPanel';
+import AdminLoginModal from './AdminLoginModal';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
-
-// Lazy load admin components to prevent blocking
-const AdminPanel = lazy(() => import('./AdminPanel'));
-const AdminLoginModal = lazy(() => import('./AdminLoginModal'));
 
 export default function Header() {
   const navigate = useNavigate();
@@ -17,7 +15,6 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [hasError, setHasError] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
   const { isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
@@ -26,14 +23,10 @@ export default function Header() {
   useEffect(() => {
     let lastScrollTime = 0;
     const handleScroll = () => {
-      try {
-        const now = Date.now();
-        if (now - lastScrollTime >= 100) {
-          setScrolled(window.scrollY > 50);
-          lastScrollTime = now;
-        }
-      } catch (err) {
-        console.error('[Header] Error in scroll handler:', err);
+      const now = Date.now();
+      if (now - lastScrollTime >= 100) {
+        setScrolled(window.scrollY > 50);
+        lastScrollTime = now;
       }
     };
     
@@ -42,23 +35,15 @@ export default function Header() {
   }, []);
 
   const handleLinkClick = useCallback(() => {
-    try {
-      playClickSound();
-    } catch (err) {
-      console.error('[Header] Error playing click sound:', err);
-    }
+    playClickSound();
   }, []);
 
   const handleAdminClick = useCallback(() => {
-    try {
-      playClickSound();
-      if (isAdminAuthenticated) {
-        setIsAdminOpen(true);
-      } else {
-        setIsLoginModalOpen(true);
-      }
-    } catch (err) {
-      console.error('[Header] Error in admin click:', err);
+    playClickSound();
+    if (isAdminAuthenticated) {
+      setIsAdminOpen(true);
+    } else {
+      setIsLoginModalOpen(true);
     }
   }, [isAdminAuthenticated]);
 
@@ -249,14 +234,10 @@ export default function Header() {
           </motion.button>
         </div>
       </nav>
-      {/* Admin Login Modal - Lazy loaded */}
-      <Suspense fallback={null}>
-        <AdminLoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
-      </Suspense>
-      {/* Admin Panel - Lazy loaded */}
-      <Suspense fallback={null}>
-        <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
-      </Suspense>
+      {/* Admin Login Modal */}
+      <AdminLoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      {/* Admin Panel */}
+      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
       {/* Mobile Navigation */}
       {isOpen && (
         <motion.div

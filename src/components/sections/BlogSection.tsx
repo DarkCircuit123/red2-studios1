@@ -12,39 +12,18 @@ export default function BlogSection() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
     const loadPosts = async () => {
       try {
-        const result = await Promise.race([
-          BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 6 }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-        ]);
-        
-        if (!isMounted) return;
-        
-        if (result?.items && Array.isArray(result.items)) {
-          setPosts(result.items);
-        } else {
-          setPosts([]);
-        }
+        const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 6 });
+        setPosts(result.items || []);
       } catch (error) {
-        if (isMounted) {
-          console.error('Error loading blog posts:', error);
-          setPosts([]);
-        }
+        console.error('Error loading blog posts:', error);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
     loadPosts();
-    
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   if (isLoading || posts.length === 0) return null;
