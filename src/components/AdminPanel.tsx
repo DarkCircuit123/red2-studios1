@@ -124,7 +124,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 <button
                   onClick={() => {
                     playClickSound();
-                    logout();
+                    adminLogout();
                     onClose();
                   }}
                   className="p-2 hover:bg-red-500/10 rounded transition-colors"
