@@ -39,6 +39,13 @@ export default function BackgroundMusicPlayer() {
     loadMusicSettings();
   }, []);
 
+  // Set audio volume when settings change
+  useEffect(() => {
+    if (audioRef.current && musicSettings?.volume) {
+      audioRef.current.volume = Math.min(1, musicSettings.volume / 100);
+    }
+  }, [musicSettings?.volume]);
+
   // Attempt to autoplay music on site load
   useEffect(() => {
     if (isLoadingSettings || !musicSettings?.isEnabled || !audioRef.current) return;
@@ -148,7 +155,6 @@ export default function BackgroundMusicPlayer() {
         onPause={handleAudioPause}
         onError={handleAudioError}
         style={{ display: 'none' }}
-        volume={Math.min(1, (musicSettings?.volume || 50) / 100)}
       >
         <source 
           src={musicSettings?.musicUrl || 'https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3'} 
