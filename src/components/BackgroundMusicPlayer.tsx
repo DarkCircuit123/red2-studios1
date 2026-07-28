@@ -39,21 +39,40 @@ export default function BackgroundMusicPlayer() {
     loadMusicSettings();
   }, []);
 
-  // Initialize audio and attempt to play on first user interaction
+  // Attempt to autoplay music on site load
   useEffect(() => {
-    if (isLoadingSettings || !musicSettings?.isEnabled) return;
+    if (isLoadingSettings || !musicSettings?.isEnabled || !audioRef.current) return;
 
+    const attemptAutoplay = async () => {
+      try {
+        // Ensure audio element is ready
+        if (audioRef.current!.readyState === 0) {
+          audioRef.current!.load();
+        }
+        
+        // Attempt to play immediately
+        const playPromise = audioRef.current!.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          setIsPlaying(true);
+          setAudioError(false);
+          setHasInteracted(true);
+        }
+      } catch (err) {
+        console.log('Autoplay failed, will retry on user interaction:', err);
+        // Autoplay was blocked, will retry on first user interaction
+      }
+    };
+
+    // Try autoplay immediately
+    attemptAutoplay();
+
+    // Fallback: Listen for user interaction to retry playback if autoplay failed
     const handleUserInteraction = async () => {
-      if (!hasInteracted && audioRef.current) {
+      if (!hasInteracted && audioRef.current && !isPlaying) {
         setHasInteracted(true);
         
         try {
-          // Ensure audio element is ready
-          if (audioRef.current.readyState === 0) {
-            audioRef.current.load();
-          }
-          
-          // Attempt to play
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
             await playPromise;
@@ -61,13 +80,12 @@ export default function BackgroundMusicPlayer() {
             setAudioError(false);
           }
         } catch (err) {
-          console.log('Audio playback failed:', err);
+          console.log('Audio playback failed on user interaction:', err);
           setAudioError(true);
         }
       }
     };
 
-    // Listen for any user interaction
     document.addEventListener('click', handleUserInteraction, { once: true });
     document.addEventListener('touchstart', handleUserInteraction, { once: true });
     document.addEventListener('keydown', handleUserInteraction, { once: true });
@@ -77,7 +95,7 @@ export default function BackgroundMusicPlayer() {
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [hasInteracted, isLoadingSettings, musicSettings?.isEnabled]);
+  }, [isLoadingSettings, musicSettings?.isEnabled, isPlaying, hasInteracted]);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -122,6 +140,7 @@ export default function BackgroundMusicPlayer() {
       <audio
         ref={audioRef}
         title="Background Music Player"
+        autoPlay
         loop={musicSettings?.loopMusic !== false}
         preload="auto"
         crossOrigin="anonymous"
