@@ -21,7 +21,7 @@ export default function BrandsSection() {
         
         if (!isMounted) return;
         
-        if (clientsData.items && clientsData.items.length > 0) {
+        if (clientsData?.items && Array.isArray(clientsData.items) && clientsData.items.length > 0) {
           setBrands(clientsData.items);
         } else {
           setBrands([]);

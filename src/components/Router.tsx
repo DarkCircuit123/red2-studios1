@@ -21,16 +21,16 @@ import React from 'react';
 // Error boundary for music player
 class MusicPlayerErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; error: Error | null }
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error) {
     console.error('[MusicPlayerErrorBoundary] Error:', error);
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -39,6 +39,7 @@ class MusicPlayerErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
+      console.warn('[MusicPlayerErrorBoundary] Music player failed to load, continuing without music');
       return null; // Silently fail - don't break the router
     }
     return this.props.children;

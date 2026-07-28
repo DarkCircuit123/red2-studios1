@@ -17,6 +17,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
   const { isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
@@ -25,10 +26,14 @@ export default function Header() {
   useEffect(() => {
     let lastScrollTime = 0;
     const handleScroll = () => {
-      const now = Date.now();
-      if (now - lastScrollTime >= 100) {
-        setScrolled(window.scrollY > 50);
-        lastScrollTime = now;
+      try {
+        const now = Date.now();
+        if (now - lastScrollTime >= 100) {
+          setScrolled(window.scrollY > 50);
+          lastScrollTime = now;
+        }
+      } catch (err) {
+        console.error('[Header] Error in scroll handler:', err);
       }
     };
     
@@ -37,15 +42,23 @@ export default function Header() {
   }, []);
 
   const handleLinkClick = useCallback(() => {
-    playClickSound();
+    try {
+      playClickSound();
+    } catch (err) {
+      console.error('[Header] Error playing click sound:', err);
+    }
   }, []);
 
   const handleAdminClick = useCallback(() => {
-    playClickSound();
-    if (isAdminAuthenticated) {
-      setIsAdminOpen(true);
-    } else {
-      setIsLoginModalOpen(true);
+    try {
+      playClickSound();
+      if (isAdminAuthenticated) {
+        setIsAdminOpen(true);
+      } else {
+        setIsLoginModalOpen(true);
+      }
+    } catch (err) {
+      console.error('[Header] Error in admin click:', err);
     }
   }, [isAdminAuthenticated]);
 

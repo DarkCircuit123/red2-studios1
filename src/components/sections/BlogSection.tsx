@@ -23,10 +23,15 @@ export default function BlogSection() {
         
         if (!isMounted) return;
         
-        setPosts(result.items || []);
+        if (result?.items && Array.isArray(result.items)) {
+          setPosts(result.items);
+        } else {
+          setPosts([]);
+        }
       } catch (error) {
         if (isMounted) {
           console.error('Error loading blog posts:', error);
+          setPosts([]);
         }
       } finally {
         if (isMounted) {

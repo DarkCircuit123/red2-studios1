@@ -26,9 +26,9 @@ export default function AboutSection() {
         
         if (!isMounted) return;
         
-        if (homepageImages?.items && homepageImages.items.length > 0) {
+        if (homepageImages?.items && Array.isArray(homepageImages.items) && homepageImages.items.length > 0) {
           const images = homepageImages.items[0] as any;
-          if (images?.aboutSectionImage) {
+          if (images && typeof images === 'object' && images.aboutSectionImage && typeof images.aboutSectionImage === 'string') {
             setAboutImage(images.aboutSectionImage);
           }
         }

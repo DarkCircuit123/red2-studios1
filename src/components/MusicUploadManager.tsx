@@ -31,71 +31,84 @@ export default function MusicUploadManager({
 
   // Initialize upload queue
   useEffect(() => {
-    const queue = new UploadQueueManager({
-      maxRetries: 3,
-      retryDelay: 1000,
-      optimizeAudio: true,
-      maxAudioSize: 10 * 1024 * 1024, // 10MB
-    });
+    let isMounted = true;
 
-    // Register upload callback
-    queue.onUpload(async (file: UploadFile, state: UploadQueueState) => {
-      try {
-        const formData = new FormData();
-        formData.append('file', file.file);
+    try {
+      const queue = new UploadQueueManager({
+        maxRetries: 3,
+        retryDelay: 1000,
+        optimizeAudio: true,
+        maxAudioSize: 10 * 1024 * 1024, // 10MB
+      });
 
-        const uploadStart = Date.now();
-        const response = await fetch('/api/upload-music', {
-          method: 'POST',
-          body: formData,
-        });
+      // Register upload callback
+      queue.onUpload(async (file: UploadFile, state: UploadQueueState) => {
+        try {
+          const formData = new FormData();
+          formData.append('file', file.file);
 
-        const uploadTime = Date.now() - uploadStart;
-        console.log(`[MUSIC_UPLOAD] Response received in ${uploadTime}ms, status: ${response.status}`);
+          const uploadStart = Date.now();
+          const response = await fetch('/api/upload-music', {
+            method: 'POST',
+            body: formData,
+          });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMsg = errorData.error || `Upload failed with status ${response.status}`;
-          console.error(`[MUSIC_UPLOAD] Upload error:`, errorData);
-          throw new Error(errorMsg);
-        }
+          const uploadTime = Date.now() - uploadStart;
+          console.log(`[MUSIC_UPLOAD] Response received in ${uploadTime}ms, status: ${response.status}`);
 
-        const data = await response.json();
-        const musicUrl = data.url;
-
-        console.log(`[MUSIC_UPLOAD] Upload successful for ${file.file.name}`);
-
-        // Update CMS if needed
-        if (itemId && collectionId && fieldName) {
-          try {
-            await BaseCrudService.update(collectionId, {
-              _id: itemId,
-              [fieldName]: musicUrl,
-            });
-            console.log(`[MUSIC_UPLOAD] CMS update successful`);
-          } catch (cmsError) {
-            console.warn('[MUSIC_UPLOAD] CMS update failed, but file was uploaded:', cmsError);
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMsg = errorData.error || `Upload failed with status ${response.status}`;
+            console.error(`[MUSIC_UPLOAD] Upload error:`, errorData);
+            throw new Error(errorMsg);
           }
+
+          const data = await response.json();
+          const musicUrl = data.url;
+
+          console.log(`[MUSIC_UPLOAD] Upload successful for ${file.file.name}`);
+
+          // Update CMS if needed
+          if (itemId && collectionId && fieldName) {
+            try {
+              await BaseCrudService.update(collectionId, {
+                _id: itemId,
+                [fieldName]: musicUrl,
+              });
+              console.log(`[MUSIC_UPLOAD] CMS update successful`);
+            } catch (cmsError) {
+              console.warn('[MUSIC_UPLOAD] CMS update failed, but file was uploaded:', cmsError);
+            }
+          }
+
+          file.uploadedUrl = musicUrl;
+          if (isMounted) {
+            onMusicUpload(musicUrl);
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to upload music';
+          throw new Error(errorMessage);
         }
+      });
 
-        file.uploadedUrl = musicUrl;
-        onMusicUpload(musicUrl);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to upload music';
-        throw new Error(errorMessage);
+      // Subscribe to state changes
+      queue.subscribe((state) => {
+        if (isMounted) {
+          setQueueState(state);
+          setIsUploading(state.isProcessing);
+        }
+      });
+
+      queueRef.current = queue;
+    } catch (err) {
+      console.error('[MUSIC_UPLOAD] Error initializing upload queue:', err);
+      if (isMounted) {
+        setError('Failed to initialize upload manager');
       }
-    });
-
-    // Subscribe to state changes
-    queue.subscribe((state) => {
-      setQueueState(state);
-      setIsUploading(state.isProcessing);
-    });
-
-    queueRef.current = queue;
+    }
 
     return () => {
-      // Cleanup
+      isMounted = false;
     };
   }, [collectionId, itemId, fieldName, onMusicUpload]);
 

@@ -22,9 +22,9 @@ export default function HeroSection() {
         
         if (!isMounted) return;
         
-        if (homepageImages?.items && homepageImages.items.length > 0) {
+        if (homepageImages?.items && Array.isArray(homepageImages.items) && homepageImages.items.length > 0) {
           const images = homepageImages.items[0] as any;
-          if (images?.heroImage) {
+          if (images && typeof images === 'object' && images.heroImage && typeof images.heroImage === 'string') {
             setHeroImage(images.heroImage);
           }
         }
@@ -46,21 +46,38 @@ export default function HeroSection() {
   // Parallax effect with passive listener
   useEffect(() => {
     const handleScroll = () => {
-      setScrollY(window.scrollY * 0.5);
+      try {
+        setScrollY(window.scrollY * 0.5);
+      } catch (err) {
+        console.error('[HeroSection] Error in scroll handler:', err);
+      }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const scrollToGallery = useCallback(() => {
-    playClickSound();
-    const element = document.getElementById('portfolio');
-    element?.scrollIntoView({ behavior: 'smooth' });
+    try {
+      playClickSound();
+      const element = document.getElementById('portfolio');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (err) {
+      console.error('[HeroSection] Error scrolling to gallery:', err);
+    }
   }, []);
 
   const handleContactClick = useCallback(() => {
-    playClickSound();
-    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+    try {
+      playClickSound();
+      const element = document.getElementById('contact');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (err) {
+      console.error('[HeroSection] Error scrolling to contact:', err);
+    }
   }, []);
 
   return (

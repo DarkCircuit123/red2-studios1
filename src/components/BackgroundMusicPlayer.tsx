@@ -20,15 +20,18 @@ export default function BackgroundMusicPlayer() {
   const [audioError, setAudioError] = useState(false);
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Load music settings from CMS with timeout and error handling
   useEffect(() => {
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout | undefined;
 
     const loadMusicSettings = async () => {
       try {
         console.log('[MUSIC_PLAYER] Loading music settings from CMS...');
+        setIsLoadingSettings(true);
+        setHasError(false);
         
         // Set a timeout to prevent hanging
         timeoutId = setTimeout(() => {
@@ -42,28 +45,41 @@ export default function BackgroundMusicPlayer() {
           const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
           
           if (!isMounted) return;
-          clearTimeout(timeoutId);
           
-          if (result?.items && result.items.length > 0) {
+          if (timeoutId) clearTimeout(timeoutId);
+          
+          if (result?.items && Array.isArray(result.items) && result.items.length > 0) {
             const settings = result.items[0];
-            console.log('[MUSIC_PLAYER] Settings loaded:', {
-              isEnabled: settings.isEnabled,
-              musicUrl: settings.musicUrl ? `${settings.musicUrl.substring(0, 50)}...` : 'none',
-              volume: settings.volume,
-              loopMusic: settings.loopMusic
-            });
-            setMusicSettings(settings);
+            if (settings && typeof settings === 'object') {
+              console.log('[MUSIC_PLAYER] Settings loaded:', {
+                isEnabled: settings.isEnabled,
+                musicUrl: settings.musicUrl ? `${String(settings.musicUrl).substring(0, 50)}...` : 'none',
+                volume: settings.volume,
+                loopMusic: settings.loopMusic
+              });
+              setMusicSettings(settings);
+            }
           } else {
             console.log('[MUSIC_PLAYER] No music settings found in CMS');
+            setMusicSettings(null);
           }
         } catch (fetchError) {
           if (isMounted) {
             console.error('[MUSIC_PLAYER] Failed to fetch music settings:', fetchError);
+            setHasError(true);
+            setMusicSettings(null);
           }
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error('[MUSIC_PLAYER] Unexpected error loading settings:', error);
+          setHasError(true);
+          setMusicSettings(null);
         }
       } finally {
         if (isMounted) {
           setIsLoadingSettings(false);
+          if (timeoutId) clearTimeout(timeoutId);
         }
       }
     };
@@ -72,14 +88,18 @@ export default function BackgroundMusicPlayer() {
     
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 
   // Set audio volume when settings change
   useEffect(() => {
-    if (audioRef.current && musicSettings?.volume) {
-      audioRef.current.volume = Math.min(1, musicSettings.volume / 100);
+    if (audioRef.current && musicSettings?.volume && typeof musicSettings.volume === 'number') {
+      try {
+        audioRef.current.volume = Math.min(1, Math.max(0, musicSettings.volume / 100));
+      } catch (err) {
+        console.error('[MUSIC_PLAYER] Error setting volume:', err);
+      }
     }
   }, [musicSettings?.volume]);
 
@@ -92,20 +112,22 @@ export default function BackgroundMusicPlayer() {
     const attemptAutoplay = async () => {
       try {
         // Ensure audio element is ready
-        if (audioRef.current!.readyState === 0) {
+        if (audioRef.current && audioRef.current.readyState === 0) {
           console.log('[MUSIC_PLAYER] Loading audio element...');
-          audioRef.current!.load();
+          audioRef.current.load();
         }
         
         // Attempt to play immediately
-        console.log('[MUSIC_PLAYER] Calling play()...');
-        const playPromise = audioRef.current!.play();
-        if (playPromise !== undefined) {
-          await playPromise;
-          console.log('[MUSIC_PLAYER] Autoplay successful');
-          setIsPlaying(true);
-          setAudioError(false);
-          setHasInteracted(true);
+        if (audioRef.current) {
+          console.log('[MUSIC_PLAYER] Calling play()...');
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            await playPromise;
+            console.log('[MUSIC_PLAYER] Autoplay successful');
+            setIsPlaying(true);
+            setAudioError(false);
+            setHasInteracted(true);
+          }
         }
       } catch (err) {
         console.log('[MUSIC_PLAYER] Autoplay failed (expected), will retry on user interaction:', err);
@@ -149,28 +171,33 @@ export default function BackgroundMusicPlayer() {
   }, [musicSettings?.isEnabled, isPlaying, hasInteracted]);
 
   const toggleMute = () => {
-    if (audioRef.current) {
-      const newMutedState = !isMuted;
-      audioRef.current.muted = newMutedState;
-      setIsMuted(newMutedState);
-      console.log(`[MUSIC_PLAYER] Mute toggled: ${newMutedState}`);
-      
-      // If unmuting and not playing, try to play
-      if (!newMutedState && !isPlaying) {
-        console.log('[MUSIC_PLAYER] Unmuted, attempting to play...');
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log('[MUSIC_PLAYER] Playback started after unmute');
-              setIsPlaying(true);
-            })
-            .catch((err) => {
-              console.error('[MUSIC_PLAYER] Playback failed after unmute:', err);
-              setAudioError(true);
-            });
+    try {
+      if (audioRef.current) {
+        const newMutedState = !isMuted;
+        audioRef.current.muted = newMutedState;
+        setIsMuted(newMutedState);
+        console.log(`[MUSIC_PLAYER] Mute toggled: ${newMutedState}`);
+        
+        // If unmuting and not playing, try to play
+        if (!newMutedState && !isPlaying) {
+          console.log('[MUSIC_PLAYER] Unmuted, attempting to play...');
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('[MUSIC_PLAYER] Playback started after unmute');
+                setIsPlaying(true);
+              })
+              .catch((err) => {
+                console.error('[MUSIC_PLAYER] Playback failed after unmute:', err);
+                setAudioError(true);
+              });
+          }
         }
       }
+    } catch (err) {
+      console.error('[MUSIC_PLAYER] Error toggling mute:', err);
+      setAudioError(true);
     }
   };
 
@@ -190,10 +217,15 @@ export default function BackgroundMusicPlayer() {
     setAudioError(true);
   };
 
-  // Don't render if music is disabled
-  if (!musicSettings?.isEnabled) {
+  // Don't render if music is disabled or if there was an error loading settings
+  if (!musicSettings?.isEnabled || hasError) {
     return null;
   }
+
+  // Safely get music URL
+  const musicUrl = musicSettings?.musicUrl && typeof musicSettings.musicUrl === 'string' 
+    ? musicSettings.musicUrl 
+    : 'https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3';
 
   return (
     <>
@@ -211,7 +243,7 @@ export default function BackgroundMusicPlayer() {
         style={{ display: 'none' }}
       >
         <source 
-          src={musicSettings?.musicUrl || 'https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3'} 
+          src={musicUrl}
           type="audio/mpeg"
         />
       </audio>

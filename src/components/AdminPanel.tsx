@@ -35,61 +35,120 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    let timeoutIds: NodeJS.Timeout[] = [];
+
     const loadImages = async () => {
       if (!isOpen) return;
       
       setIsLoading(true);
       try {
+        // Load homepage images
         try {
+          const timeoutId = setTimeout(() => {
+            if (isMounted) console.log('[ADMIN] Homepage images load timeout');
+          }, 5000);
+          timeoutIds.push(timeoutId);
+
           const homepageImagesResult = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
-          if (homepageImagesResult?.items && homepageImagesResult.items.length > 0) {
-            setHomepageImages(homepageImagesResult.items[0]);
+          if (isMounted && homepageImagesResult?.items && Array.isArray(homepageImagesResult.items) && homepageImagesResult.items.length > 0) {
+            const item = homepageImagesResult.items[0];
+            if (item && typeof item === 'object') {
+              setHomepageImages(item);
+            }
+          } else if (isMounted) {
+            setHomepageImages(null);
           }
         } catch (error) {
-          setHomepageImages(null);
+          if (isMounted) {
+            console.error('[ADMIN] Error loading homepage images:', error);
+            setHomepageImages(null);
+          }
         }
 
+        // Load portfolio items
         try {
+          const timeoutId = setTimeout(() => {
+            if (isMounted) console.log('[ADMIN] Portfolio load timeout');
+          }, 5000);
+          timeoutIds.push(timeoutId);
+
           const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
-          if (portfolioResult?.items) {
+          if (isMounted && portfolioResult?.items && Array.isArray(portfolioResult.items)) {
             setPortfolioItems(portfolioResult.items);
-          } else {
+          } else if (isMounted) {
             setPortfolioItems([]);
           }
         } catch (error) {
-          setPortfolioItems([]);
+          if (isMounted) {
+            console.error('[ADMIN] Error loading portfolio:', error);
+            setPortfolioItems([]);
+          }
         }
 
+        // Load sponsors
         try {
+          const timeoutId = setTimeout(() => {
+            if (isMounted) console.log('[ADMIN] Sponsors load timeout');
+          }, 5000);
+          timeoutIds.push(timeoutId);
+
           const sponsorsResult = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
-          if (sponsorsResult?.items) {
+          if (isMounted && sponsorsResult?.items && Array.isArray(sponsorsResult.items)) {
             setSponsors(sponsorsResult.items);
-          } else {
+          } else if (isMounted) {
             setSponsors([]);
           }
         } catch (error) {
-          setSponsors([]);
+          if (isMounted) {
+            console.error('[ADMIN] Error loading sponsors:', error);
+            setSponsors([]);
+          }
         }
 
+        // Load music settings
         try {
+          const timeoutId = setTimeout(() => {
+            if (isMounted) console.log('[ADMIN] Music settings load timeout');
+          }, 5000);
+          timeoutIds.push(timeoutId);
+
           const musicResult = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
-          if (musicResult?.items && musicResult.items.length > 0) {
-            setMusicSettings(musicResult.items[0]);
+          if (isMounted && musicResult?.items && Array.isArray(musicResult.items) && musicResult.items.length > 0) {
+            const item = musicResult.items[0];
+            if (item && typeof item === 'object') {
+              setMusicSettings(item);
+            }
+          } else if (isMounted) {
+            setMusicSettings(null);
           }
         } catch (error) {
-          setMusicSettings(null);
+          if (isMounted) {
+            console.error('[ADMIN] Error loading music settings:', error);
+            setMusicSettings(null);
+          }
         }
       } catch (error) {
-        setHomepageImages(null);
-        setPortfolioItems([]);
-        setSponsors([]);
-        setMusicSettings(null);
+        if (isMounted) {
+          console.error('[ADMIN] Unexpected error loading admin data:', error);
+          setHomepageImages(null);
+          setPortfolioItems([]);
+          setSponsors([]);
+          setMusicSettings(null);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     
     loadImages();
+
+    return () => {
+      isMounted = false;
+      timeoutIds.forEach(id => clearTimeout(id));
+    };
   }, [isOpen]);
 
   if (!isAdminAuthenticated) {
