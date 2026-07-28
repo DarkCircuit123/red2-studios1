@@ -39,7 +39,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
       
       setIsLoading(true);
       try {
-        // Load homepage images (hero image is stored here)
         try {
           const homepageImagesResult = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
           if (homepageImagesResult?.items && homepageImagesResult.items.length > 0) {
@@ -49,7 +48,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           setHomepageImages(null);
         }
 
-        // Load portfolio items
         try {
           const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
           if (portfolioResult?.items) {
@@ -61,7 +59,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           setPortfolioItems([]);
         }
 
-        // Load sponsors/clients
         try {
           const sponsorsResult = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
           if (sponsorsResult?.items) {
@@ -73,7 +70,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           setSponsors([]);
         }
 
-        // Load music settings
         try {
           const musicResult = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
           if (musicResult?.items && musicResult.items.length > 0) {
@@ -95,7 +91,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     loadImages();
   }, [isOpen]);
 
-  // Only render admin panel if user is authenticated
   if (!isAdminAuthenticated) {
     return null;
   }
@@ -104,7 +99,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -113,7 +107,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             className="fixed inset-0 bg-black/50 z-40"
           />
 
-          {/* Panel */}
           <motion.div
             initial={{ x: 400 }}
             animate={{ x: 0 }}
@@ -121,7 +114,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             transition={{ type: 'spring', damping: 20 }}
             className="fixed right-0 top-0 h-screen w-full max-w-md bg-white border-l border-black/10 z-50 overflow-y-auto"
           >
-            {/* Header */}
             <div className="sticky top-0 bg-white border-b border-black/10 p-6 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Settings className="w-5 h-5 text-black" />
@@ -148,7 +140,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               </div>
             </div>
 
-            {/* Tabs */}
             <div className="sticky top-16 bg-white border-b border-black/10 px-6 py-4 flex gap-2 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('photos')}
@@ -203,16 +194,13 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               </button>
             </div>
 
-            {/* Content */}
             <div className="p-6 space-y-8">
-              {/* Site Photos Tab */}
               {activeTab === 'photos' && (
                 <div>
                   <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
                     Manage Site Photos
                   </h3>
                   <div className="space-y-6">
-                    {/* Hero Image */}
                     <div>
                       <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
                         Hero Background Image
@@ -236,7 +224,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       />
                     </div>
 
-                    {/* About Section Image */}
                     <div>
                       <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
                         About Section Image
@@ -260,7 +247,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       />
                     </div>
 
-                    {/* Contact Background Image */}
                     <div>
                       <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
                         Contact Section Background
@@ -287,7 +273,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Portfolio Tab */}
               {activeTab === 'portfolio' && (
                 <div>
                   <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
@@ -303,7 +288,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             {item.projectName || 'Untitled Project'}
                           </h4>
                           <div className="space-y-4">
-                            {/* Main Image */}
                             <div>
                               <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
                                 Main Image
@@ -327,7 +311,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                               />
                             </div>
 
-                            {/* Gallery Images */}
                             <div>
                               <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
                                 Gallery Image 1
@@ -404,7 +387,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Sponsors Tab */}
               {activeTab === 'sponsors' && (
                 <div>
                   <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
@@ -420,7 +402,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             {sponsor.clientName || 'Untitled Sponsor'}
                           </h4>
                           <div className="space-y-4">
-                            {/* Sponsor Name */}
                             <div>
                               <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
                                 Sponsor Name (Hover Text)
@@ -443,7 +424,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 className="text-sm text-black"
                               />
                             </div>
-                            {/* Sponsor Logo */}
                             <div>
                               <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
                                 Sponsor Logo
@@ -474,7 +454,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Music Tab */}
               {activeTab === 'music' && (
                 <div>
                   <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide flex items-center gap-2">
@@ -484,7 +463,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                   <div className="space-y-6">
                     {musicSettings ? (
                       <>
-                        {/* Enable/Disable Toggle */}
                         <div>
                           <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
                             Enable Background Music
@@ -498,7 +476,143 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                   isEnabled: newState
                                 });
                                 setMusicSettings({ ...musicSettings, isEnabled: newState });
-                              } catch (error) {\n                                console.error('Error updating music settings:', error);\n                              }\n                            }}\n                            className={`px-4 py-2 rounded text-sm font-heading font-bold uppercase tracking-wide transition-all ${\n                              musicSettings.isEnabled\n                                ? 'bg-green-500 text-white hover:bg-green-600'\n                                : 'bg-gray-400 text-white hover:bg-gray-500'\n                            }`}\n                          >\n                            {musicSettings.isEnabled ? '✓ Enabled' : '✗ Disabled'}\n                          </button>\n                        </div>\n\n                        {/* Music Title */}\n                        <div>\n                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">\n                            Music Title\n                          </label>\n                          <TextEditableField\n                            value={musicSettings.musicTitle || ''}\n                            onSave={async (newTitle) => {\n                              try {\n                                await BaseCrudService.update('musicsettings', {\n                                  _id: musicSettings._id,\n                                  musicTitle: newTitle\n                                });\n                                setMusicSettings({ ...musicSettings, musicTitle: newTitle });\n                              } catch (error) {\n                                console.error('Error updating music title:', error);\n                              }\n                            }}\n                            className="text-sm text-black"\n                          />\n                        </div>\n\n                        {/* Music URL */}\n                        <div>\n                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">\n                            Music URL\n                          </label>\n                          <TextEditableField\n                            value={musicSettings.musicUrl || ''}\n                            onSave={async (newUrl) => {\n                              try {\n                                await BaseCrudService.update('musicsettings', {\n                                  _id: musicSettings._id,\n                                  musicUrl: newUrl\n                                });\n                                setMusicSettings({ ...musicSettings, musicUrl: newUrl });\n                              } catch (error) {\n                                console.error('Error updating music URL:', error);\n                              }\n                            }}\n                            className="text-xs text-black/70 break-all"\n                          />\n                        </div>\n\n                        {/* Volume Control */}\n                        <div>\n                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">\n                            Volume Level: {musicSettings.volume || 50}%\n                          </label>\n                          <input\n                            type="range"\n                            min="0"\n                            max="100"\n                            value={musicSettings.volume || 50}\n                            onChange={async (e) => {\n                              const newVolume = parseInt(e.target.value);\n                              setMusicSettings({ ...musicSettings, volume: newVolume });\n                              try {\n                                await BaseCrudService.update('musicsettings', {\n                                  _id: musicSettings._id,\n                                  volume: newVolume\n                                });\n                              } catch (error) {\n                                console.error('Error updating volume:', error);\n                              }\n                            }}\n                            className="w-full h-2 bg-black/20 rounded-lg appearance-none cursor-pointer"\n                          />\n                        </div>\n\n                        {/* Loop Toggle */}\n                        <div>\n                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">\n                            Loop Music\n                          </label>\n                          <button\n                            onClick={async () => {\n                              try {\n                                const newState = !musicSettings.loopMusic;\n                                await BaseCrudService.update('musicsettings', {\n                                  _id: musicSettings._id,\n                                  loopMusic: newState\n                                });\n                                setMusicSettings({ ...musicSettings, loopMusic: newState });\n                              } catch (error) {\n                                console.error('Error updating loop setting:', error);\n                              }\n                            }}\n                            className={`px-4 py-2 rounded text-sm font-heading font-bold uppercase tracking-wide transition-all ${\n                              musicSettings.loopMusic\n                                ? 'bg-blue-500 text-white hover:bg-blue-600'\n                                : 'bg-gray-400 text-white hover:bg-gray-500'\n                            }`}\n                          >\n                            {musicSettings.loopMusic ? '✓ Looping' : '✗ No Loop'}\n                          </button>\n                        </div>\n\n                        {/* Info Box */}\n                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mt-6">\n                          <h4 className="text-xs font-heading font-bold text-blue-600 mb-2">ℹ️ How to Upload Music</h4>\n                          <ol className="text-xs text-blue-600/70 space-y-1 list-decimal list-inside">\n                            <li>Upload your MP3 file to Wix Media</li>\n                            <li>Copy the file URL</li>\n                            <li>Paste the URL in the "Music URL" field above</li>\n                            <li>Adjust volume and settings as needed</li>\n                            <li>Enable the music to activate playback</li>\n                          </ol>\n                        </div>\n                      </>\n                    ) : (\n                      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">\n                        <p className="text-sm text-yellow-600">No music settings found. Please add one in the CMS.</p>\n                        <a\n                          href="https://manage.wix.com/dashboard"\n                          target="_blank"\n                          rel="noopener noreferrer"\n                          className="inline-block mt-4 px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-600 transition-all duration-300"\n                        >\n                          Open CMS to Add Music Settings\n                        </a>\n                      </div>\n                    )}\n                  </div>\n                </div>\n              )}\n\n              {/* Text Content Tab */}\n              {activeTab === 'text' && (
+                              } catch (error) {
+                                console.error('Error updating music settings:', error);
+                              }
+                            }}
+                            className={`px-4 py-2 rounded text-sm font-heading font-bold uppercase tracking-wide transition-all ${
+                              musicSettings.isEnabled
+                                ? 'bg-green-500 text-white hover:bg-green-600'
+                                : 'bg-gray-400 text-white hover:bg-gray-500'
+                            }`}
+                          >
+                            {musicSettings.isEnabled ? '✓ Enabled' : '✗ Disabled'}
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                            Music Title
+                          </label>
+                          <TextEditableField
+                            value={musicSettings.musicTitle || ''}
+                            onSave={async (newTitle) => {
+                              try {
+                                await BaseCrudService.update('musicsettings', {
+                                  _id: musicSettings._id,
+                                  musicTitle: newTitle
+                                });
+                                setMusicSettings({ ...musicSettings, musicTitle: newTitle });
+                              } catch (error) {
+                                console.error('Error updating music title:', error);
+                              }
+                            }}
+                            className="text-sm text-black"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                            Music URL
+                          </label>
+                          <TextEditableField
+                            value={musicSettings.musicUrl || ''}
+                            onSave={async (newUrl) => {
+                              try {
+                                await BaseCrudService.update('musicsettings', {
+                                  _id: musicSettings._id,
+                                  musicUrl: newUrl
+                                });
+                                setMusicSettings({ ...musicSettings, musicUrl: newUrl });
+                              } catch (error) {
+                                console.error('Error updating music URL:', error);
+                              }
+                            }}
+                            className="text-xs text-black/70 break-all"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
+                            Volume Level: {musicSettings.volume || 50}%
+                          </label>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={musicSettings.volume || 50}
+                            onChange={async (e) => {
+                              const newVolume = parseInt(e.target.value);
+                              setMusicSettings({ ...musicSettings, volume: newVolume });
+                              try {
+                                await BaseCrudService.update('musicsettings', {
+                                  _id: musicSettings._id,
+                                  volume: newVolume
+                                });
+                              } catch (error) {
+                                console.error('Error updating volume:', error);
+                              }
+                            }}
+                            className="w-full h-2 bg-black/20 rounded-lg appearance-none cursor-pointer"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
+                            Loop Music
+                          </label>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const newState = !musicSettings.loopMusic;
+                                await BaseCrudService.update('musicsettings', {
+                                  _id: musicSettings._id,
+                                  loopMusic: newState
+                                });
+                                setMusicSettings({ ...musicSettings, loopMusic: newState });
+                              } catch (error) {
+                                console.error('Error updating loop setting:', error);
+                              }
+                            }}
+                            className={`px-4 py-2 rounded text-sm font-heading font-bold uppercase tracking-wide transition-all ${
+                              musicSettings.loopMusic
+                                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                : 'bg-gray-400 text-white hover:bg-gray-500'
+                            }`}
+                          >
+                            {musicSettings.loopMusic ? '✓ Looping' : '✗ No Loop'}
+                          </button>
+                        </div>
+
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mt-6">
+                          <h4 className="text-xs font-heading font-bold text-blue-600 mb-2">ℹ️ How to Upload Music</h4>
+                          <ol className="text-xs text-blue-600/70 space-y-1 list-decimal list-inside">
+                            <li>Upload your MP3 file to Wix Media</li>
+                            <li>Copy the file URL</li>
+                            <li>Paste the URL in the Music URL field above</li>
+                            <li>Adjust volume and settings as needed</li>
+                            <li>Enable the music to activate playback</li>
+                          </ol>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                        <p className="text-sm text-yellow-600">No music settings found. Please add one in the CMS.</p>
+                        <a
+                          href="https://manage.wix.com/dashboard"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block mt-4 px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-600 transition-all duration-300"
+                        >
+                          Open CMS to Add Music Settings
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'text' && (
                 <div>
                   <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
                     Site Text
@@ -528,7 +642,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* CMS Collections Info */}
               <div className="bg-black/5 border border-black/10 rounded-lg p-4">
                 <h3 className="text-sm font-heading font-bold text-black mb-3 uppercase tracking-wide">
                   Manage Content
@@ -555,7 +668,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </a>
               </div>
 
-              {/* Tips */}
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
                 <h3 className="text-sm font-heading font-bold text-red-600 mb-2">💡 Tips</h3>
                 <ul className="text-xs text-red-600/70 space-y-1">
