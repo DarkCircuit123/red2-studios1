@@ -181,6 +181,27 @@ export interface HomepageImages {
 
 
 /**
+ * Collection ID: musicsettings
+ * Interface for MusicSettings
+ */
+export interface MusicSettings {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType url */
+  musicUrl?: string;
+  /** @wixFieldType boolean */
+  isEnabled?: boolean;
+  /** @wixFieldType number */
+  volume?: number;
+  /** @wixFieldType boolean */
+  loopMusic?: boolean;
+  /** @wixFieldType text */
+  musicTitle?: string;
+}
+
+
+/**
  * Collection ID: passwordchangeauthorizations
  * Interface for PasswordChangeAuthorizations
  */

@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { BaseCrudService } from '@/integrations';
+
+interface MusicSettings {
+  _id: string;
+  musicUrl?: string;
+  isEnabled?: boolean;
+  volume?: number;
+  loopMusic?: boolean;
+  musicTitle?: string;
+}
 
 export default function BackgroundMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -8,9 +18,31 @@ export default function BackgroundMusicPlayer() {
   const [isMuted, setIsMuted] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [audioError, setAudioError] = useState(false);
+  const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+
+  // Load music settings from CMS
+  useEffect(() => {
+    const loadMusicSettings = async () => {
+      try {
+        const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
+        if (result?.items && result.items.length > 0) {
+          setMusicSettings(result.items[0]);
+        }
+      } catch (error) {
+        console.log('Failed to load music settings:', error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    loadMusicSettings();
+  }, []);
 
   // Initialize audio and attempt to play on first user interaction
   useEffect(() => {
+    if (isLoadingSettings || !musicSettings?.isEnabled) return;
+
     const handleUserInteraction = async () => {
       if (!hasInteracted && audioRef.current) {
         setHasInteracted(true);
@@ -45,7 +77,7 @@ export default function BackgroundMusicPlayer() {
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [hasInteracted]);
+  }, [hasInteracted, isLoadingSettings, musicSettings?.isEnabled]);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -79,22 +111,28 @@ export default function BackgroundMusicPlayer() {
     setAudioError(true);
   };
 
+  // Don't render if music is disabled or settings not loaded
+  if (isLoadingSettings || !musicSettings?.isEnabled) {
+    return null;
+  }
+
   return (
     <>
       {/* Hidden audio element - background music */}
       <audio
         ref={audioRef}
         title="Background Music Player"
-        loop
+        loop={musicSettings?.loopMusic !== false}
         preload="auto"
         crossOrigin="anonymous"
         onPlay={handleAudioPlay}
         onPause={handleAudioPause}
         onError={handleAudioError}
         style={{ display: 'none' }}
+        volume={Math.min(1, (musicSettings?.volume || 50) / 100)}
       >
         <source 
-          src="https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3" 
+          src={musicSettings?.musicUrl || 'https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3'} 
           type="audio/mpeg"
         />
       </audio>

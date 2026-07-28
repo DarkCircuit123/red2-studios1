@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, LogOut } from 'lucide-react';
+import { Settings, X, Edit2, LogOut, Music } from 'lucide-react';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
@@ -13,6 +13,15 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
+interface MusicSettings {
+  _id: string;
+  musicUrl?: string;
+  isEnabled?: boolean;
+  volume?: number;
+  loopMusic?: boolean;
+  musicTitle?: string;
+}
+
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { isAdminAuthenticated, logout } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('photos');
@@ -21,6 +30,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
+  const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -62,10 +72,21 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
         } catch (error) {
           setSponsors([]);
         }
+
+        // Load music settings
+        try {
+          const musicResult = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
+          if (musicResult?.items && musicResult.items.length > 0) {
+            setMusicSettings(musicResult.items[0]);
+          }
+        } catch (error) {
+          setMusicSettings(null);
+        }
       } catch (error) {
         setHomepageImages(null);
         setPortfolioItems([]);
         setSponsors([]);
+        setMusicSettings(null);
       } finally {
         setIsLoading(false);
       }
@@ -158,6 +179,17 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 }`}
               >
                 Sponsors
+              </button>
+              <button
+                onClick={() => setActiveTab('music')}
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap flex items-center gap-1 ${
+                  activeTab === 'music'
+                    ? 'bg-black text-white'
+                    : 'bg-black/5 text-black hover:bg-black/10'
+                }`}
+              >
+                <Music className="w-3 h-3" />
+                Music
               </button>
               <button
                 onClick={() => setActiveTab('text')}
@@ -442,8 +474,31 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Text Content Tab */}
-              {activeTab === 'text' && (
+              {/* Music Tab */}
+              {activeTab === 'music' && (
+                <div>
+                  <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide flex items-center gap-2">
+                    <Music className="w-4 h-4" />
+                    Background Music Settings
+                  </h3>
+                  <div className="space-y-6">
+                    {musicSettings ? (
+                      <>
+                        {/* Enable/Disable Toggle */}
+                        <div>
+                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
+                            Enable Background Music
+                          </label>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const newState = !musicSettings.isEnabled;
+                                await BaseCrudService.update('musicsettings', {
+                                  _id: musicSettings._id,
+                                  isEnabled: newState
+                                });
+                                setMusicSettings({ ...musicSettings, isEnabled: newState });
+                              } catch (error) {\n                                console.error('Error updating music settings:', error);\n                              }\n                            }}\n                            className={`px-4 py-2 rounded text-sm font-heading font-bold uppercase tracking-wide transition-all ${\n                              musicSettings.isEnabled\n                                ? 'bg-green-500 text-white hover:bg-green-600'\n                                : 'bg-gray-400 text-white hover:bg-gray-500'\n                            }`}\n                          >\n                            {musicSettings.isEnabled ? '✓ Enabled' : '✗ Disabled'}\n                          </button>\n                        </div>\n\n                        {/* Music Title */}\n                        <div>\n                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">\n                            Music Title\n                          </label>\n                          <TextEditableField\n                            value={musicSettings.musicTitle || ''}\n                            onSave={async (newTitle) => {\n                              try {\n                                await BaseCrudService.update('musicsettings', {\n                                  _id: musicSettings._id,\n                                  musicTitle: newTitle\n                                });\n                                setMusicSettings({ ...musicSettings, musicTitle: newTitle });\n                              } catch (error) {\n                                console.error('Error updating music title:', error);\n                              }\n                            }}\n                            className="text-sm text-black"\n                          />\n                        </div>\n\n                        {/* Music URL */}\n                        <div>\n                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">\n                            Music URL\n                          </label>\n                          <TextEditableField\n                            value={musicSettings.musicUrl || ''}\n                            onSave={async (newUrl) => {\n                              try {\n                                await BaseCrudService.update('musicsettings', {\n                                  _id: musicSettings._id,\n                                  musicUrl: newUrl\n                                });\n                                setMusicSettings({ ...musicSettings, musicUrl: newUrl });\n                              } catch (error) {\n                                console.error('Error updating music URL:', error);\n                              }\n                            }}\n                            className="text-xs text-black/70 break-all"\n                          />\n                        </div>\n\n                        {/* Volume Control */}\n                        <div>\n                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">\n                            Volume Level: {musicSettings.volume || 50}%\n                          </label>\n                          <input\n                            type="range"\n                            min="0"\n                            max="100"\n                            value={musicSettings.volume || 50}\n                            onChange={async (e) => {\n                              const newVolume = parseInt(e.target.value);\n                              setMusicSettings({ ...musicSettings, volume: newVolume });\n                              try {\n                                await BaseCrudService.update('musicsettings', {\n                                  _id: musicSettings._id,\n                                  volume: newVolume\n                                });\n                              } catch (error) {\n                                console.error('Error updating volume:', error);\n                              }\n                            }}\n                            className="w-full h-2 bg-black/20 rounded-lg appearance-none cursor-pointer"\n                          />\n                        </div>\n\n                        {/* Loop Toggle */}\n                        <div>\n                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">\n                            Loop Music\n                          </label>\n                          <button\n                            onClick={async () => {\n                              try {\n                                const newState = !musicSettings.loopMusic;\n                                await BaseCrudService.update('musicsettings', {\n                                  _id: musicSettings._id,\n                                  loopMusic: newState\n                                });\n                                setMusicSettings({ ...musicSettings, loopMusic: newState });\n                              } catch (error) {\n                                console.error('Error updating loop setting:', error);\n                              }\n                            }}\n                            className={`px-4 py-2 rounded text-sm font-heading font-bold uppercase tracking-wide transition-all ${\n                              musicSettings.loopMusic\n                                ? 'bg-blue-500 text-white hover:bg-blue-600'\n                                : 'bg-gray-400 text-white hover:bg-gray-500'\n                            }`}\n                          >\n                            {musicSettings.loopMusic ? '✓ Looping' : '✗ No Loop'}\n                          </button>\n                        </div>\n\n                        {/* Info Box */}\n                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mt-6">\n                          <h4 className="text-xs font-heading font-bold text-blue-600 mb-2">ℹ️ How to Upload Music</h4>\n                          <ol className="text-xs text-blue-600/70 space-y-1 list-decimal list-inside">\n                            <li>Upload your MP3 file to Wix Media</li>\n                            <li>Copy the file URL</li>\n                            <li>Paste the URL in the "Music URL" field above</li>\n                            <li>Adjust volume and settings as needed</li>\n                            <li>Enable the music to activate playback</li>\n                          </ol>\n                        </div>\n                      </>\n                    ) : (\n                      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">\n                        <p className="text-sm text-yellow-600">No music settings found. Please add one in the CMS.</p>\n                        <a\n                          href="https://manage.wix.com/dashboard"\n                          target="_blank"\n                          rel="noopener noreferrer"\n                          className="inline-block mt-4 px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-600 transition-all duration-300"\n                        >\n                          Open CMS to Add Music Settings\n                        </a>\n                      </div>\n                    )}\n                  </div>\n                </div>\n              )}\n\n              {/* Text Content Tab */}\n              {activeTab === 'text' && (
                 <div>
                   <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
                     Site Text
