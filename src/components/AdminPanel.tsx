@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2 } from 'lucide-react';
-import { useMember } from '@/integrations';
+import { Settings, X, Edit2, LogOut } from 'lucide-react';
+import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import { BaseCrudService } from '@/integrations';
 import { Services, HomepageImages, Portfolio, ClientsPress } from '@/entities/index';
+import { playClickSound } from '@/lib/click-sound';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -13,7 +14,7 @@ interface AdminPanelProps {
 }
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
-  const { isAuthenticated } = useMember();
+  const { isAdminAuthenticated, logout } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('photos');
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
@@ -74,7 +75,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   }, [isOpen]);
 
   // Only render admin panel if user is authenticated
-  if (!isAuthenticated) {
+  if (!isAdminAuthenticated) {
     return null;
   }
 
@@ -105,12 +106,25 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 <Settings className="w-5 h-5 text-black" />
                 <h2 className="text-lg font-heading font-bold text-black">Admin Panel</h2>
               </div>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-black/5 rounded transition-colors"
-              >
-                <X className="w-5 h-5 text-black/60" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    playClickSound();
+                    logout();
+                    onClose();
+                  }}
+                  className="p-2 hover:bg-red-500/10 rounded transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4 text-red-500" />
+                </button>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-black/5 rounded transition-colors"
+                >
+                  <X className="w-5 h-5 text-black/60" />
+                </button>
+              </div>
             </div>
 
             {/* Tabs */}

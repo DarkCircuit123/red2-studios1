@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Settings } from 'lucide-react';
+import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
 import AdminPanel from './AdminPanel';
+import AdminLoginModal from './AdminLoginModal';
+import { useAdminAuth } from '@/lib/adminAuthStore';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
@@ -13,7 +15,9 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
+  const { isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
   // Optimized throttled scroll handler with useThrottleCallback
@@ -32,8 +36,12 @@ export default function Header() {
 
   const handleAdminClick = useCallback(() => {
     playClickSound();
-    setIsAdminOpen(true);
-  }, []);
+    if (isAdminAuthenticated) {
+      setIsAdminOpen(true);
+    } else {
+      setIsLoginModalOpen(true);
+    }
+  }, [isAdminAuthenticated]);
 
   const handleMobileMenuClick = useCallback(() => {
     playClickSound();
@@ -169,17 +177,41 @@ export default function Header() {
 
         {/* Admin & Mobile Menu - Right aligned */}
         <div className="flex items-center gap-6 ml-auto">
-          {/* Admin gear icon - only show to authenticated users */}
-          {isAuthenticated && !isLoading && (
+          {/* Admin gear icon - always show, but behavior changes based on auth */}
+          <motion.button
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleAdminClick}
+            className={`p-2 transition-colors duration-300 rounded-lg ${
+              isAdminAuthenticated
+                ? 'hover:bg-primary/10'
+                : 'hover:bg-white/10'
+            }`}
+            aria-label="Admin panel"
+            title={isAdminAuthenticated ? 'Admin Panel' : 'Admin Login'}
+          >
+            <Settings className={`w-4 h-4 transition-colors ${
+              isAdminAuthenticated
+                ? 'text-primary hover:text-primary/80'
+                : 'text-white/60 hover:text-white'
+            }`} />
+          </motion.button>
+
+          {/* Admin Logout Button - only show when authenticated */}
+          {isAdminAuthenticated && (
             <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleAdminClick}
-              className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg"
-              aria-label="Admin panel"
-              title="Admin Panel"
+              onClick={() => {
+                playClickSound();
+                adminLogout();
+                setIsAdminOpen(false);
+              }}
+              className="p-2 hover:bg-red-500/10 transition-colors duration-300 rounded-lg"
+              aria-label="Admin logout"
+              title="Logout"
             >
-              <Settings className="w-4 h-4 text-primary hover:text-primary/80 transition-colors" />
+              <LogOut className="w-4 h-4 text-red-500 hover:text-red-600 transition-colors" />
             </motion.button>
           )}
 
@@ -198,6 +230,8 @@ export default function Header() {
           </motion.button>
         </div>
       </nav>
+      {/* Admin Login Modal */}
+      <AdminLoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
       {/* Admin Panel */}
       <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
       {/* Mobile Navigation */}
