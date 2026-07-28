@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
+import UploadQueueManager, { type UploadFile, type UploadQueueState } from '@/lib/upload-queue';
 
 interface ImageUploadManagerProps {
   onImageUpload: (imageUrl: string) => void;
@@ -45,6 +46,79 @@ export default function ImageUploadManager({
   const [isDeleting, setIsDeleting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [queueState, setQueueState] = useState<UploadQueueState | null>(null);
+  const queueRef = useRef<UploadQueueManager | null>(null);
+
+  // Initialize upload queue
+  useEffect(() => {
+    const queue = new UploadQueueManager({
+      maxRetries: 3,
+      retryDelay: 1000,
+      optimizeImages: true,
+      maxImageSize: 5 * 1024 * 1024, // 5MB
+      imageQuality: 0.8,
+    });
+
+    // Register upload callback
+    queue.onUpload(async (file: UploadFile, state: UploadQueueState) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file.file);
+
+        const uploadStart = Date.now();
+        const response = await fetch('/api/upload-image', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const uploadTime = Date.now() - uploadStart;
+        console.log(`[IMAGE_UPLOAD] Response received in ${uploadTime}ms, status: ${response.status}`);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMsg = errorData.error || `Upload failed with status ${response.status}`;
+          console.error(`[IMAGE_UPLOAD] Upload error:`, errorData);
+          throw new Error(errorMsg);
+        }
+
+        const data = await response.json();
+        const imageUrl = data.url;
+
+        console.log(`[IMAGE_UPLOAD] Upload successful for ${file.file.name}`);
+
+        // Update CMS if needed
+        if (collectionId && itemId && fieldName) {
+          try {
+            await BaseCrudService.update(collectionId, {
+              _id: itemId,
+              [fieldName]: imageUrl
+            });
+            console.log(`[IMAGE_UPLOAD] CMS update successful`);
+          } catch (cmsError) {
+            console.warn('[IMAGE_UPLOAD] CMS update failed, but file was uploaded:', cmsError);
+          }
+        }
+
+        file.uploadedUrl = imageUrl;
+        onImageUpload(imageUrl);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
+        throw new Error(errorMessage);
+      }
+    });
+
+    // Subscribe to state changes
+    queue.subscribe((state) => {
+      setQueueState(state);
+      setIsProcessing(state.isProcessing);
+    });
+
+    queueRef.current = queue;
+
+    return () => {
+      // Cleanup
+    };
+  }, [collectionId, itemId, fieldName, onImageUpload]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isValidFileType = (file: File): boolean => {
@@ -87,65 +161,14 @@ export default function ImageUploadManager({
       return;
     }
 
-    console.log(`[IMAGE_UPLOAD_UI] File validation passed, starting upload...`);
-    setIsProcessing(true);
-    try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('file', file);
-
-      console.log(`[IMAGE_UPLOAD_UI] Sending to /api/upload-image...`);
-      const uploadStart = Date.now();
-
-      // Upload to API endpoint
-      const response = await fetch('/api/upload-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const uploadTime = Date.now() - uploadStart;
-      console.log(`[IMAGE_UPLOAD_UI] Response received in ${uploadTime}ms, status: ${response.status}`);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.error || `Upload failed with status ${response.status}`;
-        console.error(`[IMAGE_UPLOAD_UI] Upload error:`, errorData);
-        throw new Error(errorMsg);
-      }
-
-      const data = await response.json();
-      const imageUrl = data.url;
-
-      console.log(`[IMAGE_UPLOAD_UI] Upload successful, URL length: ${imageUrl.length} chars`);
-      if (data.debug) {
-        console.log(`[IMAGE_UPLOAD_UI] Debug info:`, data.debug);
-      }
-
-      // If collection info provided, save to CMS
-      if (collectionId && itemId && fieldName) {
-        try {
-          console.log(`[IMAGE_UPLOAD_UI] Updating CMS: ${collectionId}/${itemId}/${fieldName}`);
-          await BaseCrudService.update(collectionId, {
-            _id: itemId,
-            [fieldName]: imageUrl
-          });
-          console.log(`[IMAGE_UPLOAD_UI] CMS update successful`);
-        } catch (cmsError) {
-          console.warn('[IMAGE_UPLOAD_UI] CMS update failed, but file was uploaded:', cmsError);
-          // Still call the callback even if CMS update fails
-        }
-      }
-
-      onImageUpload(imageUrl);
+    console.log(`[IMAGE_UPLOAD_UI] File validation passed, adding to upload queue...`);
+    
+    // Add file to queue and start processing
+    if (queueRef.current) {
+      queueRef.current.addFiles([file]);
+      await queueRef.current.start();
       setUploadStatus('success');
       setTimeout(() => setUploadStatus('idle'), 3000);
-      setIsProcessing(false);
-    } catch (error) {
-      console.error('[IMAGE_UPLOAD_UI] Error uploading image:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
-      setErrorMessage(errorMessage);
-      setUploadStatus('error');
-      setIsProcessing(false);
     }
   };
 
@@ -203,6 +226,26 @@ export default function ImageUploadManager({
       setIsDeleting(false);
     }
   };
+
+  const handleRetry = (fileId: string) => {
+    if (queueRef.current) {
+      queueRef.current.retryFile(fileId);
+    }
+  };
+
+  const handleClearQueue = () => {
+    if (queueRef.current) {
+      queueRef.current.clearCompleted();
+    }
+  };
+
+  const handleCancelQueue = () => {
+    if (queueRef.current) {
+      queueRef.current.cancel();
+    }
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="w-full space-y-3">
@@ -300,7 +343,7 @@ export default function ImageUploadManager({
       {/* Supported formats info */}
       <div className="text-xs text-white/40 space-y-1">
         <p>Supported formats: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC</p>
-        <p>Max file size: 100MB</p>
+        <p>Max file size: 100MB (auto-optimized if needed)</p>
       </div>
     </div>
   );

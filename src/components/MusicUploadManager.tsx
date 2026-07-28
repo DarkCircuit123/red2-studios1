@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, X, Music, Loader } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
+import UploadQueueManager, { type UploadFile, type UploadQueueState } from '@/lib/upload-queue';
 
 interface MusicUploadManagerProps {
   label: string;
@@ -23,7 +24,79 @@ export default function MusicUploadManager({
 }: MusicUploadManagerProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [queueState, setQueueState] = useState<UploadQueueState | null>(null);
+  const queueRef = useRef<UploadQueueManager | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize upload queue
+  useEffect(() => {
+    const queue = new UploadQueueManager({
+      maxRetries: 3,
+      retryDelay: 1000,
+      optimizeAudio: true,
+      maxAudioSize: 10 * 1024 * 1024, // 10MB
+    });
+
+    // Register upload callback
+    queue.onUpload(async (file: UploadFile, state: UploadQueueState) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file.file);
+
+        const uploadStart = Date.now();
+        const response = await fetch('/api/upload-music', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const uploadTime = Date.now() - uploadStart;
+        console.log(`[MUSIC_UPLOAD] Response received in ${uploadTime}ms, status: ${response.status}`);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMsg = errorData.error || `Upload failed with status ${response.status}`;
+          console.error(`[MUSIC_UPLOAD] Upload error:`, errorData);
+          throw new Error(errorMsg);
+        }
+
+        const data = await response.json();
+        const musicUrl = data.url;
+
+        console.log(`[MUSIC_UPLOAD] Upload successful for ${file.file.name}`);
+
+        // Update CMS if needed
+        if (itemId && collectionId && fieldName) {
+          try {
+            await BaseCrudService.update(collectionId, {
+              _id: itemId,
+              [fieldName]: musicUrl,
+            });
+            console.log(`[MUSIC_UPLOAD] CMS update successful`);
+          } catch (cmsError) {
+            console.warn('[MUSIC_UPLOAD] CMS update failed, but file was uploaded:', cmsError);
+          }
+        }
+
+        file.uploadedUrl = musicUrl;
+        onMusicUpload(musicUrl);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to upload music';
+        throw new Error(errorMessage);
+      }
+    });
+
+    // Subscribe to state changes
+    queue.subscribe((state) => {
+      setQueueState(state);
+      setIsUploading(state.isProcessing);
+    });
+
+    queueRef.current = queue;
+
+    return () => {
+      // Cleanup
+    };
+  }, [collectionId, itemId, fieldName, onMusicUpload]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -41,7 +114,7 @@ export default function MusicUploadManager({
       return;
     }
 
-    // Validate file size (max 50MB - reasonable limit)
+    // Validate file size (max 50MB)
     const MAX_FILE_SIZE = 50 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       const errorMsg = `File size exceeds 50MB limit. Your file is ${fileSizeMB}MB. Please compress or use a smaller file.`;
@@ -50,68 +123,13 @@ export default function MusicUploadManager({
       return;
     }
 
-    console.log(`[MUSIC_UPLOAD_UI] File validation passed, starting upload...`);
-    setIsUploading(true);
+    console.log(`[MUSIC_UPLOAD_UI] File validation passed, adding to upload queue...`);
     setError(null);
 
-    try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('file', file);
-
-      console.log(`[MUSIC_UPLOAD_UI] Sending to /api/upload-music...`);
-      const uploadStart = Date.now();
-
-      // Upload to API endpoint
-      const response = await fetch('/api/upload-music', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const uploadTime = Date.now() - uploadStart;
-      console.log(`[MUSIC_UPLOAD_UI] Response received in ${uploadTime}ms, status: ${response.status}`);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.error || `Upload failed with status ${response.status}`;
-        console.error(`[MUSIC_UPLOAD_UI] Upload error:`, errorData);
-        throw new Error(errorMsg);
-      }
-
-      const data = await response.json();
-      const musicUrl = data.url;
-
-      console.log(`[MUSIC_UPLOAD_UI] Upload successful, URL length: ${musicUrl.length} chars`);
-      if (data.debug) {
-        console.log(`[MUSIC_UPLOAD_UI] Debug info:`, data.debug);
-      }
-
-      // Update CMS with the new music URL
-      if (itemId && collectionId && fieldName) {
-        try {
-          console.log(`[MUSIC_UPLOAD_UI] Updating CMS: ${collectionId}/${itemId}/${fieldName}`);
-          await BaseCrudService.update(collectionId, {
-            _id: itemId,
-            [fieldName]: musicUrl,
-          });
-          console.log(`[MUSIC_UPLOAD_UI] CMS update successful`);
-        } catch (cmsError) {
-          console.warn('[MUSIC_UPLOAD_UI] CMS update failed, but file was uploaded:', cmsError);
-          // Still call the callback even if CMS update fails
-        }
-      }
-
-      onMusicUpload(musicUrl);
-      setError(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to upload music';
-      setError(errorMessage);
-      console.error('[MUSIC_UPLOAD_UI] Music upload error:', err);
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    // Add file to queue and start processing
+    if (queueRef.current) {
+      queueRef.current.addFiles([file]);
+      await queueRef.current.start();
     }
   };
 
@@ -129,6 +147,18 @@ export default function MusicUploadManager({
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete music';
       setError(errorMessage);
       console.error('Music delete error:', err);
+    }
+  };
+
+  const handleRetry = (fileId: string) => {
+    if (queueRef.current) {
+      queueRef.current.retryFile(fileId);
+    }
+  };
+
+  const handleClearQueue = () => {
+    if (queueRef.current) {
+      queueRef.current.clearCompleted();
     }
   };
 
