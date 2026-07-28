@@ -3,56 +3,81 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
 import AboutSection from '@/components/sections/AboutSection';
+import FeaturedWorkSection from '@/components/sections/FeaturedWorkSection';
 import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselSection';
+import BehindTheScenesSection from '@/components/sections/BehindTheScenesSection';
+import TestimonialsSection from '@/components/sections/TestimonialsSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
+import InstagramSection from '@/components/sections/InstagramSection';
 import ContactSection from '@/components/sections/ContactSection';
 
 // Fallback component for sections
 function SectionFallback() {
-  return <div className="w-full h-96 bg-black animate-pulse" />;
+  return <div className="w-full h-screen bg-black animate-pulse" />;
+}
+
+function Section({ children }: { children: React.ReactNode }) {
+  return (
+    <section
+      className="snap-start snap-always"
+      style={{
+        scrollSnapAlign: 'start',
+        scrollSnapStop: 'always',
+      }}
+    >
+      {children}
+    </section>
+  );
 }
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-black text-white scroll-smooth" style={{ scrollBehavior: 'smooth', scrollSnapType: 'y mandatory' }}>
+    <main
+      className="min-h-screen bg-black text-white overflow-x-hidden"
+      style={{
+        scrollBehavior: 'smooth',
+        scrollSnapType: 'y mandatory',
+      }}
+    >
       <Header />
 
-      {/* Hero Section */}
       <Suspense fallback={<SectionFallback />}>
-        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
-          <HeroSection />
-        </div>
+        <Section><HeroSection /></Section>
       </Suspense>
 
-      {/* About / Vision */}
       <Suspense fallback={<SectionFallback />}>
-        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
-          <AboutSection />
-        </div>
+        <Section><AboutSection /></Section>
       </Suspense>
 
-      {/* Rubber Band Carousel */}
       <Suspense fallback={<SectionFallback />}>
-        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
-          <RubberBandCarouselSection />
-        </div>
+        <Section><FeaturedWorkSection /></Section>
       </Suspense>
 
-      {/* Sponsored By */}
       <Suspense fallback={<SectionFallback />}>
-        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
-          <SponsorsSection />
-        </div>
+        <Section><RubberBandCarouselSection /></Section>
       </Suspense>
 
-      {/* Contact / Booking */}
       <Suspense fallback={<SectionFallback />}>
-        <div style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}>
-          <ContactSection />
-        </div>
+        <Section><BehindTheScenesSection /></Section>
+      </Suspense>
+
+      <Suspense fallback={<SectionFallback />}>
+        <Section><TestimonialsSection /></Section>
+      </Suspense>
+
+      <Suspense fallback={<SectionFallback />}>
+        <Section><SponsorsSection /></Section>
+      </Suspense>
+
+      <Suspense fallback={<SectionFallback />}>
+        <Section><InstagramSection /></Section>
+      </Suspense>
+
+      <Suspense fallback={<SectionFallback />}>
+        <Section><ContactSection /></Section>
       </Suspense>
 
       <Footer />
-    </div>
+    </main>
   );
 }
