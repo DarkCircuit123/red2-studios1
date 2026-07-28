@@ -36,9 +36,11 @@ export default function MusicUploadManager({
       return;
     }
 
-    // Validate file size (max 50MB)
-    if (file.size > 50 * 1024 * 1024) {
-      setError('File size must be less than 50MB');
+    // Validate file size (max 25MB - accounts for base64 encoding overhead)
+    const MAX_FILE_SIZE = 25 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
+      setError(`File size exceeds 25MB limit. Your file is ${fileSizeMB}MB. Please compress or use a smaller file.`);
       return;
     }
 
@@ -172,7 +174,7 @@ export default function MusicUploadManager({
       )}
 
       <p className="text-xs text-black/50">
-        Supported formats: MP3, WAV, OGG, WebM (Max 50MB)
+        Supported formats: MP3, WAV, OGG, WebM (Max 25MB)
       </p>
     </div>
   );
