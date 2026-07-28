@@ -4,6 +4,27 @@
  */
 
 /**
+ * Collection ID: about
+ * Interface for AboutSection
+ */
+export interface AboutSection {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  heading?: string;
+  /** @wixFieldType text */
+  subheading?: string;
+  /** @wixFieldType text */
+  aboutText?: string;
+  /** @wixFieldType text */
+  fontFamily?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  mainImage?: string;
+}
+
+
+/**
  * Collection ID: apiratelimits
  * Interface for APIRateLimits
  */

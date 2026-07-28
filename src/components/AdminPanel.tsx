@@ -6,7 +6,7 @@ import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import MusicManager from './MusicManager';
 import { BaseCrudService } from '@/integrations';
-import { Services, HomepageImages, Portfolio, ClientsPress } from '@/entities/index';
+import { Services, HomepageImages, Portfolio, ClientsPress, AboutSection } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
 
 interface AdminPanelProps {
@@ -23,6 +23,8 @@ interface MusicSettings {
   musicTitle?: string;
 }
 
+interface AboutSettings extends AboutSection {}
+
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { isAdminAuthenticated, logout } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('photos');
@@ -32,6 +34,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
+  const [aboutSettings, setAboutSettings] = useState<AboutSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -79,11 +82,21 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
         } catch (error) {
           setMusicSettings(null);
         }
+
+        try {
+          const aboutResult = await BaseCrudService.getAll<AboutSection>('about', {}, { limit: 1 });
+          if (aboutResult?.items && aboutResult.items.length > 0) {
+            setAboutSettings(aboutResult.items[0]);
+          }
+        } catch (error) {
+          setAboutSettings(null);
+        }
       } catch (error) {
         setHomepageImages(null);
         setPortfolioItems([]);
         setSponsors([]);
         setMusicSettings(null);
+        setAboutSettings(null);
       } finally {
         setIsLoading(false);
       }
@@ -182,6 +195,16 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               >
                 <Music className="w-3 h-3" />
                 Music
+              </button>
+              <button
+                onClick={() => setActiveTab('about')}
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
+                  activeTab === 'about'
+                    ? 'bg-black text-white'
+                    : 'bg-black/5 text-black hover:bg-black/10'
+                }`}
+              >
+                About
               </button>
               <button
                 onClick={() => setActiveTab('text')}
@@ -600,6 +623,95 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                           className="inline-block mt-4 px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-600 transition-all duration-300"
                         >
                           Open CMS to Add Music Settings
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'about' && (
+                <div>
+                  <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
+                    About Section Settings
+                  </h3>
+                  <div className="space-y-6">
+                    {aboutSettings ? (
+                      <>
+                        <div>
+                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                            About Text
+                          </label>
+                          <textarea
+                            value={aboutSettings.aboutText || ''}
+                            onChange={(e) => {
+                              setAboutSettings({ ...aboutSettings, aboutText: e.target.value });
+                            }}
+                            onBlur={async () => {
+                              try {
+                                await BaseCrudService.update('about', {
+                                  _id: aboutSettings._id,
+                                  aboutText: aboutSettings.aboutText
+                                });
+                              } catch (error) {
+                                console.error('Error updating about text:', error);
+                              }
+                            }}
+                            className="w-full p-3 border border-black/10 rounded text-sm text-black resize-none h-32 focus:outline-none focus:border-black/30"
+                            placeholder="Enter about section text..."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                            Font Family
+                          </label>
+                          <select
+                            value={aboutSettings.fontFamily || 'cormorant-garamond-v2'}
+                            onChange={async (e) => {
+                              const newFont = e.target.value;
+                              setAboutSettings({ ...aboutSettings, fontFamily: newFont });
+                              try {
+                                await BaseCrudService.update('about', {
+                                  _id: aboutSettings._id,
+                                  fontFamily: newFont
+                                });
+                              } catch (error) {
+                                console.error('Error updating font family:', error);
+                              }
+                            }}
+                            className="w-full p-3 border border-black/10 rounded text-sm text-black focus:outline-none focus:border-black/30"
+                          >
+                            <option value="cormorant-garamond-v2">Cormorant Garamond</option>
+                            <option value="font-heading">Heading Font</option>
+                            <option value="font-paragraph">Paragraph Font</option>
+                            <option value="font-mono">Mono Font</option>
+                            <option value="roboto">Roboto</option>
+                            <option value="montserrat">Montserrat</option>
+                            <option value="poppins-extralight">Poppins</option>
+                            <option value="cinzel">Cinzel</option>
+                            <option value="playfair-display">Playfair Display</option>
+                            <option value="noticia-text">Noticia Text</option>
+                          </select>
+                        </div>
+
+                        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                          <h4 className="text-xs font-heading font-bold text-green-600 mb-2">✓ Settings Saved</h4>
+                          <p className="text-xs text-green-600/70">
+                            Your about section settings are automatically saved to the CMS. Changes will appear on the website immediately.
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                        <p className="text-sm text-yellow-600">No about settings found. Please add one in the CMS.</p>
+                        <a
+                          href="https://manage.wix.com/dashboard"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block mt-4 px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-600 transition-all duration-300"
+                        >
+                          Open CMS to Add About Settings
                         </a>
                       </div>
                     )}
