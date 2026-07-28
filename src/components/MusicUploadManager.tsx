@@ -50,25 +50,31 @@ export default function MusicUploadManager({
       const formData = new FormData();
       formData.append('file', file);
 
-      // Upload to Wix Media
+      // Upload to API endpoint
       const response = await fetch('/api/upload-music', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to upload music file');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
       }
 
       const data = await response.json();
       const musicUrl = data.url;
 
       // Update CMS with the new music URL
-      if (itemId) {
-        await BaseCrudService.update(collectionId, {
-          _id: itemId,
-          [fieldName]: musicUrl,
-        });
+      if (itemId && collectionId && fieldName) {
+        try {
+          await BaseCrudService.update(collectionId, {
+            _id: itemId,
+            [fieldName]: musicUrl,
+          });
+        } catch (cmsError) {
+          console.warn('CMS update failed, but file was uploaded:', cmsError);
+          // Still call the callback even if CMS update fails
+        }
       }
 
       onMusicUpload(musicUrl);

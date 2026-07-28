@@ -82,49 +82,45 @@ export default function ImageUploadManager({
 
     setIsProcessing(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Upload to API endpoint
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const imageUrl = data.url;
+
+      // If collection info provided, save to CMS
+      if (collectionId && itemId && fieldName) {
         try {
-          const base64 = event.target?.result as string;
-          
-          // If collection info provided, save to CMS
-          if (collectionId && itemId && fieldName) {
-            try {
-              await BaseCrudService.update(collectionId, {
-                _id: itemId,
-                [fieldName]: base64
-              });
-              onImageUpload(base64);
-              setUploadStatus('success');
-              setTimeout(() => setUploadStatus('idle'), 3000);
-            } catch (cmsError) {
-              console.error('CMS update failed:', cmsError);
-              setErrorMessage('Failed to save image to CMS. Please try again.');
-              setUploadStatus('error');
-            }
-          } else {
-            // No CMS info, just update locally
-            onImageUpload(base64);
-            setUploadStatus('success');
-            setTimeout(() => setUploadStatus('idle'), 3000);
-          }
-          setIsProcessing(false);
-        } catch (error) {
-          console.error('Error processing image:', error);
-          setErrorMessage('Failed to process image. Please try again.');
-          setUploadStatus('error');
-          setIsProcessing(false);
+          await BaseCrudService.update(collectionId, {
+            _id: itemId,
+            [fieldName]: imageUrl
+          });
+        } catch (cmsError) {
+          console.warn('CMS update failed, but file was uploaded:', cmsError);
+          // Still call the callback even if CMS update fails
         }
-      };
-      reader.onerror = () => {
-        setErrorMessage('Failed to read file. Please try again.');
-        setUploadStatus('error');
-        setIsProcessing(false);
-      };
-      reader.readAsDataURL(file);
+      }
+
+      onImageUpload(imageUrl);
+      setUploadStatus('success');
+      setTimeout(() => setUploadStatus('idle'), 3000);
+      setIsProcessing(false);
     } catch (error) {
-      console.error('Error processing image:', error);
-      setErrorMessage('Error processing image. Please try again.');
+      console.error('Error uploading image:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
+      setErrorMessage(errorMessage);
       setUploadStatus('error');
       setIsProcessing(false);
     }
