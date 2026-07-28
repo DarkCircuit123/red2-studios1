@@ -169,16 +169,19 @@ export default function Header() {
 
         {/* Admin & Mobile Menu - Right aligned */}
         <div className="flex items-center gap-6 ml-auto">
-          <motion.button
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleAdminClick}
-            className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg"
-            aria-label="Admin panel"
-            title="Admin Panel"
-          >
-            <Settings className="w-4 h-4 text-white/40 hover:text-primary transition-colors" />
-          </motion.button>
+          {/* Admin gear icon - only show to authenticated users */}
+          {isAuthenticated && (
+            <motion.button
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAdminClick}
+              className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg"
+              aria-label="Admin panel"
+              title="Admin Panel"
+            >
+              <Settings className="w-4 h-4 text-white/40 hover:text-primary transition-colors" />
+            </motion.button>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.1 }}

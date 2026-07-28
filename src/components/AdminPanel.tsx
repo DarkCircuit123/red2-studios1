@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, X, Edit2 } from 'lucide-react';
+import { useMember } from '@/integrations';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import { BaseCrudService } from '@/integrations';
@@ -12,6 +13,7 @@ interface AdminPanelProps {
 }
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
+  const { isAuthenticated } = useMember();
   const [activeTab, setActiveTab] = useState('photos');
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
@@ -70,6 +72,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     
     loadImages();
   }, [isOpen]);
+
+  // Only render admin panel if user is authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <AnimatePresence>
