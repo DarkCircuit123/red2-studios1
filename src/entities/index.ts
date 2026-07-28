@@ -188,8 +188,16 @@ export interface MusicSettings {
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;
+  /** @wixFieldType text */
+  duration?: string;
+  /** @wixFieldType text */
+  genre?: string;
   /** @wixFieldType url */
   musicUrl?: string;
+  /** @wixFieldType text */
+  album?: string;
+  /** @wixFieldType text */
+  artist?: string;
   /** @wixFieldType boolean */
   isEnabled?: boolean;
   /** @wixFieldType number */
