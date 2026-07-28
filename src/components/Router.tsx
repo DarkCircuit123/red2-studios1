@@ -7,8 +7,7 @@ import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import PortfolioDetailPage from './pages/PortfolioDetailPage';
 import BookingPage from './pages/BookingPage';
-import BlogPage from './pages/BlogPage';
-import BlogDetailPage from './pages/BlogDetailPage';
+// ... keep existing code (other imports) ...
 import ProfilePage from './pages/ProfilePage';
 import PrivatePage from './pages/PrivatePage';
 import HangmanGamePage from './pages/HangmanGamePage';
@@ -51,14 +50,7 @@ const router = createBrowserRouter([
         path: "booking",
         element: <BookingPage />,
       },
-      {
-        path: "blog",
-        element: <BlogPage />,
-      },
-      {
-        path: "blog/:id",
-        element: <BlogDetailPage />,
-      },
+
       {
         path: "profile",
         element: (
