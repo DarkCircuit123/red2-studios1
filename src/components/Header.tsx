@@ -170,7 +170,7 @@ export default function Header() {
         {/* Admin & Mobile Menu - Right aligned */}
         <div className="flex items-center gap-6 ml-auto">
           {/* Admin gear icon - only show to authenticated users */}
-          {isAuthenticated && (
+          {isAuthenticated && !isLoading && (
             <motion.button
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.95 }}
@@ -179,7 +179,7 @@ export default function Header() {
               aria-label="Admin panel"
               title="Admin Panel"
             >
-              <Settings className="w-4 h-4 text-white/40 hover:text-primary transition-colors" />
+              <Settings className="w-4 h-4 text-primary hover:text-primary/80 transition-colors" />
             </motion.button>
           )}
 

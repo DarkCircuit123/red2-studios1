@@ -158,13 +158,35 @@ export default function LiveTickerSection() {
   const hasVideo = !!currentStory.videoUrl;
 
   return (
-    <div className="w-full bg-gradient-to-r from-black via-black/95 to-black border-t border-b border-primary/20 py-4 px-4">
-      <div className="max-w-[100rem] mx-auto">
+    <div className="w-full bg-gradient-to-r from-black via-black/95 to-black border-t border-b border-primary/20 py-4 px-4 relative overflow-hidden">
+      {/* Animated background pulse effect */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0"
+        animate={{ opacity: [0, 0.3, 0] }}
+        transition={{ duration: 3, repeat: Infinity }}
+        style={{ pointerEvents: 'none' }}
+      />
+      
+      <div className="max-w-[100rem] mx-auto relative z-10">
         {/* Header with label and controls */}
         <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 relative">
+            {/* Flashing red dot */}
+            <motion.div
+              className="absolute -left-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-primary rounded-full"
+              animate={{ 
+                opacity: [1, 0.3, 1],
+                scale: [1, 1.2, 1],
+                boxShadow: ['0 0 0 0 rgba(111, 8, 9, 0.7)', '0 0 0 8px rgba(111, 8, 9, 0)', '0 0 0 0 rgba(111, 8, 9, 0.7)']
+              }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+            
             <motion.span 
-              animate={{ opacity: [0.7, 1, 0.7] }}
+              animate={{ 
+                opacity: [0.6, 1, 0.6],
+                textShadow: ['0 0 0px rgba(111, 8, 9, 0)', '0 0 10px rgba(111, 8, 9, 0.8)', '0 0 0px rgba(111, 8, 9, 0)']
+              }}
               transition={{ duration: 2, repeat: Infinity }}
               className="text-xs font-heading font-bold text-primary tracking-widest uppercase whitespace-nowrap"
             >
@@ -211,12 +233,17 @@ export default function LiveTickerSection() {
           </div>
         </div>
 
-        {/* Story display with enhanced styling */}
-        <a 
+        {/* Story display with enhanced styling and animated border */}
+        <motion.a 
           href={displayUrl}
           target={isExternalLink ? '_blank' : undefined}
           rel={isExternalLink ? 'noopener noreferrer' : undefined}
-          className="block overflow-hidden rounded-lg bg-black/30 border border-primary/10 p-4 cursor-pointer hover:bg-black/40 transition-colors duration-200"
+          animate={{ 
+            borderColor: ['rgba(111, 8, 9, 0.1)', 'rgba(111, 8, 9, 0.4)', 'rgba(111, 8, 9, 0.1)'],
+            boxShadow: ['0 0 0px rgba(111, 8, 9, 0)', '0 0 12px rgba(111, 8, 9, 0.3)', '0 0 0px rgba(111, 8, 9, 0)']
+          }}
+          transition={{ duration: 3, repeat: Infinity }}
+          className="block overflow-hidden rounded-lg bg-black/30 border p-4 cursor-pointer hover:bg-black/40 transition-colors duration-200"
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -273,9 +300,9 @@ export default function LiveTickerSection() {
               )}
             </motion.div>
           </AnimatePresence>
-        </a>
+        </motion.a>
 
-        {/* Progress indicators with hover preview */}
+        {/* Progress indicators with hover preview and animated glow */}
         <div className="flex gap-1 mt-4">
           {stories.map((story, idx) => (
             <motion.button
@@ -286,9 +313,16 @@ export default function LiveTickerSection() {
               className="relative flex-1 group"
               whileHover={{ scale: 1.05 }}
             >
-              <div className={`h-1 rounded-full transition-all duration-300 ${
-                idx === currentIndex ? 'bg-primary' : 'bg-gray-700 hover:bg-gray-600'
-              }`} />
+              <motion.div 
+                animate={idx === currentIndex ? {
+                  backgroundColor: ['rgba(111, 8, 9, 1)', 'rgba(111, 8, 9, 0.7)', 'rgba(111, 8, 9, 1)'],
+                  boxShadow: ['0 0 0px rgba(111, 8, 9, 0)', '0 0 8px rgba(111, 8, 9, 0.6)', '0 0 0px rgba(111, 8, 9, 0)']
+                } : {}}
+                transition={idx === currentIndex ? { duration: 2, repeat: Infinity } : {}}
+                className={`h-1 rounded-full transition-all duration-300 ${
+                  idx === currentIndex ? 'bg-primary' : 'bg-gray-700 hover:bg-gray-600'
+                }`} 
+              />
               
               {/* Hover tooltip */}
               {hoveredIndex === idx && (
