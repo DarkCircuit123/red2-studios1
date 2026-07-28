@@ -6,9 +6,7 @@ import AboutSection from '@/components/sections/AboutSection';
 import FeaturedWorkSection from '@/components/sections/FeaturedWorkSection';
 import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselSection';
 import BehindTheScenesSection from '@/components/sections/BehindTheScenesSection';
-import TestimonialsSection from '@/components/sections/TestimonialsSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
-import InstagramSection from '@/components/sections/InstagramSection';
 import ContactSection from '@/components/sections/ContactSection';
 
 // Fallback component for sections
@@ -62,15 +60,7 @@ export default function HomePage() {
       </Suspense>
 
       <Suspense fallback={<SectionFallback />}>
-        <Section><TestimonialsSection /></Section>
-      </Suspense>
-
-      <Suspense fallback={<SectionFallback />}>
         <Section><SponsorsSection /></Section>
-      </Suspense>
-
-      <Suspense fallback={<SectionFallback />}>
-        <Section><InstagramSection /></Section>
       </Suspense>
 
       <Suspense fallback={<SectionFallback />}>
