@@ -106,6 +106,15 @@ export default function LiveTickerSection() {
     }
   };
 
+  const handleStoryClick = (e: React.MouseEvent) => {
+    const link = currentStory.link;
+    if (link && link.startsWith('http')) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.open(link, '_blank');
+    }
+  };
+
   if (isLoading || stories.length === 0) {
     return null;
   }
@@ -170,7 +179,17 @@ export default function LiveTickerSection() {
         </div>
 
         {/* Story display with enhanced styling */}
-        <div className="overflow-hidden rounded-lg bg-black/30 border border-primary/10 p-4">
+        <div 
+          className="overflow-hidden rounded-lg bg-black/30 border border-primary/10 p-4 cursor-pointer hover:bg-black/40 transition-colors duration-200"
+          onClick={handleStoryClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              handleStoryClick(e as any);
+            }
+          }}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
@@ -191,18 +210,13 @@ export default function LiveTickerSection() {
 
               {/* Headline and metadata */}
               <div className="flex-1 min-w-0">
-                {/* Headline link */}
-                <a
-                  href={displayUrl}
-                  target={isExternalLink ? '_blank' : undefined}
-                  rel={isExternalLink ? 'noopener noreferrer' : undefined}
-                  className="group block text-sm md:text-base text-gray-100 hover:text-primary transition-colors duration-300 line-clamp-2 font-medium"
-                >
+                {/* Headline */}
+                <div className="group block text-sm md:text-base text-gray-100 hover:text-primary transition-colors duration-300 line-clamp-2 font-medium">
                   {currentStory.title || 'Untitled Story'}
                   {isExternalLink && (
                     <ExternalLink className="inline-block w-3 h-3 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                   )}
-                </a>
+                </div>
 
                 {/* Publish date */}
                 <p className="text-xs text-gray-500 mt-1">
