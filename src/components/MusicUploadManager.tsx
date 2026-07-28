@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, Music, Loader } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
-import UploadQueueManager, { type UploadFile, type UploadQueueState } from '@/lib/upload-queue';
+import type { UploadFile, UploadQueueState } from '@/lib/upload-queue';
+import UploadQueueManager from '@/lib/upload-queue';
 
 interface MusicUploadManagerProps {
   label: string;
