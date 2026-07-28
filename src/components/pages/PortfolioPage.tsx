@@ -107,8 +107,8 @@ export default function PortfolioPage() {
             }}
             className={`px-5 py-2.5 font-heading font-medium text-xs tracking-wide rounded-lg transition-all duration-300 ${
               selectedCategory === null
-                ? 'bg-white text-black shadow-lg shadow-white/20'
-                : 'bg-white/8 text-white border border-white/15 hover:bg-white/12 hover:border-white/30'
+                ? 'bg-white text-black'
+                : 'bg-white/8 text-white border border-white/15 hover:bg-white/15 hover:border-white/40 hover:shadow-lg hover:shadow-white/10'
             }`}
           >
             All
@@ -122,8 +122,8 @@ export default function PortfolioPage() {
               }}
               className={`px-5 py-2.5 font-heading font-medium text-xs tracking-wide rounded-lg transition-all duration-300 ${
                 selectedCategory === category
-                  ? 'bg-white text-black shadow-lg shadow-white/20'
-                  : 'bg-white/8 text-white border border-white/15 hover:bg-white/12 hover:border-white/30'
+                  ? 'bg-white text-black'
+                  : 'bg-white/8 text-white border border-white/15 hover:bg-white/15 hover:border-white/40 hover:shadow-lg hover:shadow-white/10'
               }`}
             >
               {category}
