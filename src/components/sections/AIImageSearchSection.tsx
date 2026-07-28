@@ -15,18 +15,35 @@ export default function AIImageSearchSection() {
   const availableTags = ['Fashion', 'Editorial', 'Commercial', 'Lifestyle', 'Minimalist', 'Bold', 'Luxury'];
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadPortfolio = async () => {
       try {
-        const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
+        const data = await Promise.race([
+          BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        
+        if (!isMounted) return;
+        
         setPortfolioItems(data.items || []);
         setFilteredItems(data.items || []);
       } catch (error) {
-        console.error('Error loading portfolio:', error);
+        if (isMounted) {
+          console.error('Error loading portfolio:', error);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
+    
     loadPortfolio();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {

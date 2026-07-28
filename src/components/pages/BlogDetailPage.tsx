@@ -15,26 +15,42 @@ export default function BlogDetailPage() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadPost = async () => {
       try {
         if (!id) {
           setNotFound(true);
           return;
         }
-        const result = await BaseCrudService.getById<BlogPosts>('blogposts', id);
+        const result = await Promise.race([
+          BaseCrudService.getById<BlogPosts>('blogposts', id),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        
+        if (!isMounted) return;
+        
         if (result) {
           setPost(result);
         } else {
           setNotFound(true);
         }
       } catch (error) {
-        setNotFound(true);
+        if (isMounted) {
+          setNotFound(true);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadPost();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   if (isLoading) {

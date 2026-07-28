@@ -13,18 +13,34 @@ export default function BlogPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadPosts = async () => {
       try {
-        const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 50 });
+        const result = await Promise.race([
+          BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 50 }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        
+        if (!isMounted) return;
+        
         setPosts(result.items || []);
       } catch (error) {
-        // Silently fail - show empty state
+        if (isMounted) {
+          // Silently fail - show empty state
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadPosts();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

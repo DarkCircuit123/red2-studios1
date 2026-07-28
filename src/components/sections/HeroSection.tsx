@@ -11,9 +11,17 @@ export default function HeroSection() {
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadHeroImage = async () => {
       try {
-        const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+        const homepageImages = await Promise.race([
+          BaseCrudService.getAll('homepageimages', {}, { limit: 1 }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        
+        if (!isMounted) return;
+        
         if (homepageImages?.items && homepageImages.items.length > 0) {
           const images = homepageImages.items[0] as any;
           if (images?.heroImage) {
@@ -21,11 +29,18 @@ export default function HeroSection() {
           }
         }
       } catch (error) {
-        console.error('[HeroSection] Failed to load hero image:', error);
-        // Use default image
+        if (isMounted) {
+          console.error('[HeroSection] Failed to load hero image:', error);
+          // Use default image
+        }
       }
     };
+    
     loadHeroImage();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Parallax effect with passive listener

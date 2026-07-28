@@ -28,16 +28,30 @@ export default function WatchPage() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadData = async () => {
       try {
         // Load all reels for sidebar
-        const allResult = await BaseCrudService.getAll<Reels>('reels', {}, { limit: 50 });
+        const allResult = await Promise.race([
+          BaseCrudService.getAll<Reels>('reels', {}, { limit: 50 }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        
+        if (!isMounted) return;
+        
         const sorted = (allResult.items || []).sort((a, b) => (a.order || 0) - (b.order || 0));
         setAllReels(sorted);
 
         // Load specific reel if ID provided
         if (id) {
-          const result = await BaseCrudService.getById<Reels>('reels', id);
+          const result = await Promise.race([
+            BaseCrudService.getById<Reels>('reels', id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+          ]);
+          
+          if (!isMounted) return;
+          
           if (result) {
             setReel(result);
           } else {
@@ -50,13 +64,21 @@ export default function WatchPage() {
           setNotFound(true);
         }
       } catch (error) {
-        setNotFound(true);
+        if (isMounted) {
+          setNotFound(true);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   if (isLoading) {

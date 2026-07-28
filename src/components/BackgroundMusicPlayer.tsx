@@ -23,10 +23,18 @@ export default function BackgroundMusicPlayer() {
 
   // Load music settings from CMS
   useEffect(() => {
+    let isMounted = true;
+
     const loadMusicSettings = async () => {
       try {
         console.log('[MUSIC_PLAYER] Loading music settings from CMS...');
-        const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
+        const result = await Promise.race([
+          BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        
+        if (!isMounted) return;
+        
         if (result?.items && result.items.length > 0) {
           const settings = result.items[0];
           console.log('[MUSIC_PLAYER] Settings loaded:', {
@@ -40,13 +48,21 @@ export default function BackgroundMusicPlayer() {
           console.log('[MUSIC_PLAYER] No music settings found in CMS');
         }
       } catch (error) {
-        console.error('[MUSIC_PLAYER] Failed to load music settings:', error);
+        if (isMounted) {
+          console.error('[MUSIC_PLAYER] Failed to load music settings:', error);
+        }
       } finally {
-        setIsLoadingSettings(false);
+        if (isMounted) {
+          setIsLoadingSettings(false);
+        }
       }
     };
 
     loadMusicSettings();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Set audio volume when settings change

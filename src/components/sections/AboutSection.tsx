@@ -14,10 +14,18 @@ export default function AboutSection() {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
+    let isMounted = true;
+
     const loadAboutImage = async () => {
       try {
         // Load from HomepageImages collection first
-        const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+        const homepageImages = await Promise.race([
+          BaseCrudService.getAll('homepageimages', {}, { limit: 1 }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        
+        if (!isMounted) return;
+        
         if (homepageImages?.items && homepageImages.items.length > 0) {
           const images = homepageImages.items[0] as any;
           if (images?.aboutSectionImage) {
@@ -25,12 +33,21 @@ export default function AboutSection() {
           }
         }
       } catch (error) {
-        console.error('[AboutSection] Error loading about image:', error);
+        if (isMounted) {
+          console.error('[AboutSection] Error loading about image:', error);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
+    
     loadAboutImage();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const statVariants = {
