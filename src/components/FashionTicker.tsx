@@ -1,46 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BaseCrudService } from '@/integrations';
-import { BlogPosts } from '@/entities';
 
 interface FashionNews {
   id: string;
   title: string;
   link: string;
   pubDate: string;
+  source: string;
 }
 
 export default function FashionTicker() {
   const [news, setNews] = useState<FashionNews[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFashionNews = async () => {
       try {
         setIsLoading(true);
-        setError(null);
 
-        // Fetch blog posts from CMS
-        const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 50 });
-        
-        if (result?.items && result.items.length > 0) {
-          const blogNews: FashionNews[] = result.items
-            .filter(post => post.title) // Filter out posts without titles
-            .map((post) => ({
-              id: post._id,
-              title: post.title || 'Untitled Article',
-              link: `/blog/${post._id}`,
-              pubDate: post.publicationDate ? new Date(post.publicationDate).toISOString() : new Date().toISOString(),
-            }));
-          
-          setNews(blogNews);
-        } else {
-          setNews([]);
+        // RSS feeds from real fashion and media sources
+        const feeds = [
+          { url: 'https://feeds.vogue.com/vogue/index.xml', source: 'Vogue' },
+          { url: 'https://www.sonyalpharumors.com/feed/', source: 'Sony Alpha' },
+          { url: 'https://www.fashionnetwork.com/rss/news.xml', source: 'Fashion Network' },
+          { url: 'https://www.thefashionspot.com/feed/', source: 'The Fashion Spot' },
+        ];
+
+        const allNews: FashionNews[] = [];
+
+        for (const feed of feeds) {
+          try {
+            const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.items && Array.isArray(data.items)) {
+                const feedNews = data.items.slice(0, 5).map((item: any, idx: number) => ({
+                  id: `${feed.source}-${idx}`,
+                  title: item.title || 'Untitled',
+                  link: item.link || item.url || '#',
+                  pubDate: item.pubDate || item.published || new Date().toISOString(),
+                  source: feed.source,
+                }));
+                allNews.push(...feedNews);
+              }
+            }
+          } catch (err) {
+            console.error(`Error fetching ${feed.source} feed:`, err);
+          }
         }
+
+        // Shuffle and limit to 30 stories for the ticker
+        const shuffled = allNews.sort(() => Math.random() - 0.5).slice(0, 30);
+        setNews(shuffled.length > 0 ? shuffled : []);
       } catch (err) {
         console.error('Error fetching fashion news:', err);
-        setError('Unable to load articles');
         setNews([]);
       } finally {
         setIsLoading(false);
@@ -65,11 +78,11 @@ export default function FashionTicker() {
         <div className="flex items-center gap-4 px-4">
           <div className="flex-shrink-0">
             <span className="text-xs font-heading font-bold text-primary tracking-widest uppercase whitespace-nowrap">
-              Articles
+              Live News
             </span>
           </div>
           <div className="flex-1 text-xs text-gray-500">
-            No articles available yet
+            Loading stories...
           </div>
         </div>
       </div>
@@ -83,9 +96,13 @@ export default function FashionTicker() {
       <div className="flex items-center gap-4 px-4">
         {/* Label */}
         <div className="flex-shrink-0">
-          <span className="text-xs font-heading font-bold text-primary tracking-widest uppercase whitespace-nowrap">
-            Articles
-          </span>
+          <motion.span 
+            animate={{ opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-xs font-heading font-bold text-primary tracking-widest uppercase whitespace-nowrap"
+          >
+            🔴 Live News
+          </motion.span>
         </div>
 
         {/* Ticker */}
@@ -103,12 +120,13 @@ export default function FashionTicker() {
               <a
                 key={`${item.id}-${idx}`}
                 href={item.link}
-                target={item.link.startsWith('http') ? '_blank' : undefined}
-                rel={item.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                className="flex-shrink-0 text-xs text-gray-300 hover:text-primary transition-colors duration-300 whitespace-nowrap cursor-pointer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 text-xs text-gray-300 hover:text-primary transition-colors duration-300 whitespace-nowrap cursor-pointer group"
               >
                 <span className="text-gray-600 mr-2">•</span>
-                {item.title}
+                <span className="group-hover:underline">{item.title}</span>
+                <span className="text-gray-600 ml-1 text-[10px]">({item.source})</span>
               </a>
             ))}
           </motion.div>
