@@ -3,7 +3,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
 import AboutSection from '@/components/sections/AboutSection';
-import FeaturedWorkSection from '@/components/sections/FeaturedWorkSection';
 import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselSection';
 import BehindTheScenesSection from '@/components/sections/BehindTheScenesSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
@@ -45,10 +44,6 @@ export default function HomePage() {
 
       <Suspense fallback={<SectionFallback />}>
         <Section><AboutSection /></Section>
-      </Suspense>
-
-      <Suspense fallback={<SectionFallback />}>
-        <Section><FeaturedWorkSection /></Section>
       </Suspense>
 
       <Suspense fallback={<SectionFallback />}>
