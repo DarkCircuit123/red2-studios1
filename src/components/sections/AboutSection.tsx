@@ -120,7 +120,7 @@ export default function AboutSection() {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7, delay: 0.3 }}
                   viewport={{ once: true }}
-                  className={`text-base md:text-lg text-white/75 leading-relaxed ${fontFamily}`}
+                  className={`text-base md:text-lg text-white/75 leading-relaxed whitespace-pre-wrap ${fontFamily}`}
                 >
                   {aboutText}
                 </motion.p>
