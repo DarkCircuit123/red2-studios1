@@ -4,6 +4,7 @@ import { Settings, X, Edit2, LogOut, Music } from 'lucide-react';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
+import MusicUploadManager from './MusicUploadManager';
 import { BaseCrudService } from '@/integrations';
 import { Services, HomepageImages, Portfolio, ClientsPress } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
@@ -465,6 +466,25 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       <>
                         <div>
                           <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
+                            Upload Music File
+                          </label>
+                          <MusicUploadManager
+                            label="Upload Music"
+                            currentMusicUrl={musicSettings.musicUrl}
+                            collectionId="musicsettings"
+                            itemId={musicSettings._id}
+                            fieldName="musicUrl"
+                            onMusicUpload={(url) => {
+                              setMusicSettings({ ...musicSettings, musicUrl: url });
+                            }}
+                            onMusicDelete={() => {
+                              setMusicSettings({ ...musicSettings, musicUrl: undefined });
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
                             Enable Background Music
                           </label>
                           <button
@@ -508,27 +528,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                               }
                             }}
                             className="text-sm text-black"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
-                            Music URL
-                          </label>
-                          <TextEditableField
-                            value={musicSettings.musicUrl || ''}
-                            onSave={async (newUrl) => {
-                              try {
-                                await BaseCrudService.update('musicsettings', {
-                                  _id: musicSettings._id,
-                                  musicUrl: newUrl
-                                });
-                                setMusicSettings({ ...musicSettings, musicUrl: newUrl });
-                              } catch (error) {
-                                console.error('Error updating music URL:', error);
-                              }
-                            }}
-                            className="text-xs text-black/70 break-all"
                           />
                         </div>
 
@@ -585,14 +584,10 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         </div>
 
                         <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mt-6">
-                          <h4 className="text-xs font-heading font-bold text-blue-600 mb-2">ℹ️ How to Upload Music</h4>
-                          <ol className="text-xs text-blue-600/70 space-y-1 list-decimal list-inside">
-                            <li>Upload your MP3 file to Wix Media</li>
-                            <li>Copy the file URL</li>
-                            <li>Paste the URL in the Music URL field above</li>
-                            <li>Adjust volume and settings as needed</li>
-                            <li>Enable the music to activate playback</li>
-                          </ol>
+                          <h4 className="text-xs font-heading font-bold text-blue-600 mb-2">ℹ️ Music Upload</h4>
+                          <p className="text-xs text-blue-600/70">
+                            Click "Upload Music" to select an audio file from your computer. Supported formats: MP3, WAV, OGG, WebM (Max 50MB). The file will be automatically uploaded and saved to the CMS.
+                          </p>
                         </div>
                       </>
                     ) : (
