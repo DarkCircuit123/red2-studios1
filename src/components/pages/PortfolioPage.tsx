@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 import { Image } from '@/components/ui/image';
@@ -15,6 +14,8 @@ export default function PortfolioPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -41,8 +42,19 @@ export default function PortfolioPage() {
     loadProjects();
   }, []);
 
-  // Get unique categories
-  const categories = Array.from(new Set(projects.map((p) => p.category).filter(Boolean)));
+  // Load image dimensions when selected image changes
+  useEffect(() => {
+    if (!selectedImage) {
+      setImageDimensions(null);
+      return;
+    }
+
+    const img = new window.Image();
+    img.onload = () => {
+      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = selectedImage;
+  }, [selectedImage]);
 
   const handleCategoryFilter = (category: string | null) => {
     setSelectedCategory(category);
@@ -77,6 +89,45 @@ export default function PortfolioPage() {
     <div className="min-h-screen bg-black">
       <Header />
 
+      {/* Lightbox Modal */}
+      {selectedImage && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-black/98 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-8 right-8 p-2 text-white/60 hover:text-white transition-colors z-10"
+            aria-label="Close lightbox"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          {/* Dynamic container that scales to image aspect ratio */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center justify-center"
+            style={{
+              maxWidth: '95vw',
+              maxHeight: '95vh',
+              aspectRatio: imageDimensions ? `${imageDimensions.width} / ${imageDimensions.height}` : 'auto',
+            }}
+          >
+            <Image
+              src={selectedImage}
+              alt="Full resolution image"
+              className="w-full h-full object-contain"
+            />
+          </motion.div>
+        </motion.div>
+      )}
+
       <main className="max-w-[120rem] mx-auto px-8 py-24 md:py-32">
         {/* Page Header */}
         <motion.div
@@ -91,44 +142,6 @@ export default function PortfolioPage() {
           <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
             A comprehensive collection of photography work across various categories and styles. Each project represents precision and creative excellence.
           </p>
-        </motion.div>
-
-        {/* Filters - Modern & Clean */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="mb-16 flex flex-wrap gap-2"
-        >
-          <button
-            onClick={() => {
-              playClickSound();
-              handleCategoryFilter(null);
-            }}
-            className={`px-5 py-2.5 font-heading font-medium text-xs tracking-wide rounded-lg transition-all duration-300 ${
-              selectedCategory === null
-                ? 'bg-white text-black'
-                : 'bg-white/8 text-white border border-white/15 hover:bg-white/15 hover:border-white/40 hover:shadow-lg hover:shadow-white/10'
-            }`}
-          >
-            All
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => {
-                playClickSound();
-                handleCategoryFilter(category);
-              }}
-              className={`px-5 py-2.5 font-heading font-medium text-xs tracking-wide rounded-lg transition-all duration-300 ${
-                selectedCategory === category
-                  ? 'bg-white text-black'
-                  : 'bg-white/8 text-white border border-white/15 hover:bg-white/15 hover:border-white/40 hover:shadow-lg hover:shadow-white/10'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
         </motion.div>
 
         {/* Projects Grid - Photography-First with Mixed Aspect Ratios */}
@@ -159,6 +172,10 @@ export default function PortfolioPage() {
                 className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
                   index === 0 ? 'md:col-span-2' : ''
                 }`}
+                onClick={() => {
+                  playClickSound();
+                  setSelectedImage(project.mainImage || '');
+                }}
               >
                 {/* Photography-First Container - Preserves Aspect Ratio */}
                 <div className="relative w-full bg-black/30 overflow-hidden">
@@ -191,18 +208,9 @@ export default function PortfolioPage() {
                       </h3>
                       <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
                         <span className="text-sm font-paragraph">View</span>
-                        <ArrowRight className="w-4 h-4" />
                       </div>
                     </div>
                   </motion.div>
-
-                  {/* Link */}
-                  <Link
-                    to={`/portfolio/${project._id}`}
-                    onClick={playClickSound}
-                    className="absolute inset-0"
-                    aria-label={`View ${project.projectName}`}
-                  />
                 </div>
               </motion.div>
             ))}
@@ -224,7 +232,6 @@ export default function PortfolioPage() {
               className="inline-flex items-center gap-3 px-8 py-3.5 bg-white text-black font-heading font-semibold text-sm tracking-wide rounded-lg hover:bg-white/95 hover:shadow-lg hover:shadow-white/20 transition-all duration-300"
             >
               View All Photos
-              <ArrowRight className="w-4 h-4" />
             </button>
           </motion.div>
         )}
