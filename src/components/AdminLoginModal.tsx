@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock, User } from 'lucide-react';
+import { X, Lock, User, AlertCircle } from 'lucide-react';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 
 interface AdminLoginModalProps {
@@ -13,7 +13,7 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAdminAuth();
+  const { login, failedAttempts } = useAdminAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +28,10 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
       setPassword('');
       onClose();
     } else {
-      setError('Invalid username or password');
+      const remainingAttempts = 3 - failedAttempts;
+      if (remainingAttempts > 0) {
+        setError(`Invalid username or password. ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.`);
+      }
       setPassword('');
     }
 
@@ -45,7 +48,7 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/70 z-40 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -56,7 +59,7 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
             transition={{ type: 'spring', damping: 20 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-700">
               {/* Header */}
               <div className="bg-gradient-to-r from-primary to-primary/80 px-6 py-8 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -75,36 +78,36 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {/* Username */}
                 <div>
-                  <label className="text-xs text-black/60 uppercase tracking-wide font-heading font-bold block mb-2">
+                  <label className="text-xs text-slate-300 uppercase tracking-wide font-heading font-bold block mb-2">
                     Username
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/40" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Enter username"
                       disabled={isLoading}
-                      className="w-full pl-10 pr-4 py-2 border border-black/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50"
+                      className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50"
                     />
                   </div>
                 </div>
 
                 {/* Password */}
                 <div>
-                  <label className="text-xs text-black/60 uppercase tracking-wide font-heading font-bold block mb-2">
+                  <label className="text-xs text-slate-300 uppercase tracking-wide font-heading font-bold block mb-2">
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/40" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter password"
                       disabled={isLoading}
-                      className="w-full pl-10 pr-4 py-2 border border-black/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50"
+                      className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -114,9 +117,10 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-red-500/10 border border-red-500/30 rounded-lg p-3"
+                    className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-2"
                   >
-                    <p className="text-sm text-red-600">{error}</p>
+                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-300">{error}</p>
                   </motion.div>
                 )}
 
@@ -131,8 +135,8 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
               </form>
 
               {/* Footer */}
-              <div className="bg-black/5 px-6 py-4 border-t border-black/10">
-                <p className="text-xs text-black/50 text-center">
+              <div className="bg-slate-700/50 px-6 py-4 border-t border-slate-600">
+                <p className="text-xs text-slate-400 text-center">
                   Admin access only. Unauthorized access is prohibited.
                 </p>
               </div>
