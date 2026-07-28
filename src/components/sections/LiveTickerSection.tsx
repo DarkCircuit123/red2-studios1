@@ -1,53 +1,72 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BaseCrudService } from '@/integrations';
-import { Play, Pause, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { Play, Pause, ChevronLeft, ChevronRight, ExternalLink, Video } from 'lucide-react';
 
-interface TickerStory {
-  _id: string;
-  headline?: string;
-  slug?: string;
-  storyURL?: string;
-  category?: string;
-  publishDate?: Date | string;
-  active?: boolean;
-  priority?: number;
+interface RSSStory {
+  title: string;
+  link: string;
+  pubDate: string;
+  source: string;
+  videoUrl?: string;
 }
 
 export default function LiveTickerSection() {
-  const [stories, setStories] = useState<TickerStory[]>([]);
+  const [stories, setStories] = useState<RSSStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [playingVideoIndex, setPlayingVideoIndex] = useState<number | null>(null);
   const animationRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const fetchStories = async () => {
+    const fetchRSSFeeds = async () => {
       try {
         setIsLoading(true);
-        const result = await BaseCrudService.getAll<TickerStory>('tickerstories', {}, { limit: 100 });
-        
-        if (result?.items && result.items.length > 0) {
-          // Filter active stories and sort by priority
-          const activeStories = result.items
-            .filter(story => story.active !== false)
-            .sort((a, b) => (b.priority || 0) - (a.priority || 0));
-          
-          setStories(activeStories);
-        } else {
-          setStories([]);
+        const feeds = [
+          { url: 'https://feeds.vogue.com/vogue/index.xml', source: 'Vogue' },
+          { url: 'https://www.sonyalpharumors.com/feed/', source: 'Sony Alpha' },
+          { url: 'https://www.fashionnetwork.com/rss/news.xml', source: 'Fashion Network' },
+          { url: 'https://www.thefashionspot.com/feed/', source: 'The Fashion Spot' },
+        ];
+
+        const allStories: RSSStory[] = [];
+
+        for (const feed of feeds) {
+          try {
+            const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.items && Array.isArray(data.items)) {
+                const feedStories = data.items.slice(0, 5).map((item: any) => ({
+                  title: item.title || 'Untitled',
+                  link: item.link || item.url || '#',
+                  pubDate: item.pubDate || item.published || new Date().toISOString(),
+                  source: feed.source,
+                  videoUrl: item.videoUrl || item.media?.content?.[0]?.url,
+                }));
+                allStories.push(...feedStories);
+              }
+            }
+          } catch (err) {
+            console.error(`Error fetching ${feed.source} feed:`, err);
+          }
         }
+
+        // Shuffle and limit to 20 stories
+        const shuffled = allStories.sort(() => Math.random() - 0.5).slice(0, 20);
+        setStories(shuffled.length > 0 ? shuffled : []);
       } catch (err) {
+        console.error('Error fetching RSS feeds:', err);
         setStories([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchStories();
-    // Refresh every 15 minutes
-    const interval = setInterval(fetchStories, 15 * 60 * 1000);
+    fetchRSSFeeds();
+    // Refresh every 30 minutes
+    const interval = setInterval(fetchRSSFeeds, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -79,13 +98,22 @@ export default function LiveTickerSection() {
     setIsPaused(!isPaused);
   };
 
+  const handleWatchVideo = (e: React.MouseEvent, videoUrl: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (videoUrl) {
+      window.open(videoUrl, '_blank');
+    }
+  };
+
   if (isLoading || stories.length === 0) {
     return null;
   }
 
   const currentStory = stories[currentIndex];
-  const displayUrl = currentStory.storyURL || '#';
+  const displayUrl = currentStory.link || '#';
   const isExternalLink = displayUrl.startsWith('http');
+  const hasVideo = !!currentStory.videoUrl;
 
   return (
     <div className="w-full bg-gradient-to-r from-black via-black/95 to-black border-t border-b border-primary/20 py-4 px-4">
@@ -150,18 +178,16 @@ export default function LiveTickerSection() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.4 }}
-              className="flex items-start gap-4"
+              className="flex items-start justify-between gap-4"
             >
-              {/* Category badge */}
-              {currentStory.category && (
-                <motion.span 
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  className="flex-shrink-0 text-xs font-heading font-bold text-white uppercase tracking-wider px-3 py-1 bg-primary rounded-full"
-                >
-                  {currentStory.category}
-                </motion.span>
-              )}
+              {/* Source badge */}
+              <motion.span 
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                className="flex-shrink-0 text-xs font-heading font-bold text-white uppercase tracking-wider px-3 py-1 bg-primary rounded-full"
+              >
+                {currentStory.source}
+              </motion.span>
 
               {/* Headline and metadata */}
               <div className="flex-1 min-w-0">
@@ -172,23 +198,35 @@ export default function LiveTickerSection() {
                   rel={isExternalLink ? 'noopener noreferrer' : undefined}
                   className="group block text-sm md:text-base text-gray-100 hover:text-primary transition-colors duration-300 line-clamp-2 font-medium"
                 >
-                  {currentStory.headline || 'Untitled Story'}
+                  {currentStory.title || 'Untitled Story'}
                   {isExternalLink && (
                     <ExternalLink className="inline-block w-3 h-3 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                   )}
                 </a>
 
                 {/* Publish date */}
-                {currentStory.publishDate && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(currentStory.publishDate).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </p>
-                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  {new Date(currentStory.pubDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
+                </p>
               </div>
+
+              {/* Watch Video button - only shows if video exists */}
+              {hasVideo && (
+                <motion.button
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  onClick={(e) => handleWatchVideo(e, currentStory.videoUrl!)}
+                  className="flex-shrink-0 px-3 py-1 bg-primary hover:bg-primary/90 text-white text-xs font-heading font-bold rounded-lg transition-colors duration-200 flex items-center gap-1 whitespace-nowrap"
+                  title="Watch video"
+                >
+                  <Video className="w-3 h-3" />
+                  Watch
+                </motion.button>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -215,7 +253,7 @@ export default function LiveTickerSection() {
                   animate={{ opacity: 1, y: 0 }}
                   className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black/90 border border-primary/30 rounded px-2 py-1 text-xs text-gray-200 whitespace-nowrap z-10 pointer-events-none"
                 >
-                  {story.headline?.substring(0, 30)}...
+                  {story.title?.substring(0, 30)}...
                 </motion.div>
               )}
             </motion.button>

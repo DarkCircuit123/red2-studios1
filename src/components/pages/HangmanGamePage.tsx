@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Zap, Trophy, Target, Flame } from 'lucide-react';
+import { Volume2, VolumeX, Zap, Trophy, Target, Flame, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { CameraIcon, ScissorsIcon, PolaroidIcon } from '@/components/CinemaIcons';
 import { generateRollSequence, easings, formatNumber } from '@/lib/rollStats';
 import '@/styles/cinema.css';
@@ -28,6 +29,7 @@ interface CategoryMeta {
 }
 
 export default function HangmanGamePage() {
+  const navigate = useNavigate();
   const [gameState, setGameState] = useState({
     word: '',
     displayWord: [] as string[],

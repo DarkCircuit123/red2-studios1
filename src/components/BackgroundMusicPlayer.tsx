@@ -7,22 +7,30 @@ export default function BackgroundMusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [audioError, setAudioError] = useState(false);
 
-  // Preload and attempt to play music on first user interaction
+  // Initialize audio and attempt to play on first user interaction
   useEffect(() => {
-    const handleUserInteraction = () => {
+    const handleUserInteraction = async () => {
       if (!hasInteracted && audioRef.current) {
         setHasInteracted(true);
-        // Try to play the audio
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-            })
-            .catch(() => {
-              console.log('Autoplay prevented - user interaction required');
-            });
+        
+        try {
+          // Ensure audio element is ready
+          if (audioRef.current.readyState === 0) {
+            audioRef.current.load();
+          }
+          
+          // Attempt to play
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            await playPromise;
+            setIsPlaying(true);
+            setAudioError(false);
+          }
+        } catch (err) {
+          console.log('Audio playback failed:', err);
+          setAudioError(true);
         }
       }
     };
@@ -39,36 +47,57 @@ export default function BackgroundMusicPlayer() {
     };
   }, [hasInteracted]);
 
-  const togglePlayPause = () => {
+  const toggleMute = () => {
     if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.play();
-        setIsPlaying(true);
+      const newMutedState = !isMuted;
+      audioRef.current.muted = newMutedState;
+      setIsMuted(newMutedState);
+      
+      // If unmuting and not playing, try to play
+      if (!newMutedState && !isPlaying) {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => setIsPlaying(true))
+            .catch(() => setAudioError(true));
+        }
       }
     }
   };
 
-  const toggleMute = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
+  const handleAudioPlay = () => {
+    setIsPlaying(true);
+    setAudioError(false);
+  };
+
+  const handleAudioPause = () => {
+    setIsPlaying(false);
+  };
+
+  const handleAudioError = () => {
+    console.error('Audio element error');
+    setAudioError(true);
   };
 
   return (
     <>
-      {/* Hidden audio element - jazz background music */}
+      {/* Hidden audio element - background music */}
       <audio
         ref={audioRef}
         title="Background Music Player"
         loop
         preload="auto"
-        src="https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3"
+        crossOrigin="anonymous"
+        onPlay={handleAudioPlay}
+        onPause={handleAudioPause}
+        onError={handleAudioError}
         style={{ display: 'none' }}
-      />
+      >
+        <source 
+          src="https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3" 
+          type="audio/mpeg"
+        />
+      </audio>
 
       {/* Music control button - fixed position */}
       <motion.button
@@ -76,7 +105,11 @@ export default function BackgroundMusicPlayer() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.5 }}
         onClick={toggleMute}
-        className="fixed bottom-8 right-8 z-40 p-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-all duration-300 shadow-lg"
+        className={`fixed bottom-8 right-8 z-40 p-3 rounded-full transition-all duration-300 shadow-lg ${
+          isMuted 
+            ? 'bg-gray-600 text-white hover:bg-gray-700' 
+            : 'bg-primary text-white hover:bg-primary/90'
+        }`}
         aria-label={isMuted ? 'Unmute music' : 'Mute music'}
         title={isMuted ? 'Click to unmute background music' : 'Click to mute background music'}
       >
