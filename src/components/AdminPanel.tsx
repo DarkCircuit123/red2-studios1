@@ -36,6 +36,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [aboutSettings, setAboutSettings] = useState<AboutSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSavingAbout, setIsSavingAbout] = useState(false);
 
   useEffect(() => {
     const loadImages = async () => {
@@ -647,16 +648,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             onChange={(e) => {
                               setAboutSettings({ ...aboutSettings, aboutText: e.target.value });
                             }}
-                            onBlur={async () => {
-                              try {
-                                await BaseCrudService.update('about', {
-                                  _id: aboutSettings._id,
-                                  aboutText: aboutSettings.aboutText
-                                });
-                              } catch (error) {
-                                console.error('Error updating about text:', error);
-                              }
-                            }}
                             className="w-full p-3 border border-black/10 rounded text-sm text-black resize-none h-32 focus:outline-none focus:border-black/30"
                             placeholder="Enter about section text..."
                           />
@@ -668,17 +659,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                           </label>
                           <select
                             value={aboutSettings.fontFamily || 'cormorant-garamond-v2'}
-                            onChange={async (e) => {
+                            onChange={(e) => {
                               const newFont = e.target.value;
                               setAboutSettings({ ...aboutSettings, fontFamily: newFont });
-                              try {
-                                await BaseCrudService.update('about', {
-                                  _id: aboutSettings._id,
-                                  fontFamily: newFont
-                                });
-                              } catch (error) {
-                                console.error('Error updating font family:', error);
-                              }
                             }}
                             className="w-full p-3 border border-black/10 rounded text-sm text-black focus:outline-none focus:border-black/30"
                           >
@@ -695,10 +678,32 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                           </select>
                         </div>
 
+                        <button
+                          onClick={async () => {
+                            setIsSavingAbout(true);
+                            try {
+                              await BaseCrudService.update('about', {
+                                _id: aboutSettings._id,
+                                aboutText: aboutSettings.aboutText,
+                                fontFamily: aboutSettings.fontFamily
+                              });
+                              playClickSound();
+                            } catch (error) {
+                              console.error('Error saving about settings:', error);
+                            } finally {
+                              setIsSavingAbout(false);
+                            }
+                          }}
+                          disabled={isSavingAbout}
+                          className="w-full px-4 py-3 bg-black text-white rounded text-sm font-heading font-bold uppercase tracking-wide hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                          {isSavingAbout ? 'Saving...' : 'Apply Changes'}
+                        </button>
+
                         <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-                          <h4 className="text-xs font-heading font-bold text-green-600 mb-2">✓ Settings Saved</h4>
+                          <h4 className="text-xs font-heading font-bold text-green-600 mb-2">✓ Manual Save</h4>
                           <p className="text-xs text-green-600/70">
-                            Your about section settings are automatically saved to the CMS. Changes will appear on the website immediately.
+                            Click "Apply Changes" to save your about section text and font settings to the CMS.
                           </p>
                         </div>
                       </>
