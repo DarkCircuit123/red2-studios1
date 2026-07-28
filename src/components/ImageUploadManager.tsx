@@ -62,29 +62,40 @@ export default function ImageUploadManager({
   };
 
   const processImage = async (file: File) => {
+    const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+    console.log(`[IMAGE_UPLOAD_UI] File selected: ${file.name}, Size: ${fileSizeMB}MB, Type: ${file.type}`);
+
     setErrorMessage('');
     setUploadStatus('idle');
 
     // Validate file type
     if (!isValidFileType(file)) {
-      setErrorMessage(`Unsupported file type: ${file.type || 'unknown'}. Supported formats: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC, and more.`);
+      const errorMsg = `Unsupported file type: ${file.type || 'unknown'}. Supported formats: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC, and more.`;
+      console.error(`[IMAGE_UPLOAD_UI] ${errorMsg}`);
+      setErrorMessage(errorMsg);
       setUploadStatus('error');
       return;
     }
 
-    // Validate file size (max 50MB)
-    const maxSize = 50 * 1024 * 1024;
+    // Validate file size (max 100MB)
+    const maxSize = 100 * 1024 * 1024;
     if (file.size > maxSize) {
-      setErrorMessage(`File size exceeds 50MB limit. Your file: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      const errorMsg = `File size exceeds 100MB limit. Your file: ${(file.size / 1024 / 1024).toFixed(2)}MB`;
+      console.error(`[IMAGE_UPLOAD_UI] ${errorMsg}`);
+      setErrorMessage(errorMsg);
       setUploadStatus('error');
       return;
     }
 
+    console.log(`[IMAGE_UPLOAD_UI] File validation passed, starting upload...`);
     setIsProcessing(true);
     try {
       // Create FormData for file upload
       const formData = new FormData();
       formData.append('file', file);
+
+      console.log(`[IMAGE_UPLOAD_UI] Sending to /api/upload-image...`);
+      const uploadStart = Date.now();
 
       // Upload to API endpoint
       const response = await fetch('/api/upload-image', {
@@ -92,23 +103,35 @@ export default function ImageUploadManager({
         body: formData,
       });
 
+      const uploadTime = Date.now() - uploadStart;
+      console.log(`[IMAGE_UPLOAD_UI] Response received in ${uploadTime}ms, status: ${response.status}`);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
+        const errorMsg = errorData.error || `Upload failed with status ${response.status}`;
+        console.error(`[IMAGE_UPLOAD_UI] Upload error:`, errorData);
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
       const imageUrl = data.url;
 
+      console.log(`[IMAGE_UPLOAD_UI] Upload successful, URL length: ${imageUrl.length} chars`);
+      if (data.debug) {
+        console.log(`[IMAGE_UPLOAD_UI] Debug info:`, data.debug);
+      }
+
       // If collection info provided, save to CMS
       if (collectionId && itemId && fieldName) {
         try {
+          console.log(`[IMAGE_UPLOAD_UI] Updating CMS: ${collectionId}/${itemId}/${fieldName}`);
           await BaseCrudService.update(collectionId, {
             _id: itemId,
             [fieldName]: imageUrl
           });
+          console.log(`[IMAGE_UPLOAD_UI] CMS update successful`);
         } catch (cmsError) {
-          console.warn('CMS update failed, but file was uploaded:', cmsError);
+          console.warn('[IMAGE_UPLOAD_UI] CMS update failed, but file was uploaded:', cmsError);
           // Still call the callback even if CMS update fails
         }
       }
@@ -118,7 +141,7 @@ export default function ImageUploadManager({
       setTimeout(() => setUploadStatus('idle'), 3000);
       setIsProcessing(false);
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('[IMAGE_UPLOAD_UI] Error uploading image:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
       setErrorMessage(errorMessage);
       setUploadStatus('error');
@@ -277,7 +300,7 @@ export default function ImageUploadManager({
       {/* Supported formats info */}
       <div className="text-xs text-white/40 space-y-1">
         <p>Supported formats: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC</p>
-        <p>Max file size: 15MB</p>
+        <p>Max file size: 100MB</p>
       </div>
     </div>
   );

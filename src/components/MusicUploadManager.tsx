@@ -29,21 +29,28 @@ export default function MusicUploadManager({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+    console.log(`[MUSIC_UPLOAD_UI] File selected: ${file.name}, Size: ${fileSizeMB}MB, Type: ${file.type}`);
+
     // Validate file type
     const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm'];
     if (!validTypes.includes(file.type)) {
-      setError('Please upload a valid audio file (MP3, WAV, OGG, or WebM)');
+      const errorMsg = `Invalid file type: ${file.type}. Please upload a valid audio file (MP3, WAV, OGG, or WebM)`;
+      console.error(`[MUSIC_UPLOAD_UI] ${errorMsg}`);
+      setError(errorMsg);
       return;
     }
 
-    // Validate file size (max 10MB - safe limit to avoid server errors)
-    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    // Validate file size (max 50MB - reasonable limit)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
-      const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
-      setError(`File size exceeds 10MB limit. Your file is ${fileSizeMB}MB. Please compress or use a smaller file.`);
+      const errorMsg = `File size exceeds 50MB limit. Your file is ${fileSizeMB}MB. Please compress or use a smaller file.`;
+      console.error(`[MUSIC_UPLOAD_UI] ${errorMsg}`);
+      setError(errorMsg);
       return;
     }
 
+    console.log(`[MUSIC_UPLOAD_UI] File validation passed, starting upload...`);
     setIsUploading(true);
     setError(null);
 
@@ -52,29 +59,44 @@ export default function MusicUploadManager({
       const formData = new FormData();
       formData.append('file', file);
 
+      console.log(`[MUSIC_UPLOAD_UI] Sending to /api/upload-music...`);
+      const uploadStart = Date.now();
+
       // Upload to API endpoint
       const response = await fetch('/api/upload-music', {
         method: 'POST',
         body: formData,
       });
 
+      const uploadTime = Date.now() - uploadStart;
+      console.log(`[MUSIC_UPLOAD_UI] Response received in ${uploadTime}ms, status: ${response.status}`);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
+        const errorMsg = errorData.error || `Upload failed with status ${response.status}`;
+        console.error(`[MUSIC_UPLOAD_UI] Upload error:`, errorData);
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
       const musicUrl = data.url;
 
+      console.log(`[MUSIC_UPLOAD_UI] Upload successful, URL length: ${musicUrl.length} chars`);
+      if (data.debug) {
+        console.log(`[MUSIC_UPLOAD_UI] Debug info:`, data.debug);
+      }
+
       // Update CMS with the new music URL
       if (itemId && collectionId && fieldName) {
         try {
+          console.log(`[MUSIC_UPLOAD_UI] Updating CMS: ${collectionId}/${itemId}/${fieldName}`);
           await BaseCrudService.update(collectionId, {
             _id: itemId,
             [fieldName]: musicUrl,
           });
+          console.log(`[MUSIC_UPLOAD_UI] CMS update successful`);
         } catch (cmsError) {
-          console.warn('CMS update failed, but file was uploaded:', cmsError);
+          console.warn('[MUSIC_UPLOAD_UI] CMS update failed, but file was uploaded:', cmsError);
           // Still call the callback even if CMS update fails
         }
       }
@@ -84,7 +106,7 @@ export default function MusicUploadManager({
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to upload music';
       setError(errorMessage);
-      console.error('Music upload error:', err);
+      console.error('[MUSIC_UPLOAD_UI] Music upload error:', err);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -174,7 +196,7 @@ export default function MusicUploadManager({
       )}
 
       <p className="text-xs text-black/50">
-        Supported formats: MP3, WAV, OGG, WebM (Max 10MB)
+        Supported formats: MP3, WAV, OGG, WebM (Max 50MB)
       </p>
     </div>
   );

@@ -25,12 +25,22 @@ export default function BackgroundMusicPlayer() {
   useEffect(() => {
     const loadMusicSettings = async () => {
       try {
+        console.log('[MUSIC_PLAYER] Loading music settings from CMS...');
         const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
         if (result?.items && result.items.length > 0) {
-          setMusicSettings(result.items[0]);
+          const settings = result.items[0];
+          console.log('[MUSIC_PLAYER] Settings loaded:', {
+            isEnabled: settings.isEnabled,
+            musicUrl: settings.musicUrl ? `${settings.musicUrl.substring(0, 50)}...` : 'none',
+            volume: settings.volume,
+            loopMusic: settings.loopMusic
+          });
+          setMusicSettings(settings);
+        } else {
+          console.log('[MUSIC_PLAYER] No music settings found in CMS');
         }
       } catch (error) {
-        console.log('Failed to load music settings:', error);
+        console.error('[MUSIC_PLAYER] Failed to load music settings:', error);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -50,23 +60,28 @@ export default function BackgroundMusicPlayer() {
   useEffect(() => {
     if (isLoadingSettings || !musicSettings?.isEnabled || !audioRef.current) return;
 
+    console.log('[MUSIC_PLAYER] Attempting autoplay...');
+
     const attemptAutoplay = async () => {
       try {
         // Ensure audio element is ready
         if (audioRef.current!.readyState === 0) {
+          console.log('[MUSIC_PLAYER] Loading audio element...');
           audioRef.current!.load();
         }
         
         // Attempt to play immediately
+        console.log('[MUSIC_PLAYER] Calling play()...');
         const playPromise = audioRef.current!.play();
         if (playPromise !== undefined) {
           await playPromise;
+          console.log('[MUSIC_PLAYER] Autoplay successful');
           setIsPlaying(true);
           setAudioError(false);
           setHasInteracted(true);
         }
       } catch (err) {
-        console.log('Autoplay failed, will retry on user interaction:', err);
+        console.log('[MUSIC_PLAYER] Autoplay failed (expected), will retry on user interaction:', err);
         // Autoplay was blocked, will retry on first user interaction
       }
     };
@@ -77,17 +92,19 @@ export default function BackgroundMusicPlayer() {
     // Fallback: Listen for user interaction to retry playback if autoplay failed
     const handleUserInteraction = async () => {
       if (!hasInteracted && audioRef.current && !isPlaying) {
+        console.log('[MUSIC_PLAYER] User interaction detected, attempting playback...');
         setHasInteracted(true);
         
         try {
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
             await playPromise;
+            console.log('[MUSIC_PLAYER] Playback successful after user interaction');
             setIsPlaying(true);
             setAudioError(false);
           }
         } catch (err) {
-          console.log('Audio playback failed on user interaction:', err);
+          console.error('[MUSIC_PLAYER] Audio playback failed on user interaction:', err);
           setAudioError(true);
         }
       }
@@ -109,30 +126,40 @@ export default function BackgroundMusicPlayer() {
       const newMutedState = !isMuted;
       audioRef.current.muted = newMutedState;
       setIsMuted(newMutedState);
+      console.log(`[MUSIC_PLAYER] Mute toggled: ${newMutedState}`);
       
       // If unmuting and not playing, try to play
       if (!newMutedState && !isPlaying) {
+        console.log('[MUSIC_PLAYER] Unmuted, attempting to play...');
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           playPromise
-            .then(() => setIsPlaying(true))
-            .catch(() => setAudioError(true));
+            .then(() => {
+              console.log('[MUSIC_PLAYER] Playback started after unmute');
+              setIsPlaying(true);
+            })
+            .catch((err) => {
+              console.error('[MUSIC_PLAYER] Playback failed after unmute:', err);
+              setAudioError(true);
+            });
         }
       }
     }
   };
 
   const handleAudioPlay = () => {
+    console.log('[MUSIC_PLAYER] Audio playing');
     setIsPlaying(true);
     setAudioError(false);
   };
 
   const handleAudioPause = () => {
+    console.log('[MUSIC_PLAYER] Audio paused');
     setIsPlaying(false);
   };
 
   const handleAudioError = () => {
-    console.error('Audio element error');
+    console.error('[MUSIC_PLAYER] Audio element error');
     setAudioError(true);
   };
 
