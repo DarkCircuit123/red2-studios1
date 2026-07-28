@@ -277,7 +277,7 @@ export default function ImageUploadManager({
       {/* Supported formats info */}
       <div className="text-xs text-white/40 space-y-1">
         <p>Supported formats: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC</p>
-        <p>Max file size: 50MB</p>
+        <p>Max file size: 15MB</p>
       </div>
     </div>
   );

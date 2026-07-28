@@ -41,11 +41,14 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Validate file size (max 50MB)
-    if (file.size > 50 * 1024 * 1024) {
+    // Validate file size (max 15MB - safe limit to avoid 413 errors)
+    const MAX_FILE_SIZE = 15 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
       return new Response(
-        JSON.stringify({ error: 'File size exceeds 50MB limit' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          error: `File size exceeds 15MB limit. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB. Please compress your image and try again.` 
+        }),
+        { status: 413, headers: { 'Content-Type': 'application/json' } }
       );
     }
 

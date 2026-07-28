@@ -29,12 +29,14 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Validate file size (max 25MB to account for base64 encoding overhead ~33%)
-    // 25MB * 1.33 ≈ 33MB which is safer for server limits
-    const MAX_FILE_SIZE = 25 * 1024 * 1024;
+    // Validate file size (max 10MB - safe limit to avoid 413 errors)
+    // Base64 encoding adds ~33% overhead, so we use a conservative limit
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       return new Response(
-        JSON.stringify({ error: `File size exceeds 25MB limit. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.` }),
+        JSON.stringify({ 
+          error: `File size exceeds 10MB limit. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB. Please compress your audio and try again.` 
+        }),
         { status: 413, headers: { 'Content-Type': 'application/json' } }
       );
     }
