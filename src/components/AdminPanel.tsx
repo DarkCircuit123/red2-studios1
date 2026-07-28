@@ -4,7 +4,7 @@ import { Settings, X, Edit2, LogOut, Music } from 'lucide-react';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
-import MusicUploadManager from './MusicUploadManager';
+import MusicManager from './MusicManager';
 import { BaseCrudService } from '@/integrations';
 import { Services, HomepageImages, Portfolio, ClientsPress } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
@@ -468,7 +468,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                           <label className="text-xs text-black/60 uppercase tracking-wide block mb-3">
                             Upload Music File
                           </label>
-                          <MusicUploadManager
+                          <MusicManager
                             label="Upload Music"
                             currentMusicUrl={musicSettings.musicUrl}
                             collectionId="musicsettings"
