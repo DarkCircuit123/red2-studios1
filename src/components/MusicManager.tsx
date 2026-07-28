@@ -1,2 +1,279 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, X, Music, Loader, FileAudio, Plus } from 'lucide-react';\n import { BaseCrudService } from '@/integrations';\n\ninterface MusicManagerProps {\n  label: string;\n  currentMusicUrl?: string;\n  collectionId: string;\n  itemId?: string;\n  fieldName: string;\n  onMusicUpload: (url: string) => void;\n  onMusicDelete: () => void;\n}\n\ninterface StoredMusic {\n  _id: string;\n  musicUrl?: string;\n  musicTitle?: string;\n}\n\nexport default function MusicManager({\n  label,\n  currentMusicUrl,\n  collectionId,\n  itemId,\n  fieldName,\n  onMusicUpload,\n  onMusicDelete,\n}: MusicManagerProps) {\n  const [isUploading, setIsUploading] = useState(false);\n  const [error, setError] = useState<string | null>(null);\n  const [showMediaLibrary, setShowMediaLibrary] = useState(false);\n  const [storedMusic, setStoredMusic] = useState<StoredMusic[]>([]);\n  const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);\n  const fileInputRef = useRef<HTMLInputElement>(null);\n\n  // Load existing music files from CMS\n  const loadStoredMusic = async () => {\n    setIsLoadingLibrary(true);\n    try {\n      const result = await BaseCrudService.getAll<StoredMusic>('musicsettings', {}, { limit: 100 });\n      if (result?.items) {\n        // Filter out items that have musicUrl\n        const musicItems = result.items.filter(item => item.musicUrl);\n        setStoredMusic(musicItems);\n      }\n    } catch (err) {\n      console.error('Failed to load stored music:', err);\n    } finally {\n      setIsLoadingLibrary(false);\n    }\n  };\n\n  useEffect(() => {\n    if (showMediaLibrary) {\n      loadStoredMusic();\n    }\n  }, [showMediaLibrary]);\n\n  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {\n    const file = event.target.files?.[0];\n    if (!file) return;\n\n    // Validate file type\n    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm'];\n    if (!validTypes.includes(file.type)) {\n      setError('Please upload a valid audio file (MP3, WAV, OGG, or WebM)');\n      return;\n    }\n\n    // Validate file size (max 50MB)\n    if (file.size > 50 * 1024 * 1024) {\n      setError('File size must be less than 50MB');\n      return;\n    }\n\n    setIsUploading(true);\n    setError(null);\n\n    try {\n      // Create FormData for file upload\n      const formData = new FormData();\n      formData.append('file', file);\n\n      // Upload to Wix Media\n      const response = await fetch('/api/upload-music', {\n        method: 'POST',\n        body: formData,\n      });\n\n      if (!response.ok) {\n        throw new Error('Failed to upload music file');\n      }\n\n      const data = await response.json();\n      const musicUrl = data.url;\n\n      // Update CMS with the new music URL\n      if (itemId) {\n        await BaseCrudService.update(collectionId, {\n          _id: itemId,\n          [fieldName]: musicUrl,\n        });\n      }\n\n      onMusicUpload(musicUrl);\n      setError(null);\n      setShowMediaLibrary(false);\n    } catch (err) {\n      const errorMessage = err instanceof Error ? err.message : 'Failed to upload music';\n      setError(errorMessage);\n      console.error('Music upload error:', err);\n    } finally {\n      setIsUploading(false);\n      if (fileInputRef.current) {\n        fileInputRef.current.value = '';\n      }\n    }\n  };\n\n  const handleSelectFromLibrary = async (musicUrl: string) => {\n    if (!itemId) return;\n\n    try {\n      await BaseCrudService.update(collectionId, {\n        _id: itemId,\n        [fieldName]: musicUrl,\n      });\n      onMusicUpload(musicUrl);\n      setShowMediaLibrary(false);\n      setError(null);\n    } catch (err) {\n      const errorMessage = err instanceof Error ? err.message : 'Failed to select music';\n      setError(errorMessage);\n      console.error('Music selection error:', err);\n    }\n  };\n\n  const handleDelete = async () => {\n    if (!itemId) return;\n\n    try {\n      await BaseCrudService.update(collectionId, {\n        _id: itemId,\n        [fieldName]: undefined,\n      });\n      onMusicDelete();\n      setError(null);\n    } catch (err) {\n      const errorMessage = err instanceof Error ? err.message : 'Failed to delete music';\n      setError(errorMessage);\n      console.error('Music delete error:', err);\n    }\n  };\n\n  return (\n    <div className=\"space-y-3\">\n      <div className=\"flex items-center gap-2 flex-wrap\">\n        <input\n          ref={fileInputRef}\n          type=\"file\"\n          accept=\"audio/*\"\n          onChange={handleFileSelect}\n          disabled={isUploading}\n          className=\"hidden\"\n        />\n\n        <button\n          onClick={() => fileInputRef.current?.click()}\n          disabled={isUploading}\n          className=\"flex items-center gap-2 px-3 py-2 bg-black text-white rounded text-xs font-heading font-bold uppercase tracking-wide hover:bg-black/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed\"\n        >\n          {isUploading ? (\n            <>\n              <Loader className=\"w-3 h-3 animate-spin\" />\n              Uploading...\n            </>\n          ) : (\n            <>\n              <Upload className=\"w-3 h-3\" />\n              {label}\n            </>\n          )}\n        </button>\n\n        <button\n          onClick={() => setShowMediaLibrary(!showMediaLibrary)}\n          disabled={isUploading}\n          className=\"flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded text-xs font-heading font-bold uppercase tracking-wide hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed\"\n        >\n          <FileAudio className=\"w-3 h-3\" />\n          {showMediaLibrary ? 'Hide' : 'Select from Media'}\n        </button>\n      </div>\n\n      {error && (\n        <div className=\"bg-red-500/10 border border-red-500/20 rounded p-2\">\n          <p className=\"text-xs text-red-600\">{error}</p>\n        </div>\n      )}\n\n      {/* Media Library */}\n      {showMediaLibrary && (\n        <div className=\"bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3\">\n          <div className=\"flex items-center justify-between\">\n            <h4 className=\"text-xs font-heading font-bold text-blue-900 uppercase tracking-wide\">\n              Select from Media Library\n            </h4>\n            {isLoadingLibrary && <Loader className=\"w-3 h-3 animate-spin text-blue-600\" />\n            }\n          </div>\n\n          {isLoadingLibrary ? (\n            <div className=\"flex items-center justify-center py-4\">\n              <Loader className=\"w-4 h-4 animate-spin text-blue-600\" />\n              <span className=\"text-xs text-blue-600 ml-2\">Loading media library...</span>\n            </div>\n          ) : storedMusic.length === 0 ? (\n            <div className=\"bg-white rounded p-3 border border-blue-100\">\n              <p className=\"text-xs text-blue-600/70\">\n                No music files found in media library. Upload a new file first.\n              </p>\n            </div>\n          ) : (\n            <div className=\"space-y-2 max-h-48 overflow-y-auto\">\n              {storedMusic.map((music) => (\n                <button\n                  key={music._id}\n                  onClick={() => handleSelectFromLibrary(music.musicUrl!)}\n                  className={`w-full text-left p-3 rounded border transition-all ${\n                    currentMusicUrl === music.musicUrl\n                      ? 'bg-blue-200 border-blue-400'\n                      : 'bg-white border-blue-100 hover:bg-blue-100'\n                  }`}\n                >\n                  <div className=\"flex items-start gap-2\">\n                    <Music className=\"w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0\" />\n                    <div className=\"flex-1 min-w-0\">\n                      <p className=\"text-xs font-semibold text-blue-900 truncate\">\n                        {music.musicTitle || 'Untitled Music'}\n                      </p>\n                      <p className=\"text-xs text-blue-600/60 truncate\">\n                        {music.musicUrl?.split('/').pop() || 'Music File'}\n                      </p>\n                    </div>\n                    {currentMusicUrl === music.musicUrl && (\n                      <span className=\"text-xs font-bold text-blue-600 flex-shrink-0\">✓</span>\n                    )}\n                  </div>\n                </button>\n              ))}\n            </div>\n          )}\n        </div>\n      )}\n\n      {currentMusicUrl && (\n        <div className=\"bg-black/5 border border-black/10 rounded p-3 space-y-2\">\n          <div className=\"flex items-start gap-2\">\n            <Music className=\"w-4 h-4 text-black/60 mt-0.5 flex-shrink-0\" />\n            <div className=\"flex-1 min-w-0\">\n              <p className=\"text-xs text-black/60 mb-1\">Current Music:</p>\n              <a\n                href={currentMusicUrl}\n                target=\"_blank\"\n                rel=\"noopener noreferrer\"\n                className=\"text-xs text-blue-600 hover:text-blue-700 break-all underline\"\n              >\n                {currentMusicUrl.split('/').pop() || 'Music File'}\n              </a>\n            </div>\n          </div>\n          <button\n            onClick={handleDelete}\n            className=\"flex items-center gap-1 px-2 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded text-xs text-red-600 transition-colors\"\n          >\n            <X className=\"w-3 h-3\" />\n            Remove\n          </button>\n        </div>\n      )}\n\n      <p className=\"text-xs text-black/50\">\n        Supported formats: MP3, WAV, OGG, WebM (Max 50MB)\n      </p>\n    </div>\n  );\n}\n
+import { Upload, X, Music, Loader, FileAudio } from 'lucide-react';
+import { BaseCrudService } from '@/integrations';
+
+interface MusicManagerProps {
+  label: string;
+  currentMusicUrl?: string;
+  collectionId: string;
+  itemId?: string;
+  fieldName: string;
+  onMusicUpload: (url: string) => void;
+  onMusicDelete: () => void;
+}
+
+interface StoredMusic {
+  _id: string;
+  musicUrl?: string;
+  musicTitle?: string;
+}
+
+export default function MusicManager({
+  label,
+  currentMusicUrl,
+  collectionId,
+  itemId,
+  fieldName,
+  onMusicUpload,
+  onMusicDelete,
+}: MusicManagerProps) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [storedMusic, setStoredMusic] = useState<StoredMusic[]>([]);
+  const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadStoredMusic = async () => {
+    setIsLoadingLibrary(true);
+    try {
+      const result = await BaseCrudService.getAll<StoredMusic>('musicsettings', {}, { limit: 100 });
+      if (result?.items) {
+        const musicItems = result.items.filter(item => item.musicUrl);
+        setStoredMusic(musicItems);
+      }
+    } catch (err) {
+      console.error('Failed to load stored music:', err);
+    } finally {
+      setIsLoadingLibrary(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showMediaLibrary) {
+      loadStoredMusic();
+    }
+  }, [showMediaLibrary]);
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm'];
+    if (!validTypes.includes(file.type)) {
+      setError('Please upload a valid audio file (MP3, WAV, OGG, or WebM)');
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      setError('File size must be less than 50MB');
+      return;
+    }
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-music', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload music file');
+      }
+
+      const data = await response.json();
+      const musicUrl = data.url;
+
+      if (itemId) {
+        await BaseCrudService.update(collectionId, {
+          _id: itemId,
+          [fieldName]: musicUrl,
+        });
+      }
+
+      onMusicUpload(musicUrl);
+      setError(null);
+      setShowMediaLibrary(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload music';
+      setError(errorMessage);
+      console.error('Music upload error:', err);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleSelectFromLibrary = async (musicUrl: string) => {
+    if (!itemId) return;
+
+    try {
+      await BaseCrudService.update(collectionId, {
+        _id: itemId,
+        [fieldName]: musicUrl,
+      });
+      onMusicUpload(musicUrl);
+      setShowMediaLibrary(false);
+      setError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to select music';
+      setError(errorMessage);
+      console.error('Music selection error:', err);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!itemId) return;
+
+    try {
+      await BaseCrudService.update(collectionId, {
+        _id: itemId,
+        [fieldName]: undefined,
+      });
+      onMusicDelete();
+      setError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete music';
+      setError(errorMessage);
+      console.error('Music delete error:', err);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="audio/*"
+          onChange={handleFileSelect}
+          disabled={isUploading}
+          className="hidden"
+        />
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+          className="flex items-center gap-2 px-3 py-2 bg-black text-white rounded text-xs font-heading font-bold uppercase tracking-wide hover:bg-black/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isUploading ? (
+            <>
+              <Loader className="w-3 h-3 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Upload className="w-3 h-3" />
+              {label}
+            </>
+          )}
+        </button>
+
+        <button
+          onClick={() => setShowMediaLibrary(!showMediaLibrary)}
+          disabled={isUploading}
+          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded text-xs font-heading font-bold uppercase tracking-wide hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <FileAudio className="w-3 h-3" />
+          {showMediaLibrary ? 'Hide' : 'Select from Media'}
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded p-2">
+          <p className="text-xs text-red-600">{error}</p>
+        </div>
+      )}
+
+      {showMediaLibrary && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-heading font-bold text-blue-900 uppercase tracking-wide">
+              Select from Media Library
+            </h4>
+            {isLoadingLibrary && <Loader className="w-3 h-3 animate-spin text-blue-600" />}
+          </div>
+
+          {isLoadingLibrary ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader className="w-4 h-4 animate-spin text-blue-600" />
+              <span className="text-xs text-blue-600 ml-2">Loading media library...</span>
+            </div>
+          ) : storedMusic.length === 0 ? (
+            <div className="bg-white rounded p-3 border border-blue-100">
+              <p className="text-xs text-blue-600/70">
+                No music files found in media library. Upload a new file first.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {storedMusic.map((music) => (
+                <button
+                  key={music._id}
+                  onClick={() => handleSelectFromLibrary(music.musicUrl!)}
+                  className={`w-full text-left p-3 rounded border transition-all ${
+                    currentMusicUrl === music.musicUrl
+                      ? 'bg-blue-200 border-blue-400'
+                      : 'bg-white border-blue-100 hover:bg-blue-100'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <Music className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-blue-900 truncate">
+                        {music.musicTitle || 'Untitled Music'}
+                      </p>
+                      <p className="text-xs text-blue-600/60 truncate">
+                        {music.musicUrl?.split('/').pop() || 'Music File'}
+                      </p>
+                    </div>
+                    {currentMusicUrl === music.musicUrl && (
+                      <span className="text-xs font-bold text-blue-600 flex-shrink-0">✓</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {currentMusicUrl && (
+        <div className="bg-black/5 border border-black/10 rounded p-3 space-y-2">
+          <div className="flex items-start gap-2">
+            <Music className="w-4 h-4 text-black/60 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-black/60 mb-1">Current Music:</p>
+              <a
+                href={currentMusicUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-700 break-all underline"
+              >
+                {currentMusicUrl.split('/').pop() || 'Music File'}
+              </a>
+            </div>
+          </div>
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-1 px-2 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded text-xs text-red-600 transition-colors"
+          >
+            <X className="w-3 h-3" />
+            Remove
+          </button>
+        </div>
+      )}
+
+      <p className="text-xs text-black/50">
+        Supported formats: MP3, WAV, OGG, WebM (Max 50MB)
+      </p>
+    </div>
+  );
+}
