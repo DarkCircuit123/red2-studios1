@@ -7,7 +7,6 @@ import AdminPanel from './AdminPanel';
 import AdminLoginModal from './AdminLoginModal';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
-import { useThrottleCallback } from '@/hooks/useAdvancedOptimization';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
 
 export default function Header() {
@@ -20,15 +19,20 @@ export default function Header() {
   const { isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
-  // Optimized throttled scroll handler with useThrottleCallback
-  const handleScroll = useThrottleCallback(() => {
-    setScrolled(window.scrollY > 50);
-  }, 100);
-
+  // Optimized throttled scroll handler
   useEffect(() => {
+    let lastScrollTime = 0;
+    const handleScroll = () => {
+      const now = Date.now();
+      if (now - lastScrollTime >= 100) {
+        setScrolled(window.scrollY > 50);
+        lastScrollTime = now;
+      }
+    };
+    
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+  }, []);
 
   const handleLinkClick = useCallback(() => {
     playClickSound();
