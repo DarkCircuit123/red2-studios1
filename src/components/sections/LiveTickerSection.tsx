@@ -98,22 +98,7 @@ export default function LiveTickerSection() {
     setIsPaused(!isPaused);
   };
 
-  const handleWatchVideo = (e: React.MouseEvent, videoUrl: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (videoUrl) {
-      window.open(videoUrl, '_blank');
-    }
-  };
-
-  const handleStoryClick = (e: React.MouseEvent) => {
-    const link = currentStory.link;
-    if (link && link.startsWith('http')) {
-      e.preventDefault();
-      e.stopPropagation();
-      window.open(link, '_blank');
-    }
-  };
+  // ... keep existing code (handleWatchVideo and handleStoryClick removed - using anchor tags instead) ...
 
   if (isLoading || stories.length === 0) {
     return null;
@@ -179,16 +164,11 @@ export default function LiveTickerSection() {
         </div>
 
         {/* Story display with enhanced styling */}
-        <div 
-          className="overflow-hidden rounded-lg bg-black/30 border border-primary/10 p-4 cursor-pointer hover:bg-black/40 transition-colors duration-200"
-          onClick={handleStoryClick}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              handleStoryClick(e as any);
-            }
-          }}
+        <a 
+          href={displayUrl}
+          target={isExternalLink ? '_blank' : undefined}
+          rel={isExternalLink ? 'noopener noreferrer' : undefined}
+          className="block overflow-hidden rounded-lg bg-black/30 border border-primary/10 p-4 cursor-pointer hover:bg-black/40 transition-colors duration-200"
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -230,20 +210,22 @@ export default function LiveTickerSection() {
 
               {/* Watch Video button - only shows if video exists */}
               {hasVideo && (
-                <motion.button
+                <motion.a
+                  href={currentStory.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  onClick={(e) => handleWatchVideo(e, currentStory.videoUrl!)}
                   className="flex-shrink-0 px-3 py-1 bg-primary hover:bg-primary/90 text-white text-xs font-heading font-bold rounded-lg transition-colors duration-200 flex items-center gap-1 whitespace-nowrap"
                   title="Watch video"
                 >
                   <Video className="w-3 h-3" />
                   Watch
-                </motion.button>
+                </motion.a>
               )}
             </motion.div>
           </AnimatePresence>
-        </div>
+        </a>
 
         {/* Progress indicators with hover preview */}
         <div className="flex gap-1 mt-4">
