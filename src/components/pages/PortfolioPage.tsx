@@ -93,22 +93,22 @@ export default function PortfolioPage() {
           </p>
         </motion.div>
 
-        {/* Filters - Ultra-minimal */}
+        {/* Filters - Modern & Clean */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="mb-16 flex flex-wrap gap-3"
+          className="mb-16 flex flex-wrap gap-2"
         >
           <button
             onClick={() => {
               playClickSound();
               handleCategoryFilter(null);
             }}
-            className={`px-6 py-2 font-heading font-semibold text-sm tracking-wide transition-all duration-300 ${
+            className={`px-5 py-2.5 font-heading font-medium text-xs tracking-wide rounded-lg transition-all duration-300 ${
               selectedCategory === null
-                ? 'bg-white text-black'
-                : 'border border-white/20 text-white hover:border-white/60 hover:bg-white/5'
+                ? 'bg-white text-black shadow-lg shadow-white/20'
+                : 'bg-white/8 text-white border border-white/15 hover:bg-white/12 hover:border-white/30'
             }`}
           >
             All
@@ -120,10 +120,10 @@ export default function PortfolioPage() {
                 playClickSound();
                 handleCategoryFilter(category);
               }}
-              className={`px-6 py-2 font-heading font-semibold text-sm tracking-wide transition-all duration-300 ${
+              className={`px-5 py-2.5 font-heading font-medium text-xs tracking-wide rounded-lg transition-all duration-300 ${
                 selectedCategory === category
-                  ? 'bg-white text-black'
-                  : 'border border-white/20 text-white hover:border-white/60 hover:bg-white/5'
+                  ? 'bg-white text-black shadow-lg shadow-white/20'
+                  : 'bg-white/8 text-white border border-white/15 hover:bg-white/12 hover:border-white/30'
               }`}
             >
               {category}
@@ -221,7 +221,7 @@ export default function PortfolioPage() {
             </p>
             <button
               onClick={() => handleCategoryFilter(null)}
-              className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-heading font-semibold text-sm tracking-wide hover:bg-white/90 transition-all duration-300"
+              className="inline-flex items-center gap-3 px-8 py-3.5 bg-white text-black font-heading font-semibold text-sm tracking-wide rounded-lg hover:bg-white/95 hover:shadow-lg hover:shadow-white/20 transition-all duration-300"
             >
               View All Photos
               <ArrowRight className="w-4 h-4" />
