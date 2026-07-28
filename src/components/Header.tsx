@@ -1,13 +1,15 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
-import AdminPanel from './AdminPanel';
-import AdminLoginModal from './AdminLoginModal';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
+
+// Lazy load admin components to prevent blocking
+const AdminPanel = lazy(() => import('./AdminPanel'));
+const AdminLoginModal = lazy(() => import('./AdminLoginModal'));
 
 export default function Header() {
   const navigate = useNavigate();
@@ -234,10 +236,14 @@ export default function Header() {
           </motion.button>
         </div>
       </nav>
-      {/* Admin Login Modal */}
-      <AdminLoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
-      {/* Admin Panel */}
-      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+      {/* Admin Login Modal - Lazy loaded */}
+      <Suspense fallback={null}>
+        <AdminLoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      </Suspense>
+      {/* Admin Panel - Lazy loaded */}
+      <Suspense fallback={null}>
+        <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+      </Suspense>
       {/* Mobile Navigation */}
       {isOpen && (
         <motion.div

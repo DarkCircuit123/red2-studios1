@@ -19,37 +19,47 @@ export default function BackgroundMusicPlayer() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [audioError, setAudioError] = useState(false);
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
 
-  // Load music settings from CMS
+  // Load music settings from CMS with timeout and error handling
   useEffect(() => {
     let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
 
     const loadMusicSettings = async () => {
       try {
         console.log('[MUSIC_PLAYER] Loading music settings from CMS...');
-        const result = await Promise.race([
-          BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-        ]);
         
-        if (!isMounted) return;
-        
-        if (result?.items && result.items.length > 0) {
-          const settings = result.items[0];
-          console.log('[MUSIC_PLAYER] Settings loaded:', {
-            isEnabled: settings.isEnabled,
-            musicUrl: settings.musicUrl ? `${settings.musicUrl.substring(0, 50)}...` : 'none',
-            volume: settings.volume,
-            loopMusic: settings.loopMusic
-          });
-          setMusicSettings(settings);
-        } else {
-          console.log('[MUSIC_PLAYER] No music settings found in CMS');
-        }
-      } catch (error) {
-        if (isMounted) {
-          console.error('[MUSIC_PLAYER] Failed to load music settings:', error);
+        // Set a timeout to prevent hanging
+        timeoutId = setTimeout(() => {
+          if (isMounted) {
+            console.log('[MUSIC_PLAYER] Settings load timeout - using defaults');
+            setIsLoadingSettings(false);
+          }
+        }, 3000);
+
+        try {
+          const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
+          
+          if (!isMounted) return;
+          clearTimeout(timeoutId);
+          
+          if (result?.items && result.items.length > 0) {
+            const settings = result.items[0];
+            console.log('[MUSIC_PLAYER] Settings loaded:', {
+              isEnabled: settings.isEnabled,
+              musicUrl: settings.musicUrl ? `${settings.musicUrl.substring(0, 50)}...` : 'none',
+              volume: settings.volume,
+              loopMusic: settings.loopMusic
+            });
+            setMusicSettings(settings);
+          } else {
+            console.log('[MUSIC_PLAYER] No music settings found in CMS');
+          }
+        } catch (fetchError) {
+          if (isMounted) {
+            console.error('[MUSIC_PLAYER] Failed to fetch music settings:', fetchError);
+          }
         }
       } finally {
         if (isMounted) {
@@ -62,6 +72,7 @@ export default function BackgroundMusicPlayer() {
     
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -74,7 +85,7 @@ export default function BackgroundMusicPlayer() {
 
   // Attempt to autoplay music on site load
   useEffect(() => {
-    if (isLoadingSettings || !musicSettings?.isEnabled || !audioRef.current) return;
+    if (!musicSettings?.isEnabled || !audioRef.current) return;
 
     console.log('[MUSIC_PLAYER] Attempting autoplay...');
 
@@ -135,7 +146,7 @@ export default function BackgroundMusicPlayer() {
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [isLoadingSettings, musicSettings?.isEnabled, isPlaying, hasInteracted]);
+  }, [musicSettings?.isEnabled, isPlaying, hasInteracted]);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -179,8 +190,8 @@ export default function BackgroundMusicPlayer() {
     setAudioError(true);
   };
 
-  // Don't render if music is disabled or settings not loaded
-  if (isLoadingSettings || !musicSettings?.isEnabled) {
+  // Don't render if music is disabled
+  if (!musicSettings?.isEnabled) {
     return null;
   }
 

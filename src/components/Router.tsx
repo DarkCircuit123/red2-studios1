@@ -16,13 +16,43 @@ import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
 import BackgroundMusicPlayer from './BackgroundMusicPlayer';
 // ... keep existing code (other imports) ...
+import React from 'react';
+
+// Error boundary for music player
+class MusicPlayerErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    console.error('[MusicPlayerErrorBoundary] Error:', error);
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[MusicPlayerErrorBoundary] Caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null; // Silently fail - don't break the router
+    }
+    return this.props.children;
+  }
+}
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
   return (
     <>
       <ScrollToTop />
-      <BackgroundMusicPlayer />
+      <MusicPlayerErrorBoundary>
+        <BackgroundMusicPlayer />
+      </MusicPlayerErrorBoundary>
       <Outlet />
     </>
   );
