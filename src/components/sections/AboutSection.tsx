@@ -85,135 +85,164 @@ export default function AboutSection() {
         </div>
 
         <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
-          {/* Asymmetrical layout - image right, text left */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10 lg:gap-14 items-start">
-            {/* Content - left side */}
+          {/* Premium magazine layout with floated image */}
+          <div className="space-y-4 md:space-y-6">
+            {/* Header section */}
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
-              className="space-y-4 md:space-y-6"
+              className="space-y-3 md:space-y-4"
             >
-              <div className="space-y-3 md:space-y-4">
-                <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-black text-white leading-tight tracking-tighter">
-                  About
-                  <br />
-                  <motion.span
-                    className="text-primary"
-                    animate={{ opacity: [1, 0.8, 1] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >Jordan</motion.span>
-                </h2>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-black text-white leading-tight tracking-tighter">
+                About
+                <br />
+                <motion.span
+                  className="text-primary"
+                  animate={{ opacity: [1, 0.8, 1] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >Jordan</motion.span>
+              </h2>
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: 80 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="h-1 bg-gradient-to-r from-primary to-primary/40"
+              />
+            </motion.div>
+
+            {/* Magazine-style content with floated image */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              {/* Floated image container - desktop/tablet */}
+              <div className="hidden sm:block float-right ml-6 md:ml-8 mb-4 md:mb-6 w-64 md:w-80 lg:w-96 flex-shrink-0">
                 <motion.div
-                  initial={{ width: 0 }}
-                  whileInView={{ width: 80 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  viewport={{ once: true }}
-                  className="h-1 bg-gradient-to-r from-primary to-primary/40"
+                  whileHover={{ y: -8 }}
+                  transition={{ duration: 0.3 }}
+                  className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative"
+                >
+                  {!isLoading && (
+                    <motion.div
+                      initial={{ scale: 1.1, opacity: 0 }}
+                      whileInView={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.8 }}
+                      viewport={{ once: true }}
+                      className="w-full h-full flex items-center justify-center"
+                    >
+                      <Image
+                        src={aboutImage}
+                        alt="Jordan Michael Zuniga"
+                        width={600}
+                        className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                      />
+                      {/* Overlay gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    </motion.div>
+                  )}
+                  {isLoading && (
+                    <motion.div
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-full h-full bg-gradient-to-br from-primary/10 to-white/5"
+                    />
+                  )}
+                </motion.div>
+
+                {/* Decorative elements */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                  className="absolute -top-8 -right-8 w-32 h-32 border border-primary/20 rounded-full opacity-50"
+                />
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+                  className="absolute -bottom-12 -left-12 w-40 h-40 border border-primary/10 rounded-full opacity-30"
                 />
               </div>
 
-              <div className="space-y-3 md:space-y-4">
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.7, delay: 0.3 }}
-                  viewport={{ once: true }}
-                  className={`text-base md:text-lg text-white/75 leading-relaxed whitespace-pre-wrap ${fontFamily}`}
-                >
-                  {aboutText}
-                </motion.p>
-              </div>
+              {/* Biography text - flows around floated image */}
+              <p className={`text-base md:text-lg text-white/75 leading-relaxed whitespace-pre-wrap ${fontFamily}`}>
+                {aboutText}
+              </p>
 
-              {/* Stats - enhanced with animations */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                viewport={{ once: true }}
-                className="grid grid-cols-3 gap-4 md:gap-6 pt-4 md:pt-6 border-t border-primary/30"
-              >
-                {[
-                  { value: '500+', label: 'Projects' },
-                  { value: '50+', label: 'Collaborations' },
-                  { value: '25+', label: 'Years' },
-                ].map((stat, i) => (
-                  <motion.div
-                    key={i}
-                    custom={i}
-                    variants={statVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    className="space-y-3 group"
-                  >
-                    <motion.p
-                      className="text-5xl md:text-6xl font-heading font-black text-primary"
-                      animate={{ opacity: [1, 0.8, 1] }}
-                      transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
+              {/* Mobile image - stacked above text */}
+              <div className="sm:hidden mb-6 md:mb-8">
+                <motion.div
+                  whileHover={{ y: -8 }}
+                  transition={{ duration: 0.3 }}
+                  className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative"
+                >
+                  {!isLoading && (
+                    <motion.div
+                      initial={{ scale: 1.1, opacity: 0 }}
+                      whileInView={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.8 }}
+                      viewport={{ once: true }}
+                      className="w-full h-full flex items-center justify-center"
                     >
-                      {stat.value}
-                    </motion.p>
-                    <p className="text-xs md:text-sm font-mono text-white/50 uppercase tracking-widest group-hover:text-primary transition-colors">
-                      {stat.label}
-                    </p>
-                  </motion.div>
-                ))}
-              </motion.div>
+                      <Image
+                        src={aboutImage}
+                        alt="Jordan Michael Zuniga"
+                        width={600}
+                        className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                      />
+                      {/* Overlay gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    </motion.div>
+                  )}
+                  {isLoading && (
+                    <motion.div
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-full h-full bg-gradient-to-br from-primary/10 to-white/5"
+                    />
+                  )}
+                </motion.div>
+              </div>
             </motion.div>
 
-            {/* Image - right side with enhanced effects */}
+            {/* Stats - below the text flow */}
             <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
               viewport={{ once: true }}
-              className="relative h-full"
+              className="grid grid-cols-3 gap-4 md:gap-6 pt-4 md:pt-6 border-t border-primary/30 clear-both"
             >
-              <motion.div
-                whileHover={{ y: -8 }}
-                transition={{ duration: 0.3 }}
-                className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center"
-              >
-                {!isLoading && (
-                  <motion.div
-                    initial={{ scale: 1.1, opacity: 0 }}
-                    whileInView={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.8 }}
-                    viewport={{ once: true }}
-                    className="w-full h-full flex items-center justify-center"
+              {[
+                { value: '500+', label: 'Projects' },
+                { value: '50+', label: 'Collaborations' },
+                { value: '25+', label: 'Years' },
+              ].map((stat, i) => (
+                <motion.div
+                  key={i}
+                  custom={i}
+                  variants={statVariants}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  className="space-y-3 group"
+                >
+                  <motion.p
+                    className="text-5xl md:text-6xl font-heading font-black text-primary"
+                    animate={{ opacity: [1, 0.8, 1] }}
+                    transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
                   >
-                    <Image
-                      src={aboutImage}
-                      alt="Jordan Michael Zuniga"
-                      width={600}
-                      className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
-                    />
-                    {/* Overlay gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </motion.div>
-                )}
-                {isLoading && (
-                  <motion.div
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="w-full h-full bg-gradient-to-br from-primary/10 to-white/5"
-                  />
-                )}
-              </motion.div>
-
-              {/* Decorative elements */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                className="absolute -top-8 -right-8 w-32 h-32 border border-primary/20 rounded-full opacity-50"
-              />
-              <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-                className="absolute -bottom-12 -left-12 w-40 h-40 border border-primary/10 rounded-full opacity-30"
-              />
+                    {stat.value}
+                  </motion.p>
+                  <p className="text-xs md:text-sm font-mono text-white/50 uppercase tracking-widest group-hover:text-primary transition-colors">
+                    {stat.label}
+                  </p>
+                </motion.div>
+              ))}
             </motion.div>
           </div>
         </div>
