@@ -27,19 +27,16 @@ export const EMAILJS_CONFIG = {
     
     // Customer confirmation email
     CUSTOMER_CONFIRMATION: 'booking_customer_confirmation',
-    
-    // Contact form submission
-    CONTACT_FORM: 'contact_form_submission',
   },
   
   // Admin email address (where booking notifications are sent)
-  ADMIN_EMAIL: 'hello@red2studios.com',
+  ADMIN_EMAIL: 'admin@red2photography.com',
   
   // From email (should match your EmailJS service)
-  FROM_EMAIL: 'noreply@red2studios.com',
+  FROM_EMAIL: 'noreply@red2photography.com',
   
   // From name
-  FROM_NAME: 'RED² Studios',
+  FROM_NAME: 'RED² Photography',
 };
 
 /**

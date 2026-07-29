@@ -1,9 +1,7 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
-import emailjs from '@emailjs/browser';
-import { EMAILJS_CONFIG } from '@/lib/emailjs-config';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -17,15 +15,6 @@ export default function ContactSection() {
   const [statusMessage, setStatusMessage] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const statusTimeoutRef = useRef<NodeJS.Timeout>();
-
-  // Initialize EmailJS on component mount
-  useEffect(() => {
-    try {
-      emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
-    } catch (error) {
-      console.error('Failed to initialize EmailJS:', error);
-    }
-  }, []);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -74,19 +63,8 @@ export default function ContactSection() {
         return;
       }
 
-      // Send email via EmailJS
-      await emailjs.send(
-        EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATES.CONTACT_FORM,
-        {
-          to_email: EMAILJS_CONFIG.ADMIN_EMAIL,
-          from_name: formData.name,
-          from_email: formData.email,
-          subject: formData.subject || 'Contact Form Submission',
-          message: formData.message,
-          reply_to: formData.email,
-        }
-      );
+      // Simulate form submission (in production, this would send to a backend)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       showStatus('success', 'Thank you for your message! We will get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
