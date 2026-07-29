@@ -2,17 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Check, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
+import { BookingAvailability } from '@/entities/index';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
-interface BookingSlot {
-  _id: string;
-  bookingDate: string;
-  startTime: string;
-  endTime: string;
-  isAvailable: boolean;
-  sessionType: string;
-}
 
 interface BookingRequest {
   name: string;
@@ -22,9 +14,9 @@ interface BookingRequest {
 }
 
 export default function BookingPage() {
-  const [bookings, setBookings] = useState<BookingSlot[]>([]);
+  const [bookings, setBookings] = useState<BookingAvailability[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<BookingAvailability | null>(null);
   const [formData, setFormData] = useState<BookingRequest>({
     name: '',
     email: '',
@@ -37,10 +29,18 @@ export default function BookingPage() {
   useEffect(() => {
     const loadBookings = async () => {
       try {
-        const result = await BaseCrudService.getAll<BookingSlot>('bookingavailability', {}, { limit: 100 });
-        setBookings(result.items || []);
+        const result = await BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { limit: 100 });
+        const allBookings = result.items || [];
+        
+        // Filter for available bookings and ensure they have valid dates/times
+        const validBookings = allBookings.filter(b => {
+          return b.isAvailable === true && b.bookingDate && b.startTime && b.endTime;
+        });
+        
+        setBookings(validBookings);
       } catch (error) {
-        // Silently fail - show empty state
+        console.error('Error loading bookings:', error);
+        setBookings([]);
       } finally {
         setIsLoading(false);
       }
@@ -49,15 +49,31 @@ export default function BookingPage() {
     loadBookings();
   }, []);
 
-  const availableBookings = bookings.filter(b => b.isAvailable);
-  const groupedByDate = availableBookings.reduce((acc, booking) => {
-    const date = booking.bookingDate;
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(booking);
+  // Group bookings by date and sort by date
+  const groupedByDate = bookings.reduce((acc, booking) => {
+    const dateStr = typeof booking.bookingDate === 'string' 
+      ? booking.bookingDate 
+      : booking.bookingDate instanceof Date 
+        ? booking.bookingDate.toISOString().split('T')[0]
+        : '';
+    
+    if (dateStr && !acc[dateStr]) acc[dateStr] = [];
+    if (dateStr) acc[dateStr].push(booking);
     return acc;
-  }, {} as Record<string, BookingSlot[]>);
+  }, {} as Record<string, BookingAvailability[]>);
 
-  const handleSlotClick = (slot: BookingSlot) => {
+  // Sort dates chronologically
+  const sortedDates = Object.keys(groupedByDate).sort();
+  const sortedGroupedByDate = sortedDates.reduce((acc, date) => {
+    acc[date] = groupedByDate[date].sort((a, b) => {
+      const timeA = typeof a.startTime === 'string' ? a.startTime : '';
+      const timeB = typeof b.startTime === 'string' ? b.startTime : '';
+      return timeA.localeCompare(timeB);
+    });
+    return acc;
+  }, {} as Record<string, BookingAvailability[]>);
+
+  const handleSlotClick = (slot: BookingAvailability) => {
     setSelectedSlot(slot);
     setSubmitSuccess(false);
     setFormData({ name: '', email: '', phone: '', message: '' });
@@ -75,12 +91,15 @@ export default function BookingPage() {
     setIsSubmitting(true);
     try {
       // Format the date and time for the email
-      const formattedDate = new Date(selectedSlot.bookingDate).toLocaleDateString('en-US', {
+      const bookingDateValue = selectedSlot.bookingDate || '';
+      const formattedDate = new Date(bookingDateValue).toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric'
       });
-      const dateTime = `${formattedDate} from ${selectedSlot.startTime} to ${selectedSlot.endTime}`;
+      const startTime = typeof selectedSlot.startTime === 'string' ? selectedSlot.startTime : '';
+      const endTime = typeof selectedSlot.endTime === 'string' ? selectedSlot.endTime : '';
+      const dateTime = `${formattedDate} from ${startTime} to ${endTime}`;
 
       // Store booking locally (backend function not available in this environment)
       // In production, this would send to a backend service
@@ -182,17 +201,17 @@ export default function BookingPage() {
                 <div className="mb-6 p-4 bg-white/5 border border-white/10 rounded">
                   <p className="text-sm text-white/60 mb-2">Selected Time Slot</p>
                   <p className="font-heading font-bold text-lg">
-                    {new Date(selectedSlot.bookingDate).toLocaleDateString('en-US', {
+                    {new Date(selectedSlot.bookingDate || '').toLocaleDateString('en-US', {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric'
                     })}
                   </p>
                   <p className="text-white/80 font-mono">
-                    {selectedSlot.startTime} - {selectedSlot.endTime}
+                    {typeof selectedSlot.startTime === 'string' ? selectedSlot.startTime : ''} - {typeof selectedSlot.endTime === 'string' ? selectedSlot.endTime : ''}
                   </p>
                   <p className="text-xs text-white/60 uppercase tracking-wide mt-2">
-                    {selectedSlot.sessionType}
+                    {selectedSlot.sessionType || 'Session'}
                   </p>
                 </div>
 
@@ -275,7 +294,7 @@ export default function BookingPage() {
             <div className="flex items-center justify-center py-20">
               <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             </div>
-          ) : availableBookings.length === 0 ? (
+          ) : bookings.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -286,7 +305,7 @@ export default function BookingPage() {
             </motion.div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Object.entries(groupedByDate).map(([date, slots], idx) => (
+              {Object.entries(sortedGroupedByDate).map(([date, slots], idx) => (
                 <motion.div
                   key={date}
                   initial={{ opacity: 0, y: 20 }}
@@ -316,11 +335,11 @@ export default function BookingPage() {
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-white/40" />
                             <span className="text-sm font-mono">
-                              {slot.startTime} - {slot.endTime}
+                              {typeof slot.startTime === 'string' ? slot.startTime : ''} - {typeof slot.endTime === 'string' ? slot.endTime : ''}
                             </span>
                           </div>
                           <span className="text-xs text-white/50 uppercase tracking-wide">
-                            {slot.sessionType}
+                            {slot.sessionType || 'Session'}
                           </span>
                         </div>
                       </button>
