@@ -110,11 +110,24 @@ export default function Header() {
         }`}
       >
         <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between w-full relative">
-        {/* Logo - Text-based RED² with shimmer effect */}
+        {/* Logo - Text-based RED² with unified hover behavior */}
+        <style>{`
+          @keyframes spin-2 {
+            from {
+              transform: rotateY(0deg);
+            }
+            to {
+              transform: rotateY(360deg);
+            }
+          }
+          .logo-container:hover .logo-2 {
+            animation: spin-2 4s linear infinite;
+          }
+        `}</style>
         <motion.div
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.98 }}
-          className="group"
+          className="logo-container group"
         >
           <Link
             to="/"
@@ -122,22 +135,15 @@ export default function Header() {
             className="relative flex items-center gap-0"
           >
             <span className="font-heading font-black tracking-tight text-7xl transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(111,8,9,0.8)]">
-              <motion.span
-                className="text-white inline-block"
-                initial={{ color: '#ffffff' }}
-                whileHover={{ color: '#6F0809' }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-              >
+              <span className="text-white inline-block transition-colors duration-300 group-hover:text-primary">
                 RED
-              </motion.span>
-              <motion.span 
-                className="text-primary inline-block"
-                initial={{ color: '#6F0809' }}
-                whileHover={{ rotateY: 360 }}
-                transition={{ duration: 4, ease: "linear" }}
+              </span>
+              <span 
+                className="logo-2 text-primary inline-block transition-colors duration-300 group-hover:text-white"
+                style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
               >
                 ²
-              </motion.span>
+              </span>
             </span>
           </Link>
         </motion.div>
