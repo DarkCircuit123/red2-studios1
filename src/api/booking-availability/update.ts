@@ -31,14 +31,18 @@ export async function PUT(request: Request) {
     const result = await BaseCrudService.update('bookingavailability', updateData);
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({
+        success: true,
+        data: result
+      }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error updating booking availability:', error);
     return new Response(
       JSON.stringify({
-        message: error instanceof Error ? error.message : 'Failed to update booking availability'
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update booking availability'
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );

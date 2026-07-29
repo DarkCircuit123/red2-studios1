@@ -54,14 +54,18 @@ export async function POST(request: Request) {
     );
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({
+        success: true,
+        data: result
+      }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error creating booking availability:', error);
     return new Response(
       JSON.stringify({
-        message: error instanceof Error ? error.message : 'Failed to create booking availability'
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create booking availability'
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );

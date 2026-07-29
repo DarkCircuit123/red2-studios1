@@ -28,7 +28,8 @@ export async function DELETE(request: Request) {
     console.error('Error deleting booking availability:', error);
     return new Response(
       JSON.stringify({
-        message: error instanceof Error ? error.message : 'Failed to delete booking availability'
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete booking availability'
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
