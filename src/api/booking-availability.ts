@@ -118,44 +118,62 @@ export async function createBookingAvailability(
   availability: BookingAvailability
 ): Promise<{ success: boolean; data?: BookingAvailability; error?: string }> {
   try {
-    console.log('[Frontend] Creating booking availability:', availability);
+    console.log('[Frontend] Creating booking availability:', JSON.stringify(availability, null, 2));
+    
+    const payload = JSON.stringify(availability);
+    console.log('[Frontend] Request payload:', payload);
+    console.log('[Frontend] Payload size:', payload.length, 'bytes');
     
     const response = await fetch('/api/booking-availability/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(availability),
+      body: payload,
     });
 
     console.log('[Frontend] Response status:', response.status);
-    console.log('[Frontend] Response headers:', response.headers);
+    console.log('[Frontend] Response statusText:', response.statusText);
+    console.log('[Frontend] Response headers:', {
+      contentType: response.headers.get('content-type'),
+      contentLength: response.headers.get('content-length'),
+    });
 
     // Try to parse as JSON
     let data;
     try {
-      data = await response.json();
-      console.log('[Frontend] Response data:', data);
+      const responseText = await response.text();
+      console.log('[Frontend] Raw response text:', responseText);
+      
+      if (!responseText) {
+        console.error('[Frontend] Empty response body');
+        return {
+          success: false,
+          error: 'Server returned empty response',
+        };
+      }
+      
+      data = JSON.parse(responseText);
+      console.log('[Frontend] Parsed response data:', JSON.stringify(data, null, 2));
     } catch (parseError) {
       console.error('[Frontend] Failed to parse response as JSON:', parseError);
-      const text = await response.text();
-      console.error('[Frontend] Response text:', text);
       return {
         success: false,
-        error: 'Server returned invalid JSON response',
+        error: `Failed to parse server response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
       };
     }
 
     if (!response.ok) {
       return {
         success: false,
-        error: data.message || data.error || 'Failed to create booking availability',
+        error: data.message || data.error || `Server error: ${response.statusText}`,
       };
     }
 
     return { success: data.success, data: data.data };
   } catch (error) {
     console.error('[Frontend] Error creating booking availability:', error);
+    console.error('[Frontend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -174,41 +192,55 @@ export async function updateBookingAvailability(
   try {
     console.log('[Frontend] Updating booking availability:', { id, ...updates });
     
+    const payload = JSON.stringify({ id, ...updates });
+    console.log('[Frontend] Request payload:', payload);
+    
     const response = await fetch('/api/booking-availability/update', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id, ...updates }),
+      body: payload,
     });
 
     console.log('[Frontend] Response status:', response.status);
+    console.log('[Frontend] Response statusText:', response.statusText);
 
     // Try to parse as JSON
     let data;
     try {
-      data = await response.json();
-      console.log('[Frontend] Response data:', data);
+      const responseText = await response.text();
+      console.log('[Frontend] Raw response text:', responseText);
+      
+      if (!responseText) {
+        console.error('[Frontend] Empty response body');
+        return {
+          success: false,
+          error: 'Server returned empty response',
+        };
+      }
+      
+      data = JSON.parse(responseText);
+      console.log('[Frontend] Parsed response data:', JSON.stringify(data, null, 2));
     } catch (parseError) {
       console.error('[Frontend] Failed to parse response as JSON:', parseError);
-      const text = await response.text();
-      console.error('[Frontend] Response text:', text);
       return {
         success: false,
-        error: 'Server returned invalid JSON response',
+        error: `Failed to parse server response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
       };
     }
 
     if (!response.ok) {
       return {
         success: false,
-        error: data.message || data.error || 'Failed to update booking availability',
+        error: data.message || data.error || `Server error: ${response.statusText}`,
       };
     }
 
     return { success: data.success, data: data.data };
   } catch (error) {
     console.error('[Frontend] Error updating booking availability:', error);
+    console.error('[Frontend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -226,41 +258,55 @@ export async function deleteBookingAvailability(
   try {
     console.log('[Frontend] Deleting booking availability:', id);
     
+    const payload = JSON.stringify({ id });
+    console.log('[Frontend] Request payload:', payload);
+    
     const response = await fetch('/api/booking-availability/delete', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id }),
+      body: payload,
     });
 
     console.log('[Frontend] Response status:', response.status);
+    console.log('[Frontend] Response statusText:', response.statusText);
 
     // Try to parse as JSON
     let data;
     try {
-      data = await response.json();
-      console.log('[Frontend] Response data:', data);
+      const responseText = await response.text();
+      console.log('[Frontend] Raw response text:', responseText);
+      
+      if (!responseText) {
+        console.error('[Frontend] Empty response body');
+        return {
+          success: false,
+          error: 'Server returned empty response',
+        };
+      }
+      
+      data = JSON.parse(responseText);
+      console.log('[Frontend] Parsed response data:', JSON.stringify(data, null, 2));
     } catch (parseError) {
       console.error('[Frontend] Failed to parse response as JSON:', parseError);
-      const text = await response.text();
-      console.error('[Frontend] Response text:', text);
       return {
         success: false,
-        error: 'Server returned invalid JSON response',
+        error: `Failed to parse server response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
       };
     }
 
     if (!response.ok) {
       return {
         success: false,
-        error: data.message || data.error || 'Failed to delete booking availability',
+        error: data.message || data.error || `Server error: ${response.statusText}`,
       };
     }
 
     return { success: data.success };
   } catch (error) {
     console.error('[Frontend] Error deleting booking availability:', error);
+    console.error('[Frontend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

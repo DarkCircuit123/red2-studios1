@@ -117,6 +117,13 @@ export default function BookingManagerPro() {
 
     setIsSubmitting(true);
     try {
+      console.log('[BookingManagerPro] Creating time slot with data:', {
+        selectedDate,
+        startTime: newSlot.startTime,
+        endTime: newSlot.endTime,
+        sessionType
+      });
+
       const availability: BookingAvailability = {
         _id: crypto.randomUUID(),
         bookingDate: selectedDate,
@@ -126,21 +133,28 @@ export default function BookingManagerPro() {
         sessionType: sessionType
       };
 
+      console.log('[BookingManagerPro] Availability object:', JSON.stringify(availability, null, 2));
+
       // Use backend API with elevated permissions
       const result = await createBookingAvailability(availability);
       
+      console.log('[BookingManagerPro] Create result:', JSON.stringify(result, null, 2));
+      
       if (!result.success) {
+        console.error('[BookingManagerPro] Failed to create availability:', result.error);
         addNotification('error', `Failed to add time slot: ${result.error}`);
         return;
       }
       
+      console.log('[BookingManagerPro] Successfully created time slot');
       setAvailabilities([...availabilities, availability]);
       setNewSlot({ startTime: '09:00', endTime: '10:00' });
       setSessionType('Studio Session');
       setShowAddModal(false);
       addNotification('success', `Time slot added: ${newSlot.startTime} - ${newSlot.endTime}`);
     } catch (error) {
-      console.error('Error adding time slot:', error);
+      console.error('[BookingManagerPro] Error adding time slot:', error);
+      console.error('[BookingManagerPro] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       addNotification('error', `Failed to add time slot: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
