@@ -3,20 +3,19 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet, Suspense } from 
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
-import HomePage from './pages/HomePage';
-import PortfolioPage from './pages/PortfolioPage';
-import PortfolioDetailPage from './pages/PortfolioDetailPage';
-import BookingPage from './pages/BookingPage';
-// ... keep existing code (other imports) ...
-import ProfilePage from './pages/ProfilePage';
-import PrivatePage from './pages/PrivatePage';
-import HangmanGamePage from './pages/HangmanGamePage';
-import ClientRegisterPage from './pages/ClientRegisterPage';
-import WorkPage from './pages/WorkPage';
-import ContactPage from './pages/ContactPage';
-// ... keep existing code (other imports) ...
 import { lazy } from 'react';
 
+// Lazy load all pages to prevent circular dependencies
+const HomePage = lazy(() => import('./pages/HomePage'));
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
+const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage'));
+const BookingPage = lazy(() => import('./pages/BookingPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const PrivatePage = lazy(() => import('./pages/PrivatePage'));
+const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage'));
+const ClientRegisterPage = lazy(() => import('./pages/ClientRegisterPage'));
+const WorkPage = lazy(() => import('./pages/WorkPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
 const BackgroundMusicPlayer = lazy(() => import('./BackgroundMusicPlayer'));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
@@ -27,7 +26,9 @@ function Layout() {
       <Suspense fallback={null}>
         <BackgroundMusicPlayer />
       </Suspense>
-      <Outlet />
+      <Suspense fallback={<div />}>
+        <Outlet />
+      </Suspense>
     </>
   );
 }
@@ -40,48 +41,85 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />,
+        element: (
+          <Suspense fallback={<div />}>
+            <HomePage />
+          </Suspense>
+        ),
       },
       {
         path: "portfolio",
-        element: <PortfolioPage />,
+        element: (
+          <Suspense fallback={<div />}>
+            <PortfolioPage />
+          </Suspense>
+        ),
       },
       {
         path: "portfolio/:id",
-        element: <PortfolioDetailPage />,
+        element: (
+          <Suspense fallback={<div />}>
+            <PortfolioDetailPage />
+          </Suspense>
+        ),
       },
       {
         path: "booking",
-        element: <BookingPage />,
+        element: (
+          <Suspense fallback={<div />}>
+            <BookingPage />
+          </Suspense>
+        ),
       },
-
       {
         path: "profile",
         element: (
           <MemberProtectedRoute>
-            <ProfilePage />
+            <Suspense fallback={<div />}>
+              <ProfilePage />
+            </Suspense>
           </MemberProtectedRoute>
         ),
       },
       {
         path: "private",
-        element: <PrivatePage />,
+        element: (
+          <Suspense fallback={<div />}>
+            <PrivatePage />
+          </Suspense>
+        ),
       },
       {
         path: "play",
-        element: <HangmanGamePage />,
+        element: (
+          <Suspense fallback={<div />}>
+            <HangmanGamePage />
+          </Suspense>
+        ),
       },
       {
         path: "client-register",
-        element: <ClientRegisterPage />,
+        element: (
+          <Suspense fallback={<div />}>
+            <ClientRegisterPage />
+          </Suspense>
+        ),
       },
       {
         path: "work",
-        element: <WorkPage />,
+        element: (
+          <Suspense fallback={<div />}>
+            <WorkPage />
+          </Suspense>
+        ),
       },
       {
         path: "contact",
-        element: <ContactPage />,
+        element: (
+          <Suspense fallback={<div />}>
+            <ContactPage />
+          </Suspense>
+        ),
       },
       {
         path: "*",
