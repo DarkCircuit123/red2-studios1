@@ -123,9 +123,10 @@ export default function Header() {
           >
             <span className="font-heading font-black text-white tracking-tight text-7xl transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(111,8,9,0.8)]">
               RED<motion.span 
-                className="text-primary group-hover:text-red-500 transition-colors duration-300 inline-block"
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                className="text-primary inline-block"
+                initial={{ color: '#6F0809' }}
+                whileHover={{ color: '#ffffff', rotateY: 360 }}
+                transition={{ duration: 4, ease: "linear" }}
               >
                 ²
               </motion.span>
