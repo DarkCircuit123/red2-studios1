@@ -134,8 +134,16 @@ export default function BookingManagerPro() {
       };
 
       console.log('[BookingManagerPro] Availability object:', JSON.stringify(availability, null, 2));
+      console.log('[BookingManagerPro] Availability field types:');
+      console.log('[BookingManagerPro]   _id:', typeof availability._id, availability._id);
+      console.log('[BookingManagerPro]   bookingDate:', typeof availability.bookingDate, availability.bookingDate);
+      console.log('[BookingManagerPro]   startTime:', typeof availability.startTime, availability.startTime);
+      console.log('[BookingManagerPro]   endTime:', typeof availability.endTime, availability.endTime);
+      console.log('[BookingManagerPro]   isAvailable:', typeof availability.isAvailable, availability.isAvailable);
+      console.log('[BookingManagerPro]   sessionType:', typeof availability.sessionType, availability.sessionType);
 
       // Use backend API with elevated permissions
+      console.log('[BookingManagerPro] Calling createBookingAvailability...');
       const result = await createBookingAvailability(availability);
       
       console.log('[BookingManagerPro] Create result:', JSON.stringify(result, null, 2));
@@ -154,7 +162,10 @@ export default function BookingManagerPro() {
       addNotification('success', `Time slot added: ${newSlot.startTime} - ${newSlot.endTime}`);
     } catch (error) {
       console.error('[BookingManagerPro] Error adding time slot:', error);
+      console.error('[BookingManagerPro] Error type:', error instanceof Error ? error.constructor.name : typeof error);
+      console.error('[BookingManagerPro] Error message:', error instanceof Error ? error.message : String(error));
       console.error('[BookingManagerPro] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      console.error('[BookingManagerPro] Full error object:', JSON.stringify(error, null, 2));
       addNotification('error', `Failed to add time slot: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);

@@ -119,18 +119,38 @@ export async function createBookingAvailability(
 ): Promise<{ success: boolean; data?: BookingAvailability; error?: string }> {
   try {
     console.log('[Frontend] Creating booking availability:', JSON.stringify(availability, null, 2));
+    console.log('[Frontend] Availability field types:');
+    console.log('[Frontend]   _id:', typeof availability._id, availability._id);
+    console.log('[Frontend]   bookingDate:', typeof availability.bookingDate, availability.bookingDate);
+    console.log('[Frontend]   startTime:', typeof availability.startTime, availability.startTime);
+    console.log('[Frontend]   endTime:', typeof availability.endTime, availability.endTime);
+    console.log('[Frontend]   isAvailable:', typeof availability.isAvailable, availability.isAvailable);
+    console.log('[Frontend]   sessionType:', typeof availability.sessionType, availability.sessionType);
     
     const payload = JSON.stringify(availability);
     console.log('[Frontend] Request payload:', payload);
     console.log('[Frontend] Payload size:', payload.length, 'bytes');
     
-    const response = await fetch('/api/booking-availability/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: payload,
-    });
+    let response;
+    try {
+      console.log('[Frontend] Sending fetch request to /api/booking-availability/create');
+      response = await fetch('/api/booking-availability/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: payload,
+      });
+      console.log('[Frontend] Fetch request completed');
+    } catch (fetchError) {
+      console.error('[Frontend] Fetch request failed:', fetchError);
+      console.error('[Frontend] Fetch error type:', fetchError instanceof Error ? fetchError.constructor.name : typeof fetchError);
+      console.error('[Frontend] Fetch error message:', fetchError instanceof Error ? fetchError.message : String(fetchError));
+      return {
+        success: false,
+        error: `Network error: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`,
+      };
+    }
 
     console.log('[Frontend] Response status:', response.status);
     console.log('[Frontend] Response statusText:', response.statusText);
@@ -157,6 +177,8 @@ export async function createBookingAvailability(
       console.log('[Frontend] Parsed response data:', JSON.stringify(data, null, 2));
     } catch (parseError) {
       console.error('[Frontend] Failed to parse response as JSON:', parseError);
+      console.error('[Frontend] Parse error type:', parseError instanceof Error ? parseError.constructor.name : typeof parseError);
+      console.error('[Frontend] Parse error message:', parseError instanceof Error ? parseError.message : String(parseError));
       return {
         success: false,
         error: `Failed to parse server response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
@@ -164,15 +186,20 @@ export async function createBookingAvailability(
     }
 
     if (!response.ok) {
+      console.error('[Frontend] Response not OK. Status:', response.status);
+      console.error('[Frontend] Error response data:', data);
       return {
         success: false,
         error: data.message || data.error || `Server error: ${response.statusText}`,
       };
     }
 
+    console.log('[Frontend] Successfully created booking availability');
     return { success: data.success, data: data.data };
   } catch (error) {
     console.error('[Frontend] Error creating booking availability:', error);
+    console.error('[Frontend] Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error('[Frontend] Error message:', error instanceof Error ? error.message : String(error));
     console.error('[Frontend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return {
       success: false,

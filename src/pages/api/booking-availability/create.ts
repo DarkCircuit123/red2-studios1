@@ -91,10 +91,28 @@ export async function POST({ request }: { request: Request }) {
 
     console.log('[API] Insert payload:', JSON.stringify(insertPayload, null, 2));
     console.log('[API] Collection ID: bookingavailability');
+    console.log('[API] Payload field types:');
+    console.log('[API]   _id:', typeof insertPayload._id, insertPayload._id);
+    console.log('[API]   bookingDate:', typeof insertPayload.bookingDate, insertPayload.bookingDate);
+    console.log('[API]   startTime:', typeof insertPayload.startTime, insertPayload.startTime);
+    console.log('[API]   endTime:', typeof insertPayload.endTime, insertPayload.endTime);
+    console.log('[API]   isAvailable:', typeof insertPayload.isAvailable, insertPayload.isAvailable);
+    console.log('[API]   sessionType:', typeof insertPayload.sessionType, insertPayload.sessionType);
 
     // Use wixData.insert with elevated permissions (suppressAuth: true)
     // This bypasses the ADMIN-only permission restriction on the collection
-    const result = await wixData.insert('bookingavailability', insertPayload, { suppressAuth: true });
+    let result;
+    try {
+      console.log('[API] Calling wixData.insert...');
+      result = await wixData.insert('bookingavailability', insertPayload, { suppressAuth: true });
+      console.log('[API] wixData.insert succeeded');
+    } catch (insertError) {
+      console.error('[API] wixData.insert failed with error:', insertError);
+      console.error('[API] Insert error type:', insertError instanceof Error ? insertError.constructor.name : typeof insertError);
+      console.error('[API] Insert error message:', insertError instanceof Error ? insertError.message : String(insertError));
+      console.error('[API] Insert error details:', JSON.stringify(insertError, null, 2));
+      throw insertError;
+    }
 
     console.log('[API] Database response:', JSON.stringify(result, null, 2));
 
@@ -108,15 +126,19 @@ export async function POST({ request }: { request: Request }) {
     );
   } catch (error) {
     console.error('[API] Error creating booking availability:', error);
+    console.error('[API] Error type:', error instanceof Error ? error.constructor.name : typeof error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to create booking availability';
-    console.error('[API] Error details:', errorMessage);
-    console.error('[API] Full error:', error);
+    console.error('[API] Error message:', errorMessage);
+    console.error('[API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('[API] Full error object:', JSON.stringify(error, null, 2));
     
     return new Response(
       JSON.stringify({
         success: false,
         message: errorMessage,
-        error: String(error)
+        error: String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorStack: error instanceof Error ? error.stack : undefined
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
