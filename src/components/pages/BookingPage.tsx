@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Check, X } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { formatDateShort, normalizeDateString } from '@/lib/date-formatter';
+import { getPublicAvailability, submitPublicBooking } from '@/api/booking-availability';
 
 interface BookingRequest {
   name: string;
@@ -42,15 +42,22 @@ export default function BookingPage() {
   useEffect(() => {
     const loadBookings = async () => {
       try {
-        const result = await BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { limit: 100 });
-        const allBookings = result.items || [];
+        // Use backend API to fetch public available slots
+        const result = await getPublicAvailability();
         
-        // Filter for available bookings and ensure they have valid dates/times
-        const validBookings = allBookings.filter(b => {
-          return b.isAvailable === true && b.bookingDate && b.startTime && b.endTime;
-        });
-        
-        setBookings(validBookings);
+        if (!result.success) {
+          console.error('Error loading bookings:', result.error);
+          setBookings([]);
+        } else {
+          const allBookings = result.data || [];
+          
+          // Filter for available bookings and ensure they have valid dates/times
+          const validBookings = allBookings.filter(b => {
+            return b.isAvailable === true && b.bookingDate && b.startTime && b.endTime;
+          });
+          
+          setBookings(validBookings);
+        }
       } catch (error) {
         console.error('Error loading bookings:', error);
         setBookings([]);
@@ -99,27 +106,23 @@ export default function BookingPage() {
 
     setIsSubmitting(true);
     try {
-      // Create booking record in the bookings collection
-      const booking: Booking = {
-        _id: crypto.randomUUID(),
-        clientName: formData.name,
-        clientEmail: formData.email,
-        clientPhone: formData.phone,
-        sessionType: selectedSlot.sessionType,
-        bookingDate: selectedSlot.bookingDate,
-        bookingTime: typeof selectedSlot.startTime === 'string' ? selectedSlot.startTime : '',
-        clientMessage: formData.message,
-        bookingStatus: 'Pending'
-      };
+      // Use backend API to submit booking with elevated permissions
+      const result = await submitPublicBooking(
+        formData.name,
+        formData.email,
+        formData.phone,
+        selectedSlot.sessionType,
+        selectedSlot.bookingDate,
+        typeof selectedSlot.startTime === 'string' ? selectedSlot.startTime : '',
+        formData.message,
+        selectedSlot._id
+      );
 
-      // Save booking to CMS
-      await BaseCrudService.create('bookings', booking);
-
-      // Mark the availability slot as booked
-      await BaseCrudService.update('bookingavailability', {
-        _id: selectedSlot._id,
-        isAvailable: false
-      });
+      if (!result.success) {
+        console.error('Error submitting booking:', result.error);
+        alert(`Failed to submit booking: ${result.error}`);
+        return;
+      }
 
       // Update local state
       setBookings(bookings.filter(b => b._id !== selectedSlot._id));

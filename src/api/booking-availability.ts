@@ -267,3 +267,123 @@ export async function deleteBookingAvailability(
     };
   }
 }
+
+/**
+ * Fetch public available booking slots
+ * Public operation - no authentication required
+ * Used by the public booking page
+ */
+export async function getPublicAvailability(): Promise<{
+  success: boolean;
+  data?: BookingAvailability[];
+  error?: string;
+}> {
+  try {
+    console.log('[Frontend] Fetching public available booking slots');
+
+    const response = await fetch('/api/booking-availability/get-public', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('[Frontend] Get public availability response status:', response.status);
+
+    let data;
+    try {
+      data = await response.json();
+      console.log('[Frontend] Get public availability response data:', data);
+    } catch (parseError) {
+      console.error('[Frontend] Failed to parse public availability response as JSON:', parseError);
+      const text = await response.text();
+      console.error('[Frontend] Response text:', text);
+      return {
+        success: false,
+        error: 'Server returned invalid JSON response',
+      };
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || data.message || 'Failed to fetch available slots',
+      };
+    }
+
+    return { success: data.success, data: data.data };
+  } catch (error) {
+    console.error('[Frontend] Error fetching public available slots:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Submit a public booking
+ * Creates a booking record and marks the availability slot as booked
+ */
+export async function submitPublicBooking(
+  clientName: string,
+  clientEmail: string,
+  clientPhone: string,
+  sessionType: string | undefined,
+  bookingDate: string | Date | undefined,
+  bookingTime: string | undefined,
+  clientMessage: string,
+  slotId: string
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    console.log('[Frontend] Submitting public booking');
+
+    const response = await fetch('/api/booking-availability/submit-booking', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        clientName,
+        clientEmail,
+        clientPhone,
+        sessionType,
+        bookingDate,
+        bookingTime,
+        clientMessage,
+        slotId
+      }),
+    });
+
+    console.log('[Frontend] Submit booking response status:', response.status);
+
+    let data;
+    try {
+      data = await response.json();
+      console.log('[Frontend] Submit booking response data:', data);
+    } catch (parseError) {
+      console.error('[Frontend] Failed to parse submit booking response as JSON:', parseError);
+      const text = await response.text();
+      console.error('[Frontend] Response text:', text);
+      return {
+        success: false,
+        error: 'Server returned invalid JSON response',
+      };
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || data.message || 'Failed to submit booking',
+      };
+    }
+
+    return { success: data.success, data: data.data };
+  } catch (error) {
+    console.error('[Frontend] Error submitting booking:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
