@@ -160,7 +160,7 @@ export async function POST(request: Request) {
 
     console.log(`[CREATE:${requestId}] Inserting normalized data:`, JSON.stringify(dataToInsert, null, 2));
 
-    const result = await wixData.insert('bookingavailability', dataToInsert);
+    const result = await wixData.insert('bookingavailability', dataToInsert, { suppressAuth: true });
 
     const duration = new Date().getTime() - startTime.getTime();
     console.log(`[CREATE:${requestId}] ✓ Successfully created slot ${result._id} in ${duration}ms`);

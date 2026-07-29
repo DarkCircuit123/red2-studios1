@@ -11,9 +11,12 @@ export default function PrivatePage() {
   const [error, setError] = useState('');
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Secret password - in production, this would be handled server-side
-  const SECRET_PASSWORD = 'classified';
+  /**
+   * SECURITY NOTE: Password validation is now handled server-side via /api/auth/private-check
+   * Frontend never stores or compares passwords directly.
+   */
 
   useEffect(() => {
     // Check if already unlocked in session
@@ -27,7 +30,7 @@ export default function PrivatePage() {
     sessionStorage.removeItem('privatePageLocked');
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (isLocked) {
@@ -35,24 +38,44 @@ export default function PrivatePage() {
       return;
     }
 
-    if (password === SECRET_PASSWORD) {
-      setIsUnlocked(true);
-      setError('');
-      setPassword('');
-      sessionStorage.setItem('privatePageUnlocked', 'true');
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      setError('Access denied. Invalid credentials.');
-      setPassword('');
+    setIsLoading(true);
+    setError('');
 
-      if (newAttempts >= 3) {
-        setIsLocked(true);
-        setTimeout(() => {
-          setIsLocked(false);
-          setAttempts(0);
-        }, 30000); // Lock for 30 seconds
+    try {
+      // Call secure backend endpoint for password validation
+      const response = await fetch('/api/auth/private-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (data.authenticated) {
+        setIsUnlocked(true);
+        setError('');
+        setPassword('');
+        setAttempts(0);
+        sessionStorage.setItem('privatePageUnlocked', 'true');
+      } else {
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        setError('Access denied. Invalid credentials.');
+        setPassword('');
+
+        if (newAttempts >= 3) {
+          setIsLocked(true);
+          setTimeout(() => {
+            setIsLocked(false);
+            setAttempts(0);
+          }, 30000); // Lock for 30 seconds
+        }
       }
+    } catch (err) {
+      setError('Network error. Please try again.');
+      console.error('Authentication error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -181,10 +204,10 @@ export default function PrivatePage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isLocked || password.length === 0}
+                  disabled={isLocked || password.length === 0 || isLoading}
                   className="w-full py-3 bg-red-900 text-white font-heading font-bold text-sm uppercase tracking-widest hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 border border-red-900"
                 >
-                  {isLocked ? 'SYSTEM LOCKED' : 'AUTHENTICATE'}
+                  {isLoading ? 'VERIFYING...' : isLocked ? 'SYSTEM LOCKED' : 'AUTHENTICATE'}
                 </button>
               </motion.form>
 
