@@ -16,11 +16,19 @@ interface Notification {
   message: string;
 }
 
+// Helper function to get today's date in local timezone as YYYY-MM-DD string
+const getLocalDateString = (date: Date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function BookingManagerPro() {
   const [availabilities, setAvailabilities] = useState<BookingAvailability[]>([]);
   const [bookings, setBookings] = useState<Bookings[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
   const [showAddModal, setShowAddModal] = useState(false);
   const [newSlot, setNewSlot] = useState<TimeSlot>({ startTime: '09:00', endTime: '10:00' });
   const [sessionType, setSessionType] = useState('Studio Session');
@@ -57,6 +65,14 @@ export default function BookingManagerPro() {
     }, 4000);
   };
 
+  // Helper to normalize date to YYYY-MM-DD format
+  const normalizeDateString = (date: Date | string | undefined): string => {
+    if (!date) return '';
+    if (typeof date === 'string') return date;
+    if (date instanceof Date) return getLocalDateString(date);
+    return '';
+  };
+
   const validateTimeSlot = (): boolean => {
     if (!newSlot.startTime || !newSlot.endTime) {
       addNotification('warning', 'Please fill in both start and end times');
@@ -70,11 +86,7 @@ export default function BookingManagerPro() {
 
     // Check for overlapping slots
     const dateSlots = availabilities.filter(a => {
-      const aDate = typeof a.bookingDate === 'string' 
-        ? a.bookingDate 
-        : a.bookingDate instanceof Date 
-          ? a.bookingDate.toISOString().split('T')[0]
-          : '';
+      const aDate = normalizeDateString(a.bookingDate);
       return aDate === selectedDate;
     });
 
@@ -172,11 +184,7 @@ export default function BookingManagerPro() {
 
   const getDateSlots = () => {
     return availabilities.filter(a => {
-      const aDate = typeof a.bookingDate === 'string' 
-        ? a.bookingDate 
-        : a.bookingDate instanceof Date 
-          ? a.bookingDate.toISOString().split('T')[0]
-          : '';
+      const aDate = normalizeDateString(a.bookingDate);
       return aDate === selectedDate;
     }).sort((a, b) => {
       const timeA = typeof a.startTime === 'string' ? a.startTime : '';
@@ -186,14 +194,10 @@ export default function BookingManagerPro() {
   };
 
   const getUpcomingBookings = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     return bookings
       .filter(b => {
-        const bDate = typeof b.bookingDate === 'string' 
-          ? b.bookingDate 
-          : b.bookingDate instanceof Date 
-            ? b.bookingDate.toISOString().split('T')[0]
-            : '';
+        const bDate = normalizeDateString(b.bookingDate);
         return bDate >= today;
       })
       .sort((a, b) => {
@@ -211,7 +215,7 @@ export default function BookingManagerPro() {
     return { bg: 'bg-red-500/20', border: 'border-red-500/50', text: 'text-red-300', label: 'BLOCKED' };
   };
 
-  const minDate = new Date().toISOString().split('T')[0];
+  const minDate = getLocalDateString();
   const dateSlots = getDateSlots();
   const upcomingBookings = getUpcomingBookings();
 
