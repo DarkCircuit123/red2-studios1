@@ -63,9 +63,21 @@ export default function ContactSection() {
     clearStatusMessage();
 
     try {
-      // Basic validation
-      if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-        showStatus('error', 'Please fill in all required fields');
+      // Frontend validation - all fields required
+      if (!formData.name.trim()) {
+        showStatus('error', 'Please enter your name');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.email.trim()) {
+        showStatus('error', 'Please enter your email address');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.message.trim()) {
+        showStatus('error', 'Please enter your message');
         setIsSubmitting(false);
         return;
       }
@@ -77,8 +89,27 @@ export default function ContactSection() {
         return;
       }
 
-      // Simulate form submission (in production, this would send to a backend)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Send to backend for validation and rate limiting
+      const response = await fetch('/api/contact-submission', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          subject: formData.subject.trim(),
+          message: formData.message.trim(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        showStatus('error', result.error || 'An error occurred. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
 
       showStatus('success', 'Thank you for your message! We will get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
@@ -304,10 +335,14 @@ export default function ContactSection() {
 
               <motion.button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !formData.name.trim() || !formData.email.trim() || !formData.message.trim() || !!emailError}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full px-8 py-4 bg-primary text-white font-heading font-bold text-sm tracking-widest uppercase hover:bg-primary/90 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group shadow-lg hover:shadow-[0_0_30px_rgba(111,8,9,0.6)]"
+                className={`w-full px-8 py-4 bg-primary text-white font-heading font-bold text-sm tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group shadow-lg ${
+                  !formData.name.trim() || !formData.email.trim() || !formData.message.trim() || emailError
+                    ? 'opacity-60 cursor-not-allowed shadow-[0_0_40px_rgba(239,68,68,0.8)] hover:shadow-[0_0_50px_rgba(239,68,68,0.9)]'
+                    : 'hover:bg-primary/90 hover:shadow-[0_0_30px_rgba(111,8,9,0.6)]'
+                }`}
               >
                 <motion.div
                   className="absolute inset-0 bg-white/20"
