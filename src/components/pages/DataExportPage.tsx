@@ -6,16 +6,16 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
-import { Download, FileJson, FileText, AlertCircle } from 'lucide-react';
-import { exportData, prepareClientDataForExport, prepareBookingDataForExport } from '@/lib/data-export';
+import { Download, FileJson, AlertCircle } from 'lucide-react';
+import { exportData } from '@/lib/data-export';
 import {
   BlogPosts,
-  BookingAvailability,
   ClientsPress,
   Portfolio,
   Services,
   TeamMembers,
 } from '@/entities/index';
+import { getAvailability } from '@/api/booking-availability';
 
 function DataExportPageContent() {
   const { member } = useMember();
@@ -29,7 +29,7 @@ function DataExportPageContent() {
       try {
         const [blogs, bookings, clients, portfolio, services, team] = await Promise.all([
           BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 1 }),
-          BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { limit: 1 }),
+          getAvailability(),
           BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 1 }),
           BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 1 }),
           BaseCrudService.getAll<Services>('services', {}, { limit: 1 }),
@@ -38,7 +38,7 @@ function DataExportPageContent() {
 
         setDataStats({
           'Blog Posts': blogs.totalCount || 0,
-          'Bookings': bookings.totalCount || 0,
+          'Bookings': bookings.data?.length || 0,
           'Clients & Press': clients.totalCount || 0,
           'Portfolio': portfolio.totalCount || 0,
           'Services': services.totalCount || 0,
@@ -62,8 +62,17 @@ function DataExportPageContent() {
     setExportStatus(`Exporting ${collectionName}...`);
 
     try {
-      const result = await BaseCrudService.getAll(collectionId, {}, { limit: 1000 });
-      const data = result.items || [];
+      let data: any[] = [];
+      
+      // Use backend API for bookingavailability
+      if (collectionId === 'bookingavailability') {
+        const result = await getAvailability();
+        data = result.data || [];
+      } else {
+        // For other collections, use BaseCrudService
+        const result = await BaseCrudService.getAll(collectionId, {}, { limit: 1000 });
+        data = result.items || [];
+      }
 
       await exportData(data, `${collectionName}_export`, {
         format: 'json',
@@ -88,21 +97,24 @@ function DataExportPageContent() {
     setExportStatus('Exporting all data...');
 
     try {
-      const collections = [
-        'blogposts',
-        'bookingavailability',
-        'clientspress',
-        'portfolio',
-        'services',
-        'teammembers',
-      ];
-
       const allData: Record<string, any[]> = {};
 
-      for (const collectionId of collections) {
-        const result = await BaseCrudService.getAll(collectionId, {}, { limit: 1000 });
-        allData[collectionId] = result.items || [];
-      }
+      // Get all collections
+      const [blogs, bookings, clients, portfolio, services, team] = await Promise.all([
+        BaseCrudService.getAll('blogposts', {}, { limit: 1000 }),
+        getAvailability(),
+        BaseCrudService.getAll('clientspress', {}, { limit: 1000 }),
+        BaseCrudService.getAll('portfolio', {}, { limit: 1000 }),
+        BaseCrudService.getAll('services', {}, { limit: 1000 }),
+        BaseCrudService.getAll('teammembers', {}, { limit: 1000 }),
+      ]);
+
+      allData['blogposts'] = blogs.items || [];
+      allData['bookingavailability'] = bookings.data || [];
+      allData['clientspress'] = clients.items || [];
+      allData['portfolio'] = portfolio.items || [];
+      allData['services'] = services.items || [];
+      allData['teammembers'] = team.items || [];
 
       // Create comprehensive export
       const exportPayload = {

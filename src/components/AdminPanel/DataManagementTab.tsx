@@ -5,10 +5,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Download, RefreshCw, AlertCircle } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { exportData } from '@/lib/data-export';
+import { getAvailability } from '@/api/booking-availability';
 
 interface DataStats {
   [key: string]: {
@@ -38,9 +38,25 @@ export function DataManagementTab() {
       const stats: DataStats = {};
 
       for (const collection of collections) {
-        const result = await BaseCrudService.getAll(collection.id, {}, { limit: 1 });
+        let count = 0;
+        
+        // Use backend API for bookingavailability to bypass permission restrictions
+        if (collection.id === 'bookingavailability') {
+          const apiResult = await getAvailability();
+          count = apiResult.data?.length || 0;
+        } else {
+          // For other collections, use BaseCrudService (if available)
+          try {
+            const { BaseCrudService } = await import('@/integrations');
+            const result = await BaseCrudService.getAll(collection.id, {}, { limit: 1 });
+            count = result.totalCount || 0;
+          } catch {
+            count = 0;
+          }
+        }
+        
         stats[collection.id] = {
-          count: result.totalCount || 0,
+          count: count,
           lastUpdated: new Date().toLocaleString(),
         };
       }
@@ -62,8 +78,22 @@ export function DataManagementTab() {
     setExportStatus(`Exporting ${collectionName}...`);
 
     try {
-      const result = await BaseCrudService.getAll(collectionId, {}, { limit: 1000 });
-      const data = result.items || [];
+      let data: any[] = [];
+      
+      // Use backend API for bookingavailability
+      if (collectionId === 'bookingavailability') {
+        const apiResult = await getAvailability();
+        data = apiResult.data || [];
+      } else {
+        // For other collections, use BaseCrudService
+        try {
+          const { BaseCrudService } = await import('@/integrations');
+          const result = await BaseCrudService.getAll(collectionId, {}, { limit: 1000 });
+          data = result.items || [];
+        } catch {
+          data = [];
+        }
+      }
 
       await exportData(data, `${collectionName}_export`, {
         format: 'json',
@@ -89,8 +119,24 @@ export function DataManagementTab() {
       const allData: Record<string, any[]> = {};
 
       for (const collection of collections) {
-        const result = await BaseCrudService.getAll(collection.id, {}, { limit: 1000 });
-        allData[collection.id] = result.items || [];
+        let data: any[] = [];
+        
+        // Use backend API for bookingavailability
+        if (collection.id === 'bookingavailability') {
+          const apiResult = await getAvailability();
+          data = apiResult.data || [];
+        } else {
+          // For other collections, use BaseCrudService
+          try {
+            const { BaseCrudService } = await import('@/integrations');
+            const result = await BaseCrudService.getAll(collection.id, {}, { limit: 1000 });
+            data = result.items || [];
+          } catch {
+            data = [];
+          }
+        }
+        
+        allData[collection.id] = data;
       }
 
       const exportPayload = {

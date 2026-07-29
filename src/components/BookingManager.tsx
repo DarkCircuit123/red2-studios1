@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Plus, Trash2, Edit2, Check, X, AlertCircle } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
+import { Calendar, Clock, Plus, Trash2, Check, AlertCircle } from 'lucide-react';
 import { BookingAvailability } from '@/entities/index';
+import { 
+  getAvailability, 
+  createBookingAvailability, 
+  deleteBookingAvailability, 
+  updateBookingAvailability 
+} from '@/api/booking-availability';
 
 interface TimeSlot {
   startTime: string;
@@ -13,10 +18,8 @@ export default function BookingManager() {
   const [availabilities, setAvailabilities] = useState<BookingAvailability[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [newSlot, setNewSlot] = useState<TimeSlot>({ startTime: '09:00', endTime: '10:00' });
   const [sessionType, setSessionType] = useState('Studio Session');
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
 
   // Load availabilities
@@ -24,28 +27,15 @@ export default function BookingManager() {
     loadAvailabilities();
   }, []);
 
-  // Update time slots when date changes
-  useEffect(() => {
-    const dateSlots = availabilities.filter(a => {
-      const aDate = typeof a.bookingDate === 'string' 
-        ? a.bookingDate 
-        : a.bookingDate instanceof Date 
-          ? a.bookingDate.toISOString().split('T')[0]
-          : '';
-      return aDate === selectedDate;
-    });
-    
-    setTimeSlots(dateSlots.map(a => ({
-      startTime: typeof a.startTime === 'string' ? a.startTime : '',
-      endTime: typeof a.endTime === 'string' ? a.endTime : ''
-    })));
-  }, [selectedDate, availabilities]);
-
   const loadAvailabilities = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { limit: 500 });
-      setAvailabilities(result.items || []);
+      const result = await getAvailability();
+      if (result.success) {
+        setAvailabilities(result.data || []);
+      } else {
+        console.error('Error loading availabilities:', result.error);
+      }
     } catch (error) {
       console.error('Error loading availabilities:', error);
     } finally {
@@ -69,12 +59,15 @@ export default function BookingManager() {
         sessionType: sessionType
       };
 
-      await BaseCrudService.create('bookingavailability', availability);
-      
-      setAvailabilities([...availabilities, availability]);
-      setNewSlot({ startTime: '09:00', endTime: '10:00' });
-      setSuccessMessage('Time slot added successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      const result = await createBookingAvailability(availability);
+      if (result.success) {
+        setAvailabilities([...availabilities, availability]);
+        setNewSlot({ startTime: '09:00', endTime: '10:00' });
+        setSuccessMessage('Time slot added successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        alert(`Failed to add time slot: ${result.error}`);
+      }
     } catch (error) {
       console.error('Error adding time slot:', error);
       alert('Failed to add time slot');
@@ -85,10 +78,14 @@ export default function BookingManager() {
     if (!confirm('Are you sure you want to delete this time slot?')) return;
 
     try {
-      await BaseCrudService.delete('bookingavailability', id);
-      setAvailabilities(availabilities.filter(a => a._id !== id));
-      setSuccessMessage('Time slot deleted successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      const result = await deleteBookingAvailability(id);
+      if (result.success) {
+        setAvailabilities(availabilities.filter(a => a._id !== id));
+        setSuccessMessage('Time slot deleted successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        alert(`Failed to delete time slot: ${result.error}`);
+      }
     } catch (error) {
       console.error('Error deleting time slot:', error);
       alert('Failed to delete time slot');
@@ -97,16 +94,19 @@ export default function BookingManager() {
 
   const toggleAvailability = async (id: string, currentStatus: boolean) => {
     try {
-      await BaseCrudService.update('bookingavailability', {
-        _id: id,
+      const result = await updateBookingAvailability(id, {
         isAvailable: !currentStatus
       });
 
-      setAvailabilities(availabilities.map(a => 
-        a._id === id ? { ...a, isAvailable: !currentStatus } : a
-      ));
-      setSuccessMessage(`Slot marked as ${!currentStatus ? 'available' : 'unavailable'}!`);
-      setTimeout(() => setSuccessMessage(''), 3000);
+      if (result.success) {
+        setAvailabilities(availabilities.map(a => 
+          a._id === id ? { ...a, isAvailable: !currentStatus } : a
+        ));
+        setSuccessMessage(`Slot marked as ${!currentStatus ? 'available' : 'unavailable'}!`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        alert(`Failed to update availability: ${result.error}`);
+      }
     } catch (error) {
       console.error('Error updating availability:', error);
       alert('Failed to update availability');
@@ -276,7 +276,7 @@ export default function BookingManager() {
         </div>
         <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
           <p className="text-2xl font-heading font-bold">{availabilities.filter(a => a.isAvailable === true).length}</p>
-          <p className="text-xs text-white/60 uppercase tracking-wide mt-1">Available</p>
+          <p className="text-xs text-white/60 uppercase tracking-wide mt-1\">Available</p>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
           <p className="text-2xl font-heading font-bold">{availabilities.filter(a => a.isAvailable === false).length}</p>
