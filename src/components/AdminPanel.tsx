@@ -172,17 +172,13 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               </div>
             </div>
 
-            <div className={`sticky top-16 border-b px-6 py-4 flex gap-2 overflow-x-auto transition-colors ${
-              activeTab === 'bookings'
-                ? 'bg-black border-white/10'
-                : 'bg-white border-black/10'
-            }`}>
+            <div className="sticky top-16 border-b px-6 py-4 flex gap-2 overflow-x-auto bg-black border-white/10">
               <button
                 onClick={() => setActiveTab('photos')}
                 className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
                   activeTab === 'photos'
-                    ? 'bg-black text-white'
-                    : 'bg-black/5 text-black hover:bg-black/10'
+                    ? 'bg-white text-black'
+                    : 'bg-black text-white hover:text-red-500'
                 }`}
               >
                 Site Photos
@@ -191,8 +187,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 onClick={() => setActiveTab('portfolio')}
                 className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
                   activeTab === 'portfolio'
-                    ? 'bg-black text-white'
-                    : 'bg-black/5 text-black hover:bg-black/10'
+                    ? 'bg-white text-black'
+                    : 'bg-black text-white hover:text-red-500'
                 }`}
               >
                 Portfolio
@@ -201,8 +197,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 onClick={() => setActiveTab('sponsors')}
                 className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
                   activeTab === 'sponsors'
-                    ? 'bg-black text-white'
-                    : 'bg-black/5 text-black hover:bg-black/10'
+                    ? 'bg-white text-black'
+                    : 'bg-black text-white hover:text-red-500'
                 }`}
               >
                 Sponsors
@@ -211,8 +207,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 onClick={() => setActiveTab('music')}
                 className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap flex items-center gap-1 ${
                   activeTab === 'music'
-                    ? 'bg-black text-white'
-                    : 'bg-black/5 text-black hover:bg-black/10'
+                    ? 'bg-white text-black'
+                    : 'bg-black text-white hover:text-red-500'
                 }`}
               >
                 <Music className="w-3 h-3" />
@@ -222,8 +218,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 onClick={() => setActiveTab('about')}
                 className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
                   activeTab === 'about'
-                    ? 'bg-black text-white'
-                    : 'bg-black/5 text-black hover:bg-black/10'
+                    ? 'bg-white text-black'
+                    : 'bg-black text-white hover:text-red-500'
                 }`}
               >
                 About
@@ -232,8 +228,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 onClick={() => setActiveTab('text')}
                 className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
                   activeTab === 'text'
-                    ? 'bg-black text-white'
-                    : 'bg-black/5 text-black hover:bg-black/10'
+                    ? 'bg-white text-black'
+                    : 'bg-black text-white hover:text-red-500'
                 }`}
               >
                 Text Content
@@ -242,8 +238,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 onClick={() => setActiveTab('bookings')}
                 className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap flex items-center gap-1 ${
                   activeTab === 'bookings'
-                    ? 'bg-black text-white'
-                    : 'bg-black/5 text-black hover:bg-black/10'
+                    ? 'bg-white text-black'
+                    : 'bg-black text-white hover:text-red-500'
                 }`}
               >
                 <Calendar className="w-3 h-3" />

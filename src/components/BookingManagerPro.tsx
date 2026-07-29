@@ -106,7 +106,7 @@ export default function BookingManagerPro() {
         sessionType: sessionType
       };
 
-      await BaseCrudService.create('bookingavailability', availability);
+      await BaseCrudService.create('bookingavailability', availability, {}, { suppressAuth: true });
       
       setAvailabilities([...availabilities, availability]);
       setNewSlot({ startTime: '09:00', endTime: '10:00' });
@@ -125,7 +125,7 @@ export default function BookingManagerPro() {
     if (!confirm('Are you sure you want to delete this time slot?')) return;
 
     try {
-      await BaseCrudService.delete('bookingavailability', id);
+      await BaseCrudService.delete('bookingavailability', id, { suppressAuth: true });
       setAvailabilities(availabilities.filter(a => a._id !== id));
       addNotification('success', 'Time slot deleted successfully');
     } catch (error) {
@@ -139,7 +139,7 @@ export default function BookingManagerPro() {
       await BaseCrudService.update('bookingavailability', {
         _id: id,
         isAvailable: !currentStatus
-      });
+      }, {}, { suppressAuth: true });
 
       setAvailabilities(availabilities.map(a => 
         a._id === id ? { ...a, isAvailable: !currentStatus } : a
