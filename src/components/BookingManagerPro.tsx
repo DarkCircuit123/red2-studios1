@@ -4,6 +4,7 @@ import { Calendar, Clock, Plus, Trash2, X, AlertCircle, CheckCircle, AlertTriang
 import { BaseCrudService } from '@/integrations';
 import { BookingAvailability, Bookings } from '@/entities/index';
 import { createBookingAvailability, updateBookingAvailability, deleteBookingAvailability } from '@/api/booking-availability';
+import { getTodayString, formatDateToString, formatDateForDisplay, normalizeDateString } from '@/lib/date-formatter';
 
 interface TimeSlot {
   startTime: string;
@@ -16,19 +17,11 @@ interface Notification {
   message: string;
 }
 
-// Helper function to get today's date in local timezone as YYYY-MM-DD string
-const getLocalDateString = (date: Date = new Date()): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 export default function BookingManagerPro() {
   const [availabilities, setAvailabilities] = useState<BookingAvailability[]>([]);
   const [bookings, setBookings] = useState<Bookings[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
   const [showAddModal, setShowAddModal] = useState(false);
   const [newSlot, setNewSlot] = useState<TimeSlot>({ startTime: '09:00', endTime: '10:00' });
   const [sessionType, setSessionType] = useState('Studio Session');
@@ -63,14 +56,6 @@ export default function BookingManagerPro() {
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 4000);
-  };
-
-  // Helper to normalize date to YYYY-MM-DD format
-  const normalizeDateString = (date: Date | string | undefined): string => {
-    if (!date) return '';
-    if (typeof date === 'string') return date;
-    if (date instanceof Date) return getLocalDateString(date);
-    return '';
   };
 
   const validateTimeSlot = (): boolean => {
@@ -194,16 +179,16 @@ export default function BookingManagerPro() {
   };
 
   const getUpcomingBookings = () => {
-    const today = getLocalDateString();
+    const today = getTodayString();
     return bookings
       .filter(b => {
         const bDate = normalizeDateString(b.bookingDate);
         return bDate >= today;
       })
       .sort((a, b) => {
-        const dateA = new Date(a.bookingDate || 0).getTime();
-        const dateB = new Date(b.bookingDate || 0).getTime();
-        return dateA - dateB;
+        const dateA = normalizeDateString(a.bookingDate);
+        const dateB = normalizeDateString(b.bookingDate);
+        return dateA.localeCompare(dateB);
       })
       .slice(0, 5);
   };
@@ -215,7 +200,7 @@ export default function BookingManagerPro() {
     return { bg: 'bg-red-500/20', border: 'border-red-500/50', text: 'text-red-300', label: 'BLOCKED' };
   };
 
-  const minDate = getLocalDateString();
+  const minDate = getTodayString();
   const dateSlots = getDateSlots();
   const upcomingBookings = getUpcomingBookings();
 
@@ -292,7 +277,7 @@ export default function BookingManagerPro() {
         <div>
           <h4 className="text-sm font-heading font-bold text-white mb-4 flex items-center gap-2">
             <Clock className="w-4 h-4 text-white/60" />
-            {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {formatDateForDisplay(selectedDate)}
           </h4>
 
           {isLoading ? (
@@ -426,7 +411,7 @@ export default function BookingManagerPro() {
                 <div>
                   <p className="text-sm text-white/60 uppercase tracking-wide mb-2">Date</p>
                   <p className="text-lg font-heading font-bold text-white">
-                    {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                    {formatDateForDisplay(selectedDate)}
                   </p>
                 </div>
 

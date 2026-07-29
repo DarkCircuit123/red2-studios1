@@ -5,6 +5,7 @@ import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { formatDateShort, normalizeDateString } from '@/lib/date-formatter';
 
 interface BookingRequest {
   name: string;
@@ -63,11 +64,7 @@ export default function BookingPage() {
 
   // Group bookings by date and sort by date
   const groupedByDate = bookings.reduce((acc, booking) => {
-    const dateStr = typeof booking.bookingDate === 'string' 
-      ? booking.bookingDate 
-      : booking.bookingDate instanceof Date 
-        ? booking.bookingDate.toISOString().split('T')[0]
-        : '';
+    const dateStr = normalizeDateString(booking.bookingDate);
     
     if (dateStr && !acc[dateStr]) acc[dateStr] = [];
     if (dateStr) acc[dateStr].push(booking);
@@ -213,11 +210,7 @@ export default function BookingPage() {
                 <div className="mb-6 p-4 bg-white/5 border border-white/10 rounded">
                   <p className="text-sm text-white/60 mb-2">Selected Time Slot</p>
                   <p className="font-heading font-bold text-lg">
-                    {new Date(selectedSlot.bookingDate || '').toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
+                    {formatDateShort(selectedSlot.bookingDate || '')}
                   </p>
                   <p className="text-white/80 font-mono">
                     {typeof selectedSlot.startTime === 'string' ? selectedSlot.startTime : ''} - {typeof selectedSlot.endTime === 'string' ? selectedSlot.endTime : ''}
