@@ -4,7 +4,7 @@ import { Calendar, Clock, Check, X } from 'lucide-react';
 import { BookingAvailability } from '@/entities/index';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { formatDateShort, normalizeDateString } from '@/lib/date-formatter';
+import { formatDateShort, normalizeDateString, formatDateForDisplay, getTodayString } from '@/lib/date-formatter';
 import { getPublicAvailability, submitPublicBooking } from '@/api/booking-availability';
 
 interface BookingRequest {
@@ -324,11 +324,7 @@ export default function BookingPage() {
                   <div className="flex items-center gap-3 mb-4">
                     <Calendar className="w-5 h-5 text-white/60" />
                     <h3 className="text-lg font-heading font-bold">
-                      {new Date(date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
+                      {formatDateShort(date)}
                     </h3>
                   </div>
 
