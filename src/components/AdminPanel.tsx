@@ -5,8 +5,7 @@ import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import MusicManager from './MusicManager';
-import BookingManager from './BookingManager';
-import UpcomingBookings from './UpcomingBookings';
+import BookingManagerPro from './BookingManagerPro';
 import { BaseCrudService } from '@/integrations';
 import { Services, HomepageImages, Portfolio, ClientsPress, AboutSection } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
@@ -129,12 +128,20 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             animate={{ x: 0 }}
             exit={{ x: 400 }}
             transition={{ type: 'spring', damping: 20 }}
-            className="fixed right-0 top-0 h-screen w-full max-w-2xl bg-white border-l border-black/10 z-50 overflow-y-auto"
+            className={`fixed right-0 top-0 h-screen w-full max-w-2xl z-50 overflow-y-auto transition-colors ${
+              activeTab === 'bookings'
+                ? 'bg-black border-l border-white/10'
+                : 'bg-white border-l border-black/10'
+            }`}
           >
-            <div className="sticky top-0 bg-white border-b border-black/10 p-6 flex items-center justify-between">
+            <div className={`sticky top-0 border-b p-6 flex items-center justify-between transition-colors ${
+              activeTab === 'bookings'
+                ? 'bg-black border-white/10'
+                : 'bg-white border-black/10'
+            }`}>
               <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-black" />
-                <h2 className="text-lg font-heading font-bold text-black">Admin Panel</h2>
+                <Settings className={`w-5 h-5 ${activeTab === 'bookings' ? 'text-red-500' : 'text-black'}`} />
+                <h2 className={`text-lg font-heading font-bold ${activeTab === 'bookings' ? 'text-white' : 'text-black'}`}>Admin Panel</h2>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -143,21 +150,33 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     logout();
                     onClose();
                   }}
-                  className="p-2 hover:bg-red-500/10 rounded transition-colors"
+                  className={`p-2 rounded transition-colors ${
+                    activeTab === 'bookings'
+                      ? 'hover:bg-red-500/20'
+                      : 'hover:bg-red-500/10'
+                  }`}
                   title="Logout"
                 >
-                  <LogOut className="w-4 h-4 text-red-500" />
+                  <LogOut className={`w-4 h-4 ${activeTab === 'bookings' ? 'text-red-400' : 'text-red-500'}`} />
                 </button>
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-black/5 rounded transition-colors"
+                  className={`p-2 rounded transition-colors ${
+                    activeTab === 'bookings'
+                      ? 'hover:bg-white/10'
+                      : 'hover:bg-black/5'
+                  }`}
                 >
-                  <X className="w-5 h-5 text-black/60" />
+                  <X className={`w-5 h-5 ${activeTab === 'bookings' ? 'text-white/60' : 'text-black/60'}`} />
                 </button>
               </div>
             </div>
 
-            <div className="sticky top-16 bg-white border-b border-black/10 px-6 py-4 flex gap-2 overflow-x-auto">
+            <div className={`sticky top-16 border-b px-6 py-4 flex gap-2 overflow-x-auto transition-colors ${
+              activeTab === 'bookings'
+                ? 'bg-black border-white/10'
+                : 'bg-white border-black/10'
+            }`}>
               <button
                 onClick={() => setActiveTab('photos')}
                 className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap ${
@@ -234,22 +253,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
 
             <div className="p-6 space-y-8">
               {activeTab === 'bookings' && (
-                <div>
-                  <div className="space-y-8">
-                    <div>
-                      <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
-                        Manage Availability
-                      </h3>
-                      <BookingManager />
-                    </div>
-
-                    <div className="border-t border-black/10 pt-8">
-                      <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
-                        Upcoming Bookings
-                      </h3>
-                      <UpcomingBookings />
-                    </div>
-                  </div>
+                <div className="bg-gradient-to-b from-black to-black/95 border border-white/10 rounded-lg p-6">
+                  <BookingManagerPro />
                 </div>
               )}
 
