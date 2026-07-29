@@ -14,6 +14,8 @@ export async function createBookingAvailability(
   availability: BookingAvailability
 ): Promise<{ success: boolean; data?: BookingAvailability; error?: string }> {
   try {
+    console.log('[Frontend] Creating booking availability:', availability);
+    
     const response = await fetch('/api/booking-availability/create', {
       method: 'POST',
       headers: {
@@ -22,18 +24,34 @@ export async function createBookingAvailability(
       body: JSON.stringify(availability),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
+    console.log('[Frontend] Response status:', response.status);
+    console.log('[Frontend] Response headers:', response.headers);
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = await response.json();
+      console.log('[Frontend] Response data:', data);
+    } catch (parseError) {
+      console.error('[Frontend] Failed to parse response as JSON:', parseError);
+      const text = await response.text();
+      console.error('[Frontend] Response text:', text);
       return {
         success: false,
-        error: error.message || 'Failed to create booking availability',
+        error: 'Server returned invalid JSON response',
       };
     }
 
-    const data = await response.json();
-    return { success: true, data };
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || data.error || 'Failed to create booking availability',
+      };
+    }
+
+    return { success: data.success, data: data.data };
   } catch (error) {
-    console.error('Error creating booking availability:', error);
+    console.error('[Frontend] Error creating booking availability:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -50,6 +68,8 @@ export async function updateBookingAvailability(
   updates: Partial<BookingAvailability>
 ): Promise<{ success: boolean; data?: BookingAvailability; error?: string }> {
   try {
+    console.log('[Frontend] Updating booking availability:', { id, ...updates });
+    
     const response = await fetch('/api/booking-availability/update', {
       method: 'PUT',
       headers: {
@@ -58,18 +78,33 @@ export async function updateBookingAvailability(
       body: JSON.stringify({ id, ...updates }),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
+    console.log('[Frontend] Response status:', response.status);
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = await response.json();
+      console.log('[Frontend] Response data:', data);
+    } catch (parseError) {
+      console.error('[Frontend] Failed to parse response as JSON:', parseError);
+      const text = await response.text();
+      console.error('[Frontend] Response text:', text);
       return {
         success: false,
-        error: error.message || 'Failed to update booking availability',
+        error: 'Server returned invalid JSON response',
       };
     }
 
-    const data = await response.json();
-    return { success: true, data };
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || data.error || 'Failed to update booking availability',
+      };
+    }
+
+    return { success: data.success, data: data.data };
   } catch (error) {
-    console.error('Error updating booking availability:', error);
+    console.error('[Frontend] Error updating booking availability:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -85,6 +120,8 @@ export async function deleteBookingAvailability(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    console.log('[Frontend] Deleting booking availability:', id);
+    
     const response = await fetch('/api/booking-availability/delete', {
       method: 'DELETE',
       headers: {
@@ -93,17 +130,33 @@ export async function deleteBookingAvailability(
       body: JSON.stringify({ id }),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
+    console.log('[Frontend] Response status:', response.status);
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = await response.json();
+      console.log('[Frontend] Response data:', data);
+    } catch (parseError) {
+      console.error('[Frontend] Failed to parse response as JSON:', parseError);
+      const text = await response.text();
+      console.error('[Frontend] Response text:', text);
       return {
         success: false,
-        error: error.message || 'Failed to delete booking availability',
+        error: 'Server returned invalid JSON response',
       };
     }
 
-    return { success: true };
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || data.error || 'Failed to delete booking availability',
+      };
+    }
+
+    return { success: data.success };
   } catch (error) {
-    console.error('Error deleting booking availability:', error);
+    console.error('[Frontend] Error deleting booking availability:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
