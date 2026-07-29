@@ -125,17 +125,15 @@ export default function BookingManagerPro() {
       });
 
       const availability: BookingAvailability = {
-        _id: crypto.randomUUID(),
         bookingDate: selectedDate,
         startTime: newSlot.startTime,
         endTime: newSlot.endTime,
         isAvailable: true,
         sessionType: sessionType
-      };
+      } as BookingAvailability;
 
       console.log('[BookingManagerPro] Availability object:', JSON.stringify(availability, null, 2));
       console.log('[BookingManagerPro] Availability field types:');
-      console.log('[BookingManagerPro]   _id:', typeof availability._id, availability._id);
       console.log('[BookingManagerPro]   bookingDate:', typeof availability.bookingDate, availability.bookingDate);
       console.log('[BookingManagerPro]   startTime:', typeof availability.startTime, availability.startTime);
       console.log('[BookingManagerPro]   endTime:', typeof availability.endTime, availability.endTime);
@@ -155,7 +153,9 @@ export default function BookingManagerPro() {
       }
       
       console.log('[BookingManagerPro] Successfully created time slot');
-      setAvailabilities([...availabilities, availability]);
+      // Use the returned data with the generated _id
+      const createdAvailability = result.data || availability;
+      setAvailabilities([...availabilities, createdAvailability]);
       setNewSlot({ startTime: '09:00', endTime: '10:00' });
       setSessionType('Studio Session');
       setShowAddModal(false);

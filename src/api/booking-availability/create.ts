@@ -20,14 +20,6 @@ export async function POST(request: Request) {
     console.log('[Backend] Received availability data:', JSON.stringify(availability, null, 2));
 
     // Validate required fields
-    if (!availability._id) {
-      console.error('[Backend] Missing _id');
-      return new Response(
-        JSON.stringify({ success: false, message: 'Missing required field: _id' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
     if (!availability.bookingDate) {
       console.error('[Backend] Missing bookingDate');
       return new Response(
@@ -52,9 +44,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Prepare the data for insertion
+    // Prepare the data for insertion - let Wix generate the _id
     const dataToInsert = {
-      _id: availability._id,
       bookingDate: availability.bookingDate,
       startTime: availability.startTime,
       endTime: availability.endTime,
@@ -65,8 +56,9 @@ export async function POST(request: Request) {
     console.log('[Backend] Inserting data:', JSON.stringify(dataToInsert, null, 2));
 
     // Use wixData.insert with elevated permissions (backend-only)
-    // This bypasses frontend permission restrictions
-    const result = await wixData.insert('bookingavailability', dataToInsert, { suppressAuth: true });
+    // Backend APIs automatically have elevated permissions - no need for suppressAuth
+    // suppressAuth is for bypassing authentication, not permissions
+    const result = await wixData.insert('bookingavailability', dataToInsert);
 
     console.log('[Backend] Successfully inserted availability slot:', JSON.stringify(result, null, 2));
 
