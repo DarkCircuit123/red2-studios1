@@ -96,6 +96,33 @@ export interface BookingAvailability {
 
 
 /**
+ * Collection ID: bookings
+ * Interface for Bookings
+ */
+export interface Bookings {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  clientName?: string;
+  /** @wixFieldType text */
+  clientEmail?: string;
+  /** @wixFieldType text */
+  clientPhone?: string;
+  /** @wixFieldType text */
+  sessionType?: string;
+  /** @wixFieldType date */
+  bookingDate?: Date | string;
+  /** @wixFieldType time */
+  bookingTime?: any;
+  /** @wixFieldType text */
+  clientMessage?: string;
+  /** @wixFieldType text */
+  bookingStatus?: string;
+}
+
+
+/**
  * Collection ID: clientgalleries
  * Interface for ClientProofingGalleries
  */

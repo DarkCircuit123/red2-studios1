@@ -13,6 +13,18 @@ interface BookingRequest {
   message: string;
 }
 
+interface Booking {
+  _id: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  sessionType?: string;
+  bookingDate?: string | Date;
+  bookingTime?: string;
+  clientMessage?: string;
+  bookingStatus?: string;
+}
+
 export default function BookingPage() {
   const [bookings, setBookings] = useState<BookingAvailability[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,31 +102,30 @@ export default function BookingPage() {
 
     setIsSubmitting(true);
     try {
-      // Format the date and time for the email
-      const bookingDateValue = selectedSlot.bookingDate || '';
-      const formattedDate = new Date(bookingDateValue).toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric'
-      });
-      const startTime = typeof selectedSlot.startTime === 'string' ? selectedSlot.startTime : '';
-      const endTime = typeof selectedSlot.endTime === 'string' ? selectedSlot.endTime : '';
-      const dateTime = `${formattedDate} from ${startTime} to ${endTime}`;
-
-      // Store booking locally (backend function not available in this environment)
-      // In production, this would send to a backend service
-      const bookingData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
+      // Create booking record in the bookings collection
+      const booking: Booking = {
+        _id: crypto.randomUUID(),
+        clientName: formData.name,
+        clientEmail: formData.email,
+        clientPhone: formData.phone,
         sessionType: selectedSlot.sessionType,
-        dateTime: dateTime,
-        notes: formData.message || '(No additional notes)',
-        timestamp: new Date().toISOString()
+        bookingDate: selectedSlot.bookingDate,
+        bookingTime: typeof selectedSlot.startTime === 'string' ? selectedSlot.startTime : '',
+        clientMessage: formData.message,
+        bookingStatus: 'Pending'
       };
-      
-      // Log booking for admin review
-      console.log('Booking submitted:', bookingData);
+
+      // Save booking to CMS
+      await BaseCrudService.create('bookings', booking);
+
+      // Mark the availability slot as booked
+      await BaseCrudService.update('bookingavailability', {
+        _id: selectedSlot._id,
+        isAvailable: false
+      });
+
+      // Update local state
+      setBookings(bookings.filter(b => b._id !== selectedSlot._id));
 
       setSubmitSuccess(true);
       setSelectedSlot(null);
@@ -122,6 +133,7 @@ export default function BookingPage() {
       setTimeout(() => setSubmitSuccess(false), 5000);
     } catch (error) {
       console.error('Error submitting booking:', error);
+      alert('Failed to submit booking. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

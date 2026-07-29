@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, LogOut, Music } from 'lucide-react';
+import { Settings, X, Edit2, LogOut, Music, Calendar } from 'lucide-react';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import MusicManager from './MusicManager';
+import BookingManager from './BookingManager';
+import UpcomingBookings from './UpcomingBookings';
 import { BaseCrudService } from '@/integrations';
 import { Services, HomepageImages, Portfolio, ClientsPress, AboutSection } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
@@ -127,7 +129,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             animate={{ x: 0 }}
             exit={{ x: 400 }}
             transition={{ type: 'spring', damping: 20 }}
-            className="fixed right-0 top-0 h-screen w-full max-w-md bg-white border-l border-black/10 z-50 overflow-y-auto"
+            className="fixed right-0 top-0 h-screen w-full max-w-2xl bg-white border-l border-black/10 z-50 overflow-y-auto"
           >
             <div className="sticky top-0 bg-white border-b border-black/10 p-6 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -217,9 +219,40 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               >
                 Text Content
               </button>
+              <button
+                onClick={() => setActiveTab('bookings')}
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap flex items-center gap-1 ${
+                  activeTab === 'bookings'
+                    ? 'bg-black text-white'
+                    : 'bg-black/5 text-black hover:bg-black/10'
+                }`}
+              >
+                <Calendar className="w-3 h-3" />
+                Bookings
+              </button>
             </div>
 
             <div className="p-6 space-y-8">
+              {activeTab === 'bookings' && (
+                <div>
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
+                        Manage Availability
+                      </h3>
+                      <BookingManager />
+                    </div>
+
+                    <div className="border-t border-black/10 pt-8">
+                      <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
+                        Upcoming Bookings
+                      </h3>
+                      <UpcomingBookings />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'photos' && (
                 <div>
                   <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide">
