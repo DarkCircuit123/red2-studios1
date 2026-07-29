@@ -33,6 +33,7 @@ function Layout() {
   );
 }
 
+// Create router synchronously to ensure it's available immediately
 const router = createBrowserRouter([
   {
     path: "/",
