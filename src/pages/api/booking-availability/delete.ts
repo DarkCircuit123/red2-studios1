@@ -1,14 +1,19 @@
 /**
  * Backend endpoint for deleting booking availability slots
  * Uses elevated permissions to bypass frontend restrictions
- * Astro API Route Handler
+ * Astro API Route Handler - BACKEND ONLY
+ * 
+ * CRITICAL: This uses wix-data (backend SDK) with suppressAuth: true
+ * NOT BaseCrudService which uses @wix/data (frontend SDK)
  */
 
-import { BaseCrudService } from '@/integrations';
+import wixData from 'wix-data';
 
 export async function DELETE({ request }: { request: Request }) {
   try {
     console.log('[API] DELETE /api/booking-availability/delete - Request received');
+    console.log('[API] Authenticated identity: Backend (Astro API route)');
+    console.log('[API] Current permissions: ADMIN (backend-only)');
     
     // Parse request body safely - handle both standard Request and Astro's request wrapper
     let body: { id: string };
@@ -50,9 +55,12 @@ export async function DELETE({ request }: { request: Request }) {
     }
 
     console.log('[API] Validation passed, deleting booking availability...');
+    console.log('[API] Collection ID: bookingavailability');
+    console.log('[API] Using wix-data backend SDK with suppressAuth: true');
 
     // Delete the booking availability with elevated permissions
-    await BaseCrudService.delete('bookingavailability', body.id);
+    console.log('[API] Calling wixData.remove with suppressAuth: true...');
+    await wixData.remove('bookingavailability', body.id, { suppressAuth: true });
 
     console.log('[API] Successfully deleted booking availability with id:', body.id);
 
@@ -65,8 +73,10 @@ export async function DELETE({ request }: { request: Request }) {
     );
   } catch (error) {
     console.error('[API] Error deleting booking availability:', error);
+    console.error('[API] Error type:', error instanceof Error ? error.constructor.name : typeof error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to delete booking availability';
     console.error('[API] Error details:', errorMessage);
+    console.error('[API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     console.error('[API] Full error:', error);
     
     return new Response(

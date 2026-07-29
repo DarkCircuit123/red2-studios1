@@ -1,15 +1,20 @@
 /**
  * Backend endpoint for creating booking availability slots
  * Uses elevated permissions to bypass frontend restrictions
- * Astro API Route Handler
+ * Astro API Route Handler - BACKEND ONLY
+ * 
+ * CRITICAL: This uses wix-data (backend SDK) with suppressAuth: true
+ * NOT BaseCrudService which uses @wix/data (frontend SDK)
  */
 
-import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
+import wixData from 'wix-data';
 
 export async function POST({ request }: { request: Request }) {
   try {
     console.log('[API] POST /api/booking-availability/create - Request received');
+    console.log('[API] Authenticated identity: Backend (Astro API route)');
+    console.log('[API] Current permissions: ADMIN (backend-only)');
     
     // Parse request body safely - handle both standard Request and Astro's request wrapper
     let availability: BookingAvailability;
@@ -97,15 +102,17 @@ export async function POST({ request }: { request: Request }) {
 
     console.log('[API] Insert payload:', JSON.stringify(insertPayload, null, 2));
     console.log('[API] Collection ID: bookingavailability');
+    console.log('[API] Collection permissions: ADMIN-only CREATE');
+    console.log('[API] Using wix-data backend SDK with suppressAuth: true');
 
-    // Use BaseCrudService.create with elevated permissions
-    // This bypasses the ADMIN-only permission restriction on the collection
-    // Wix CMS will automatically generate the _id
-    console.log('[API] Calling BaseCrudService.create...');
-    const result = await BaseCrudService.create('bookingavailability', insertPayload);
-    console.log('[API] BaseCrudService.create succeeded');
+    // Use wix-data backend SDK with suppressAuth: true for elevated permissions
+    // This is the CORRECT way to bypass ADMIN-only permissions in Astro API routes
+    console.log('[API] Calling wixData.insert with suppressAuth: true...');
+    const result = await wixData.insert('bookingavailability', insertPayload, { suppressAuth: true });
+    console.log('[API] wixData.insert succeeded');
 
     console.log('[API] Database response:', JSON.stringify(result, null, 2));
+    console.log('[API] Created item _id:', result._id);
 
     // Return the created item with the Wix-generated _id
     return new Response(
@@ -122,6 +129,7 @@ export async function POST({ request }: { request: Request }) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to create booking availability';
     console.error('[API] Error message:', errorMessage);
     console.error('[API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('[API] Full error object:', JSON.stringify(error, null, 2));
     
     return new Response(
       JSON.stringify({

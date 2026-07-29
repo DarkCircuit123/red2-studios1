@@ -1,15 +1,20 @@
 /**
  * Backend endpoint for updating booking availability slots
  * Uses elevated permissions to bypass frontend restrictions
- * Astro API Route Handler
+ * Astro API Route Handler - BACKEND ONLY
+ * 
+ * CRITICAL: This uses wix-data (backend SDK) with suppressAuth: true
+ * NOT BaseCrudService which uses @wix/data (frontend SDK)
  */
 
-import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
+import wixData from 'wix-data';
 
 export async function PUT({ request }: { request: Request }) {
   try {
     console.log('[API] PUT /api/booking-availability/update - Request received');
+    console.log('[API] Authenticated identity: Backend (Astro API route)');
+    console.log('[API] Current permissions: ADMIN (backend-only)');
     
     // Parse request body safely - handle both standard Request and Astro's request wrapper
     let body: { id: string } & Partial<BookingAvailability>;
@@ -62,9 +67,12 @@ export async function PUT({ request }: { request: Request }) {
     if (body.sessionType !== undefined) updateData.sessionType = body.sessionType;
 
     console.log('[API] Update payload:', JSON.stringify(updateData, null, 2));
+    console.log('[API] Collection ID: bookingavailability');
+    console.log('[API] Using wix-data backend SDK with suppressAuth: true');
 
     // Update the booking availability with elevated permissions
-    const result = await BaseCrudService.update('bookingavailability', updateData);
+    console.log('[API] Calling wixData.update with suppressAuth: true...');
+    const result = await wixData.update('bookingavailability', updateData, { suppressAuth: true });
 
     console.log('[API] Database response:', JSON.stringify(result, null, 2));
 
@@ -78,8 +86,10 @@ export async function PUT({ request }: { request: Request }) {
     );
   } catch (error) {
     console.error('[API] Error updating booking availability:', error);
+    console.error('[API] Error type:', error instanceof Error ? error.constructor.name : typeof error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to update booking availability';
     console.error('[API] Error details:', errorMessage);
+    console.error('[API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     console.error('[API] Full error:', error);
     
     return new Response(
