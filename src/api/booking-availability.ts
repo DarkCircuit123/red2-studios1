@@ -4,7 +4,111 @@
  * Bypasses frontend permission restrictions
  */
 
-import { BookingAvailability } from '@/entities/index';
+import { BookingAvailability, Bookings } from '@/entities/index';
+
+/**
+ * Fetch all booking availability slots
+ * Admin-only operation with elevated permissions
+ */
+export async function getAvailability(): Promise<{
+  success: boolean;
+  data?: BookingAvailability[];
+  error?: string;
+}> {
+  try {
+    console.log('[Frontend] Fetching booking availability');
+
+    const response = await fetch('/api/booking-availability/get-all', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('[Frontend] Get availability response status:', response.status);
+
+    let data;
+    try {
+      data = await response.json();
+      console.log('[Frontend] Get availability response data:', data);
+    } catch (parseError) {
+      console.error('[Frontend] Failed to parse availability response as JSON:', parseError);
+      const text = await response.text();
+      console.error('[Frontend] Response text:', text);
+      return {
+        success: false,
+        error: 'Server returned invalid JSON response',
+      };
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || data.message || 'Failed to fetch booking availability',
+      };
+    }
+
+    return { success: data.success, data: data.data };
+  } catch (error) {
+    console.error('[Frontend] Error fetching booking availability:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Fetch all bookings
+ * Admin-only operation with elevated permissions
+ */
+export async function getBookings(): Promise<{
+  success: boolean;
+  data?: Bookings[];
+  error?: string;
+}> {
+  try {
+    console.log('[Frontend] Fetching bookings');
+
+    const response = await fetch('/api/booking-availability/get-bookings', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('[Frontend] Get bookings response status:', response.status);
+
+    let data;
+    try {
+      data = await response.json();
+      console.log('[Frontend] Get bookings response data:', data);
+    } catch (parseError) {
+      console.error('[Frontend] Failed to parse bookings response as JSON:', parseError);
+      const text = await response.text();
+      console.error('[Frontend] Response text:', text);
+      return {
+        success: false,
+        error: 'Server returned invalid JSON response',
+      };
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || data.message || 'Failed to fetch bookings',
+      };
+    }
+
+    return { success: data.success, data: data.data };
+  } catch (error) {
+    console.error('[Frontend] Error fetching bookings:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
 
 /**
  * Create a new booking availability slot

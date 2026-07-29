@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, Plus, Trash2, X, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { BookingAvailability, Bookings } from '@/entities/index';
-import { createBookingAvailability, updateBookingAvailability, deleteBookingAvailability } from '@/api/booking-availability';
+import { 
+  getAvailability, 
+  getBookings, 
+  createBookingAvailability, 
+  updateBookingAvailability, 
+  deleteBookingAvailability 
+} from '@/api/booking-availability';
 import { getTodayString, formatDateToString, formatDateForDisplay, normalizeDateString } from '@/lib/date-formatter';
 
 interface TimeSlot {
@@ -36,15 +41,32 @@ export default function BookingManagerPro() {
   const loadData = async () => {
     try {
       setIsLoading(true);
+      
+      // Fetch availability and bookings using backend API with elevated permissions
       const [availResult, bookingResult] = await Promise.all([
-        BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { limit: 500 }),
-        BaseCrudService.getAll<Bookings>('bookings', {}, { limit: 500 })
+        getAvailability(),
+        getBookings()
       ]);
-      setAvailabilities(availResult.items || []);
-      setBookings(bookingResult.items || []);
+
+      // Check for errors
+      if (!availResult.success) {
+        console.error('Error fetching availability:', availResult.error);
+        addNotification('error', `Failed to load availability: ${availResult.error}`);
+        setAvailabilities([]);
+      } else {
+        setAvailabilities(availResult.data || []);
+      }
+
+      if (!bookingResult.success) {
+        console.error('Error fetching bookings:', bookingResult.error);
+        addNotification('error', `Failed to load bookings: ${bookingResult.error}`);
+        setBookings([]);
+      } else {
+        setBookings(bookingResult.data || []);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
-      addNotification('error', 'Failed to load booking data');
+      addNotification('error', `Failed to load booking data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }

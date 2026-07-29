@@ -69,7 +69,11 @@ export async function POST(request: Request) {
     console.log('[API] Database response:', JSON.stringify(result, null, 2));
 
     return new Response(
-      JSON.stringify({ success: true, data: result }),
+      JSON.stringify({ 
+        success: true, 
+        data: result,
+        message: 'Booking availability created successfully'
+      }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {

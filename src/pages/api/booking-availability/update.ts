@@ -42,7 +42,11 @@ export async function PUT(request: Request) {
     console.log('[API] Database response:', JSON.stringify(result, null, 2));
 
     return new Response(
-      JSON.stringify({ success: true, data: result }),
+      JSON.stringify({ 
+        success: true, 
+        data: result,
+        message: 'Booking availability updated successfully'
+      }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {

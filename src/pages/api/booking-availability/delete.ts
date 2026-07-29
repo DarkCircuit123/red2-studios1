@@ -30,7 +30,10 @@ export async function DELETE(request: Request) {
     console.log('[API] Successfully deleted booking availability with id:', body.id);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Booking availability deleted successfully' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Booking availability deleted successfully'
+      }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
