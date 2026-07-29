@@ -10,7 +10,20 @@ export async function PUT(request: Request) {
   try {
     console.log('[API] PUT /api/booking-availability/update - Request received');
     
-    const body = await request.json() as { id: string } & Partial<BookingAvailability>;
+    // Parse request body safely
+    let body: { id: string } & Partial<BookingAvailability>;
+    try {
+      body = await request.json() as { id: string } & Partial<BookingAvailability>;
+    } catch (parseError) {
+      console.error('[API] Failed to parse request body:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Invalid JSON in request body' 
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log('[API] Incoming update data:', JSON.stringify(body, null, 2));
 

@@ -10,7 +10,21 @@ export async function POST(request: Request) {
   try {
     console.log('[API] POST /api/booking-availability/create - Request received');
     
-    const availability = await request.json() as BookingAvailability;
+    // Parse request body safely
+    let availability: BookingAvailability;
+    try {
+      const body = await request.json();
+      availability = body as BookingAvailability;
+    } catch (parseError) {
+      console.error('[API] Failed to parse request body:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Invalid JSON in request body' 
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
     
     console.log('[API] Incoming availability data:', JSON.stringify(availability, null, 2));
 

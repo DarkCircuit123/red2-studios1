@@ -9,7 +9,20 @@ export async function DELETE(request: Request) {
   try {
     console.log('[API] DELETE /api/booking-availability/delete - Request received');
     
-    const body = await request.json() as { id: string };
+    // Parse request body safely
+    let body: { id: string };
+    try {
+      body = await request.json() as { id: string };
+    } catch (parseError) {
+      console.error('[API] Failed to parse request body:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Invalid JSON in request body' 
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log('[API] Incoming delete data:', JSON.stringify(body, null, 2));
 
