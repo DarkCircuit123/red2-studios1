@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import FashionTicker from '@/components/FashionTicker';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
+import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function AboutSection() {
   const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_b2c52e273a12463198e51100c1907f31~mv2.jpg');

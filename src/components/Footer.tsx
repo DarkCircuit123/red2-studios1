@@ -3,6 +3,7 @@ import { Instagram, Linkedin, Mail, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { playClickSound } from '@/lib/click-sound';
 import { useCallback, useMemo } from 'react';
+import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function Footer() {
   const currentYear = useMemo(() => new Date().getFullYear(), []);

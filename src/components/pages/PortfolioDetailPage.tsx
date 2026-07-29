@@ -9,6 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
+import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function PortfolioDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -152,30 +153,21 @@ export default function PortfolioDetailPage() {
       {/* Main Content */}
       <main className="max-w-[120rem] mx-auto px-8 py-24 md:py-32">
         {/* Back Button */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-16"
-        >
-          <Link
-            to="/#portfolio"
-            className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-paragraph">Back to Portfolio</span>
-          </Link>
-        </motion.div>
+         <ScrollReveal direction="left" duration={600} className="mb-16">
+           <Link
+             to="/#portfolio"
+             className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors"
+           >
+             <ArrowLeft className="w-4 h-4" />
+             <span className="text-sm font-paragraph">Back to Portfolio</span>
+           </Link>
+         </ScrollReveal>
 
-        {/* Project Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="mb-16"
-        >
-          <h1 className="text-6xl md:text-7xl font-heading font-bold text-white mb-8 tracking-tighter">
-            {project.projectName}
-          </h1>
+         {/* Project Header */}
+         <ScrollReveal direction="up" duration={800} className="mb-16">
+           <h1 className="text-6xl md:text-7xl font-heading font-bold text-white mb-8 tracking-tighter">
+             {project.projectName}
+           </h1>
           <div className="flex flex-wrap gap-6 items-center">
             <span className="px-4 py-2 border border-white/20 text-white text-sm font-mono uppercase tracking-widest">
               {project.category}

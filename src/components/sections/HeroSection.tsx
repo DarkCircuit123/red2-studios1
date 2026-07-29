@@ -6,6 +6,7 @@ import { BaseCrudService } from '@/integrations';
 import { playClickSound } from '@/lib/click-sound';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants } from '@/lib/scroll-animation-variants';
+import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function HeroSection() {
   const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_c01a98369e0e46449c4db84b41fdb2dc~mv2.jpg');
@@ -82,12 +83,7 @@ export default function HeroSection() {
       {/* Content positioned in lower third with padding */}
 
       {/* Enhanced scroll indicator with scroll animation */}
-      <motion.div
-        initial="hidden"
-        animate={contentVisible ? "visible" : "hidden"}
-        variants={scrollAnimationVariants.buttonSlideUp}
-        className="absolute bottom-6 md:bottom-12 left-4 md:left-8 z-10"
-      >
+      <ScrollReveal direction="up" delay={600} duration={800} className="absolute bottom-6 md:bottom-12 left-4 md:left-8 z-10">
         <motion.button
           onClick={scrollToGallery}
           whileHover={{ scale: 1.1 }}
@@ -98,7 +94,7 @@ export default function HeroSection() {
             <ChevronDown className="w-4 h-4 group-hover:text-primary transition-colors" />
           </motion.div>
         </motion.button>
-      </motion.div>
+      </ScrollReveal>
     </section>
   );
 }

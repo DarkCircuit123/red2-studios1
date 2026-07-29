@@ -4,6 +4,7 @@ import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
+import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({

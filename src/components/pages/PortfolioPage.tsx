@@ -7,6 +7,7 @@ import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
+import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function PortfolioPage() {
   const [projects, setProjects] = useState<Portfolio[]>([]);
@@ -130,19 +131,14 @@ export default function PortfolioPage() {
 
       <main className="max-w-[120rem] mx-auto px-8 py-24 md:py-32">
         {/* Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="mb-20"
-        >
+        <ScrollReveal direction="up" duration={800} className="mb-20">
           <h1 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
             All Photos
           </h1>
           <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
             A comprehensive collection of photography work across various categories and styles. Each project represents precision and creative excellence.
           </p>
-        </motion.div>
+        </ScrollReveal>
 
         {/* Projects Grid - Photography-First with Mixed Aspect Ratios */}
         {isLoading ? (
