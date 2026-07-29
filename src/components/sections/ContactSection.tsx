@@ -13,27 +13,12 @@ export default function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
-  const [emailError, setEmailError] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const statusTimeoutRef = useRef<NodeJS.Timeout>();
-
-  // Email validation regex
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // Validate email in real-time
-    if (name === 'email') {
-      if (value.trim() === '') {
-        setEmailError('');
-      } else if (!emailRegex.test(value.trim())) {
-        setEmailError('Please enter a valid email address');
-      } else {
-        setEmailError('');
-      }
-    }
   }, []);
 
   const clearStatusMessage = useCallback(() => {
@@ -63,57 +48,26 @@ export default function ContactSection() {
     clearStatusMessage();
 
     try {
-      // Frontend validation - all fields required
-      if (!formData.name.trim()) {
-        showStatus('error', 'Please enter your name');
+      // Basic validation
+      if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+        showStatus('error', 'Please fill in all required fields');
         setIsSubmitting(false);
         return;
       }
 
-      if (!formData.email.trim()) {
-        showStatus('error', 'Please enter your email address');
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (!formData.message.trim()) {
-        showStatus('error', 'Please enter your message');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Email validation
+      // Simple email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email.trim())) {
         showStatus('error', 'Please enter a valid email address');
         setIsSubmitting(false);
         return;
       }
 
-      // Send to backend for validation and rate limiting
-      const response = await fetch('/api/contact-submission', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          subject: formData.subject.trim(),
-          message: formData.message.trim(),
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        showStatus('error', result.error || 'An error occurred. Please try again.');
-        setIsSubmitting(false);
-        return;
-      }
+      // Simulate form submission (in production, this would send to a backend)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       showStatus('success', 'Thank you for your message! We will get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
-      setEmailError('');
       
       // Reset form if ref exists
       if (formRef.current) {
@@ -268,22 +222,9 @@ export default function ContactSection() {
                     value={formData[field.id as keyof typeof formData]}
                     onChange={handleChange}
                     required
-                    className={`w-full px-0 py-3 border-b-2 bg-transparent text-white placeholder-white/30 focus:outline-none transition-colors duration-300 ${
-                      field.id === 'email' && emailError
-                        ? 'border-red-500 focus:border-red-500'
-                        : 'border-white/20 focus:border-primary'
-                    }`}
+                    className="w-full px-0 py-3 border-b-2 border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors duration-300"
                     placeholder={field.placeholder}
                   />
-                  {field.id === 'email' && emailError && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-xs text-red-400 mt-2"
-                    >
-                      {emailError}
-                    </motion.p>
-                  )}
                 </motion.div>
               ))}
 
@@ -335,14 +276,10 @@ export default function ContactSection() {
 
               <motion.button
                 type="submit"
-                disabled={isSubmitting || !formData.name.trim() || !formData.email.trim() || !formData.message.trim() || !!emailError}
-                whileHover={{ scale: 1.02 }}
+                disabled={isSubmitting}
+                whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(73, 7, 8, 0.4)' }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full px-8 py-4 bg-primary text-white font-heading font-bold text-sm tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group shadow-lg ${
-                  !formData.name.trim() || !formData.email.trim() || !formData.message.trim() || emailError
-                    ? 'opacity-60 cursor-not-allowed shadow-[0_0_40px_rgba(239,68,68,0.8)] hover:shadow-[0_0_50px_rgba(239,68,68,0.9)]'
-                    : 'hover:bg-primary/90 hover:shadow-[0_0_30px_rgba(111,8,9,0.6)]'
-                }`}
+                className="w-full px-8 py-4 bg-primary text-white font-heading font-bold text-sm tracking-widest uppercase hover:bg-primary/90 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group"
               >
                 <motion.div
                   className="absolute inset-0 bg-white/20"

@@ -688,12 +688,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 fontFamily: aboutSettings.fontFamily
                               });
                               playClickSound();
-                              // Reload page to show font changes immediately
-                              setTimeout(() => {
-                                window.location.reload();
-                              }, 500);
                             } catch (error) {
                               console.error('Error saving about settings:', error);
+                            } finally {
                               setIsSavingAbout(false);
                             }
                           }}
