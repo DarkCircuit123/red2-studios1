@@ -112,16 +112,23 @@ export default function Header() {
         <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between w-full relative">
         {/* Logo - Text-based RED² with shimmer effect */}
         <motion.div
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.98 }}
+          className="group"
         >
           <Link
             to="/"
             onClick={handleLinkClick}
-            className="relative flex items-center gap-0 group"
+            className="relative flex items-center gap-0"
           >
-            <span className="font-heading font-black text-white tracking-tight hover:text-primary transition-colors duration-300 text-7xl">
-              RED<span className="text-primary">²</span>
+            <span className="font-heading font-black text-white tracking-tight text-7xl transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(111,8,9,0.8)]">
+              RED<motion.span 
+                className="text-primary group-hover:text-red-500 transition-colors duration-300 inline-block"
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              >
+                ²
+              </motion.span>
             </span>
           </Link>
         </motion.div>
