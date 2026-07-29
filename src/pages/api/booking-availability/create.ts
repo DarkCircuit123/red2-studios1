@@ -4,14 +4,12 @@
  * Astro API Route Handler
  */
 
-import wixData from 'wix-data';
+import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
 
 export async function POST({ request }: { request: Request }) {
   try {
     console.log('[API] POST /api/booking-availability/create - Request received');
-    console.log('[API] Request type:', typeof request);
-    console.log('[API] Request constructor:', request?.constructor?.name);
     
     // Parse request body safely - handle both standard Request and Astro's request wrapper
     let availability: BookingAvailability;
@@ -91,28 +89,12 @@ export async function POST({ request }: { request: Request }) {
 
     console.log('[API] Insert payload:', JSON.stringify(insertPayload, null, 2));
     console.log('[API] Collection ID: bookingavailability');
-    console.log('[API] Payload field types:');
-    console.log('[API]   _id:', typeof insertPayload._id, insertPayload._id);
-    console.log('[API]   bookingDate:', typeof insertPayload.bookingDate, insertPayload.bookingDate);
-    console.log('[API]   startTime:', typeof insertPayload.startTime, insertPayload.startTime);
-    console.log('[API]   endTime:', typeof insertPayload.endTime, insertPayload.endTime);
-    console.log('[API]   isAvailable:', typeof insertPayload.isAvailable, insertPayload.isAvailable);
-    console.log('[API]   sessionType:', typeof insertPayload.sessionType, insertPayload.sessionType);
 
-    // Use wixData.insert with elevated permissions (suppressAuth: true)
+    // Use BaseCrudService.create with elevated permissions
     // This bypasses the ADMIN-only permission restriction on the collection
-    let result;
-    try {
-      console.log('[API] Calling wixData.insert...');
-      result = await wixData.insert('bookingavailability', insertPayload, { suppressAuth: true });
-      console.log('[API] wixData.insert succeeded');
-    } catch (insertError) {
-      console.error('[API] wixData.insert failed with error:', insertError);
-      console.error('[API] Insert error type:', insertError instanceof Error ? insertError.constructor.name : typeof insertError);
-      console.error('[API] Insert error message:', insertError instanceof Error ? insertError.message : String(insertError));
-      console.error('[API] Insert error details:', JSON.stringify(insertError, null, 2));
-      throw insertError;
-    }
+    console.log('[API] Calling BaseCrudService.create...');
+    const result = await BaseCrudService.create('bookingavailability', insertPayload);
+    console.log('[API] BaseCrudService.create succeeded');
 
     console.log('[API] Database response:', JSON.stringify(result, null, 2));
 
@@ -130,7 +112,6 @@ export async function POST({ request }: { request: Request }) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to create booking availability';
     console.error('[API] Error message:', errorMessage);
     console.error('[API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    console.error('[API] Full error object:', JSON.stringify(error, null, 2));
     
     return new Response(
       JSON.stringify({
