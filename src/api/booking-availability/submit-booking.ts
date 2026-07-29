@@ -18,7 +18,7 @@ interface BookingSubmission {
   slotId: string; // ID of the availability slot being booked
 }
 
-export async function POST(request: Request) {
+export async function POST({ request }: { request: Request }) {
   try {
     const body = await request.json() as BookingSubmission;
 

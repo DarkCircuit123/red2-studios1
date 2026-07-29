@@ -6,7 +6,7 @@
 import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
 
-export async function POST(request: Request) {
+export async function POST({ request }: { request: Request }) {
   try {
     const availability = await request.json() as BookingAvailability;
 

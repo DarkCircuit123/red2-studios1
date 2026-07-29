@@ -6,7 +6,7 @@
 import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
 
-export async function PUT(request: Request) {
+export async function PUT({ request }: { request: Request }) {
   try {
     const body = await request.json() as { id: string } & Partial<BookingAvailability>;
 
