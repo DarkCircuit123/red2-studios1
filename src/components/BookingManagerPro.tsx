@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, Plus, Trash2, X, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { BookingAvailability, Bookings } from '@/entities/index';
+import { createBookingAvailability, updateBookingAvailability, deleteBookingAvailability } from '@/api/booking-availability';
 
 interface TimeSlot {
   startTime: string;
@@ -106,7 +107,13 @@ export default function BookingManagerPro() {
         sessionType: sessionType
       };
 
-      await BaseCrudService.create('bookingavailability', availability, {}, { suppressAuth: true });
+      // Use backend API with elevated permissions
+      const result = await createBookingAvailability(availability);
+      
+      if (!result.success) {
+        addNotification('error', `Failed to add time slot: ${result.error}`);
+        return;
+      }
       
       setAvailabilities([...availabilities, availability]);
       setNewSlot({ startTime: '09:00', endTime: '10:00' });
@@ -125,7 +132,14 @@ export default function BookingManagerPro() {
     if (!confirm('Are you sure you want to delete this time slot?')) return;
 
     try {
-      await BaseCrudService.delete('bookingavailability', id, { suppressAuth: true });
+      // Use backend API with elevated permissions
+      const result = await deleteBookingAvailability(id);
+      
+      if (!result.success) {
+        addNotification('error', `Failed to delete time slot: ${result.error}`);
+        return;
+      }
+      
       setAvailabilities(availabilities.filter(a => a._id !== id));
       addNotification('success', 'Time slot deleted successfully');
     } catch (error) {
@@ -136,10 +150,15 @@ export default function BookingManagerPro() {
 
   const toggleAvailability = async (id: string, currentStatus: boolean) => {
     try {
-      await BaseCrudService.update('bookingavailability', {
-        _id: id,
+      // Use backend API with elevated permissions
+      const result = await updateBookingAvailability(id, {
         isAvailable: !currentStatus
-      }, {}, { suppressAuth: true });
+      });
+
+      if (!result.success) {
+        addNotification('error', `Failed to update slot status: ${result.error}`);
+        return;
+      }
 
       setAvailabilities(availabilities.map(a => 
         a._id === id ? { ...a, isAvailable: !currentStatus } : a
