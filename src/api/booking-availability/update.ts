@@ -1,27 +1,65 @@
 /**
- * Backend endpoint for updating booking availability slots
- * Uses elevated permissions to bypass frontend restrictions
+ * PUT /api/booking-availability/update
  * 
- * This endpoint is called from the frontend BookingManagerPro component
- * and uses backend-only APIs with elevated permissions to update the
- * bookingavailability collection.
+ * Updates an existing booking availability slot with production hardening:
+ * - Server-side data normalization and validation
+ * - Validates time logic (endTime after startTime)
+ * - Comprehensive logging for audit trail
+ * 
+ * Request Payload:
+ * {
+ *   id: string (required, the _id of the slot to update)
+ *   bookingDate?: string (YYYY-MM-DD format)
+ *   startTime?: string (HH:mm format)
+ *   endTime?: string (HH:mm format)
+ *   sessionType?: string (trimmed)
+ *   isAvailable?: boolean
+ * }
+ * 
+ * Success Response (200):
+ * {
+ *   success: true,
+ *   data: { _id: string, bookingDate, startTime, endTime, sessionType, isAvailable, _createdDate, _updatedDate }
+ * }
+ * 
+ * Error Responses:
+ * 400: Missing id or invalid field values
+ * 500: Server error
  */
 
 import { BookingAvailability } from '@/entities/index';
-
-// Import Wix backend APIs - these run with elevated permissions
 import wixData from 'wix-data';
 
+// Validation helpers
+function validateDateFormat(date: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date);
+}
+
+function validateTimeFormat(time: string): boolean {
+  return /^\d{2}:\d{2}$/.test(time);
+}
+
+function isTimeAfter(startTime: string, endTime: string): boolean {
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+  const startTotalMin = startHour * 60 + startMin;
+  const endTotalMin = endHour * 60 + endMin;
+  return endTotalMin > startTotalMin;
+}
+
 export async function PUT(request: Request) {
+  const startTime = new Date();
+  const requestId = Math.random().toString(36).substring(7);
+  
   try {
-    console.log('[Backend] PUT /api/booking-availability/update - Updating availability slot');
+    console.log(`[UPDATE:${requestId}] PUT /api/booking-availability/update - Starting`);
     
     const body = await request.json() as { id: string } & Partial<BookingAvailability>;
-    console.log('[Backend] Received update data:', JSON.stringify(body, null, 2));
+    console.log(`[UPDATE:${requestId}] Received payload:`, JSON.stringify(body, null, 2));
 
     // Validate required fields
     if (!body.id) {
-      console.error('[Backend] Missing id');
+      console.warn(`[UPDATE:${requestId}] Validation failed: Missing id`);
       return new Response(
         JSON.stringify({ success: false, message: 'Missing required field: id' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -31,19 +69,68 @@ export async function PUT(request: Request) {
     // Build update object with only provided fields
     const updateData: any = { _id: body.id };
 
-    if (body.bookingDate !== undefined) updateData.bookingDate = body.bookingDate;
-    if (body.startTime !== undefined) updateData.startTime = body.startTime;
-    if (body.endTime !== undefined) updateData.endTime = body.endTime;
-    if (body.isAvailable !== undefined) updateData.isAvailable = body.isAvailable;
-    if (body.sessionType !== undefined) updateData.sessionType = body.sessionType;
+    // Normalize and validate each field if provided
+    if (body.bookingDate !== undefined) {
+      const bookingDate = body.bookingDate.trim();
+      if (!validateDateFormat(bookingDate)) {
+        console.warn(`[UPDATE:${requestId}] Validation failed: Invalid bookingDate format: ${bookingDate}`);
+        return new Response(
+          JSON.stringify({ success: false, message: 'Invalid bookingDate format. Expected YYYY-MM-DD' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      updateData.bookingDate = bookingDate;
+    }
 
-    console.log('[Backend] Update data:', JSON.stringify(updateData, null, 2));
+    if (body.startTime !== undefined) {
+      const startTimeNorm = body.startTime.trim();
+      if (!validateTimeFormat(startTimeNorm)) {
+        console.warn(`[UPDATE:${requestId}] Validation failed: Invalid startTime format: ${startTimeNorm}`);
+        return new Response(
+          JSON.stringify({ success: false, message: 'Invalid startTime format. Expected HH:mm' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      updateData.startTime = startTimeNorm;
+    }
 
-    // Use wixData.update with elevated permissions (backend-only)
-    // This bypasses frontend permission restrictions
+    if (body.endTime !== undefined) {
+      const endTimeNorm = body.endTime.trim();
+      if (!validateTimeFormat(endTimeNorm)) {
+        console.warn(`[UPDATE:${requestId}] Validation failed: Invalid endTime format: ${endTimeNorm}`);
+        return new Response(
+          JSON.stringify({ success: false, message: 'Invalid endTime format. Expected HH:mm' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      updateData.endTime = endTimeNorm;
+    }
+
+    // Validate time logic if both times are being set or updated
+    if (updateData.startTime && updateData.endTime) {
+      if (!isTimeAfter(updateData.startTime, updateData.endTime)) {
+        console.warn(`[UPDATE:${requestId}] Validation failed: endTime (${updateData.endTime}) is not after startTime (${updateData.startTime})`);
+        return new Response(
+          JSON.stringify({ success: false, message: 'endTime must be after startTime' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    if (body.sessionType !== undefined) {
+      updateData.sessionType = body.sessionType.trim();
+    }
+
+    if (body.isAvailable !== undefined) {
+      updateData.isAvailable = body.isAvailable;
+    }
+
+    console.log(`[UPDATE:${requestId}] Update data:`, JSON.stringify(updateData, null, 2));
+
     const result = await wixData.update('bookingavailability', updateData, { suppressAuth: true });
 
-    console.log('[Backend] Successfully updated availability slot:', JSON.stringify(result, null, 2));
+    const duration = new Date().getTime() - startTime.getTime();
+    console.log(`[UPDATE:${requestId}] ✓ Successfully updated slot ${body.id} in ${duration}ms`);
 
     return new Response(
       JSON.stringify({
@@ -53,9 +140,9 @@ export async function PUT(request: Request) {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[Backend] Error updating booking availability:', error);
-    console.error('[Backend] Error details:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('[Backend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    const duration = new Date().getTime() - startTime.getTime();
+    console.error(`[UPDATE:${requestId}] ✗ Failed after ${duration}ms:`, error);
+    console.error(`[UPDATE:${requestId}] Error details:`, error instanceof Error ? error.message : 'Unknown error');
     
     return new Response(
       JSON.stringify({

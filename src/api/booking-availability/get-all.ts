@@ -1,27 +1,53 @@
 /**
- * Backend endpoint for fetching all booking availability slots
- * Uses elevated permissions to bypass frontend restrictions
+ * GET /api/booking-availability
  * 
- * This endpoint is called from the frontend BookingManagerPro component
- * and uses backend-only APIs with elevated permissions to read from
- * the bookingavailability collection.
+ * Fetches all booking availability slots with pagination support.
+ * Uses elevated permissions to bypass frontend restrictions.
+ * 
+ * Query Parameters:
+ * - limit: number (optional, default 500, max 500)
+ * - skip: number (optional, default 0)
+ * 
+ * Success Response (200):
+ * {
+ *   success: true,
+ *   data: BookingAvailability[],
+ *   totalCount: number,
+ *   hasNext: boolean
+ * }
+ * 
+ * Error Response (500):
+ * {
+ *   success: false,
+ *   error: string
+ * }
  */
 
-// Import Wix backend APIs - these run with elevated permissions
 import wixData from 'wix-data';
 import { BookingAvailability } from '@/entities/index';
 
 export async function GET(request: Request) {
+  const startTime = new Date();
+  const requestId = Math.random().toString(36).substring(7);
+  
   try {
-    console.log('[Backend] GET /api/booking-availability/get-all - Fetching all availability slots');
+    console.log(`[GET_ALL:${requestId}] GET /api/booking-availability - Starting`);
 
-    // Use wixData.query with elevated permissions (backend-only)
-    // This bypasses frontend permission restrictions
+    // Parse query parameters
+    const url = new URL(request.url);
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '500'), 500);
+    const skip = parseInt(url.searchParams.get('skip') || '0');
+
+    console.log(`[GET_ALL:${requestId}] Query params: limit=${limit}, skip=${skip}`);
+
+    // Query with elevated permissions
     const results = await wixData.query('bookingavailability')
-      .limit(500)
+      .limit(limit)
+      .skip(skip)
       .find({ suppressAuth: true });
 
-    console.log('[Backend] Fetched availability slots:', results.items?.length || 0);
+    const duration = new Date().getTime() - startTime.getTime();
+    console.log(`[GET_ALL:${requestId}] ✓ Fetched ${results.items?.length || 0} slots (total: ${results.totalCount}) in ${duration}ms`);
 
     return new Response(
       JSON.stringify({
@@ -33,9 +59,9 @@ export async function GET(request: Request) {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[Backend] Error fetching booking availability:', error);
-    console.error('[Backend] Error details:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('[Backend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    const duration = new Date().getTime() - startTime.getTime();
+    console.error(`[GET_ALL:${requestId}] ✗ Failed after ${duration}ms:`, error);
+    console.error(`[GET_ALL:${requestId}] Error details:`, error instanceof Error ? error.message : 'Unknown error');
     
     return new Response(
       JSON.stringify({

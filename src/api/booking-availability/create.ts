@@ -1,27 +1,79 @@
 /**
- * Backend endpoint for creating booking availability slots
- * Uses elevated permissions to bypass frontend restrictions
+ * POST /api/booking-availability/create
  * 
- * This endpoint is called from the frontend BookingManagerPro component
- * and uses backend-only APIs with elevated permissions to insert into
- * the bookingavailability collection.
+ * Creates a new booking availability slot with production hardening:
+ * - Duplicate slot protection (checks bookingDate + startTime + endTime)
+ * - Server-side data normalization and validation
+ * - Comprehensive logging for audit trail
+ * 
+ * Request Payload:
+ * {
+ *   bookingDate: string (YYYY-MM-DD format, required)
+ *   startTime: string (HH:mm format, required)
+ *   endTime: string (HH:mm format, required)
+ *   sessionType: string (optional, trimmed, defaults to 'Session')
+ *   isAvailable: boolean (optional, defaults to true)
+ * }
+ * 
+ * Success Response (201):
+ * {
+ *   success: true,
+ *   data: { _id: string, bookingDate, startTime, endTime, sessionType, isAvailable, _createdDate, _updatedDate }
+ * }
+ * 
+ * Error Responses:
+ * 400: Missing/invalid required fields
+ * 409: Duplicate slot already exists
+ * 500: Server error
  */
 
 import { BookingAvailability } from '@/entities/index';
-
-// Import Wix backend APIs - these run with elevated permissions
 import wixData from 'wix-data';
 
-export async function POST(request: Request) {
+// Validation helpers
+function validateDateFormat(date: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date);
+}
+
+function validateTimeFormat(time: string): boolean {
+  return /^\d{2}:\d{2}$/.test(time);
+}
+
+function isTimeAfter(startTime: string, endTime: string): boolean {
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+  const startTotalMin = startHour * 60 + startMin;
+  const endTotalMin = endHour * 60 + endMin;
+  return endTotalMin > startTotalMin;
+}
+
+async function checkDuplicateSlot(bookingDate: string, startTime: string, endTime: string): Promise<boolean> {
   try {
-    console.log('[Backend] POST /api/booking-availability/create - Creating availability slot');
+    const results = await wixData.query('bookingavailability')
+      .eq('bookingDate', bookingDate)
+      .eq('startTime', startTime)
+      .eq('endTime', endTime)
+      .find({ suppressAuth: true });
+    return (results.items?.length || 0) > 0;
+  } catch (error) {
+    console.error('[Backend] Error checking for duplicate slot:', error);
+    throw error;
+  }
+}
+
+export async function POST(request: Request) {
+  const startTime = new Date();
+  const requestId = Math.random().toString(36).substring(7);
+  
+  try {
+    console.log(`[CREATE:${requestId}] POST /api/booking-availability/create - Starting`);
     
     const availability = await request.json() as BookingAvailability;
-    console.log('[Backend] Received availability data:', JSON.stringify(availability, null, 2));
+    console.log(`[CREATE:${requestId}] Received payload:`, JSON.stringify(availability, null, 2));
 
-    // Validate required fields
+    // Validate required fields exist
     if (!availability.bookingDate) {
-      console.error('[Backend] Missing bookingDate');
+      console.warn(`[CREATE:${requestId}] Validation failed: Missing bookingDate`);
       return new Response(
         JSON.stringify({ success: false, message: 'Missing required field: bookingDate' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -29,7 +81,7 @@ export async function POST(request: Request) {
     }
 
     if (!availability.startTime) {
-      console.error('[Backend] Missing startTime');
+      console.warn(`[CREATE:${requestId}] Validation failed: Missing startTime`);
       return new Response(
         JSON.stringify({ success: false, message: 'Missing required field: startTime' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -37,30 +89,81 @@ export async function POST(request: Request) {
     }
 
     if (!availability.endTime) {
-      console.error('[Backend] Missing endTime');
+      console.warn(`[CREATE:${requestId}] Validation failed: Missing endTime`);
       return new Response(
         JSON.stringify({ success: false, message: 'Missing required field: endTime' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Prepare the data for insertion - let Wix generate the _id
+    // Normalize and validate data
+    const bookingDate = availability.bookingDate.trim();
+    const startTimeNorm = availability.startTime.trim();
+    const endTimeNorm = availability.endTime.trim();
+    const sessionType = (availability.sessionType || 'Session').trim();
+
+    // Validate date format
+    if (!validateDateFormat(bookingDate)) {
+      console.warn(`[CREATE:${requestId}] Validation failed: Invalid bookingDate format (expected YYYY-MM-DD): ${bookingDate}`);
+      return new Response(
+        JSON.stringify({ success: false, message: 'Invalid bookingDate format. Expected YYYY-MM-DD' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate time formats
+    if (!validateTimeFormat(startTimeNorm)) {
+      console.warn(`[CREATE:${requestId}] Validation failed: Invalid startTime format (expected HH:mm): ${startTimeNorm}`);
+      return new Response(
+        JSON.stringify({ success: false, message: 'Invalid startTime format. Expected HH:mm' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!validateTimeFormat(endTimeNorm)) {
+      console.warn(`[CREATE:${requestId}] Validation failed: Invalid endTime format (expected HH:mm): ${endTimeNorm}`);
+      return new Response(
+        JSON.stringify({ success: false, message: 'Invalid endTime format. Expected HH:mm' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate endTime is after startTime
+    if (!isTimeAfter(startTimeNorm, endTimeNorm)) {
+      console.warn(`[CREATE:${requestId}] Validation failed: endTime (${endTimeNorm}) is not after startTime (${startTimeNorm})`);
+      return new Response(
+        JSON.stringify({ success: false, message: 'endTime must be after startTime' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check for duplicate slot
+    console.log(`[CREATE:${requestId}] Checking for duplicate slot: ${bookingDate} ${startTimeNorm}-${endTimeNorm}`);
+    const isDuplicate = await checkDuplicateSlot(bookingDate, startTimeNorm, endTimeNorm);
+    
+    if (isDuplicate) {
+      console.warn(`[CREATE:${requestId}] Duplicate slot detected: ${bookingDate} ${startTimeNorm}-${endTimeNorm}`);
+      return new Response(
+        JSON.stringify({ success: false, message: 'This availability slot already exists' }),
+        { status: 409, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Prepare normalized data for insertion
     const dataToInsert = {
-      bookingDate: availability.bookingDate,
-      startTime: availability.startTime,
-      endTime: availability.endTime,
+      bookingDate,
+      startTime: startTimeNorm,
+      endTime: endTimeNorm,
       isAvailable: availability.isAvailable !== false,
-      sessionType: availability.sessionType || 'Session'
+      sessionType
     };
 
-    console.log('[Backend] Inserting data:', JSON.stringify(dataToInsert, null, 2));
+    console.log(`[CREATE:${requestId}] Inserting normalized data:`, JSON.stringify(dataToInsert, null, 2));
 
-    // Use wixData.insert with elevated permissions (backend-only)
-    // Backend APIs automatically have elevated permissions - no need for suppressAuth
-    // suppressAuth is for bypassing authentication, not permissions
     const result = await wixData.insert('bookingavailability', dataToInsert);
 
-    console.log('[Backend] Successfully inserted availability slot:', JSON.stringify(result, null, 2));
+    const duration = new Date().getTime() - startTime.getTime();
+    console.log(`[CREATE:${requestId}] ✓ Successfully created slot ${result._id} in ${duration}ms`);
 
     return new Response(
       JSON.stringify({
@@ -70,9 +173,9 @@ export async function POST(request: Request) {
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[Backend] Error creating booking availability:', error);
-    console.error('[Backend] Error details:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('[Backend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    const duration = new Date().getTime() - startTime.getTime();
+    console.error(`[CREATE:${requestId}] ✗ Failed after ${duration}ms:`, error);
+    console.error(`[CREATE:${requestId}] Error details:`, error instanceof Error ? error.message : 'Unknown error');
     
     return new Response(
       JSON.stringify({

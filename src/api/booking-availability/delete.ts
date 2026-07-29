@@ -1,45 +1,58 @@
 /**
- * Backend endpoint for deleting booking availability slots
- * Uses elevated permissions to bypass frontend restrictions
+ * DELETE /api/booking-availability/delete
  * 
- * This endpoint is called from the frontend BookingManagerPro component
- * and uses backend-only APIs with elevated permissions to delete from
- * the bookingavailability collection.
+ * Deletes a booking availability slot with comprehensive logging.
+ * Uses elevated permissions to bypass frontend restrictions.
+ * 
+ * Request Payload:
+ * {
+ *   id: string (required, the _id of the slot to delete)
+ * }
+ * 
+ * Success Response (200):
+ * {
+ *   success: true
+ * }
+ * 
+ * Error Responses:
+ * 400: Missing id
+ * 500: Server error
  */
 
-// Import Wix backend APIs - these run with elevated permissions
 import wixData from 'wix-data';
 
 export async function DELETE(request: Request) {
+  const startTime = new Date();
+  const requestId = Math.random().toString(36).substring(7);
+  
   try {
-    console.log('[Backend] DELETE /api/booking-availability/delete - Deleting availability slot');
+    console.log(`[DELETE:${requestId}] DELETE /api/booking-availability/delete - Starting`);
     
     const body = await request.json() as { id: string };
-    console.log('[Backend] Received delete request for id:', body.id);
+    console.log(`[DELETE:${requestId}] Received delete request for id: ${body.id}`);
 
     // Validate required fields
     if (!body.id) {
-      console.error('[Backend] Missing id');
+      console.warn(`[DELETE:${requestId}] Validation failed: Missing id`);
       return new Response(
         JSON.stringify({ success: false, message: 'Missing required field: id' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Use wixData.remove with elevated permissions (backend-only)
-    // This bypasses frontend permission restrictions
     await wixData.remove('bookingavailability', body.id, { suppressAuth: true });
 
-    console.log('[Backend] Successfully deleted availability slot:', body.id);
+    const duration = new Date().getTime() - startTime.getTime();
+    console.log(`[DELETE:${requestId}] ✓ Successfully deleted slot ${body.id} in ${duration}ms`);
 
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[Backend] Error deleting booking availability:', error);
-    console.error('[Backend] Error details:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('[Backend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    const duration = new Date().getTime() - startTime.getTime();
+    console.error(`[DELETE:${requestId}] ✗ Failed after ${duration}ms:`, error);
+    console.error(`[DELETE:${requestId}] Error details:`, error instanceof Error ? error.message : 'Unknown error');
     
     return new Response(
       JSON.stringify({
