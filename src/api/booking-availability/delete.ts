@@ -5,7 +5,7 @@
 
 import { BaseCrudService } from '@/integrations';
 
-export async function DELETE({ request }: { request: Request }) {
+export async function DELETE(request: Request) {
   try {
     const body = await request.json() as { id: string };
 
