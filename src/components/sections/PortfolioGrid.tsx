@@ -5,6 +5,8 @@ import { ArrowRight } from 'lucide-react';
 import { Portfolio } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import { playClickSound } from '@/lib/click-sound';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 
 interface PortfolioGridProps {
   items: Portfolio[];
@@ -13,6 +15,7 @@ interface PortfolioGridProps {
 
 export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
 
   // Use first 6 items or create placeholder items
   const displayItems = items.length > 0 ? items.slice(0, 6) : Array(6).fill(null);
@@ -22,24 +25,24 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.12,
         delayChildren: 0.15,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 40, scale: 0.95 },
+    hidden: { opacity: 0, y: 50, scale: 0.95 },
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
-      transition: { duration: 0.7, ease: 'easeOut' },
+      transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] },
     },
   };
 
   return (
-    <section id="portfolio" className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden">
+    <section ref={sectionRef} id="portfolio" className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden">
       {/* Animated background gradient */}
       <div className="absolute inset-0 z-0">
         <motion.div
@@ -58,10 +61,9 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
       <div className="max-w-[120rem] mx-auto px-8 relative z-10">
         {/* Section Header with enhanced typography */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9 }}
-          viewport={{ once: true }}
+          initial="hidden"
+          animate={sectionVisible ? "visible" : "hidden"}
+          variants={scrollAnimationVariants.headingSlideUp}
           className="mb-24 md:mb-32"
         >
           <h2 className="text-7xl md:text-8xl lg:text-9xl font-heading font-black text-white mb-8 tracking-tighter leading-none">
@@ -76,17 +78,23 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
             </motion.span>
           </h2>
           <div className="w-20 h-1 bg-gradient-to-r from-primary to-primary/40 mb-8" />
-          <p className="text-base md:text-lg font-paragraph text-white/70 max-w-2xl leading-relaxed">
+          <motion.p
+            initial="hidden"
+            animate={sectionVisible ? "visible" : "hidden"}
+            variants={scrollAnimationVariants.textSlideUp}
+            transition={{ delay: 0.2 }}
+            className="text-base md:text-lg font-paragraph text-white/70 max-w-2xl leading-relaxed"
+          >
             A selection of recent projects showcasing diverse aesthetics and creative directions. Each work represents precision and luxury restraint.
-          </p>
+          </motion.p>
         </motion.div>
 
         {/* Grid - Photography-First with Mixed Aspect Ratios */}
         <motion.div
+          ref={sectionRef}
           variants={containerVariants}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
+          animate={sectionVisible ? "visible" : "hidden"}
           className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 auto-rows-max"
         >
           {displayItems.map((item, index) => {
@@ -186,10 +194,10 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
 
         {/* View All Button with enhanced styling */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          viewport={{ once: true }}
+          initial="hidden"
+          animate={sectionVisible ? "visible" : "hidden"}
+          variants={scrollAnimationVariants.buttonSlideUp}
+          transition={{ delay: 0.4 }}
           className="mt-24 md:mt-32 text-center"
         >
           <motion.div

@@ -4,6 +4,8 @@ import { AboutSection as AboutSectionType } from '@/entities/index';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import FashionTicker from '@/components/FashionTicker';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 
 export default function AboutSection() {
   const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_b2c52e273a12463198e51100c1907f31~mv2.jpg');
@@ -11,6 +13,7 @@ export default function AboutSection() {
   const [fontFamily, setFontFamily] = useState('font-cormorant-garamond-v2');
   const [isLoading, setIsLoading] = useState(true);
   const fetchedRef = useRef(false);
+  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
 
   useEffect(() => {
     // Prevent duplicate fetches
@@ -62,7 +65,7 @@ export default function AboutSection() {
   };
 
   return (
-    <section id="about" className="relative w-full bg-black overflow-hidden">
+    <section ref={sectionRef} id="about" className="relative w-full bg-black overflow-hidden">
       {/* Fashion Ticker */}
       <div className="relative z-20">
         <FashionTicker />
@@ -89,10 +92,9 @@ export default function AboutSection() {
           <div className="space-y-4 md:space-y-6">
             {/* Header section */}
             <motion.div
-              initial={{ opacity: 0, x: -40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
+              initial="hidden"
+              animate={sectionVisible ? "visible" : "hidden"}
+              variants={scrollAnimationVariants.headingSlideUp}
               className="space-y-3 md:space-y-4"
             >
               <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-black text-white leading-tight tracking-tighter">
@@ -106,24 +108,26 @@ export default function AboutSection() {
               </h2>
               <motion.div
                 initial={{ width: 0 }}
-                whileInView={{ width: 80 }}
+                animate={sectionVisible ? { width: 80 } : { width: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                viewport={{ once: true }}
                 className="h-1 bg-gradient-to-r from-primary to-primary/40"
               />
             </motion.div>
 
             {/* Magazine-style content with floated image */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-              viewport={{ once: true }}
+              initial="hidden"
+              animate={sectionVisible ? "visible" : "hidden"}
+              variants={scrollAnimationVariants.textSlideUp}
+              transition={{ delay: 0.2 }}
               className="relative"
             >
               {/* Floated image container - desktop/tablet */}
               <div className="hidden sm:block float-right ml-6 md:ml-8 mb-4 md:mb-6 w-64 md:w-80 lg:w-96 flex-shrink-0">
                 <motion.div
+                  initial="hidden"
+                  animate={sectionVisible ? "visible" : "hidden"}
+                  variants={scrollAnimationVariants.imageSlideInRight}
                   whileHover={{ y: -8 }}
                   transition={{ duration: 0.3 }}
                   className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative"
@@ -131,9 +135,8 @@ export default function AboutSection() {
                   {!isLoading && (
                     <motion.div
                       initial={{ scale: 1.1, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.8 }}
-                      viewport={{ once: true }}
+                      animate={sectionVisible ? { scale: 1, opacity: 1 } : { scale: 1.1, opacity: 0 }}
+                      transition={{ duration: 0.8, delay: 0.3 }}
                       className="w-full h-full flex items-center justify-center"
                     >
                       <Image
@@ -176,6 +179,9 @@ export default function AboutSection() {
               {/* Mobile image - stacked above text */}
               <div className="sm:hidden mb-6 md:mb-8">
                 <motion.div
+                  initial="hidden"
+                  animate={sectionVisible ? "visible" : "hidden"}
+                  variants={scrollAnimationVariants.imageSlideInLeft}
                   whileHover={{ y: -8 }}
                   transition={{ duration: 0.3 }}
                   className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative"
@@ -183,9 +189,8 @@ export default function AboutSection() {
                   {!isLoading && (
                     <motion.div
                       initial={{ scale: 1.1, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.8 }}
-                      viewport={{ once: true }}
+                      animate={sectionVisible ? { scale: 1, opacity: 1 } : { scale: 1.1, opacity: 0 }}
+                      transition={{ duration: 0.8, delay: 0.3 }}
                       className="w-full h-full flex items-center justify-center"
                     >
                       <Image
@@ -211,10 +216,9 @@ export default function AboutSection() {
 
             {/* Stats - below the text flow */}
             <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              viewport={{ once: true }}
+              initial="hidden"
+              animate={sectionVisible ? "visible" : "hidden"}
+              variants={scrollAnimationVariants.containerStagger}
               className="grid grid-cols-3 gap-4 md:gap-6 pt-4 md:pt-6 border-t border-primary/30 clear-both"
             >
               {[
@@ -224,11 +228,7 @@ export default function AboutSection() {
               ].map((stat, i) => (
                 <motion.div
                   key={i}
-                  custom={i}
-                  variants={statVariants}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
+                  variants={getStaggeredVariant(i, 0.3, 0.1)}
                   className="space-y-3 group"
                 >
                   <motion.p

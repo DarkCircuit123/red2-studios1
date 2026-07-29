@@ -4,11 +4,14 @@ import { Image } from '@/components/ui/image';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { BaseCrudService } from '@/integrations';
 import { playClickSound } from '@/lib/click-sound';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { scrollAnimationVariants } from '@/lib/scroll-animation-variants';
 
 export default function HeroSection() {
   const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_c01a98369e0e46449c4db84b41fdb2dc~mv2.jpg');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [scrollY, setScrollY] = useState(0);
+  const { ref: contentRef, isVisible: contentVisible } = useScrollAnimation({ triggerOnce: true });
 
   useEffect(() => {
     const loadHeroImage = async () => {
@@ -49,7 +52,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
+    <section ref={contentRef} className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
       {/* Parallax image with depth */}
       <motion.div
         className="absolute inset-0 z-0"
@@ -78,10 +81,11 @@ export default function HeroSection() {
       <div className="absolute inset-0 z-5 bg-gradient-to-b from-black/20 via-black/40 to-black/70" />
       {/* Content positioned in lower third with padding */}
 
-      {/* Enhanced scroll indicator */}
+      {/* Enhanced scroll indicator with scroll animation */}
       <motion.div
-        animate={{ y: [0, 12, 0] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+        initial="hidden"
+        animate={contentVisible ? "visible" : "hidden"}
+        variants={scrollAnimationVariants.buttonSlideUp}
         className="absolute bottom-6 md:bottom-12 left-4 md:left-8 z-10"
       >
         <motion.button

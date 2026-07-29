@@ -1,21 +1,33 @@
 import { motion } from 'framer-motion';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 
 export default function BehindTheScenesSection() {
+  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
+
   return (
-    <section className="w-full min-h-screen bg-black text-white py-20 px-4 md:px-8">
+    <section ref={sectionRef} className="w-full min-h-screen bg-black text-white py-20 px-4 md:px-8">
       <div className="max-w-[100rem] mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          initial="hidden"
+          animate={sectionVisible ? "visible" : "hidden"}
+          variants={scrollAnimationVariants.headingSlideUp}
         >
           <h2 className="text-4xl md:text-6xl font-heading font-bold mb-12">Behind The Scenes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="bg-gray-900 rounded-lg overflow-hidden aspect-square" />
+          <motion.div
+            initial="hidden"
+            animate={sectionVisible ? "visible" : "hidden"}
+            variants={scrollAnimationVariants.containerStagger}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            {[1, 2, 3].map((item, i) => (
+              <motion.div
+                key={item}
+                variants={getStaggeredVariant(i, 0.15, 0.12)}
+                className="bg-gray-900 rounded-lg overflow-hidden aspect-square"
+              />
             ))}
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </section>

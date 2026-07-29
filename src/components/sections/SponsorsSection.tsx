@@ -3,10 +3,13 @@ import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 import { ClientsPress } from '@/entities/index';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 
 export default function SponsorsSection() {
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
 
   useEffect(() => {
     const loadSponsors = async () => {
@@ -29,26 +32,36 @@ export default function SponsorsSection() {
   }, []);
 
   return (
-    <section className="relative w-full py-16 md:py-20 lg:py-24 bg-black border-t border-white/10">
+    <section ref={sectionRef} className="relative w-full py-16 md:py-20 lg:py-24 bg-black border-t border-white/10">
       <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          initial="hidden"
+          animate={sectionVisible ? "visible" : "hidden"}
+          variants={scrollAnimationVariants.headingSlideUp}
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-heading font-bold text-white mb-6 tracking-tight">
             Sponsored By
           </h2>
-          <p className="text-sm md:text-base text-white/60 max-w-2xl mx-auto font-mono">
+          <motion.p
+            initial="hidden"
+            animate={sectionVisible ? "visible" : "hidden"}
+            variants={scrollAnimationVariants.textSlideUp}
+            transition={{ delay: 0.15 }}
+            className="text-sm md:text-base text-white/60 max-w-2xl mx-auto font-mono"
+          >
             Collaborating with industry-leading partners to deliver exceptional visual experiences
-          </p>
+          </motion.p>
         </motion.div>
 
         {/* Sponsors Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <motion.div
+          initial="hidden"
+          animate={sectionVisible ? "visible" : "hidden"}
+          variants={scrollAnimationVariants.containerStagger}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+        >
           {isLoading ? (
             <div className="col-span-full text-center py-12">
               <p className="text-white/60">Loading sponsors...</p>
@@ -64,10 +77,8 @@ export default function SponsorsSection() {
                 href={sponsor.externalLink || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
+                variants={getStaggeredVariant(index, 0.15, 0.1)}
+                whileHover={{ y: -4 }}
                 className="group relative flex items-center justify-center p-8 md:p-12 bg-white/5 border border-white/10 hover:border-white/30 transition-all duration-300 hover:bg-white/10"
               >
                 <div className="relative w-full h-32 md:h-40 flex items-center justify-center">
@@ -91,7 +102,7 @@ export default function SponsorsSection() {
               </motion.a>
             ))
           )}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

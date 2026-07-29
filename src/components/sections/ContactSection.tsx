@@ -2,6 +2,8 @@ import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -15,6 +17,7 @@ export default function ContactSection() {
   const [statusMessage, setStatusMessage] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const statusTimeoutRef = useRef<NodeJS.Timeout>();
+  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -82,7 +85,7 @@ export default function ContactSection() {
   }, [formData, isSubmitting, clearStatusMessage, showStatus]);
 
   return (
-    <section id="contact" className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden">
+    <section ref={sectionRef} id="contact" className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden">
       {/* Animated background */}
       <div className="absolute inset-0 z-0">
         <motion.div
@@ -102,10 +105,9 @@ export default function ContactSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
           {/* Contact Info */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+            initial="hidden"
+            animate={sectionVisible ? "visible" : "hidden"}
+            variants={scrollAnimationVariants.slideInHorizontal}
           >
             <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-heading font-black text-white mb-6 md:mb-8 tracking-tighter leading-none">
               Get in
@@ -119,12 +121,23 @@ export default function ContactSection() {
               </motion.span>
             </h2>
 
-            <p className="text-sm md:text-base font-paragraph text-white/70 mb-8 md:mb-10 leading-relaxed">
+            <motion.p
+              initial="hidden"
+              animate={sectionVisible ? "visible" : "hidden"}
+              variants={scrollAnimationVariants.textSlideUp}
+              transition={{ delay: 0.1 }}
+              className="text-sm md:text-base font-paragraph text-white/70 mb-8 md:mb-10 leading-relaxed"
+            >
               Ready to collaborate on your next project? I'd love to hear about your vision and discuss how we can bring it to life.
-            </p>
+            </motion.p>
 
             {/* Contact Methods - Enhanced with animations */}
-            <div className="space-y-6 md:space-y-8">
+            <motion.div
+              initial="hidden"
+              animate={sectionVisible ? "visible" : "hidden"}
+              variants={scrollAnimationVariants.containerStagger}
+              className="space-y-6 md:space-y-8"
+            >
               {[
                 { icon: Mail, label: 'Email', value: 'hello@red2studios.com', href: 'mailto:hello@red2studios.com' },
                 { icon: Phone, label: 'Phone', value: '+1 (310) 386-0405', href: 'tel:+13103860405' },
@@ -134,10 +147,7 @@ export default function ContactSection() {
                 return (
                   <motion.div
                     key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1, duration: 0.6 }}
-                    viewport={{ once: true }}
+                    variants={getStaggeredVariant(i, 0.15, 0.1)}
                     className="flex gap-6 group"
                   >
                     <motion.div
@@ -161,14 +171,14 @@ export default function ContactSection() {
                   </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
 
             {/* Social Links */}
             <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              viewport={{ once: true }}
+              initial="hidden"
+              animate={sectionVisible ? "visible" : "hidden"}
+              variants={scrollAnimationVariants.fadeIn}
+              transition={{ delay: 0.5 }}
               className="mt-12 pt-8 border-t border-primary/30"
             >
               <p className="text-xs font-mono uppercase tracking-widest text-white/40 mb-6">
@@ -194,45 +204,48 @@ export default function ContactSection() {
 
           {/* Contact Form - Enhanced */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+            initial="hidden"
+            animate={sectionVisible ? "visible" : "hidden"}
+            variants={scrollAnimationVariants.slideInHorizontal}
+            transition={{ delay: 0.1 }}
           >
             <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
-              {[
-                { id: 'name', label: 'Full Name', placeholder: 'Your name', type: 'text' },
-                { id: 'email', label: 'Email Address', placeholder: 'your@email.com', type: 'email' },
-                { id: 'subject', label: 'Subject', placeholder: 'Project inquiry', type: 'text' },
-              ].map((field, i) => (
-                <motion.div
-                  key={field.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1, duration: 0.6 }}
-                  viewport={{ once: true }}
-                >
-                  <label htmlFor={field.id} className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3 group-hover:text-primary transition-colors">
-                    {field.label} *
-                  </label>
-                  <input
-                    type={field.type}
-                    id={field.id}
-                    name={field.id}
-                    value={formData[field.id as keyof typeof formData]}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-0 py-3 border-b-2 border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors duration-300"
-                    placeholder={field.placeholder}
-                  />
-                </motion.div>
-              ))}
+              <motion.div
+                initial="hidden"
+                animate={sectionVisible ? "visible" : "hidden"}
+                variants={scrollAnimationVariants.containerStagger}
+              >
+                {[
+                  { id: 'name', label: 'Full Name', placeholder: 'Your name', type: 'text' },
+                  { id: 'email', label: 'Email Address', placeholder: 'your@email.com', type: 'email' },
+                  { id: 'subject', label: 'Subject', placeholder: 'Project inquiry', type: 'text' },
+                ].map((field, i) => (
+                  <motion.div
+                    key={field.id}
+                    variants={getStaggeredVariant(i, 0.15, 0.1)}
+                  >
+                    <label htmlFor={field.id} className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3 group-hover:text-primary transition-colors">
+                      {field.label} *
+                    </label>
+                    <input
+                      type={field.type}
+                      id={field.id}
+                      name={field.id}
+                      value={formData[field.id as keyof typeof formData]}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-0 py-3 border-b-2 border-white/20 bg-transparent text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors duration-300"
+                      placeholder={field.placeholder}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
 
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-                viewport={{ once: true }}
+                initial="hidden"
+                animate={sectionVisible ? "visible" : "hidden"}
+                variants={scrollAnimationVariants.textSlideUp}
+                transition={{ delay: 0.45 }}
               >
                 <label htmlFor="message" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
                   Message *
@@ -277,6 +290,10 @@ export default function ContactSection() {
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
+                initial="hidden"
+                animate={sectionVisible ? "visible" : "hidden"}
+                variants={scrollAnimationVariants.buttonSlideUp}
+                transition={{ delay: 0.55 }}
                 whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(73, 7, 8, 0.4)' }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full px-8 py-4 bg-primary text-white font-heading font-bold text-sm tracking-widest uppercase hover:bg-primary/90 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group"
