@@ -1,5 +1,5 @@
 import { MemberProvider } from '@/integrations';
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, Suspense } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
@@ -14,15 +14,19 @@ import HangmanGamePage from './pages/HangmanGamePage';
 import ClientRegisterPage from './pages/ClientRegisterPage';
 import WorkPage from './pages/WorkPage';
 import ContactPage from './pages/ContactPage';
-import BackgroundMusicPlayer from './BackgroundMusicPlayer';
 // ... keep existing code (other imports) ...
+import { lazy } from 'react';
+
+const BackgroundMusicPlayer = lazy(() => import('./BackgroundMusicPlayer'));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
   return (
     <>
       <ScrollToTop />
-      <BackgroundMusicPlayer />
+      <Suspense fallback={null}>
+        <BackgroundMusicPlayer />
+      </Suspense>
       <Outlet />
     </>
   );
