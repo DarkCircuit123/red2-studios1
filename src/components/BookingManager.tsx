@@ -51,17 +51,18 @@ export default function BookingManager() {
 
     try {
       const availability: BookingAvailability = {
-        _id: crypto.randomUUID(),
         bookingDate: selectedDate,
         startTime: newSlot.startTime,
         endTime: newSlot.endTime,
         isAvailable: true,
         sessionType: sessionType
-      };
+      } as BookingAvailability;
 
       const result = await createBookingAvailability(availability);
       if (result.success) {
-        setAvailabilities([...availabilities, availability]);
+        // Use the returned data with the Wix-generated _id
+        const createdAvailability = result.data || availability;
+        setAvailabilities([...availabilities, createdAvailability]);
         setNewSlot({ startTime: '09:00', endTime: '10:00' });
         setSuccessMessage('Time slot added successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
