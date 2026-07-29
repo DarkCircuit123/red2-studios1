@@ -2,10 +2,16 @@
  * Backend endpoint for submitting a public booking
  * Creates a booking record and marks the availability slot as booked
  * Uses elevated permissions to bypass frontend restrictions
+ * 
+ * This endpoint is called from the public booking page and uses
+ * backend-only APIs with elevated permissions to write to both
+ * the bookings and bookingavailability collections.
  */
 
-import { BaseCrudService } from '@/integrations';
 import { Bookings, BookingAvailability } from '@/entities/index';
+
+// Import Wix backend APIs - these run with elevated permissions
+import wixData from 'wix-data';
 
 interface BookingSubmission {
   clientName: string;
@@ -20,10 +26,14 @@ interface BookingSubmission {
 
 export async function POST(request: Request) {
   try {
+    console.log('[Backend] POST /api/booking-availability/submit-booking - Submitting booking');
+    
     const body = await request.json() as BookingSubmission;
+    console.log('[Backend] Received booking submission:', JSON.stringify(body, null, 2));
 
     // Validate required fields
     if (!body.clientName) {
+      console.error('[Backend] Missing clientName');
       return new Response(
         JSON.stringify({ success: false, error: 'Missing required field: clientName' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -31,6 +41,7 @@ export async function POST(request: Request) {
     }
 
     if (!body.clientEmail) {
+      console.error('[Backend] Missing clientEmail');
       return new Response(
         JSON.stringify({ success: false, error: 'Missing required field: clientEmail' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -38,6 +49,7 @@ export async function POST(request: Request) {
     }
 
     if (!body.slotId) {
+      console.error('[Backend] Missing slotId');
       return new Response(
         JSON.stringify({ success: false, error: 'Missing required field: slotId' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -57,14 +69,22 @@ export async function POST(request: Request) {
       bookingStatus: 'Pending'
     };
 
+    console.log('[Backend] Creating booking record:', JSON.stringify(booking, null, 2));
+
     // Save booking to CMS with elevated permissions
-    await BaseCrudService.create('bookings', booking);
+    const bookingResult = await wixData.insert('bookings', booking, { suppressAuth: true });
+    console.log('[Backend] Booking created successfully:', JSON.stringify(bookingResult, null, 2));
 
     // Mark the availability slot as booked with elevated permissions
-    await BaseCrudService.update('bookingavailability', {
+    const updateData = {
       _id: body.slotId,
       isAvailable: false
-    });
+    };
+
+    console.log('[Backend] Updating availability slot:', JSON.stringify(updateData, null, 2));
+
+    const updateResult = await wixData.update('bookingavailability', updateData, { suppressAuth: true });
+    console.log('[Backend] Availability slot updated successfully:', JSON.stringify(updateResult, null, 2));
 
     return new Response(
       JSON.stringify({
@@ -74,7 +94,10 @@ export async function POST(request: Request) {
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error submitting booking:', error);
+    console.error('[Backend] Error submitting booking:', error);
+    console.error('[Backend] Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('[Backend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
     return new Response(
       JSON.stringify({
         success: false,

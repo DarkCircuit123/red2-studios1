@@ -1,19 +1,29 @@
 /**
  * Backend endpoint for updating booking availability slots
  * Uses elevated permissions to bypass frontend restrictions
+ * 
+ * This endpoint is called from the frontend BookingManagerPro component
+ * and uses backend-only APIs with elevated permissions to update the
+ * bookingavailability collection.
  */
 
-import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
+
+// Import Wix backend APIs - these run with elevated permissions
+import wixData from 'wix-data';
 
 export async function PUT(request: Request) {
   try {
+    console.log('[Backend] PUT /api/booking-availability/update - Updating availability slot');
+    
     const body = await request.json() as { id: string } & Partial<BookingAvailability>;
+    console.log('[Backend] Received update data:', JSON.stringify(body, null, 2));
 
     // Validate required fields
     if (!body.id) {
+      console.error('[Backend] Missing id');
       return new Response(
-        JSON.stringify({ message: 'Missing required field: id' }),
+        JSON.stringify({ success: false, message: 'Missing required field: id' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -27,8 +37,13 @@ export async function PUT(request: Request) {
     if (body.isAvailable !== undefined) updateData.isAvailable = body.isAvailable;
     if (body.sessionType !== undefined) updateData.sessionType = body.sessionType;
 
-    // Update the booking availability with elevated permissions
-    const result = await BaseCrudService.update('bookingavailability', updateData);
+    console.log('[Backend] Update data:', JSON.stringify(updateData, null, 2));
+
+    // Use wixData.update with elevated permissions (backend-only)
+    // This bypasses frontend permission restrictions
+    const result = await wixData.update('bookingavailability', updateData, { suppressAuth: true });
+
+    console.log('[Backend] Successfully updated availability slot:', JSON.stringify(result, null, 2));
 
     return new Response(
       JSON.stringify({
@@ -38,7 +53,10 @@ export async function PUT(request: Request) {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error updating booking availability:', error);
+    console.error('[Backend] Error updating booking availability:', error);
+    console.error('[Backend] Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('[Backend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
     return new Response(
       JSON.stringify({
         success: false,
