@@ -100,11 +100,21 @@ describe('WDE0009 Portfolio Upload Lifecycle', () => {
       console.log('  - Image 3 (gallery):', uploadedImages.galleryImage2);
       console.log('  - Image 4 (gallery):', uploadedImages.galleryImage3);
 
-      // Verify all URLs are valid
+      // Verify all URLs are valid and in correct Wix format
       Object.entries(uploadedImages).forEach(([key, url]) => {
         expect(url).toBeDefined();
         expect(url).toMatch(/^https:\/\/static\.wixstatic\.com/);
-        console.log(`  ✅ ${key} URL valid`);
+        
+        // CRITICAL: Verify images are NOT stored as base64
+        expect(url.startsWith('data:image')).toBe(false);
+        expect(url.startsWith('data:image/jpeg')).toBe(false);
+        expect(url.startsWith('data:image/png')).toBe(false);
+        expect(url.startsWith('data:image/webp')).toBe(false);
+        
+        // CRITICAL: Verify images ARE stored in Wix format
+        expect(url.includes('wixstatic.com')).toBe(true);
+        
+        console.log(`  ✅ ${key} URL valid (Wix format, not base64)`);
       });
 
       // Store uploaded images in test state for next step
@@ -143,10 +153,23 @@ describe('WDE0009 Portfolio Upload Lifecycle', () => {
       });
 
       console.log('✅ Portfolio saved with all 4 images');
+      
+      // CRITICAL: Verify saved images are in Wix format, not base64
       expect(createdPortfolio.mainImage).toBeDefined();
+      expect(createdPortfolio.mainImage?.startsWith('data:image')).toBe(false);
+      expect(createdPortfolio.mainImage?.includes('wixstatic.com')).toBe(true);
+      
       expect(createdPortfolio.galleryImage1).toBeDefined();
+      expect(createdPortfolio.galleryImage1?.startsWith('data:image')).toBe(false);
+      expect(createdPortfolio.galleryImage1?.includes('wixstatic.com')).toBe(true);
+      
       expect(createdPortfolio.galleryImage2).toBeDefined();
+      expect(createdPortfolio.galleryImage2?.startsWith('data:image')).toBe(false);
+      expect(createdPortfolio.galleryImage2?.includes('wixstatic.com')).toBe(true);
+      
       expect(createdPortfolio.galleryImage3).toBeDefined();
+      expect(createdPortfolio.galleryImage3?.startsWith('data:image')).toBe(false);
+      expect(createdPortfolio.galleryImage3?.includes('wixstatic.com')).toBe(true);
     } catch (error) {
       console.error('❌ Failed to save portfolio:', error);
       throw error;
@@ -181,6 +204,21 @@ describe('WDE0009 Portfolio Upload Lifecycle', () => {
       console.log('  - Gallery image 1:', reloadedPortfolio?.galleryImage1);
       console.log('  - Gallery image 2:', reloadedPortfolio?.galleryImage2);
       console.log('  - Gallery image 3:', reloadedPortfolio?.galleryImage3);
+
+      // CRITICAL: Verify all reloaded images are in Wix format, not base64
+      expect(reloadedPortfolio?.mainImage?.startsWith('data:image')).toBe(false);
+      expect(reloadedPortfolio?.mainImage?.includes('wixstatic.com')).toBe(true);
+      
+      expect(reloadedPortfolio?.galleryImage1?.startsWith('data:image')).toBe(false);
+      expect(reloadedPortfolio?.galleryImage1?.includes('wixstatic.com')).toBe(true);
+      
+      expect(reloadedPortfolio?.galleryImage2?.startsWith('data:image')).toBe(false);
+      expect(reloadedPortfolio?.galleryImage2?.includes('wixstatic.com')).toBe(true);
+      
+      expect(reloadedPortfolio?.galleryImage3?.startsWith('data:image')).toBe(false);
+      expect(reloadedPortfolio?.galleryImage3?.includes('wixstatic.com')).toBe(true);
+      
+      console.log('✅ All reloaded images verified as Wix format (not base64)');
 
       // Update test state with reloaded data
       createdPortfolio = reloadedPortfolio;
@@ -285,6 +323,21 @@ describe('WDE0009 Portfolio Upload Lifecycle', () => {
       console.log('  - Gallery image 2: ✅ Unchanged');
       console.log('  - Gallery image 3: ✅ Unchanged');
 
+      // CRITICAL: Verify all final images are in Wix format, not base64
+      expect(finalPortfolio?.mainImage?.startsWith('data:image')).toBe(false);
+      expect(finalPortfolio?.mainImage?.includes('wixstatic.com')).toBe(true);
+      
+      expect(finalPortfolio?.galleryImage1?.startsWith('data:image')).toBe(false);
+      expect(finalPortfolio?.galleryImage1?.includes('wixstatic.com')).toBe(true);
+      
+      expect(finalPortfolio?.galleryImage2?.startsWith('data:image')).toBe(false);
+      expect(finalPortfolio?.galleryImage2?.includes('wixstatic.com')).toBe(true);
+      
+      expect(finalPortfolio?.galleryImage3?.startsWith('data:image')).toBe(false);
+      expect(finalPortfolio?.galleryImage3?.includes('wixstatic.com')).toBe(true);
+      
+      console.log('✅ All final images verified as Wix format (not base64)');
+
       console.log('\n🎉 WDE0009 Regression Test PASSED');
       console.log('   Complete portfolio lifecycle is healthy!');
     } catch (error) {
@@ -326,12 +379,20 @@ describe('WDE0009 Portfolio Upload Lifecycle', () => {
  * ✅ Image replacement
  * ✅ Final persistence verification
  * 
+ * CRITICAL IMAGE FORMAT VALIDATION:
+ * ✅ All images stored as Wix URLs (https://static.wixstatic.com/...)
+ * ✅ NO base64 encoding (data:image/jpeg;base64,...)
+ * ✅ Explicit assertion: image.startsWith('data:image') === false
+ * ✅ Explicit assertion: image.includes('wixstatic.com') === true
+ * ✅ Prevents regression to base64 storage format
+ * 
  * Architecture Validation:
  * ✅ Wix Media Manager stores images (simulated URLs)
  * ✅ Wix CMS stores metadata and image URLs
  * ✅ Frontend can retrieve and display images
  * ✅ No duplicate storage
  * ✅ No custom image logic
+ * ✅ Validator path correctly enforced
  * 
  * Run with: npm run test:regression
  */
