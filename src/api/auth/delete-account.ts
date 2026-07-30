@@ -1,5 +1,5 @@
 import { getSecureContext } from '@wix/sdk';
-import { members } from '@wix/members';
+import { members, authentication } from '@wix/members';
 import { BaseCrudService } from '@/integrations';
 
 // Helper to extract IP address from request headers
@@ -88,11 +88,12 @@ export async function POST(request: Request) {
     // Get the secure context for backend operations
     const context = getSecureContext();
     const membersClient = members(context);
+    const authClient = authentication(context);
 
     // Get current member
     const currentMember = await membersClient.getCurrentMember({ fieldsets: ['FULL'] });
-    
-    if (!currentMember?.member?._id) {
+
+    if (!currentMember?.member?._id || !currentMember?.member?.loginEmail) {
       return new Response(
         JSON.stringify({ message: 'Not authenticated' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -100,6 +101,26 @@ export async function POST(request: Request) {
     }
 
     const memberId = currentMember.member._id;
+
+    // CRITICAL: the password field was previously only checked for being
+    // non-empty - ANY non-empty string deleted the account, the "confirm
+    // your password" prompt was pure UX theater with zero real
+    // verification behind it. Mirrors the real check already used in
+    // login-for-change-password.ts: attempt a real login with the
+    // member's own email + the submitted password, which only succeeds
+    // if the password is actually correct.
+    try {
+      await authClient.login({
+        loginEmail: currentMember.member.loginEmail,
+        password,
+      });
+    } catch (authError) {
+      console.error('Delete account - password verification failed:', authError);
+      return new Response(
+        JSON.stringify({ message: 'Incorrect password' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     // LINE 71: RATE LIMIT CHECK - Delete account: 3 attempts per member per 24 hours
     const rateLimitWindow = 24 * 60 * 60 * 1000; // 24 hours

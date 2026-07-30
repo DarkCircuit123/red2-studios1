@@ -94,10 +94,14 @@ export async function POST({ request }: { request: Request }) {
 
     // Server-side filtered query - only fetch matching email and code
     // This prevents the full collection from being exposed to the client
+    // (limit must be large enough to actually search the collection - see
+    // ClientLoginPage.tsx / ClientGalleryDashboardPage.tsx for the same
+    // 100-item convention used elsewhere; limit: 1 would only ever inspect
+    // one arbitrary record)
     const result = await BaseCrudService.getAll<ClientProofingGalleries>(
       'clientgalleries',
       {},
-      { limit: 1 }
+      { limit: 100 }
     );
 
     // Filter on server side (additional security layer)

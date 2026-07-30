@@ -198,6 +198,33 @@ export interface ClientsPress {
 
 
 /**
+ * Collection ID: contactsubmissions
+ * Interface for ContactSubmissions
+ */
+export interface ContactSubmissions {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  name?: string;
+  /** @wixFieldType text */
+  email?: string;
+  /** @wixFieldType text */
+  subject?: string;
+  /** @wixFieldType text */
+  message?: string;
+  /** @wixFieldType text */
+  ipAddress?: string;
+  /** @wixFieldType text */
+  userAgent?: string;
+  /** @wixFieldType datetime */
+  submittedAt?: Date | string;
+  /** @wixFieldType text */
+  status?: string;
+}
+
+
+/**
  * Collection ID: dataexportaudit
  * Interface for DataExportAudit
  */
@@ -394,6 +421,29 @@ export interface Portfolio {
   galleryImage2?: string;
   /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
   galleryImage3?: string;
+}
+
+
+/**
+ * Collection ID: portfolioimagebackups
+ * Interface for PortfolioImageBackups
+ */
+export interface PortfolioImageBackups {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  portfolioItemId?: string;
+  /** @wixFieldType text */
+  mainImage?: string;
+  /** @wixFieldType text */
+  galleryImage1?: string;
+  /** @wixFieldType text */
+  galleryImage2?: string;
+  /** @wixFieldType text */
+  galleryImage3?: string;
+  /** @wixFieldType datetime */
+  backupCreatedAt?: Date | string;
 }
 
 

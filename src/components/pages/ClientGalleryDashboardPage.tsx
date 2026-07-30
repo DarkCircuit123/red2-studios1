@@ -5,8 +5,8 @@ import { LogOut, Calendar, CheckCircle, Clock, AlertCircle, Lock } from 'lucide-
 import { BaseCrudService, useMember } from '@/integrations';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { SEOHead } from '@/components/SEOHead';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import SEOHead from '@/components/SEOHead';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ClientProofingGalleries } from '@/entities';
 

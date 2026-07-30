@@ -1154,6 +1154,20 @@ export default function HangmanGamePage() {
       </AnimatePresence>
 
       <main className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8 md:py-12">
+        {/* Exit/Home button - previously there was no way to leave this page
+            other than the browser back button. `navigate` and the `Home`
+            icon were already imported here but never actually used. */}
+        <motion.button
+          onClick={() => navigate('/')}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-black/70 backdrop-blur-md border-2 border-cyan-400/60 rounded-lg text-cyan-300 font-mono text-sm uppercase tracking-widest hover:border-cyan-300 hover:bg-black/90 transition-all"
+          aria-label="Exit to home page"
+        >
+          <Home className="w-4 h-4" />
+          Exit
+        </motion.button>
+
         {/* Header - VIP Status & Sound Toggle */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}

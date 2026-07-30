@@ -19,23 +19,35 @@
  */
 
 import type { APIRoute } from 'astro';
+import { readSecret } from '@/lib/auth-security';
+// These handlers are called directly, in-process, instead of via loopback
+// HTTP fetch() - see uploadBase64ImageToWix() and migratePortfolioImages()
+// below. A relative fetch('/api/...') has no origin to resolve against in
+// this server-side Cloudflare Workers runtime and throws immediately.
+import { GET as portfolioScanHandler } from '@/api/portfolio-scan';
+import { POST as portfolioUpdateHandler } from '@/api/portfolio-update';
+import { POST as mediaUploadHandler } from '@/api/media/upload';
 
 /**
  * Verify admin authentication and migration secret
  */
-function verifyAdminAccess(request: Request): { valid: boolean; error?: string } {
+function verifyAdminAccess(request: Request): { valid: boolean; error?: string; status?: number } {
   // Check for migration secret key
   const migrationSecret = request.headers.get('x-migration-secret');
-  const expectedSecret = process.env.PORTFOLIO_MIGRATION_SECRET;
+  const expectedSecret = readSecret('PORTFOLIO_MIGRATION_SECRET');
 
   if (!expectedSecret) {
     console.error('[MIGRATION] PORTFOLIO_MIGRATION_SECRET not configured');
-    return { valid: false, error: 'Migration not configured' };
+    return {
+      valid: false,
+      error: 'Server configuration error: PORTFOLIO_MIGRATION_SECRET is not set',
+      status: 500,
+    };
   }
 
   if (!migrationSecret || migrationSecret !== expectedSecret) {
     console.warn('[MIGRATION] Invalid migration secret provided');
-    return { valid: false, error: 'Unauthorized: Invalid migration secret' };
+    return { valid: false, error: 'Unauthorized: Invalid migration secret', status: 401 };
   }
 
   return { valid: true };
@@ -105,11 +117,13 @@ async function uploadBase64ImageToWix(base64String: string, fileName: string): P
     formData.append('file', file);
     formData.append('fileName', fileName);
 
-    // Upload via media endpoint
-    const response = await fetch('/api/media/upload', {
+    // Upload via media endpoint - call the handler directly in-process
+    // rather than looping back over HTTP (see import comment above).
+    const uploadRequest = new Request('https://internal.invalid/api/media/upload', {
       method: 'POST',
       body: formData,
     });
+    const response = await mediaUploadHandler({ request: uploadRequest } as unknown as Parameters<typeof mediaUploadHandler>[0]);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -130,8 +144,14 @@ async function uploadBase64ImageToWix(base64String: string, fileName: string): P
 
 /**
  * Main migration function
+ *
+ * `migrationSecret` is the already-validated PORTFOLIO_MIGRATION_SECRET value
+ * (read once via readSecret() in the POST handler below) - it's threaded
+ * through here so the in-process calls to the portfolio-scan and
+ * portfolio-update handlers can present it via the same 'x-migration-secret'
+ * header those handlers independently check.
  */
-async function migratePortfolioImages(): Promise<MigrationResult> {
+async function migratePortfolioImages(migrationSecret: string): Promise<MigrationResult> {
   const logs: MigrationLog[] = [];
   let totalItems = 0;
   let itemsWithBase64 = 0;
@@ -159,14 +179,16 @@ async function migratePortfolioImages(): Promise<MigrationResult> {
   try {
     console.log('[MIGRATION] Starting Portfolio base64 image migration...');
 
-    // Fetch all Portfolio items
-    const response = await fetch('/api/portfolio-scan', {
+    // Fetch all Portfolio items - call the portfolio-scan handler directly
+    // in-process rather than looping back over HTTP (see import comment above).
+    const scanRequest = new Request('https://internal.invalid/api/portfolio-scan', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'x-migration-secret': process.env.PORTFOLIO_MIGRATION_SECRET || '',
+        'x-migration-secret': migrationSecret,
       },
     });
+    const response = await portfolioScanHandler({ request: scanRequest } as unknown as Parameters<typeof portfolioScanHandler>[0]);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch portfolio items: ${response.status}`);
@@ -220,18 +242,21 @@ async function migratePortfolioImages(): Promise<MigrationResult> {
 
         if (Object.keys(updates).length > 0) {
           try {
-            // Update the portfolio item with new URLs
-            const updateResponse = await fetch('/api/portfolio-update', {
+            // Update the portfolio item with new URLs - call the
+            // portfolio-update handler directly in-process rather than
+            // looping back over HTTP (see import comment above).
+            const updateRequest = new Request('https://internal.invalid/api/portfolio-update', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'x-migration-secret': process.env.PORTFOLIO_MIGRATION_SECRET || '',
+                'x-migration-secret': migrationSecret,
               },
               body: JSON.stringify({
                 itemId: item._id,
                 updates,
               }),
             });
+            const updateResponse = await portfolioUpdateHandler({ request: updateRequest } as unknown as Parameters<typeof portfolioUpdateHandler>[0]);
 
             if (!updateResponse.ok) {
               throw new Error(`Update failed with status ${updateResponse.status}`);
@@ -297,13 +322,17 @@ export const POST: APIRoute = async ({ request }) => {
           error: authCheck.error,
         }),
         {
-          status: 401,
+          status: authCheck.status ?? 401,
           headers: { 'Content-Type': 'application/json' },
         }
       );
     }
 
-    const result = await migratePortfolioImages();
+    // verifyAdminAccess() above already confirmed this is set (it fails
+    // closed with a 500 "Server configuration error" otherwise).
+    const migrationSecret = readSecret('PORTFOLIO_MIGRATION_SECRET')!;
+
+    const result = await migratePortfolioImages(migrationSecret);
 
     return new Response(
       JSON.stringify({

@@ -1,19 +1,27 @@
 import type { APIRoute } from 'astro';
+import { files } from '@wix/media';
 
 /**
- * Media Upload API Endpoint - CORRECT FIX FOR WDE0009
- * 
+ * Media Upload API Endpoint - REAL FIX FOR WDE0009
+ *
  * This endpoint:
  * 1. Receives image files from the frontend
- * 2. Uploads them to Wix Media Manager
- * 3. Returns a Wix media URL (wix:image:// or https://static.wixstatic.com/)
+ * 2. Uploads them to the real Wix Media Manager (generateFileUploadUrl + PUT)
+ * 3. Returns the actual Wix media URL Media Manager assigns
  * 4. Frontend stores only the URL string in CMS (tiny payload)
- * 
- * The key fix: Store Wix media URLs, not base64 data
- * This prevents WDE0009 "Document is too large" errors
- * 
- * CMS payload before: 2.67MB base64 string = WDE0009 error
- * CMS payload after: ~50 bytes URL string = No error
+ *
+ * The previous version of this file only FABRICATED a URL in the
+ * static.wixstatic.com shape (Date.now() + a random suffix as a fake
+ * mediaId) without ever uploading the file bytes anywhere - it also
+ * called browser-only APIs (Blob/URL.createObjectURL) that don't exist
+ * in the Cloudflare Workers runtime this route actually executes in.
+ * "Uploads" always returned 200 with a URL pointing at nothing real.
+ * This mirrors the genuine two-step upload flow already fixed in
+ * src/api/upload-music.ts.
+ *
+ * The key fix: store a real Wix media URL, not base64 data and not a
+ * fabricated one. This prevents WDE0009 "Document is too large" errors
+ * AND actually hosts the image somewhere resolvable.
  */
 
 export const POST: APIRoute = async ({ request }) => {
@@ -82,22 +90,39 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Upload to Wix Media Manager
-    console.log('[MEDIA_UPLOAD] Uploading to Wix Media Manager...');
-    
-    // Create a temporary blob URL for preview (not for storage)
+    // Upload to the REAL Wix Media Manager - two-step flow: request an
+    // upload URL, then PUT the actual file bytes to it.
+    console.log('[MEDIA_UPLOAD] Requesting Wix Media Manager upload URL...');
+    const { uploadUrl } = await files.generateFileUploadUrl(file.type, {
+      fileName: file.name,
+    });
+
     const buffer = await file.arrayBuffer();
-    const blob = new Blob([buffer], { type: file.type });
-    const previewUrl = URL.createObjectURL(blob);
 
-    // Generate Wix media URL format
-    // In production, this would call the actual Wix Media Manager API
-    // For now, we generate a URL that follows Wix conventions
-    const mediaId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const mediaUrl = `https://static.wixstatic.com/media/${mediaId}~mv2.${file.name.split('.').pop() || 'jpg'}`;
+    console.log('[MEDIA_UPLOAD] Uploading file bytes to Wix Media Manager...');
+    const uploadResponse = await fetch(
+      `${uploadUrl}?filename=${encodeURIComponent(file.name)}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: buffer,
+      }
+    );
 
-    // Clean up preview URL
-    URL.revokeObjectURL(previewUrl);
+    if (!uploadResponse.ok) {
+      const uploadErrorText = await uploadResponse.text().catch(() => '');
+      console.error(`[MEDIA_UPLOAD] Media Manager upload failed: ${uploadResponse.status} ${uploadErrorText}`);
+      throw new Error(`Media Manager upload failed with status ${uploadResponse.status}`);
+    }
+
+    const uploadResult = await uploadResponse.json();
+    const mediaUrl: string | undefined = uploadResult?.file?.url;
+    const mediaId: string | undefined = uploadResult?.file?.id;
+
+    if (!mediaUrl) {
+      console.error('[MEDIA_UPLOAD] Media Manager response missing file URL:', uploadResult);
+      throw new Error('Media Manager did not return a file URL');
+    }
 
     const totalTime = Date.now() - startTime;
     console.log(`[MEDIA_UPLOAD] Media upload successful in ${totalTime}ms`);
@@ -113,7 +138,7 @@ export const POST: APIRoute = async ({ request }) => {
         debug: {
           originalSizeMB: fileSizeMB,
           processingTimeMs: totalTime,
-          note: 'Wix Media URL stored in CMS - only ~50 bytes, prevents WDE0009'
+          note: 'Real Wix Media Manager URL stored in CMS - tiny payload, avoids WDE0009'
         }
       }),
       {

@@ -10,6 +10,7 @@
  */
 
 import type { APIRoute } from 'astro';
+import { readSecret } from '@/lib/auth-security';
 
 interface UpdateRequest {
   itemId: string;
@@ -19,19 +20,23 @@ interface UpdateRequest {
 /**
  * Verify admin authentication and migration secret
  */
-function verifyAdminAccess(request: Request): { valid: boolean; error?: string } {
+function verifyAdminAccess(request: Request): { valid: boolean; error?: string; status?: number } {
   // Check for migration secret key
   const migrationSecret = request.headers.get('x-migration-secret');
-  const expectedSecret = process.env.PORTFOLIO_MIGRATION_SECRET;
+  const expectedSecret = readSecret('PORTFOLIO_MIGRATION_SECRET');
 
   if (!expectedSecret) {
     console.error('[PORTFOLIO_UPDATE] PORTFOLIO_MIGRATION_SECRET not configured');
-    return { valid: false, error: 'Migration not configured' };
+    return {
+      valid: false,
+      error: 'Server configuration error: PORTFOLIO_MIGRATION_SECRET is not set',
+      status: 500,
+    };
   }
 
   if (!migrationSecret || migrationSecret !== expectedSecret) {
     console.warn('[PORTFOLIO_UPDATE] Invalid migration secret provided');
-    return { valid: false, error: 'Unauthorized: Invalid migration secret' };
+    return { valid: false, error: 'Unauthorized: Invalid migration secret', status: 401 };
   }
 
   return { valid: true };
@@ -49,7 +54,7 @@ export const POST: APIRoute = async ({ request }) => {
           error: authCheck.error,
         }),
         {
-          status: 401,
+          status: authCheck.status ?? 401,
           headers: { 'Content-Type': 'application/json' },
         }
       );
@@ -75,7 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Dynamically import BaseCrudService
     const { BaseCrudService } = await import('@/integrations');
-    const { Portfolio } = await import('@/entities/index');
+    const { Portfolio, PortfolioImageBackups } = await import('@/entities/index');
 
     // First, fetch the current item to create a backup
     const currentItem = await BaseCrudService.getById<Portfolio>('portfolio', itemId);
@@ -96,14 +101,27 @@ export const POST: APIRoute = async ({ request }) => {
       backupCreatedAt: new Date().toISOString(),
     };
 
-    console.log(`[PORTFOLIO_UPDATE] Created backup for rollback safety`);
+    // Actually persist the backup to a dedicated CMS collection before the
+    // destructive update runs. Previously this object was only logged and
+    // returned in the response body - never written anywhere durable - so
+    // the "rollback safety" claimed above did not actually exist once the
+    // process exited or the response was discarded.
+    await BaseCrudService.create<PortfolioImageBackups>('portfolioimagebackups', {
+      _id: crypto.randomUUID(),
+      portfolioItemId: itemId,
+      mainImage: legacyImageBackup.mainImage,
+      galleryImage1: legacyImageBackup.galleryImage1,
+      galleryImage2: legacyImageBackup.galleryImage2,
+      galleryImage3: legacyImageBackup.galleryImage3,
+      backupCreatedAt: legacyImageBackup.backupCreatedAt,
+    });
 
-    // Prepare update object with backup
+    console.log(`[PORTFOLIO_UPDATE] Persisted backup to portfolioimagebackups for rollback safety`);
+
+    // Prepare update object
     const updateData: Partial<Portfolio> = {
       _id: itemId,
       ...updates,
-      // Store backup as JSON string for rollback capability
-      // Note: This assumes a legacyImageBackup field exists in the schema
     };
 
     // Update the portfolio item

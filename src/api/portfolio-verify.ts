@@ -9,6 +9,7 @@
  */
 
 import type { APIRoute } from 'astro';
+import { readSecret } from '@/lib/auth-security';
 
 interface VerificationResult {
   totalItems: number;
@@ -26,19 +27,23 @@ interface VerificationResult {
 /**
  * Verify admin authentication and migration secret
  */
-function verifyAdminAccess(request: Request): { valid: boolean; error?: string } {
+function verifyAdminAccess(request: Request): { valid: boolean; error?: string; status?: number } {
   // Check for migration secret key
   const migrationSecret = request.headers.get('x-migration-secret');
-  const expectedSecret = process.env.PORTFOLIO_MIGRATION_SECRET;
+  const expectedSecret = readSecret('PORTFOLIO_MIGRATION_SECRET');
 
   if (!expectedSecret) {
     console.error('[PORTFOLIO_VERIFY] PORTFOLIO_MIGRATION_SECRET not configured');
-    return { valid: false, error: 'Migration not configured' };
+    return {
+      valid: false,
+      error: 'Server configuration error: PORTFOLIO_MIGRATION_SECRET is not set',
+      status: 500,
+    };
   }
 
   if (!migrationSecret || migrationSecret !== expectedSecret) {
     console.warn('[PORTFOLIO_VERIFY] Invalid migration secret provided');
-    return { valid: false, error: 'Unauthorized: Invalid migration secret' };
+    return { valid: false, error: 'Unauthorized: Invalid migration secret', status: 401 };
   }
 
   return { valid: true };
@@ -56,7 +61,7 @@ export const GET: APIRoute = async ({ request }) => {
           error: authCheck.error,
         }),
         {
-          status: 401,
+          status: authCheck.status ?? 401,
           headers: { 'Content-Type': 'application/json' },
         }
       );

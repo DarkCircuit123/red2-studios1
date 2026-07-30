@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { readSecret, constantTimeEqual } from '@/lib/auth-security';
 
 /**
  * Secure Private Page Authentication Check
@@ -32,12 +33,25 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Get password from environment variables (NEVER hardcode)
-    const privatePagePassword = import.meta.env.PRIVATE_PAGE_PASSWORD;
+    // Get password from environment variables (NEVER hardcode).
+    // readSecret() also tolerates a "KEY = value" string pasted into the
+    // secret's value field, same as the admin login secrets.
+    const privatePagePassword = readSecret('PRIVATE_PAGE_PASSWORD');
 
-    // Validate password
-    // In production, use bcrypt or similar for password hashing
-    const isValid = password === privatePagePassword;
+    if (!privatePagePassword) {
+      // Distinguish "nothing is configured" from "wrong password" - this
+      // was previously silently falling through to compare against
+      // `undefined` and returning a generic "Invalid credentials", which
+      // permanently locks the page with no signal as to why.
+      console.error('[SECURITY] PRIVATE_PAGE_PASSWORD is not configured');
+      return new Response(
+        JSON.stringify({ authenticated: false, error: 'Server configuration error' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Constant-time comparison to prevent timing attacks (same as admin-check.ts)
+    const isValid = constantTimeEqual(password, privatePagePassword);
 
     if (!isValid) {
       // Log failed attempt (for security monitoring)

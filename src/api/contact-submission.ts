@@ -1,5 +1,5 @@
 import { BaseCrudService } from '@/integrations';
-import { APIRateLimits } from '@/entities';
+import { APIRateLimits, ContactSubmissions } from '@/entities';
 
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
 const MAX_REQUESTS_PER_IP = 5; // Max 5 messages per IP per hour
@@ -205,8 +205,29 @@ export async function POST(request: Request) {
     // Log successful attempt
     await logSubmissionAttempt(clientIP, true, userAgent);
 
-    // TODO: Send email notification (when backend functions are available)
-    // For now, just return success
+    // Persist the submission so it durably survives. Previously this endpoint
+    // validated the form and applied rate limiting, but never actually saved
+    // the message anywhere - every contact form submission was silently
+    // discarded after a "success" response was returned to the visitor.
+    console.log(`[CONTACT_SUBMISSION] Saving submission from ${email.trim()}...`);
+    await BaseCrudService.create<ContactSubmissions>('contactsubmissions', {
+      _id: crypto.randomUUID(),
+      name: name.trim(),
+      email: email.trim(),
+      subject: subject?.trim() || '',
+      message: message.trim(),
+      ipAddress: clientIP,
+      userAgent,
+      submittedAt: new Date(),
+      status: 'new',
+    });
+    console.log('[CONTACT_SUBMISSION] Submission saved successfully');
+
+    // NOTE: Outbound email notification (e.g. alerting the business owner) is
+    // NOT wired up here - no email service/API key is configured in this
+    // environment. The submission is now durably saved in the
+    // `contactsubmissions` CMS collection; sending a notification email is a
+    // separate, still-open follow-up item.
 
     return new Response(
       JSON.stringify({
