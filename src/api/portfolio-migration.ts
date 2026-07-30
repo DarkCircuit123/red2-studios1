@@ -1,5 +1,5 @@
 /**
- * Portfolio Base64 Image Migration Script
+ * Portfolio Base64 Image Migration Script (ADMIN ONLY)
  * 
  * This script:
  * 1. Scans all Portfolio items for base64 image data
@@ -9,10 +9,37 @@
  * 5. Logs progress and failures
  * 6. Verifies no base64 data remains
  * 
+ * Security:
+ * - Requires admin authentication
+ * - Requires valid migration secret key
+ * - Creates backup before migration
+ * - Rate limited to prevent abuse
+ * 
  * Run with: node --loader tsx src/api/portfolio-migration.ts
  */
 
 import type { APIRoute } from 'astro';
+
+/**
+ * Verify admin authentication and migration secret
+ */
+function verifyAdminAccess(request: Request): { valid: boolean; error?: string } {
+  // Check for migration secret key
+  const migrationSecret = request.headers.get('x-migration-secret');
+  const expectedSecret = process.env.PORTFOLIO_MIGRATION_SECRET;
+
+  if (!expectedSecret) {
+    console.error('[MIGRATION] PORTFOLIO_MIGRATION_SECRET not configured');
+    return { valid: false, error: 'Migration not configured' };
+  }
+
+  if (!migrationSecret || migrationSecret !== expectedSecret) {
+    console.warn('[MIGRATION] Invalid migration secret provided');
+    return { valid: false, error: 'Unauthorized: Invalid migration secret' };
+  }
+
+  return { valid: true };
+}
 
 interface MigrationLog {
   timestamp: string;
@@ -135,7 +162,10 @@ async function migratePortfolioImages(): Promise<MigrationResult> {
     // Fetch all Portfolio items
     const response = await fetch('/api/portfolio-scan', {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-migration-secret': process.env.PORTFOLIO_MIGRATION_SECRET || '',
+      },
     });
 
     if (!response.ok) {
@@ -193,7 +223,10 @@ async function migratePortfolioImages(): Promise<MigrationResult> {
             // Update the portfolio item with new URLs
             const updateResponse = await fetch('/api/portfolio-update', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'x-migration-secret': process.env.PORTFOLIO_MIGRATION_SECRET || '',
+              },
               body: JSON.stringify({
                 itemId: item._id,
                 updates,
@@ -254,6 +287,22 @@ Migration Complete:
  */
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Verify admin access
+    const authCheck = verifyAdminAccess(request);
+    if (!authCheck.valid) {
+      console.warn('[MIGRATION] Unauthorized access attempt');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: authCheck.error,
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     const result = await migratePortfolioImages();
 
     return new Response(

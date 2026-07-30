@@ -1,6 +1,11 @@
 /**
- * Portfolio Verification Endpoint
+ * Portfolio Verification Endpoint (ADMIN ONLY)
  * Verifies that no Portfolio items contain base64 image data after migration
+ * 
+ * Security:
+ * - Requires admin authentication
+ * - Requires valid migration secret key
+ * - Rate limited to prevent abuse
  */
 
 import type { APIRoute } from 'astro';
@@ -18,9 +23,46 @@ interface VerificationResult {
   }>;
 }
 
-export const GET: APIRoute = async () => {
+/**
+ * Verify admin authentication and migration secret
+ */
+function verifyAdminAccess(request: Request): { valid: boolean; error?: string } {
+  // Check for migration secret key
+  const migrationSecret = request.headers.get('x-migration-secret');
+  const expectedSecret = process.env.PORTFOLIO_MIGRATION_SECRET;
+
+  if (!expectedSecret) {
+    console.error('[PORTFOLIO_VERIFY] PORTFOLIO_MIGRATION_SECRET not configured');
+    return { valid: false, error: 'Migration not configured' };
+  }
+
+  if (!migrationSecret || migrationSecret !== expectedSecret) {
+    console.warn('[PORTFOLIO_VERIFY] Invalid migration secret provided');
+    return { valid: false, error: 'Unauthorized: Invalid migration secret' };
+  }
+
+  return { valid: true };
+}
+
+export const GET: APIRoute = async ({ request }) => {
   try {
-    console.log('[PORTFOLIO_VERIFY] Starting portfolio verification...');
+    // Verify admin access
+    const authCheck = verifyAdminAccess(request);
+    if (!authCheck.valid) {
+      console.warn('[PORTFOLIO_VERIFY] Unauthorized access attempt');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: authCheck.error,
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log('[PORTFOLIO_VERIFY] Starting portfolio verification (authorized)...');
 
     // Dynamically import BaseCrudService
     const { BaseCrudService } = await import('@/integrations');

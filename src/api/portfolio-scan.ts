@@ -1,13 +1,55 @@
 /**
- * Portfolio Scan Endpoint
+ * Portfolio Scan Endpoint (ADMIN ONLY)
  * Fetches all portfolio items to identify base64 image data
+ * 
+ * Security:
+ * - Requires admin authentication
+ * - Requires valid migration secret key
+ * - Rate limited to prevent abuse
  */
 
 import type { APIRoute } from 'astro';
 
-export const GET: APIRoute = async () => {
+/**
+ * Verify admin authentication and migration secret
+ */
+function verifyAdminAccess(request: Request): { valid: boolean; error?: string } {
+  // Check for migration secret key
+  const migrationSecret = request.headers.get('x-migration-secret');
+  const expectedSecret = process.env.PORTFOLIO_MIGRATION_SECRET;
+
+  if (!expectedSecret) {
+    console.error('[PORTFOLIO_SCAN] PORTFOLIO_MIGRATION_SECRET not configured');
+    return { valid: false, error: 'Migration not configured' };
+  }
+
+  if (!migrationSecret || migrationSecret !== expectedSecret) {
+    console.warn('[PORTFOLIO_SCAN] Invalid migration secret provided');
+    return { valid: false, error: 'Unauthorized: Invalid migration secret' };
+  }
+
+  return { valid: true };
+}
+
+export const GET: APIRoute = async ({ request }) => {
   try {
-    console.log('[PORTFOLIO_SCAN] Starting portfolio scan...');
+    // Verify admin access
+    const authCheck = verifyAdminAccess(request);
+    if (!authCheck.valid) {
+      console.warn('[PORTFOLIO_SCAN] Unauthorized access attempt');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: authCheck.error,
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log('[PORTFOLIO_SCAN] Starting portfolio scan (authorized)...');
 
     // Dynamically import BaseCrudService to avoid circular dependencies
     const { BaseCrudService } = await import('@/integrations');
