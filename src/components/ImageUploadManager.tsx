@@ -5,6 +5,7 @@ import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import MediaUploadService, { MediaUploadProgress } from '@/lib/media-upload-service';
 import WDE0009FixValidator from '@/lib/wde0009-fix-validation';
+import { validateImageStorage, validateCMSUpdatePayload } from '@/lib/image-storage-validator';
 
 interface ImageUploadManagerProps {
   onImageUpload: (imageUrl: string) => void;
@@ -106,13 +107,24 @@ export default function ImageUploadManager({
         throw new Error('Upload returned base64 data URL instead of Wix media URL. This would cause WDE0009 error.');
       }
 
+      // FINAL HARDENING: Validate image storage before CMS update
+      try {
+        validateImageStorage(result.mediaUrl, fieldName || 'image');
+      } catch (validationError) {
+        throw new Error(`Image storage validation failed: ${validationError instanceof Error ? validationError.message : String(validationError)}`);
+      }
+
       // Save media URL (not base64) to CMS if collection info provided
       if (collectionId && itemId && fieldName) {
         try {
-          await BaseCrudService.update(collectionId, {
+          // FINAL HARDENING: Validate entire CMS payload before update
+          const updatePayload = {
             _id: itemId,
             [fieldName]: result.mediaUrl
-          });
+          };
+          validateCMSUpdatePayload(collectionId, updatePayload);
+
+          await BaseCrudService.update(collectionId, updatePayload);
           onImageUpload(result.mediaUrl);
           setUploadStatus('success');
           setTimeout(() => setUploadStatus('idle'), 3000);
