@@ -11,7 +11,7 @@
 import wixData from 'wix-data';
 import { BookingAvailability } from '@/entities/index';
 
-export async function GET(request: Request) {
+export async function GET({ request }: { request: Request }) {
   try {
     console.log('[Backend] GET /api/booking-availability/get-public - Fetching public available slots');
 

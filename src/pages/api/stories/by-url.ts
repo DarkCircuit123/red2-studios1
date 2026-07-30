@@ -5,7 +5,7 @@
 
 import { getStoryBySourceURL } from '@/api/rss';
 
-export async function GET(request: Request) {
+export async function GET({ request }: { request: Request }) {
   const url = new URL(request.url);
   const sourceUrl = url.searchParams.get('url');
 

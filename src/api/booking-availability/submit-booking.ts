@@ -24,7 +24,7 @@ interface BookingSubmission {
   slotId: string; // ID of the availability slot being booked
 }
 
-export async function POST(request: Request) {
+export async function POST({ request }: { request: Request }) {
   try {
     console.log('[Backend] POST /api/booking-availability/submit-booking - Submitting booking');
     

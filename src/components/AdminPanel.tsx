@@ -95,17 +95,16 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           setAboutSettings(null);
         }
 
-        try {
-          const credsResult = await BaseCrudService.getAll<AdminCredentials>('admincredentials', {}, { limit: 1 });
-          if (credsResult?.items && credsResult.items.length > 0) {
-            const creds = credsResult.items[0];
-            setAdminCredentials(creds);
-            setNewUsername(creds.username || '');
-            setNewPassword(creds.password || '');
-          }
-        } catch (error) {
-          console.log('[ADMIN PANEL] Admin credentials not found in CMS');
-        }
+        // Admin credentials are NOT read from the CMS. They live in
+        // Secrets Manager (ADMIN_USERNAME / ADMIN_PASSWORD) and are only
+        // ever compared server-side in /api/auth/admin-check.
+        //
+        // This used to load the 'admincredentials' collection and pour the
+        // stored password straight into a form field. That collection was
+        // world-readable, so the password was retrievable by anyone, and
+        // the value shown here had no connection to the credentials that
+        // actually authenticate you. The collection is now locked to
+        // PRIVILEGED and nothing reads it.
       } catch (error) {
         console.error('[ADMIN PANEL] Error loading data:', error);
       } finally {
@@ -130,35 +129,25 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
       return;
     }
 
-    setIsSavingCredentials(true);
-    try {
-      if (adminCredentials) {
-        // Update existing credentials
-        await BaseCrudService.update('admincredentials', {
-          _id: adminCredentials._id,
-          username: newUsername,
-          password: newPassword
-        });
-        setAdminCredentials({ ...adminCredentials, username: newUsername, password: newPassword });
-      } else {
-        // Create new credentials
-        const newCreds = {
-          _id: crypto.randomUUID(),
-          username: newUsername,
-          password: newPassword
-        };
-        await BaseCrudService.create('admincredentials', newCreds);
-        setAdminCredentials(newCreds);
-      }
-      setCredentialsSuccess('Credentials saved successfully! New credentials will be active on next login.');
-      playClickSound();
-      setTimeout(() => setCredentialsSuccess(''), 3000);
-    } catch (error) {
-      console.error('[ADMIN PANEL] Error saving credentials:', error);
-      setCredentialsError('Failed to save credentials. Please try again.');
-    } finally {
-      setIsSavingCredentials(false);
-    }
+    // Deliberately does NOT write to the CMS.
+    //
+    // This previously saved the username and password as plaintext into
+    // the 'admincredentials' collection and reported "New credentials will
+    // be active on next login" - which was never true. Real admin auth
+    // compares against ADMIN_USERNAME / ADMIN_PASSWORD from Secrets
+    // Manager (see /api/auth/admin-check), and never consults that
+    // collection. So the form stored a readable copy of the password
+    // while changing nothing about how login actually works.
+    //
+    // Credentials must be rotated in Secrets Manager. Writing them from
+    // the browser would mean shipping them to a data collection, which is
+    // the exact problem being removed here.
+    setCredentialsError(
+      'Admin credentials are stored in Wix Secrets Manager, not in the CMS. ' +
+      'Update ADMIN_USERNAME / ADMIN_PASSWORD there (Developer Tools → Secrets Manager), ' +
+      'then republish. Saving them here would store your password in a data collection.'
+    );
+    setIsSavingCredentials(false);
   };
 
   if (!isAdminAuthenticated) {

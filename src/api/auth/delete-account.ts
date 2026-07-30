@@ -71,7 +71,7 @@ async function logRateLimitAttempt(
   }
 }
 
-export async function POST(request: Request) {
+export async function POST({ request }: { request: Request }) {
   const ipAddress = getClientIp(request);
   const userAgent = request.headers.get('user-agent') || 'unknown';
 

@@ -20,8 +20,16 @@
  */
 
 import wixData from 'wix-data';
+import { requireAdmin } from '@/lib/auth-security';
 
-export async function DELETE(request: Request) {
+export async function DELETE({ request, cookies }: { request: Request; cookies: any }) {
+  // ADMIN GATE: this route mutates the availability calendar with
+  // suppressAuth: true, bypassing collection permissions entirely.
+  // It previously had no auth at all - anyone who knew the URL could
+  // add, alter or wipe the entire booking calendar.
+  const denied = await requireAdmin(cookies, request, 'delete booking availability');
+  if (denied) return denied;
+
   const startTime = new Date();
   const requestId = Math.random().toString(36).substring(7);
   

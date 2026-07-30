@@ -10,9 +10,29 @@
 // Import Wix backend APIs - these run with elevated permissions
 import wixData from 'wix-data';
 import { Bookings } from '@/entities/index';
+import { verifyAdminToken, getClientIP } from '@/lib/auth-security';
 
-export async function GET(request: Request) {
+export async function GET({ request, cookies }: { request: Request; cookies: any }) {
   try {
+    // ADMIN GATE. This endpoint queries with suppressAuth: true, so it
+    // bypasses collection permissions entirely and returns every client's
+    // name, email, phone number and message. It previously had no
+    // authentication of any kind - anyone who knew the URL could GET the
+    // full client list. Locking the bookings collection to PRIVILEGED
+    // read would have been pointless while this route stayed open.
+    const sessionToken = cookies?.get?.('admin_session')?.value;
+    const validation = sessionToken
+      ? await verifyAdminToken(sessionToken)
+      : { valid: false as const };
+
+    if (!validation.valid) {
+      console.warn(`[SECURITY] Unauthenticated get-bookings attempt from IP: ${getClientIP(request.headers)}`);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('[Backend] GET /api/booking-availability/get-bookings - Fetching all bookings');
 
     // Use wixData.query with elevated permissions (backend-only)

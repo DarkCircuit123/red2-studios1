@@ -130,7 +130,7 @@ function validateEmail(email: string): boolean {
   return true;
 }
 
-export async function POST(request: Request) {
+export async function POST({ request }: { request: Request }) {
   try {
     const clientIP = getClientIP(request);
     const userAgent = request.headers.get('user-agent') || 'unknown';

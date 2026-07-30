@@ -5,7 +5,7 @@
 
 import { processFeed, getAllStories, getStoryBySourceURL } from '@/api/rss';
 
-export async function GET(request: Request) {
+export async function GET({ request }: { request: Request }) {
   const url = new URL(request.url);
   const limit = parseInt(url.searchParams.get('limit') || '12');
   const skip = parseInt(url.searchParams.get('skip') || '0');
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST({ request }: { request: Request }) {
   try {
     const newItems = await processFeed();
     return new Response(JSON.stringify({ 

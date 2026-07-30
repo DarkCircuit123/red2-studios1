@@ -40,6 +40,42 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
 }
 
 /**
+ * Admin gate for API routes.
+ *
+ * Returns null when the caller holds a valid admin session, or a ready-to-
+ * return 401 Response when they don't.
+ *
+ * Use this on EVERY route that calls Wix Data with `suppressAuth: true`.
+ * suppressAuth bypasses collection permissions completely, so such a route
+ * is only as protected as its own auth check - locking the collection down
+ * does nothing if an open endpoint reads or writes it with suppressAuth.
+ *
+ *   const denied = await requireAdmin(cookies, request);
+ *   if (denied) return denied;
+ */
+export async function requireAdmin(
+  cookies: { get?: (name: string) => { value?: string } | undefined } | undefined,
+  request: Request,
+  label = 'admin-only endpoint'
+): Promise<Response | null> {
+  const sessionToken = cookies?.get?.('admin_session')?.value;
+  const validation = sessionToken
+    ? await verifyAdminToken(sessionToken)
+    : { valid: false as const };
+
+  if (!validation.valid) {
+    console.warn(
+      `[SECURITY] Unauthorized ${label} attempt from IP: ${getClientIP(request.headers)}`
+    );
+    return new Response(
+      JSON.stringify({ success: false, error: 'Unauthorized' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  return null;
+}
+
+/**
  * Constant-time string comparison to prevent timing attacks
  * Compares two strings in constant time regardless of length or content
  */

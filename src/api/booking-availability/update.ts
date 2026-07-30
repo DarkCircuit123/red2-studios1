@@ -29,6 +29,7 @@
 
 import { BookingAvailability } from '@/entities/index';
 import wixData from 'wix-data';
+import { requireAdmin } from '@/lib/auth-security';
 
 // Validation helpers
 function validateDateFormat(date: string): boolean {
@@ -47,7 +48,14 @@ function isTimeAfter(startTime: string, endTime: string): boolean {
   return endTotalMin > startTotalMin;
 }
 
-export async function PUT(request: Request) {
+export async function PUT({ request, cookies }: { request: Request; cookies: any }) {
+  // ADMIN GATE: this route mutates the availability calendar with
+  // suppressAuth: true, bypassing collection permissions entirely.
+  // It previously had no auth at all - anyone who knew the URL could
+  // add, alter or wipe the entire booking calendar.
+  const denied = await requireAdmin(cookies, request, 'update booking availability');
+  if (denied) return denied;
+
   const startTime = new Date();
   const requestId = Math.random().toString(36).substring(7);
   

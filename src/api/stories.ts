@@ -9,7 +9,7 @@ import { processFeed, getAllStories, getStoryBySlug, getStoryBySourceURL } from 
  * GET /api/stories
  * Fetch all stories with pagination
  */
-export async function GET(request: Request) {
+export async function GET({ request }: { request: Request }) {
   const url = new URL(request.url);
   const limit = parseInt(url.searchParams.get('limit') || '12');
   const skip = parseInt(url.searchParams.get('skip') || '0');
@@ -76,7 +76,7 @@ export async function getStory(slug: string) {
  * POST /api/stories/sync
  * Manually trigger RSS feed sync
  */
-export async function POST(request: Request) {
+export async function POST({ request }: { request: Request }) {
   try {
     const newItems = await processFeed();
     return new Response(JSON.stringify({ 

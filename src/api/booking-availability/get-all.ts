@@ -26,7 +26,7 @@
 import wixData from 'wix-data';
 import { BookingAvailability } from '@/entities/index';
 
-export async function GET(request: Request) {
+export async function GET({ request }: { request: Request }) {
   const startTime = new Date();
   const requestId = Math.random().toString(36).substring(7);
   
