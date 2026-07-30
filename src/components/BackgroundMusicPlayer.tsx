@@ -30,7 +30,12 @@ export default function BackgroundMusicPlayer() {
           setMusicSettings(result.items[0]);
         }
       } catch (error) {
-        console.log('Failed to load music settings:', error);
+        // Suppress 403 errors from CMS - music is optional
+        if (error instanceof Error && error.message.includes('403')) {
+          console.log('[AUDIO] CMS access denied for music settings (expected in some environments)');
+        } else {
+          console.log('Failed to load music settings:', error);
+        }
       } finally {
         setIsLoadingSettings(false);
       }
@@ -156,10 +161,12 @@ export default function BackgroundMusicPlayer() {
         onError={handleAudioError}
         style={{ display: 'none' }}
       >
-        <source 
-          src={musicSettings?.musicUrl || 'https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3'} 
-          type="audio/mpeg"
-        />
+        {musicSettings?.musicUrl && (
+          <source 
+            src={musicSettings.musicUrl} 
+            type="audio/mpeg"
+          />
+        )}
       </audio>
 
       {/* Music control button - fixed position */}
