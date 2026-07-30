@@ -4,6 +4,7 @@ import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { Image } from '@/components/ui/image';
 
 export default function WorkPage() {
   const [projects, setProjects] = useState<Portfolio[]>([]);;
@@ -75,10 +76,12 @@ export default function WorkPage() {
               >
                 <div className="overflow-hidden bg-white/5 hover:bg-white/10 transition-colors">
                   {project.mainImage && (
-                    <img
+                    <Image
                       src={project.mainImage}
                       alt={project.projectName || 'Project'}
                       className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                      data-field-name="mainImage"
+                      data-record-id={project._id}
                     />
                   )}
                 </div>

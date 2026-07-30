@@ -105,7 +105,10 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
   useEffect(() => {
     // If src prop changes, resolve it through WixImageResolver and update state
     if (src !== imgSrc) {
-      const resolved = WixImageResolver.resolve(src);
+      const resolved = WixImageResolver.resolve(src, {
+        fieldName: props['data-field-name'] as string | undefined,
+        recordId: props['data-record-id'] as string | undefined
+      });
       setImgSrc(resolved.url);
     }
   }, [src])
@@ -115,7 +118,10 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
   }
 
   // Resolve the URL through WixImageResolver for consistency
-  const resolved = WixImageResolver.resolve(imgSrc);
+  const resolved = WixImageResolver.resolve(imgSrc, {
+    fieldName: props['data-field-name'] as string | undefined,
+    recordId: props['data-record-id'] as string | undefined
+  });
   const finalSrc = resolved.url;
 
   const imageProps = {

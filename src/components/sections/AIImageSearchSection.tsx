@@ -177,6 +177,8 @@ export default function AIImageSearchSection() {
                     src={item.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png'}
                     alt={item.projectName || 'Project'}
                     className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                    data-field-name="mainImage"
+                    data-record-id={item._id}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300" />
                 </div>

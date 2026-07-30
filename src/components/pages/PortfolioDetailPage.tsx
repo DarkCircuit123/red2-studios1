@@ -145,6 +145,7 @@ export default function PortfolioDetailPage() {
               src={selectedImage}
               alt="Full resolution image"
               className="w-full h-full object-contain"
+              data-field-name="lightbox"
             />
           </motion.div>
         </motion.div>
@@ -195,6 +196,8 @@ export default function PortfolioDetailPage() {
             src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_fcbd4072cbd84e428547c62bbddbf23c~mv2.png?originWidth=1152&originHeight=640'}
             alt={project.projectName}
             className="w-full h-auto object-cover"
+            data-field-name="mainImage"
+            data-record-id={project._id}
           />
         </motion.div>
 
@@ -279,6 +282,8 @@ export default function PortfolioDetailPage() {
                     src={image}
                     alt={`Gallery image ${index + 1}`}
                     className="w-full h-auto object-cover"
+                    data-field-name={`galleryImage${index + 1}`}
+                    data-record-id={project._id}
                   />
                 </div>
               ))}

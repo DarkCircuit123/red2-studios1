@@ -9,6 +9,10 @@
  * 
  * This resolver is the single source of truth for image URL handling.
  * All image rendering should route through this utility.
+ * 
+ * DEBUG MODE:
+ * - Production: Silently returns fallback for invalid URLs
+ * - Development: console.warn with detailed context (component, record ID, URL type)
  */
 
 export interface ResolvedImageUrl {
@@ -25,13 +29,31 @@ export interface ResolvedImageUrl {
 }
 
 const FALLBACK_IMAGE_URL = 'https://static.wixstatic.com/media/12d367_4f26ccd17f8f4e3a8958306ea08c2332~mv2.png';
+const IS_DEVELOPMENT = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
+
+/**
+ * Extract component name from stack trace for debug logging
+ */
+const getCallerComponent = (): string => {
+  if (typeof Error === 'undefined') return 'unknown';
+  const stack = new Error().stack || '';
+  const lines = stack.split('\n');
+  // Look for React component names in stack
+  for (const line of lines) {
+    if (line.includes('at ') && !line.includes('WixImageResolver')) {
+      const match = line.match(/at\s+(\w+)/);
+      if (match) return match[1];
+    }
+  }
+  return 'unknown';
+};
 
 class WixImageResolver {
   /**
    * Resolve any image URL to a valid, renderable format
    * This is the main entry point for all image rendering
    */
-  static resolve(url: string | undefined | null): ResolvedImageUrl {
+  static resolve(url: string | undefined | null, context?: { recordId?: string; fieldName?: string }): ResolvedImageUrl {
     // Handle empty/null URLs
     if (!url || typeof url !== 'string' || url.trim() === '') {
       return {
@@ -77,6 +99,18 @@ class WixImageResolver {
 
     // Check for base64 data URLs (NOT SUPPORTED - causes WDE0009)
     if (trimmedUrl.startsWith('data:image/') || trimmedUrl.startsWith('data:application/')) {
+      if (IS_DEVELOPMENT) {
+        const component = getCallerComponent();
+        console.warn(
+          `[WixImageResolver] Base64 image detected (development debug)\n` +
+          `  Component: ${component}\n` +
+          `  Record ID: ${context?.recordId || 'unknown'}\n` +
+          `  Field: ${context?.fieldName || 'unknown'}\n` +
+          `  URL Type: base64 data URL\n` +
+          `  Action: Using fallback image\n` +
+          `  Fix: Upload image to Wix Media Manager instead of storing base64`
+        );
+      }
       return {
         url: FALLBACK_IMAGE_URL,
         isValid: false,
@@ -88,6 +122,18 @@ class WixImageResolver {
 
     // Check for blob URLs (temporary previews - NOT SUPPORTED for storage)
     if (trimmedUrl.startsWith('blob:')) {
+      if (IS_DEVELOPMENT) {
+        const component = getCallerComponent();
+        console.warn(
+          `[WixImageResolver] Blob URL detected (development debug)\n` +
+          `  Component: ${component}\n` +
+          `  Record ID: ${context?.recordId || 'unknown'}\n` +
+          `  Field: ${context?.fieldName || 'unknown'}\n` +
+          `  URL Type: blob URL (temporary preview)\n` +
+          `  Action: Using fallback image\n` +
+          `  Fix: Upload image to Wix Media Manager before storing`
+        );
+      }
       return {
         url: FALLBACK_IMAGE_URL,
         isValid: false,
@@ -98,6 +144,18 @@ class WixImageResolver {
     }
 
     // Unknown format
+    if (IS_DEVELOPMENT) {
+      const component = getCallerComponent();
+      console.warn(
+        `[WixImageResolver] Unknown URL format detected (development debug)\n` +
+        `  Component: ${component}\n` +
+        `  Record ID: ${context?.recordId || 'unknown'}\n` +
+        `  Field: ${context?.fieldName || 'unknown'}\n` +
+        `  URL Type: unknown\n` +
+        `  URL Value: ${trimmedUrl.substring(0, 100)}${trimmedUrl.length > 100 ? '...' : ''}\n` +
+        `  Action: Using fallback image`
+      );
+    }
     return {
       url: FALLBACK_IMAGE_URL,
       isValid: false,

@@ -124,6 +124,7 @@ export default function PortfolioPage() {
               src={selectedImage}
               alt="Full resolution image"
               className="w-full h-full object-contain"
+              data-field-name="lightbox"
             />
           </motion.div>
         </motion.div>
@@ -180,6 +181,8 @@ export default function PortfolioPage() {
                     src={project.mainImage || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
                     alt={project.projectName}
                     className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-110"
+                    data-field-name="mainImage"
+                    data-record-id={project._id}
                   />
 
                   {/* Subtle grain overlay */}
