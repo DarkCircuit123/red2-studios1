@@ -1,12 +1,16 @@
 import type { APIRoute } from 'astro';
 import { BaseCrudService } from '@/integrations';
+import { constantTimeEqual, checkRateLimit, recordFailedAttempt, getClientIP, generateSessionToken } from '@/lib/auth-security';
 
 /**
- * Secure Admin Authentication Check
+ * Secure Admin Authentication Check - P1 HARDENED
  * 
- * This endpoint validates admin credentials server-side.
- * Credentials can be stored in CMS (adminCredentials collection) or environment variables.
- * NEVER expose credentials in frontend code.
+ * Security improvements:
+ * - Constant-time comparison to prevent timing attacks
+ * - Rate limiting per IP address
+ * - Session token generation for httpOnly cookies
+ * - Server-side session validation
+ * - No hardcoded credentials in code
  */
 
 export const POST: APIRoute = async ({ request }) => {
@@ -19,47 +23,77 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Parse request body
-    const body = await request.json();
-    const { username, password } = body;
-
-    // Validate input
-    if (!username || !password) {
+    // Get client IP for rate limiting
+    const clientIP = getClientIP(request.headers);
+    
+    // Check rate limit
+    const rateLimit = checkRateLimit(clientIP);
+    if (!rateLimit.allowed) {
+      console.warn(`[SECURITY] Rate limit exceeded for IP: ${clientIP}`);
       return new Response(
-        JSON.stringify({ authenticated: false, error: 'Missing credentials' }),
+        JSON.stringify({ 
+          authenticated: false, 
+          error: 'Too many attempts. Please try again later.',
+          retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000)
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
+      );
+    }
+
+    // Parse request body
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ authenticated: false, error: 'Invalid request body' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Try to get credentials from CMS first
-    let adminUsername = '';
-    let adminPassword = '';
-    
-    try {
-      const credentialsResult = await BaseCrudService.getAll('admincredentials', {}, { limit: 1 });
-      if (credentialsResult?.items && credentialsResult.items.length > 0) {
-        const creds = credentialsResult.items[0] as any;
-        adminUsername = creds.username || '';
-        adminPassword = creds.password || '';
-        console.log('[ADMIN AUTH] Loaded credentials from CMS');
-      }
-    } catch (cmsError) {
-      console.warn('[ADMIN AUTH] CMS credentials not available, falling back to env vars');
+    const { username, password } = body;
+
+    // Validate input
+    if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+      recordFailedAttempt(clientIP);
+      return new Response(
+        JSON.stringify({ authenticated: false, error: 'Invalid credentials format' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Fallback to environment variables if CMS credentials not found
+    // Sanitize inputs
+    const sanitizedUsername = username.trim().substring(0, 100);
+    const sanitizedPassword = password.substring(0, 500);
+
+    // Get credentials from environment (NEVER from CMS for admin auth)
+    const adminUsername = process.env.ADMIN_USERNAME || import.meta.env.ADMIN_USERNAME;
+    const adminPassword = process.env.ADMIN_PASSWORD || import.meta.env.ADMIN_PASSWORD;
+
+    // Verify credentials exist
     if (!adminUsername || !adminPassword) {
-      adminUsername = import.meta.env.ADMIN_USERNAME || 'admin';
-      adminPassword = import.meta.env.ADMIN_PASSWORD || 'Iloveanna1!';
-      console.log('[ADMIN AUTH] Using environment variable credentials');
+      console.error('[SECURITY] Admin credentials not configured');
+      recordFailedAttempt(clientIP);
+      return new Response(
+        JSON.stringify({ authenticated: false, error: 'Server configuration error' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Validate credentials
-    const isValid = username === adminUsername && password === adminPassword;
+    // CRITICAL: Use constant-time comparison to prevent timing attacks
+    const usernameMatch = constantTimeEqual(sanitizedUsername, adminUsername);
+    const passwordMatch = constantTimeEqual(sanitizedPassword, adminPassword);
+    const isValid = usernameMatch && passwordMatch;
 
     if (!isValid) {
-      // Log failed attempt (for security monitoring)
-      console.warn(`[SECURITY] Failed admin login attempt for user: ${username}`);
+      recordFailedAttempt(clientIP);
+      console.warn(`[SECURITY] Failed admin login attempt from IP: ${clientIP}`);
       
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Invalid credentials' }),
@@ -67,16 +101,28 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Credentials are valid - return success
-    console.log(`[ADMIN AUTH] Successful login for user: ${username}`);
+    // Generate session token
+    const sessionToken = generateSessionToken();
+    const sessionExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+    console.log(`[ADMIN AUTH] Successful login for user: ${sanitizedUsername} from IP: ${clientIP}`);
+
+    // Return success with session token
+    // In production, this should be set as httpOnly cookie via Set-Cookie header
     return new Response(
       JSON.stringify({ 
         authenticated: true,
-        message: 'Admin authentication successful'
+        message: 'Admin authentication successful',
+        sessionToken,
+        expiresAt: sessionExpiry.toISOString()
       }),
       { 
         status: 200, 
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          // Set httpOnly cookie (requires proper cookie configuration)
+          'Set-Cookie': `admin_session=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=1800`
+        }
       }
     );
 
