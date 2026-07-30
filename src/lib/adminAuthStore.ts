@@ -21,7 +21,7 @@ const MAX_FAILED_ATTEMPTS = 3;
  */
 export const useAdminAuth = create<AdminAuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isAdminAuthenticated: false,
       adminUsername: null,
       failedAttempts: 0,
@@ -41,6 +41,7 @@ export const useAdminAuth = create<AdminAuthState>()(
           const data = await response.json();
 
           if (data.authenticated) {
+            // CRITICAL: Ensure state is fully updated before returning
             set({
               isAdminAuthenticated: true,
               adminUsername: username,
@@ -48,6 +49,14 @@ export const useAdminAuth = create<AdminAuthState>()(
               isLoading: false,
               error: null,
             });
+            
+            // Verify state was set
+            const state = get();
+            console.log('[ADMIN AUTH] Login successful. State:', { 
+              isAdminAuthenticated: state.isAdminAuthenticated,
+              adminUsername: state.adminUsername 
+            });
+            
             return true;
           }
 
@@ -72,6 +81,7 @@ export const useAdminAuth = create<AdminAuthState>()(
 
           return false;
         } catch (error) {
+          console.error('[ADMIN AUTH] Login error:', error);
           set({
             isLoading: false,
             error: 'Network error. Please try again.',
@@ -85,6 +95,7 @@ export const useAdminAuth = create<AdminAuthState>()(
           adminUsername: null,
           error: null,
         });
+        console.log('[ADMIN AUTH] Logout successful');
       },
       resetFailedAttempts: () => {
         set({

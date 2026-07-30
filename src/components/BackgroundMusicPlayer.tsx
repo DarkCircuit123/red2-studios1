@@ -132,7 +132,7 @@ export default function BackgroundMusicPlayer() {
   };
 
   const handleAudioError = () => {
-    console.error('Audio element error');
+    console.error('[AUDIO] Audio element error event triggered');
     setAudioError(true);
   };
 

@@ -20,22 +20,31 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
     setError('');
     setIsLoading(true);
 
-    // Simulate network delay for security
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    if (login(username, password)) {
-      setUsername('');
-      setPassword('');
-      onClose();
-    } else {
-      const remainingAttempts = 3 - failedAttempts;
-      if (remainingAttempts > 0) {
-        setError(`Invalid username or password. ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.`);
+    try {
+      // Call login and await the result
+      const success = await login(username, password);
+      
+      if (success) {
+        console.log('[ADMIN LOGIN] Login successful, closing modal');
+        setUsername('');
+        setPassword('');
+        // Small delay to ensure state is persisted before closing
+        setTimeout(() => {
+          onClose();
+        }, 100);
+      } else {
+        const remainingAttempts = 3 - failedAttempts;
+        if (remainingAttempts > 0) {
+          setError(`Invalid username or password. ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.`);
+        }
+        setPassword('');
       }
-      setPassword('');
+    } catch (err) {
+      console.error('[ADMIN LOGIN] Error during login:', err);
+      setError('An error occurred during login. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
