@@ -73,18 +73,15 @@ export const POST: APIRoute = async ({ request }) => {
     const sanitizedPassword = password.substring(0, 500);
 
     // Get credentials from environment (NEVER from CMS for admin auth).
-    // 'Claude' / 'Claude2' fallback: the Secrets Manager entries for these
-    // are currently named 'Claude' and 'Claude2' rather than
-    // 'ADMIN_USERNAME' / 'ADMIN_PASSWORD' - see readSecret() in
-    // auth-security.ts. Checking both means this works today without
-    // renaming anything in the dashboard, and will keep working
-    // automatically if the secrets are ever renamed correctly later.
-    const adminUsername = readSecret('ADMIN_USERNAME', 'Claude');
-    const adminPassword = readSecret('ADMIN_PASSWORD', 'Claude2');
+    // Credentials are stored in Wix Secrets Manager and accessed via
+    // environment variables. The readSecret() function handles fallbacks
+    // for legacy secret names and tolerates "KEY = value" format.
+    const adminUsername = readSecret('ADMIN_USERNAME');
+    const adminPassword = readSecret('ADMIN_PASSWORD');
 
     // Verify credentials exist
     if (!adminUsername || !adminPassword) {
-      console.error('[SECURITY] Admin credentials not configured');
+      console.error('[SECURITY] Admin credentials not configured in Secrets Manager');
       recordFailedAttempt(clientIP);
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Server configuration error' }),

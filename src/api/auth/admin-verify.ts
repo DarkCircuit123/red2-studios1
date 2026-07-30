@@ -54,7 +54,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     if (!sessionToken) {
       return new Response(
         JSON.stringify({ valid: false, error: 'Missing session token' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 

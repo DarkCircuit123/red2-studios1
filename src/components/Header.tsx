@@ -25,7 +25,10 @@ export default function Header() {
   // "logged out" even with a perfectly valid session cookie — this is
   // what makes a refresh correctly stay logged in.
   useEffect(() => {
-    verifySession();
+    verifySession().catch(err => {
+      // Silently handle verification errors - expected for unauthenticated users
+      console.log('[HEADER] Admin session verification skipped (not authenticated)');
+    });
   }, [verifySession]);
 
   // Optimized throttled scroll handler

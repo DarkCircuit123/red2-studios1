@@ -162,6 +162,19 @@ export const useAdminAuth = create<AdminAuthState>()(
             body: JSON.stringify({}),
           });
 
+          // Handle non-OK responses gracefully
+          if (!response.ok) {
+            if (response.status === 400 || response.status === 401 || response.status === 403) {
+              // Expected responses for unauthenticated users
+              set({ isAdminAuthenticated: false, adminUsername: null, isVerifying: false });
+              return false;
+            }
+            // Log unexpected errors but don't crash
+            console.warn(`[ADMIN AUTH] Unexpected response status ${response.status}`);
+            set({ isAdminAuthenticated: false, isVerifying: false });
+            return false;
+          }
+
           const data = await safeJson(response);
 
           if (data.valid) {
@@ -176,7 +189,7 @@ export const useAdminAuth = create<AdminAuthState>()(
             return false;
           }
         } catch (error) {
-          console.error('[ADMIN AUTH] Session verification error:', error);
+          console.log('[ADMIN AUTH] Session verification error (expected if not authenticated):', error instanceof Error ? error.message : error);
           set({ isAdminAuthenticated: false, isVerifying: false });
           return false;
         }

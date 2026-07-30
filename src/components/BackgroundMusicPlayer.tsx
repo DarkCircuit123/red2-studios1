@@ -12,6 +12,9 @@ interface MusicSettings {
   musicTitle?: string;
 }
 
+// Default music URL - high-quality background music
+const DEFAULT_MUSIC_URL = 'https://www.epidemicsound.com/music/tracks/0077f7bc-f9cc-4042-83b3-7504bb14def6/';
+
 export default function BackgroundMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -27,10 +30,46 @@ export default function BackgroundMusicPlayer() {
       try {
         const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
         if (result?.items && result.items.length > 0) {
-          setMusicSettings(result.items[0]);
+          const settings = result.items[0];
+          // Use CMS URL if available, otherwise use default
+          const musicUrl = settings.musicUrl || DEFAULT_MUSIC_URL;
+          console.log('[AUDIO] Loaded music settings:', {
+            enabled: settings.isEnabled,
+            hasUrl: !!musicUrl,
+            volume: settings.volume,
+            loop: settings.loopMusic,
+            title: settings.musicTitle,
+            source: settings.musicUrl ? 'CMS' : 'DEFAULT'
+          });
+          setMusicSettings({ ...settings, musicUrl });
+        } else {
+          console.log('[AUDIO] No music settings found in CMS, using defaults');
+          // Create default settings
+          setMusicSettings({
+            _id: 'default',
+            musicUrl: DEFAULT_MUSIC_URL,
+            isEnabled: true,
+            volume: 30,
+            loopMusic: true,
+            musicTitle: 'Background Music'
+          });
         }
       } catch (error) {
-        console.log('Failed to load music settings:', error);
+        // Suppress 403 errors from CMS - music is optional
+        if (error instanceof Error && error.message.includes('403')) {
+          console.log('[AUDIO] CMS access denied for music settings (expected in some environments), using defaults');
+        } else {
+          console.log('[AUDIO] Failed to load music settings:', error);
+        }
+        // Use default settings on error
+        setMusicSettings({
+          _id: 'default',
+          musicUrl: DEFAULT_MUSIC_URL,
+          isEnabled: true,
+          volume: 30,
+          loopMusic: true,
+          musicTitle: 'Background Music'
+        });
       } finally {
         setIsLoadingSettings(false);
       }
@@ -57,16 +96,18 @@ export default function BackgroundMusicPlayer() {
           audioRef.current!.load();
         }
         
+        console.log('[AUDIO] Attempting autoplay...');
         // Attempt to play immediately
         const playPromise = audioRef.current!.play();
         if (playPromise !== undefined) {
           await playPromise;
+          console.log('[AUDIO] Autoplay successful');
           setIsPlaying(true);
           setAudioError(false);
           setHasInteracted(true);
         }
       } catch (err) {
-        console.log('Autoplay failed, will retry on user interaction:', err);
+        console.log('[AUDIO] Autoplay failed, will retry on user interaction:', err);
         // Autoplay was blocked, will retry on first user interaction
       }
     };
@@ -83,11 +124,12 @@ export default function BackgroundMusicPlayer() {
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
             await playPromise;
+            console.log('[AUDIO] Playback started on user interaction');
             setIsPlaying(true);
             setAudioError(false);
           }
         } catch (err) {
-          console.log('Audio playback failed on user interaction:', err);
+          console.log('[AUDIO] Audio playback failed on user interaction:', err);
           setAudioError(true);
         }
       }
@@ -131,13 +173,40 @@ export default function BackgroundMusicPlayer() {
     setIsPlaying(false);
   };
 
-  const handleAudioError = () => {
-    console.error('[AUDIO] Audio element error event triggered');
+  const handleAudioError = (event: Event) => {
+    const audio = event.target as HTMLAudioElement;
+    const errorCode = audio.error?.code;
+    const errorMessage = audio.error?.message || 'Unknown error';
+    
+    const errorCodeMap: { [key: number]: string } = {
+      1: 'MEDIA_ERR_ABORTED',
+      2: 'MEDIA_ERR_NETWORK',
+      3: 'MEDIA_ERR_DECODE',
+      4: 'MEDIA_ERR_SRC_NOT_SUPPORTED'
+    };
+    
+    console.error('[AUDIO] Audio element error:', {
+      code: errorCode,
+      codeType: errorCodeMap[errorCode || 0] || 'UNKNOWN',
+      message: errorMessage,
+      networkState: audio.networkState,
+      readyState: audio.readyState,
+      src: musicSettings?.musicUrl,
+      crossOrigin: audio.crossOrigin,
+      timestamp: new Date().toISOString()
+    });
+    
     setAudioError(true);
   };
 
   // Don't render if music is disabled or settings not loaded
   if (isLoadingSettings || !musicSettings?.isEnabled) {
+    return null;
+  }
+
+  // Validate music URL is available
+  if (!musicSettings?.musicUrl) {
+    console.warn('[AUDIO] No music URL available, cannot play background music');
     return null;
   }
 
@@ -157,8 +226,18 @@ export default function BackgroundMusicPlayer() {
         style={{ display: 'none' }}
       >
         <source 
-          src={musicSettings?.musicUrl || 'https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.mp3'} 
+          src={musicSettings.musicUrl} 
           type="audio/mpeg"
+        />
+        {/* Fallback for other audio formats */}
+        <source 
+          src={musicSettings.musicUrl} 
+          type="audio/wav"
+        />
+        {/* Fallback for OGG */}
+        <source 
+          src={musicSettings.musicUrl} 
+          type="audio/ogg"
         />
       </audio>
 

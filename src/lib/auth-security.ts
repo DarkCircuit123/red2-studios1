@@ -15,11 +15,9 @@
  * line ends up pasted into the Value field instead. In that case this
  * strips the "KEY = " prefix and returns just the value.
  *
- * Usage: readSecret('ADMIN_USERNAME', 'Claude') checks ADMIN_USERNAME
- * first (the "correct" name), then falls back to Claude (whatever a
- * secret actually got named in the dashboard) - so this keeps working
- * today AND automatically starts using a correctly-named secret later
- * without another code change.
+ * Usage: readSecret('ADMIN_USERNAME') checks ADMIN_USERNAME
+ * first (the primary name). If multiple names are provided, checks
+ * them in order as fallbacks.
  */
 export function readSecret(...candidateEnvNames: string[]): string | undefined {
   for (const name of candidateEnvNames) {
@@ -226,13 +224,10 @@ function base64UrlDecode(str: string): Uint8Array {
 }
 
 async function getSigningKey(): Promise<CryptoKey> {
-  // 'Claude3' fallback: see readSecret() - the actual Secrets Manager
-  // entry for this value is currently named 'Claude3' rather than
-  // 'SESSION_SECRET'. Reading both means this doesn't require renaming
-  // anything in the dashboard.
-  const secret = readSecret('SESSION_SECRET', 'Claude3');
+  // Read SESSION_SECRET from Secrets Manager
+  const secret = readSecret('SESSION_SECRET');
   if (!secret) {
-    throw new Error('SESSION_SECRET is not configured');
+    throw new Error('SESSION_SECRET is not configured in Secrets Manager');
   }
   const encoder = new TextEncoder();
   return crypto.subtle.importKey(
