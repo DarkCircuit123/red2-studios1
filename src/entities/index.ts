@@ -25,6 +25,27 @@ export interface AboutSection {
 
 
 /**
+ * Collection ID: admincredentials
+ * Interface for AdminCredentials
+ */
+export interface AdminCredentials {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  username?: string;
+  /** @wixFieldType text */
+  password?: string;
+  /** @wixFieldType text */
+  email?: string;
+  /** @wixFieldType datetime */
+  lastLoginDate?: Date | string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+}
+
+
+/**
  * Collection ID: apiratelimits
  * Interface for APIRateLimits
  */
