@@ -1,26 +1,17 @@
 /**
- * Media Upload Service - REFACTORED FOR WDE0009 FIX
+ * Wix Media Manager Integration
  * 
- * This service now uses Wix Media Manager instead of base64 storage.
+ * Handles uploading files to Wix Media Manager and returning proper Wix media URLs.
+ * This is the correct fix for WDE0009 - store URLs, not base64 data.
  * 
- * Key changes:
- * 1. Removed base64 encoding (was causing WDE0009)
- * 2. Upload to Wix Media Manager returns proper URLs
- * 3. Store only URL strings in CMS (tiny payload)
- * 4. Use URL.createObjectURL for previews (not base64)
- * 
- * Result:
- * - Before: 2.67MB base64 string in CMS = WDE0009 error
- * - After: ~50 byte URL string in CMS = No error
+ * Flow:
+ * 1. Upload file to Wix Media Manager
+ * 2. Receive wix:image:// or https://static.wixstatic.com/ URL
+ * 3. Store only the URL string in CMS (tiny payload)
+ * 4. CMS document stays under size limits
  */
 
-export interface MediaUploadProgress {
-  loaded: number;
-  total: number;
-  percentage: number;
-}
-
-export interface MediaUploadResult {
+export interface WixMediaUploadResult {
   mediaUrl: string;
   mediaId: string;
   fileName: string;
@@ -28,13 +19,13 @@ export interface MediaUploadResult {
   mimeType: string;
 }
 
-export interface MediaUploadError {
+export interface WixMediaError {
   code: string;
   message: string;
   details?: string;
 }
 
-class MediaUploadService {
+class WixMediaManager {
   private static readonly MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB - Wix Media Manager limit
   private static readonly SUPPORTED_IMAGE_TYPES = [
     'image/jpeg',
@@ -55,14 +46,14 @@ class MediaUploadService {
    */
   static async uploadImage(
     file: File,
-    onProgress?: (progress: MediaUploadProgress) => void
-  ): Promise<MediaUploadResult> {
+    onProgress?: (progress: { loaded: number; total: number; percentage: number }) => void
+  ): Promise<WixMediaUploadResult> {
     // Validate file type
     if (!this.SUPPORTED_IMAGE_TYPES.includes(file.type) && !file.type.startsWith('image/')) {
       throw {
         code: 'INVALID_FILE_TYPE',
         message: `Unsupported file type: ${file.type}. Supported: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC`,
-      } as MediaUploadError;
+      } as WixMediaError;
     }
 
     // Validate file size (Wix Media Manager limit)
@@ -70,7 +61,7 @@ class MediaUploadService {
       throw {
         code: 'FILE_TOO_LARGE',
         message: `File size exceeds 100MB limit. Your file: ${(file.size / 1024 / 1024).toFixed(2)}MB.`,
-      } as MediaUploadError;
+      } as WixMediaError;
     }
 
     try {
@@ -79,7 +70,7 @@ class MediaUploadService {
       formData.append('file', file);
       formData.append('fileName', file.name);
 
-      // Upload via API endpoint (which uploads to Wix Media Manager)
+      // Upload via API endpoint (which will use Wix Media Manager)
       const response = await this.uploadToAPI(formData, onProgress);
 
       if (!response.ok) {
@@ -88,7 +79,7 @@ class MediaUploadService {
           code: 'UPLOAD_FAILED',
           message: errorData.error || `Upload failed with status ${response.status}`,
           details: errorData.debug?.errorType,
-        } as MediaUploadError;
+        } as WixMediaError;
       }
 
       const result = await response.json();
@@ -98,7 +89,7 @@ class MediaUploadService {
         throw {
           code: 'INVALID_RESPONSE',
           message: 'Server returned invalid media response',
-        } as MediaUploadError;
+        } as WixMediaError;
       }
 
       return {
@@ -117,7 +108,7 @@ class MediaUploadService {
       throw {
         code: 'UPLOAD_ERROR',
         message: errorMessage,
-      } as MediaUploadError;
+      } as WixMediaError;
     }
   }
 
@@ -126,7 +117,7 @@ class MediaUploadService {
    */
   private static async uploadToAPI(
     formData: FormData,
-    onProgress?: (progress: MediaUploadProgress) => void
+    onProgress?: (progress: { loaded: number; total: number; percentage: number }) => void
   ): Promise<Response> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -190,7 +181,6 @@ class MediaUploadService {
   /**
    * Generate preview URL from File using URL.createObjectURL
    * Use this for local previews instead of base64
-   * This is memory-efficient and doesn't bloat the CMS
    */
   static createPreviewUrl(file: File): string {
     return URL.createObjectURL(file);
@@ -211,11 +201,11 @@ class MediaUploadService {
   }
 
   /**
-   * Check if a URL is a data URL (should NOT be used for CMS storage)
+   * Check if a URL is a data URL (should not be used)
    */
   static isDataUrl(url: string): boolean {
     return url.startsWith('data:');
   }
 }
 
-export default MediaUploadService;
+export default WixMediaManager;

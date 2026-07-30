@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import MediaUploadService, { MediaUploadProgress } from '@/lib/media-upload-service';
+import WDE0009FixValidator from '@/lib/wde0009-fix-validation';
 
 interface ImageUploadManagerProps {
   onImageUpload: (imageUrl: string) => void;
@@ -89,13 +90,21 @@ export default function ImageUploadManager({
 
     try {
       // Create local preview URL using URL.createObjectURL (not base64)
+      // This is memory-efficient and doesn't bloat the CMS
       const localPreviewUrl = MediaUploadService.createPreviewUrl(file);
       setPreviewUrl(localPreviewUrl);
 
       // Upload to Wix Media Manager
+      // Returns a Wix media URL (wix:image:// or https://static.wixstatic.com/)
       const result = await MediaUploadService.uploadImage(file, (progress: MediaUploadProgress) => {
         setUploadProgress(progress.percentage);
       });
+
+      // Validate that we got a proper Wix media URL (not base64)
+      // This prevents WDE0009 errors
+      if (MediaUploadService.isDataUrl(result.mediaUrl)) {
+        throw new Error('Upload returned base64 data URL instead of Wix media URL. This would cause WDE0009 error.');
+      }
 
       // Save media URL (not base64) to CMS if collection info provided
       if (collectionId && itemId && fieldName) {
