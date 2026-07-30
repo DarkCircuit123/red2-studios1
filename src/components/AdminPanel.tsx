@@ -27,12 +27,6 @@ interface MusicSettings {
 
 interface AboutSettings extends AboutSection {}
 
-interface AdminCredentials {
-  _id: string;
-  username: string;
-  password: string;
-}
-
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { isAdminAuthenticated, logout } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('photos');
@@ -43,12 +37,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [aboutSettings, setAboutSettings] = useState<AboutSettings | null>(null);
-  const [adminCredentials, setAdminCredentials] = useState<AdminCredentials | null>(null);
-  const [newUsername, setNewUsername] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [credentialsError, setCredentialsError] = useState('');
-  const [credentialsSuccess, setCredentialsSuccess] = useState('');
-  const [isSavingCredentials, setIsSavingCredentials] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingAbout, setIsSavingAbout] = useState(false);
 
