@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Music, Loader } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
+import { safeJson } from '@/lib/safeJson';
 
 interface MusicUploadManagerProps {
   label: string;
@@ -60,7 +61,13 @@ export default function MusicUploadManager({
         throw new Error('Failed to upload music file');
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await safeJson(response);
+      } catch (parseError) {
+        console.error('Failed to parse upload response:', parseError);
+        throw parseError;
+      }
       const musicUrl = data.url;
 
       // Update CMS with the new music URL

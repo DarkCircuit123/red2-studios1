@@ -5,6 +5,7 @@
  */
 
 import { BookingAvailability, Bookings } from '@/entities/index';
+import { safeJson } from '@/lib/safeJson';
 
 /**
  * Fetch all booking availability slots
@@ -29,15 +30,13 @@ export async function getAvailability(): Promise<{
 
     let data;
     try {
-      data = await response.json();
+      data = await safeJson(response);
       console.log('[Frontend] Get availability response data:', data);
     } catch (parseError) {
-      console.error('[Frontend] Failed to parse availability response as JSON:', parseError);
-      const text = await response.text();
-      console.error('[Frontend] Response text:', text);
+      console.error('[Frontend] Failed to parse availability response:', parseError);
       return {
         success: false,
-        error: 'Server returned invalid JSON response',
+        error: parseError instanceof Error ? parseError.message : 'Server returned invalid response',
       };
     }
 
@@ -81,15 +80,13 @@ export async function getBookings(): Promise<{
 
     let data;
     try {
-      data = await response.json();
+      data = await safeJson(response);
       console.log('[Frontend] Get bookings response data:', data);
     } catch (parseError) {
-      console.error('[Frontend] Failed to parse bookings response as JSON:', parseError);
-      const text = await response.text();
-      console.error('[Frontend] Response text:', text);
+      console.error('[Frontend] Failed to parse bookings response:', parseError);
       return {
         success: false,
-        error: 'Server returned invalid JSON response',
+        error: parseError instanceof Error ? parseError.message : 'Server returned invalid response',
       };
     }
 
@@ -162,26 +159,13 @@ export async function createBookingAvailability(
     // Try to parse as JSON
     let data;
     try {
-      const responseText = await response.text();
-      console.log('[Frontend] Raw response text:', responseText);
-      
-      if (!responseText) {
-        console.error('[Frontend] Empty response body');
-        return {
-          success: false,
-          error: 'Server returned empty response',
-        };
-      }
-      
-      data = JSON.parse(responseText);
+      data = await safeJson(response);
       console.log('[Frontend] Parsed response data:', JSON.stringify(data, null, 2));
     } catch (parseError) {
-      console.error('[Frontend] Failed to parse response as JSON:', parseError);
-      console.error('[Frontend] Parse error type:', parseError instanceof Error ? parseError.constructor.name : typeof parseError);
-      console.error('[Frontend] Parse error message:', parseError instanceof Error ? parseError.message : String(parseError));
+      console.error('[Frontend] Failed to parse response:', parseError);
       return {
         success: false,
-        error: `Failed to parse server response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+        error: parseError instanceof Error ? parseError.message : 'Failed to parse server response',
       };
     }
 
@@ -236,24 +220,13 @@ export async function updateBookingAvailability(
     // Try to parse as JSON
     let data;
     try {
-      const responseText = await response.text();
-      console.log('[Frontend] Raw response text:', responseText);
-      
-      if (!responseText) {
-        console.error('[Frontend] Empty response body');
-        return {
-          success: false,
-          error: 'Server returned empty response',
-        };
-      }
-      
-      data = JSON.parse(responseText);
+      data = await safeJson(response);
       console.log('[Frontend] Parsed response data:', JSON.stringify(data, null, 2));
     } catch (parseError) {
-      console.error('[Frontend] Failed to parse response as JSON:', parseError);
+      console.error('[Frontend] Failed to parse response:', parseError);
       return {
         success: false,
-        error: `Failed to parse server response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+        error: parseError instanceof Error ? parseError.message : 'Failed to parse server response',
       };
     }
 
@@ -302,24 +275,13 @@ export async function deleteBookingAvailability(
     // Try to parse as JSON
     let data;
     try {
-      const responseText = await response.text();
-      console.log('[Frontend] Raw response text:', responseText);
-      
-      if (!responseText) {
-        console.error('[Frontend] Empty response body');
-        return {
-          success: false,
-          error: 'Server returned empty response',
-        };
-      }
-      
-      data = JSON.parse(responseText);
+      data = await safeJson(response);
       console.log('[Frontend] Parsed response data:', JSON.stringify(data, null, 2));
     } catch (parseError) {
-      console.error('[Frontend] Failed to parse response as JSON:', parseError);
+      console.error('[Frontend] Failed to parse response:', parseError);
       return {
         success: false,
-        error: `Failed to parse server response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+        error: parseError instanceof Error ? parseError.message : 'Failed to parse server response',
       };
     }
 
@@ -365,15 +327,13 @@ export async function getPublicAvailability(): Promise<{
 
     let data;
     try {
-      data = await response.json();
+      data = await safeJson(response);
       console.log('[Frontend] Get public availability response data:', data);
     } catch (parseError) {
-      console.error('[Frontend] Failed to parse public availability response as JSON:', parseError);
-      const text = await response.text();
-      console.error('[Frontend] Response text:', text);
+      console.error('[Frontend] Failed to parse public availability response:', parseError);
       return {
         success: false,
-        error: 'Server returned invalid JSON response',
+        error: parseError instanceof Error ? parseError.message : 'Server returned invalid response',
       };
     }
 
@@ -432,15 +392,13 @@ export async function submitPublicBooking(
 
     let data;
     try {
-      data = await response.json();
+      data = await safeJson(response);
       console.log('[Frontend] Submit booking response data:', data);
     } catch (parseError) {
-      console.error('[Frontend] Failed to parse submit booking response as JSON:', parseError);
-      const text = await response.text();
-      console.error('[Frontend] Response text:', text);
+      console.error('[Frontend] Failed to parse submit booking response:', parseError);
       return {
         success: false,
-        error: 'Server returned invalid JSON response',
+        error: parseError instanceof Error ? parseError.message : 'Server returned invalid response',
       };
     }
 

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { safeJson } from './safeJson';
 
 interface AdminAuthState {
   isAdminAuthenticated: boolean;
@@ -38,7 +39,17 @@ export const useAdminAuth = create<AdminAuthState>()(
             body: JSON.stringify({ username, password }),
           });
 
-          const data = await response.json();
+          let data;
+           try {
+             data = await safeJson(response);
+           } catch (parseError) {
+             console.error('[ADMIN AUTH] Response parse error:', parseError);
+             set({ 
+               isLoading: false, 
+               error: parseError instanceof Error ? parseError.message : 'Invalid server response'
+             });
+             return false;
+           }
 
           if (data.authenticated) {
             // CRITICAL: Ensure state is fully updated before returning
