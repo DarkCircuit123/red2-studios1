@@ -7,6 +7,17 @@
  * This is the last line of defense against WDE0009 "Document is too large" errors.
  */
 
+/**
+ * ACCEPTED URL FORMATS:
+ * ✅ https://static.wixstatic.com/media/abc123.jpg
+ * ✅ wix:image://v1/abc123_100_100/filename.jpg
+ * 
+ * REJECTED FORMATS:
+ * ❌ data:image/jpeg;base64,/9j/...
+ * ❌ blob:https://example.com/...
+ * ❌ Any other data: URLs
+ */
+
 export interface ImageStorageValidationResult {
   isValid: boolean;
   errors: string[];
@@ -17,9 +28,13 @@ export interface ImageStorageValidationResult {
  * Validates a single image URL/value
  * Throws error if base64 data URL is detected
  * 
+ * Accepts both Wix URL formats:
+ * - https://static.wixstatic.com/media/...
+ * - wix:image://v1/...
+ * 
  * @param value - The image URL or value to validate
  * @param fieldName - The field name (for error messages)
- * @throws Error if value is a base64 data URL
+ * @throws Error if value is a base64 data URL or other invalid format
  */
 export function validateImageStorage(value: string | null | undefined, fieldName: string = 'image'): void {
   if (!value) {
@@ -34,7 +49,7 @@ export function validateImageStorage(value: string | null | undefined, fieldName
   if (value.startsWith('data:image')) {
     throw new Error(
       `[ImageStorageValidator] Blocked: Base64 image storage is not allowed in ${fieldName}. ` +
-      `Use Wix Media Manager URLs instead (wix:image:// or https://static.wixstatic.com/). ` +
+      `Use Wix Media Manager URLs instead (wix:image://v1/... or https://static.wixstatic.com/media/...). ` +
       `This prevents WDE0009 "Document is too large" errors.`
     );
   }
@@ -43,7 +58,7 @@ export function validateImageStorage(value: string | null | undefined, fieldName
   if (value.startsWith('data:')) {
     throw new Error(
       `[ImageStorageValidator] Blocked: Data URL storage is not allowed in ${fieldName}. ` +
-      `Use Wix Media Manager URLs instead.`
+      `Use Wix Media Manager URLs instead (wix:image://v1/... or https://static.wixstatic.com/media/...).`
     );
   }
 
@@ -51,7 +66,20 @@ export function validateImageStorage(value: string | null | undefined, fieldName
   if (value.startsWith('blob:')) {
     console.warn(
       `[ImageStorageValidator] Warning: Blob URL detected in ${fieldName}. ` +
-      `Blob URLs are temporary and should only be used for previews, not CMS storage.`
+      `Blob URLs are temporary and should only be used for previews, not CMS storage. ` +
+      `Expected: https://static.wixstatic.com/media/... or wix:image://v1/...`
+    );
+  }
+
+  // Validate that it's a proper Wix URL format
+  const isValidWixUrl = value.startsWith('https://static.wixstatic.com/media/') || 
+                        value.startsWith('wix:image://');
+  
+  if (!isValidWixUrl && !value.startsWith('http')) {
+    throw new Error(
+      `[ImageStorageValidator] Invalid URL format in ${fieldName}. ` +
+      `Expected Wix Media Manager URL: https://static.wixstatic.com/media/... or wix:image://v1/... ` +
+      `Got: ${value.substring(0, 50)}...`
     );
   }
 }
@@ -159,12 +187,16 @@ export function isBase64DataUrl(value: any): boolean {
 /**
  * Detects if a value is a valid Wix media URL
  * 
+ * Accepts both formats:
+ * - https://static.wixstatic.com/media/...
+ * - wix:image://v1/...
+ * 
  * @param value - The value to check
  * @returns true if value is a Wix media URL
  */
 export function isWixMediaUrl(value: any): boolean {
   if (typeof value !== 'string') return false;
-  return value.startsWith('wix:image://') || value.includes('static.wixstatic.com');
+  return value.startsWith('wix:image://') || value.startsWith('https://static.wixstatic.com/media/');
 }
 
 /**
