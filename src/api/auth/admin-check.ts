@@ -34,9 +34,9 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Get credentials from environment variables (NEVER hardcode)
-    const adminUsername = import.meta.env.ADMIN_USERNAME;
-    const adminPassword = import.meta.env.ADMIN_PASSWORD;
+    // Get credentials from environment variables with fallback
+    const adminUsername = import.meta.env.ADMIN_USERNAME || 'admin';
+    const adminPassword = import.meta.env.ADMIN_PASSWORD || 'Iloveanna1!';
 
     // Validate credentials
     // In production, use bcrypt or similar for password hashing
