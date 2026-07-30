@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { BaseCrudService } from '@/integrations';
-import { constantTimeEqual, checkRateLimit, recordFailedAttempt, getClientIP, signAdminToken } from '@/lib/auth-security';
+import { constantTimeEqual, checkRateLimit, recordFailedAttempt, getClientIP, signAdminToken, readSecret } from '@/lib/auth-security';
 
 /**
  * Secure Admin Authentication Check - P1 HARDENED
@@ -72,9 +72,15 @@ export const POST: APIRoute = async ({ request }) => {
     const sanitizedUsername = username.trim().substring(0, 100);
     const sanitizedPassword = password.substring(0, 500);
 
-    // Get credentials from environment (NEVER from CMS for admin auth)
-    const adminUsername = process.env.ADMIN_USERNAME || import.meta.env.ADMIN_USERNAME;
-    const adminPassword = process.env.ADMIN_PASSWORD || import.meta.env.ADMIN_PASSWORD;
+    // Get credentials from environment (NEVER from CMS for admin auth).
+    // 'Claude' / 'Claude2' fallback: the Secrets Manager entries for these
+    // are currently named 'Claude' and 'Claude2' rather than
+    // 'ADMIN_USERNAME' / 'ADMIN_PASSWORD' - see readSecret() in
+    // auth-security.ts. Checking both means this works today without
+    // renaming anything in the dashboard, and will keep working
+    // automatically if the secrets are ever renamed correctly later.
+    const adminUsername = readSecret('ADMIN_USERNAME', 'Claude');
+    const adminPassword = readSecret('ADMIN_PASSWORD', 'Claude2');
 
     // Verify credentials exist
     if (!adminUsername || !adminPassword) {

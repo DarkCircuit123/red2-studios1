@@ -4,6 +4,41 @@
  */
 
 /**
+ * Reads a secret from process.env / import.meta.env, checking each
+ * candidate name in order and returning the first one that's set.
+ *
+ * Also tolerates values that were pasted into Secrets Manager in
+ * "KEY = value" form (e.g. a secret literally storing the string
+ * "ADMIN_USERNAME = Jordan310") instead of just the bare value -
+ * this happens when a secret's Name field in the dashboard doesn't
+ * match the variable name the code expects, and the actual "KEY=value"
+ * line ends up pasted into the Value field instead. In that case this
+ * strips the "KEY = " prefix and returns just the value.
+ *
+ * Usage: readSecret('ADMIN_USERNAME', 'Claude') checks ADMIN_USERNAME
+ * first (the "correct" name), then falls back to Claude (whatever a
+ * secret actually got named in the dashboard) - so this keeps working
+ * today AND automatically starts using a correctly-named secret later
+ * without another code change.
+ */
+export function readSecret(...candidateEnvNames: string[]): string | undefined {
+  for (const name of candidateEnvNames) {
+    const raw = process.env[name] || import.meta.env[name];
+    if (!raw) continue;
+
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+
+    // Tolerate "KEY = value" pasted directly into the secret's value.
+    const match = trimmed.match(/^[A-Z_][A-Z0-9_]*\s*=\s*([\s\S]*)$/);
+    const value = match ? match[1].trim() : trimmed;
+
+    if (value) return value;
+  }
+  return undefined;
+}
+
+/**
  * Constant-time string comparison to prevent timing attacks
  * Compares two strings in constant time regardless of length or content
  */
@@ -191,7 +226,11 @@ function base64UrlDecode(str: string): Uint8Array {
 }
 
 async function getSigningKey(): Promise<CryptoKey> {
-  const secret = process.env.SESSION_SECRET || import.meta.env.SESSION_SECRET;
+  // 'Claude3' fallback: see readSecret() - the actual Secrets Manager
+  // entry for this value is currently named 'Claude3' rather than
+  // 'SESSION_SECRET'. Reading both means this doesn't require renaming
+  // anything in the dashboard.
+  const secret = readSecret('SESSION_SECRET', 'Claude3');
   if (!secret) {
     throw new Error('SESSION_SECRET is not configured');
   }
