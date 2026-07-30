@@ -1,6 +1,7 @@
 import React, { useRef, forwardRef } from 'react';
 import { useAdaptiveImage, useLazyImage } from '@/hooks/useAdaptiveImage';
 import { Image } from '@/components/ui/image';
+import WixImageResolver from '@/lib/wix-image-resolver';
 
 export interface AdaptiveImageProps
   extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src' | 'srcSet'> {
@@ -45,8 +46,12 @@ const AdaptiveImage = forwardRef<HTMLImageElement, AdaptiveImageProps>(
     const imgRef = useRef<HTMLImageElement>(null);
     const { isVisible } = useLazyImage(imgRef);
 
+    // Resolve the image URL through WixImageResolver for consistency
+    const resolved = WixImageResolver.resolve(src);
+    const resolvedSrc = resolved.url;
+
     const { src: adaptiveSrc, srcSet, sizes, width, height, quality, format } = useAdaptiveImage(
-      src,
+      resolvedSrc,
       {
         originalWidth,
         originalHeight,

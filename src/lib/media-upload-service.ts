@@ -212,9 +212,24 @@ class MediaUploadService {
 
   /**
    * Check if a URL is a data URL (should NOT be used for CMS storage)
+   * This includes both base64 and blob URLs
    */
   static isDataUrl(url: string): boolean {
-    return url.startsWith('data:');
+    return url.startsWith('data:') || url.startsWith('blob:');
+  }
+
+  /**
+   * Check if a URL is a blob URL (temporary preview)
+   */
+  static isBlobUrl(url: string): boolean {
+    return url.startsWith('blob:');
+  }
+
+  /**
+   * Check if a URL is a base64 data URL
+   */
+  static isBase64Url(url: string): boolean {
+    return url.startsWith('data:image/') || url.startsWith('data:application/');
   }
 }
 

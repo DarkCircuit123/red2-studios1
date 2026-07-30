@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Maximize2 } from 'lucide-react';
 import { Image, type ImageProps } from '@/components/ui/image';
+import WixImageResolver from '@/lib/wix-image-resolver';
 
 interface EnlargeableImageProps extends ImageProps {
   onEnlarge?: () => void;
@@ -12,9 +13,14 @@ export default function EnlargeableImage({
   onEnlarge,
   showIndicator = true,
   className = '',
+  src,
   ...imageProps
 }: EnlargeableImageProps) {
   const [isHovered, setIsHovered] = useState(false);
+
+  // Resolve the image URL through WixImageResolver
+  const resolved = WixImageResolver.resolve(src);
+  const resolvedSrc = resolved.url;
 
   const handleClick = () => {
     onEnlarge?.();
@@ -37,6 +43,7 @@ export default function EnlargeableImage({
     >
       <Image
         {...imageProps}
+        src={resolvedSrc}
         className={`${className} transition-opacity duration-300 ${
           isHovered ? 'opacity-90' : 'opacity-100'
         }`}

@@ -1,6 +1,7 @@
 import { type FittingType, getPlaceholder, sdk, STATIC_MEDIA_URL } from '@wix/image-kit'
 import { forwardRef, type ImgHTMLAttributes, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useSize } from '@/hooks/use-size'
+import WixImageResolver from '@/lib/wix-image-resolver'
 
 // Inline CSS for image animation
 const imageStyles = `
@@ -38,18 +39,28 @@ type ImageData = {
 }
 
 const getImageData = (url: string): ImageData | undefined => {
+  // Use WixImageResolver to validate and normalize the URL first
+  const resolved = WixImageResolver.resolve(url);
+  
+  // If URL is not valid or is a fallback, don't try to parse it
+  if (!resolved.isValid || resolved.isFallback) {
+    return undefined;
+  }
+
+  const normalizedUrl = resolved.url;
+
   // wix:image://v1/${uri}/${filename}#originWidth=${width}&originHeight=${height}
   const wixImagePrefix = 'wix:image://v1/'
-  if (url.startsWith(wixImagePrefix)) {
-    const uri = url.replace(wixImagePrefix, '').split('#')[0].split('/')[0]
+  if (normalizedUrl.startsWith(wixImagePrefix)) {
+    const uri = normalizedUrl.replace(wixImagePrefix, '').split('#')[0].split('/')[0]
 
-    const params = new URLSearchParams(url.split('#')[1] || '')
+    const params = new URLSearchParams(normalizedUrl.split('#')[1] || '')
     const width = parseInt(params.get('originWidth') || '0', 10)
     const height = parseInt(params.get('originHeight') || '0', 10)
 
     return { id: uri, width, height }
-  } else if (url.startsWith(STATIC_MEDIA_URL)) {
-    const urlObj = new URL(url)
+  } else if (normalizedUrl.startsWith(STATIC_MEDIA_URL)) {
+    const urlObj = new URL(normalizedUrl)
     if (urlObj.searchParams.get('originWidth') && urlObj.searchParams.get('originHeight')) {
       const uri = urlObj.pathname.split('/').slice(2).join('/')
       const width = parseInt(urlObj.searchParams.get('originWidth') || '0', 10)
@@ -92,24 +103,34 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
   const [imgSrc, setImgSrc] = useState<string | undefined>(src)
 
   useEffect(() => {
-    // If src prop changes, update the imgSrc state
-    setImgSrc((prev) => {
-      if (prev !== src) {
-        return src
-      }
-      return prev
-    })
+    // If src prop changes, resolve it through WixImageResolver and update state
+    if (src !== imgSrc) {
+      const resolved = WixImageResolver.resolve(src);
+      setImgSrc(resolved.url);
+    }
   }, [src])
 
-  if (!src) {
+  if (!imgSrc) {
     return <div data-empty-image ref={ref} {...props} />
   }
 
-  const imageProps = {...props, onError: () => setImgSrc(FALLBACK_IMAGE_URL)}
-  const imageData = getImageData(imgSrc)
+  // Resolve the URL through WixImageResolver for consistency
+  const resolved = WixImageResolver.resolve(imgSrc);
+  const finalSrc = resolved.url;
+
+  const imageProps = {
+    ...props,
+    onError: () => {
+      // On error, fall back to the fallback image
+      setImgSrc(FALLBACK_IMAGE_URL);
+    }
+  };
+
+  const imageData = getImageData(finalSrc);
 
   if (!imageData) {
-    return <img data-error-image={imgSrc === FALLBACK_IMAGE_URL} ref={ref} src={imgSrc} {...imageProps} />
+    // If we can't parse as Wix image data, render as regular img
+    return <img data-error-image={finalSrc === FALLBACK_IMAGE_URL} ref={ref} src={finalSrc} {...imageProps} />
   }
 
   return <WixImage ref={ref} data={imageData} {...imageProps} />

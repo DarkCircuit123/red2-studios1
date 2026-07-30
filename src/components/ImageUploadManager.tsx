@@ -6,6 +6,7 @@ import { BaseCrudService } from '@/integrations';
 import MediaUploadService, { MediaUploadProgress } from '@/lib/media-upload-service';
 import WDE0009FixValidator from '@/lib/wde0009-fix-validation';
 import { validateImageStorage, validateCMSUpdatePayload } from '@/lib/image-storage-validator';
+import WixImageResolver from '@/lib/wix-image-resolver';
 
 interface ImageUploadManagerProps {
   onImageUpload: (imageUrl: string) => void;
@@ -105,6 +106,12 @@ export default function ImageUploadManager({
       // This prevents WDE0009 errors
       if (MediaUploadService.isDataUrl(result.mediaUrl)) {
         throw new Error('Image upload failed: this file could not be stored. Please retry the upload.');
+      }
+
+      // Use WixImageResolver to validate the URL format
+      const resolved = WixImageResolver.resolve(result.mediaUrl);
+      if (!resolved.isValid || resolved.isFallback) {
+        throw new Error('Image upload failed: invalid URL format returned. Please retry the upload.');
       }
 
       // FINAL HARDENING: Validate image storage before CMS update
