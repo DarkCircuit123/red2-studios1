@@ -224,8 +224,13 @@ function base64UrlDecode(str: string): Uint8Array {
 }
 
 async function getSigningKey(): Promise<CryptoKey> {
-  // Read SESSION_SECRET from Secrets Manager
-  const secret = readSecret('SESSION_SECRET');
+  // The 'Claude3' fallback is load-bearing, do not remove it - see the
+  // matching note in admin-check.ts. The Vibe editor/preview runtime
+  // only sees the Secrets Manager entry, which on this site is named
+  // 'Claude3' rather than 'SESSION_SECRET'. Without this fallback,
+  // signAdminToken() throws in preview and admin login returns a
+  // 500 "Server configuration error" there while working fine live.
+  const secret = readSecret('SESSION_SECRET', 'Claude3');
   if (!secret) {
     throw new Error('SESSION_SECRET is not configured in Secrets Manager');
   }
