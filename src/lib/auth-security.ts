@@ -7,17 +7,19 @@
  * Reads a secret from process.env / import.meta.env, checking each
  * candidate name in order and returning the first one that's set.
  *
- * Also tolerates values that were pasted into Secrets Manager in
- * "KEY = value" form (e.g. a secret literally storing the string
- * "ADMIN_USERNAME = Jordan310") instead of just the bare value -
- * this happens when a secret's Name field in the dashboard doesn't
- * match the variable name the code expects, and the actual "KEY=value"
- * line ends up pasted into the Value field instead. In that case this
- * strips the "KEY = " prefix and returns just the value.
+ * Trims surrounding whitespace, which matters because pasting a value
+ * into the Secrets Manager dashboard easily leaves a trailing newline.
  *
- * Usage: readSecret('ADMIN_USERNAME') checks ADMIN_USERNAME
- * first (the primary name). If multiple names are provided, checks
- * them in order as fallbacks.
+ * Also tolerates a value accidentally saved in "KEY = value" form (the
+ * whole env line pasted into the Value field instead of just the value).
+ * This ONLY strips the prefix when KEY is exactly the name being looked
+ * up - deliberately narrow. A looser pattern would silently corrupt any
+ * legitimate secret whose value happens to contain an '=', e.g. a
+ * password like "ABC=123" would be truncated to "123" and every login
+ * would fail for a reason nothing in the logs would explain.
+ *
+ * Usage: readSecret('ADMIN_USERNAME') checks ADMIN_USERNAME. If several
+ * names are given they're checked in order, first one that resolves wins.
  */
 export function readSecret(...candidateEnvNames: string[]): string | undefined {
   for (const name of candidateEnvNames) {
@@ -27,8 +29,9 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     const trimmed = raw.trim();
     if (!trimmed) continue;
 
-    // Tolerate "KEY = value" pasted directly into the secret's value.
-    const match = trimmed.match(/^[A-Z_][A-Z0-9_]*\s*=\s*([\s\S]*)$/);
+    // Only strip a prefix that is exactly this key's own name.
+    const selfPrefix = new RegExp(`^${name}\\s*=\\s*([\\s\\S]*)$`);
+    const match = trimmed.match(selfPrefix);
     const value = match ? match[1].trim() : trimmed;
 
     if (value) return value;
@@ -224,13 +227,7 @@ function base64UrlDecode(str: string): Uint8Array {
 }
 
 async function getSigningKey(): Promise<CryptoKey> {
-  // The 'Claude3' fallback is load-bearing, do not remove it - see the
-  // matching note in admin-check.ts. The Vibe editor/preview runtime
-  // only sees the Secrets Manager entry, which on this site is named
-  // 'Claude3' rather than 'SESSION_SECRET'. Without this fallback,
-  // signAdminToken() throws in preview and admin login returns a
-  // 500 "Server configuration error" there while working fine live.
-  const secret = readSecret('SESSION_SECRET', 'Claude3');
+  const secret = readSecret('SESSION_SECRET');
   if (!secret) {
     throw new Error('SESSION_SECRET is not configured in Secrets Manager');
   }

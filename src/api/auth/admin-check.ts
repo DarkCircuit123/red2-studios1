@@ -73,18 +73,12 @@ export const POST: APIRoute = async ({ request }) => {
     const sanitizedPassword = password.substring(0, 500);
 
     // Get credentials from environment (NEVER from CMS for admin auth).
-    //
-    // The 'Claude' / 'Claude2' fallbacks are load-bearing, do not remove
-    // them: production and the Vibe editor/preview runtime do NOT expose
-    // the same environment. Production resolves ADMIN_USERNAME /
-    // ADMIN_PASSWORD directly (login works live), but the preview runtime
-    // at *.remote-machine.wix-code.com only sees the Secrets Manager
-    // entries, which on this site are literally named 'Claude' and
-    // 'Claude2' and hold values in "KEY = value" form. Checking the
-    // correct names first and falling back keeps BOTH environments
-    // working, and costs nothing once the secrets are renamed properly.
-    const adminUsername = readSecret('ADMIN_USERNAME', 'Claude');
-    const adminPassword = readSecret('ADMIN_PASSWORD', 'Claude2');
+    // Both live in Secrets Manager under these exact names. readSecret()
+    // trims whitespace, which matters - a value pasted into the dashboard
+    // can carry a trailing newline that would otherwise fail the
+    // constant-time comparison below with no visible cause.
+    const adminUsername = readSecret('ADMIN_USERNAME');
+    const adminPassword = readSecret('ADMIN_PASSWORD');
 
     // Verify credentials exist
     if (!adminUsername || !adminPassword) {
