@@ -144,7 +144,7 @@ Open browser DevTools (F12) and check Console for:
 **Scenario 3: No CMS Entry, No Env Vars**
 1. Delete CMS entry
 2. Clear environment variables
-3. Default credentials: `admin` / `Iloveanna1!`
+3. Default credentials: `admin` / `[REDACTED-ROTATE-IN-WIX-ENV-VARS]`
 4. Should authenticate with defaults
 
 ---
@@ -239,7 +239,7 @@ Open browser DevTools (F12) and check Console for:
 1. Verify credentials in Admin Panel Credentials tab
 2. Check CMS `admincredentials` collection for entries
 3. Verify environment variables are set
-4. Try default credentials: `admin` / `Iloveanna1!`
+4. Try default credentials: `admin` / `[REDACTED-ROTATE-IN-WIX-ENV-VARS]`
 
 ### Issue: Admin Panel Won't Open After Login
 **Causes:**

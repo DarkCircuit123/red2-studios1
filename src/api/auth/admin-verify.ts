@@ -1,69 +1,22 @@
 /**
  * Admin Session Verification Endpoint
- * 
- * Verifies that the admin session is still valid before allowing mutations
- * Called by all admin-mutating functions to ensure server-side validation
+ *
+ * Verifies that the admin session is still valid before allowing mutations.
+ * Called on admin panel mount and by all admin-mutating functions.
+ *
+ * NOTE: This used to check an in-memory Map of active sessions. That does
+ * not work reliably on Cloudflare Workers (this site's deploy target) —
+ * different edge isolates can each hold their own empty copy of the Map,
+ * so a session created on one request could appear invalid on the very
+ * next one. Verification now checks a signed token's own signature and
+ * expiry instead (see verifyAdminToken in @/lib/auth-security), which
+ * requires no shared server state at all.
  */
 
 import type { APIRoute } from 'astro';
-import { isValidSessionToken, getClientIP } from '@/lib/auth-security';
+import { verifyAdminToken, getClientIP } from '@/lib/auth-security';
 
-// In-memory session store (in production, use Redis or database)
-const activeSessions = new Map<string, {
-  username: string;
-  createdAt: number;
-  lastActivity: number;
-  ip: string;
-}>();
-
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-
-export function createAdminSession(username: string, sessionToken: string, ip: string): void {
-  activeSessions.set(sessionToken, {
-    username,
-    createdAt: Date.now(),
-    lastActivity: Date.now(),
-    ip,
-  });
-  console.log(`[ADMIN SESSION] Created session for ${username}`);
-}
-
-export function validateAdminSession(sessionToken: string, ip: string): { valid: boolean; username?: string } {
-  if (!isValidSessionToken(sessionToken)) {
-    return { valid: false };
-  }
-
-  const session = activeSessions.get(sessionToken);
-  if (!session) {
-    return { valid: false };
-  }
-
-  // Check IP match (prevent session hijacking)
-  if (session.ip !== ip) {
-    console.warn(`[SECURITY] Session IP mismatch: expected ${session.ip}, got ${ip}`);
-    activeSessions.delete(sessionToken);
-    return { valid: false };
-  }
-
-  // Check timeout
-  const elapsed = Date.now() - session.lastActivity;
-  if (elapsed > SESSION_TIMEOUT_MS) {
-    console.warn(`[SECURITY] Session timeout for ${session.username}`);
-    activeSessions.delete(sessionToken);
-    return { valid: false };
-  }
-
-  // Update last activity
-  session.lastActivity = Date.now();
-  return { valid: true, username: session.username };
-}
-
-export function invalidateAdminSession(sessionToken: string): void {
-  activeSessions.delete(sessionToken);
-  console.log('[ADMIN SESSION] Session invalidated');
-}
-
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     if (request.method !== 'POST') {
       return new Response(
@@ -72,8 +25,31 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const body = await request.json();
-    const { sessionToken } = body;
+    const body = await request.json().catch(() => ({}));
+
+    // Explicit logout: always clear the cookie regardless of whether the
+    // token was still valid. Previously logout only cleared client-side
+    // state and left the httpOnly cookie live until its natural 30-minute
+    // expiry — a refresh right after "logging out" would silently log the
+    // admin back in.
+    if (body?.action === 'logout') {
+      return new Response(
+        JSON.stringify({ valid: false, loggedOut: true }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Set-Cookie': 'admin_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0',
+          },
+        }
+      );
+    }
+
+    // Prefer the httpOnly cookie — it's the tamper-proof source and lets
+    // the client verify a session (e.g. on page refresh) without ever
+    // having to hold the raw token in JS. Fall back to a body-supplied
+    // token for backward compatibility with any existing caller.
+    const sessionToken = cookies.get('admin_session')?.value || body?.sessionToken;
 
     if (!sessionToken) {
       return new Response(
@@ -83,9 +59,10 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const clientIP = getClientIP(request.headers);
-    const validation = validateAdminSession(sessionToken, clientIP);
+    const validation = await verifyAdminToken(sessionToken);
 
     if (!validation.valid) {
+      console.warn(`[SECURITY] Session verification failed from IP: ${clientIP}`);
       return new Response(
         JSON.stringify({ valid: false, error: 'Invalid or expired session' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -93,8 +70,8 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     return new Response(
-      JSON.stringify({ 
-        valid: true, 
+      JSON.stringify({
+        valid: true,
         username: validation.username,
         message: 'Session is valid'
       }),

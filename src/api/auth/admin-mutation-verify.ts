@@ -6,9 +6,9 @@
  */
 
 import type { APIRoute } from 'astro';
-import { validateAdminSession, getClientIP } from '@/lib/auth-security';
+import { verifyAdminToken, getClientIP } from '@/lib/auth-security';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     if (request.method !== 'POST') {
       return new Response(
@@ -17,8 +17,11 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const body = await request.json();
-    const { sessionToken, action } = body;
+    const body = await request.json().catch(() => ({}));
+    const { action } = body;
+    // Prefer the httpOnly cookie over a body-supplied token, same reasoning
+    // as admin-verify.ts.
+    const sessionToken = cookies.get('admin_session')?.value || body?.sessionToken;
 
     if (!sessionToken || !action) {
       return new Response(
@@ -28,9 +31,9 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const clientIP = getClientIP(request.headers);
-    
-    // Validate session
-    const validation = validateAdminSession(sessionToken, clientIP);
+
+    // Validate session (signed token, no server-side lookup required)
+    const validation = await verifyAdminToken(sessionToken);
 
     if (!validation.valid) {
       console.warn(`[SECURITY] Unauthorized mutation attempt from IP: ${clientIP}`);

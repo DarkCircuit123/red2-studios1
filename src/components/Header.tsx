@@ -16,8 +16,17 @@ export default function Header() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
-  const { isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
+  const { isAdminAuthenticated, isVerifying, logout: adminLogout, verifySession } = useAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
+
+  // Reconcile real auth state from the server on every page load. The
+  // client no longer persists isAdminAuthenticated to localStorage (see
+  // adminAuthStore.ts), so without this call every refresh would show
+  // "logged out" even with a perfectly valid session cookie — this is
+  // what makes a refresh correctly stay logged in.
+  useEffect(() => {
+    verifySession();
+  }, [verifySession]);
 
   // Optimized throttled scroll handler
   useEffect(() => {
@@ -208,13 +217,16 @@ export default function Header() {
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleAdminClick}
+            disabled={isVerifying}
             className={`p-2 transition-colors duration-300 rounded-lg ${
-              isAdminAuthenticated
+              isVerifying
+                ? 'opacity-50 cursor-wait'
+                : isAdminAuthenticated
                 ? 'hover:bg-primary/10'
                 : 'hover:bg-white/10'
             }`}
             aria-label="Admin panel"
-            title={isAdminAuthenticated ? 'Admin Panel' : 'Admin Login'}
+            title={isVerifying ? 'Checking session…' : isAdminAuthenticated ? 'Admin Panel' : 'Admin Login'}
           >
             <Settings className={`w-4 h-4 transition-colors ${
               isAdminAuthenticated
@@ -257,7 +269,11 @@ export default function Header() {
         </div>
       </nav>
       {/* Admin Login Modal */}
-      <AdminLoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      <AdminLoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={() => setIsAdminOpen(true)}
+      />
       {/* Admin Panel */}
       <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
       {/* Mobile Navigation */}

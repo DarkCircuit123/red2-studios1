@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { BaseCrudService } from '@/integrations';
-import { constantTimeEqual, checkRateLimit, recordFailedAttempt, getClientIP, generateSessionToken } from '@/lib/auth-security';
+import { constantTimeEqual, checkRateLimit, recordFailedAttempt, getClientIP, signAdminToken } from '@/lib/auth-security';
 
 /**
  * Secure Admin Authentication Check - P1 HARDENED
@@ -101,9 +101,20 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Generate session token
-    const sessionToken = generateSessionToken();
+    // Generate a signed, self-verifying session token (see auth-security.ts
+    // for why this replaced the old in-memory session Map: Cloudflare
+    // Workers isolates don't reliably share in-memory state).
+    let sessionToken: string;
     const sessionExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    try {
+      sessionToken = await signAdminToken(sanitizedUsername, 30 * 60 * 1000);
+    } catch (signError) {
+      console.error('[SECURITY] Failed to sign session token (SESSION_SECRET missing?):', signError);
+      return new Response(
+        JSON.stringify({ authenticated: false, error: 'Server configuration error' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log(`[ADMIN AUTH] Successful login for user: ${sanitizedUsername} from IP: ${clientIP}`);
 

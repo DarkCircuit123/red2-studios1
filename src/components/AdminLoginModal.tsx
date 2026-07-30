@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, User, AlertCircle } from 'lucide-react';
-import { useAdminAuth } from '@/lib/adminAuthStore';
+import { useAdminAuth, MAX_FAILED_ATTEMPTS } from '@/lib/adminAuthStore';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onLoginSuccess?: () => void;
 }
 
-export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProps) {
+export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }: AdminLoginModalProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login, failedAttempts } = useAdminAuth();
+  const { login } = useAdminAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,19 +24,41 @@ export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProp
     try {
       // Call login and await the result
       const success = await login(username, password);
-      
+
       if (success) {
-        console.log('[ADMIN LOGIN] Login successful, closing modal');
+        console.log('[ADMIN LOGIN] Login successful, opening admin panel');
         setUsername('');
         setPassword('');
         // Small delay to ensure state is persisted before closing
         setTimeout(() => {
           onClose();
+          // Previously the admin panel required a SECOND gear click after
+          // a successful login — this is what made login "appear to
+          // succeed" while nothing visibly happened. Open it directly.
+          onLoginSuccess?.();
         }, 100);
       } else {
-        const remainingAttempts = 3 - failedAttempts;
-        if (remainingAttempts > 0) {
-          setError(`Invalid username or password. ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.`);
+        // Read fresh state directly from the store rather than the
+        // destructured value above, which is captured at render time and
+        // would be one attempt stale inside this same call.
+        const storeError = useAdminAuth.getState().error;
+        const currentFailedAttempts = useAdminAuth.getState().failedAttempts;
+
+        // IMPORTANT: only show the "invalid password" messaging when the
+        // server actually said the credentials were wrong. Previously this
+        // branch showed that message unconditionally, which is why a dead
+        // API route, a missing SESSION_SECRET, or a plain network error
+        // all looked identical to a wrong password — the real cause was
+        // invisible. Every other failure now shows its real message.
+        if (storeError === 'Invalid credentials') {
+          const remainingAttempts = Math.max(0, MAX_FAILED_ATTEMPTS - currentFailedAttempts);
+          setError(
+            remainingAttempts > 0
+              ? `Invalid username or password. ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.`
+              : 'Too many failed attempts. Please try again later.'
+          );
+        } else {
+          setError(storeError || 'Login failed for an unknown reason. Check the browser console for details.');
         }
         setPassword('');
       }

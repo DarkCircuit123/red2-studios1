@@ -149,3 +149,107 @@ export function getClientIP(headers: Headers): string {
   }
   return headers.get('x-real-ip') || 'unknown';
 }
+
+/**
+ * Stateless signed admin session tokens (HMAC-SHA256)
+ *
+ * This site deploys on Cloudflare Workers (@astrojs/cloudflare). An
+ * in-memory Map is NOT reliably shared across requests there — different
+ * edge isolates/regions can each hold their own empty copy, which caused
+ * the intermittent "login succeeds, then admin panel never appears"
+ * behavior: the session was created in one isolate's memory and the next
+ * request landed on a different one that had never heard of it.
+ *
+ * A signed token is self-verifying: the signature + expiry are checked
+ * with pure math, no server-side lookup required, so it behaves
+ * identically on every edge node and survives redeploys/cold starts.
+ *
+ * Deliberately NOT pinned to client IP: mobile/cellular connections (and
+ * CDN edge hops) legitimately rotate IPs mid-session, which would cause
+ * spurious logouts for exactly that kind of usage.
+ */
+
+interface AdminTokenPayload {
+  username: string;
+  iat: number; // issued-at, ms epoch
+  exp: number; // expiry, ms epoch
+}
+
+function base64UrlEncode(bytes: Uint8Array): string {
+  let str = '';
+  for (const b of bytes) str += String.fromCharCode(b);
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlDecode(str: string): Uint8Array {
+  const padLen = (4 - (str.length % 4)) % 4;
+  const padded = str.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(padLen);
+  const bin = atob(padded);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+async function getSigningKey(): Promise<CryptoKey> {
+  const secret = process.env.SESSION_SECRET || import.meta.env.SESSION_SECRET;
+  if (!secret) {
+    throw new Error('SESSION_SECRET is not configured');
+  }
+  const encoder = new TextEncoder();
+  return crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify']
+  );
+}
+
+/**
+ * Create a signed session token for an authenticated admin user.
+ * Throws if SESSION_SECRET is not configured — callers must catch this
+ * and fail closed (500), never fall back to an unsigned token.
+ */
+export async function signAdminToken(username: string, ttlMs: number = 30 * 60 * 1000): Promise<string> {
+  const payload: AdminTokenPayload = {
+    username,
+    iat: Date.now(),
+    exp: Date.now() + ttlMs,
+  };
+  const payloadB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+
+  const key = await getSigningKey();
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payloadB64));
+  const sigB64 = base64UrlEncode(new Uint8Array(signature));
+
+  return `${payloadB64}.${sigB64}`;
+}
+
+/**
+ * Verify a signed session token. Returns { valid: false } for any
+ * malformed, tampered, expired, or unconfigured-secret case — never throws.
+ */
+export async function verifyAdminToken(token: string): Promise<{ valid: boolean; username?: string }> {
+  try {
+    const [payloadB64, sigB64] = token.split('.');
+    if (!payloadB64 || !sigB64) return { valid: false };
+
+    const key = await getSigningKey();
+    const expectedSig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payloadB64));
+    const expectedSigB64 = base64UrlEncode(new Uint8Array(expectedSig));
+
+    if (!constantTimeEqual(sigB64, expectedSigB64)) {
+      return { valid: false };
+    }
+
+    const payload: AdminTokenPayload = JSON.parse(new TextDecoder().decode(base64UrlDecode(payloadB64)));
+
+    if (Date.now() > payload.exp) {
+      return { valid: false };
+    }
+
+    return { valid: true, username: payload.username };
+  } catch {
+    return { valid: false };
+  }
+}

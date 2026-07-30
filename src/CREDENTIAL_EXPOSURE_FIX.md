@@ -25,7 +25,7 @@ All hardcoded credentials have been removed from the frontend codebase and moved
 ```typescript
 // BEFORE (VULNERABLE)
 const ADMIN_USERNAME = 'Jordan310';
-const ADMIN_PASSWORD = 'Iloveanna1!';
+const ADMIN_PASSWORD = '[REDACTED-ROTATE-IN-WIX-ENV-VARS]';
 ```
 
 **Risk:**
@@ -203,7 +203,7 @@ PRIVATE_PAGE_PASSWORD=<secure-password>
 - `secret` - ✅ No hardcoded values found
 - `token` - ✅ No hardcoded values found
 - `apiKey` - ✅ No hardcoded values found
-- `Iloveanna1` - ✅ Removed from codebase
+- `[REDACTED]` - ✅ Removed from codebase
 - `classified` - ✅ Removed from codebase
 
 ### Files Modified
@@ -243,7 +243,7 @@ PRIVATE_PAGE_PASSWORD=<secure-password>
 
 2. Scan for exposed credentials:
    ```bash
-   grep -r "Iloveanna1" dist/
+   grep -r "[REDACTED]" dist/
    grep -r "classified" dist/
    grep -r "password" dist/ | grep -v "node_modules"
    ```
