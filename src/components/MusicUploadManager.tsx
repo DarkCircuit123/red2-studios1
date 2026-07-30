@@ -57,10 +57,14 @@ export default function MusicUploadManager({
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to upload music file');
-      }
-
+      // Parse the body (via safeJson, not raw response.json()) before
+      // deciding what to throw - even on a non-2xx status the server
+      // route always returns a JSON { error: "..." } body, so reading it
+      // surfaces the REAL reason (invalid type, too large, Media Manager
+      // failure) instead of the generic "Failed to upload music file".
+      // safeJson also means a stray non-JSON response (HTML error page)
+      // produces a readable "Expected JSON, got ..." message instead of
+      // the raw, meaningless "Unexpected token '<'" parse crash.
       let data;
       try {
         data = await safeJson(response);
@@ -68,6 +72,11 @@ export default function MusicUploadManager({
         console.error('Failed to parse upload response:', parseError);
         throw parseError;
       }
+
+      if (!response.ok) {
+        throw new Error(data?.error || `Failed to upload music file (HTTP ${response.status})`);
+      }
+
       const musicUrl = data.url;
 
       // Update CMS with the new music URL

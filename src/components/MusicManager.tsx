@@ -83,10 +83,11 @@ export default function MusicManager({
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to upload music file');
-      }
-
+      // Parse via safeJson before deciding what to throw, so a non-2xx
+      // response surfaces the server's real error message instead of a
+      // generic one, and a stray non-JSON body (HTML error page) fails
+      // with a readable "Expected JSON, got ..." message rather than the
+      // raw, meaningless "Unexpected token '<'" parse crash.
       let data;
       try {
         data = await safeJson(response);
@@ -94,6 +95,11 @@ export default function MusicManager({
         console.error('Failed to parse upload response:', parseError);
         throw parseError;
       }
+
+      if (!response.ok) {
+        throw new Error(data?.error || `Failed to upload music file (HTTP ${response.status})`);
+      }
+
       const musicUrl = data.url;
 
       if (itemId) {

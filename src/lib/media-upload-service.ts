@@ -14,6 +14,8 @@
  * - After: ~50 byte URL string in CMS = No error
  */
 
+import { safeJson } from './safeJson';
+
 export interface MediaUploadProgress {
   loaded: number;
   total: number;
@@ -83,7 +85,7 @@ class MediaUploadService {
       const response = await this.uploadToAPI(formData, onProgress);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await safeJson(response).catch(() => ({} as any));
         throw {
           code: 'UPLOAD_FAILED',
           message: errorData.error || `Upload failed with status ${response.status}`,
@@ -91,7 +93,12 @@ class MediaUploadService {
         } as MediaUploadError;
       }
 
-      const result = await response.json();
+      // safeJson (not raw response.json()) so a non-JSON body - e.g. an
+      // HTML error/404 page returned with a 200 status by an edge/CDN
+      // layer in front of the route - produces a diagnostic
+      // "Expected JSON, got text/html..." message instead of the opaque
+      // native "Unexpected token '<'" parse crash.
+      const result = await safeJson(response);
 
       // Validate response structure
       if (!result.mediaUrl || !result.mediaId) {
@@ -146,24 +153,25 @@ class MediaUploadService {
 
       // Handle completion
       xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(
-            new Response(xhr.responseText, {
-              status: xhr.status,
-              statusText: xhr.statusText,
-              headers: new Headers({
-                'Content-Type': 'application/json',
-              }),
-            })
-          );
-        } else {
-          resolve(
-            new Response(xhr.responseText, {
-              status: xhr.status,
-              statusText: xhr.statusText,
-            })
-          );
-        }
+        // BUG FIX: this used to hard-code 'Content-Type': 'application/json'
+        // on every 2xx response regardless of what the server actually
+        // sent. If a route ever fell through to a 200-status HTML page
+        // (an SPA/CDN catch-all, a stale deploy, an edge cache hit) the
+        // wrapped Response would *claim* to be JSON while actually
+        // holding "<!DOCTYPE html>...", and safeJson/.json() would blow
+        // up with the opaque "Unexpected token '<'" error further down -
+        // exactly the symptom reported in production. Pass through the
+        // real header xhr received so JSON-vs-HTML detection is honest.
+        const contentType = xhr.getResponseHeader('Content-Type') || 'application/octet-stream';
+        resolve(
+          new Response(xhr.responseText, {
+            status: xhr.status,
+            statusText: xhr.statusText,
+            headers: new Headers({
+              'Content-Type': contentType,
+            }),
+          })
+        );
       });
 
       // Handle errors
