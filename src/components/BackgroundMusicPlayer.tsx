@@ -12,6 +12,9 @@ interface MusicSettings {
   musicTitle?: string;
 }
 
+// Default music URL - high-quality background music
+const DEFAULT_MUSIC_URL = 'https://www.epidemicsound.com/music/tracks/0077f7bc-f9cc-4042-83b3-7504bb14def6/';
+
 export default function BackgroundMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -28,24 +31,45 @@ export default function BackgroundMusicPlayer() {
         const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
         if (result?.items && result.items.length > 0) {
           const settings = result.items[0];
+          // Use CMS URL if available, otherwise use default
+          const musicUrl = settings.musicUrl || DEFAULT_MUSIC_URL;
           console.log('[AUDIO] Loaded music settings:', {
             enabled: settings.isEnabled,
-            hasUrl: !!settings.musicUrl,
+            hasUrl: !!musicUrl,
             volume: settings.volume,
             loop: settings.loopMusic,
-            title: settings.musicTitle
+            title: settings.musicTitle,
+            source: settings.musicUrl ? 'CMS' : 'DEFAULT'
           });
-          setMusicSettings(settings);
+          setMusicSettings({ ...settings, musicUrl });
         } else {
-          console.log('[AUDIO] No music settings found in CMS');
+          console.log('[AUDIO] No music settings found in CMS, using defaults');
+          // Create default settings
+          setMusicSettings({
+            _id: 'default',
+            musicUrl: DEFAULT_MUSIC_URL,
+            isEnabled: true,
+            volume: 30,
+            loopMusic: true,
+            musicTitle: 'Background Music'
+          });
         }
       } catch (error) {
         // Suppress 403 errors from CMS - music is optional
         if (error instanceof Error && error.message.includes('403')) {
-          console.log('[AUDIO] CMS access denied for music settings (expected in some environments)');
+          console.log('[AUDIO] CMS access denied for music settings (expected in some environments), using defaults');
         } else {
           console.log('[AUDIO] Failed to load music settings:', error);
         }
+        // Use default settings on error
+        setMusicSettings({
+          _id: 'default',
+          musicUrl: DEFAULT_MUSIC_URL,
+          isEnabled: true,
+          volume: 30,
+          loopMusic: true,
+          musicTitle: 'Background Music'
+        });
       } finally {
         setIsLoadingSettings(false);
       }
@@ -154,12 +178,22 @@ export default function BackgroundMusicPlayer() {
     const errorCode = audio.error?.code;
     const errorMessage = audio.error?.message || 'Unknown error';
     
+    const errorCodeMap: { [key: number]: string } = {
+      1: 'MEDIA_ERR_ABORTED',
+      2: 'MEDIA_ERR_NETWORK',
+      3: 'MEDIA_ERR_DECODE',
+      4: 'MEDIA_ERR_SRC_NOT_SUPPORTED'
+    };
+    
     console.error('[AUDIO] Audio element error:', {
       code: errorCode,
+      codeType: errorCodeMap[errorCode || 0] || 'UNKNOWN',
       message: errorMessage,
       networkState: audio.networkState,
       readyState: audio.readyState,
-      src: musicSettings?.musicUrl
+      src: musicSettings?.musicUrl,
+      crossOrigin: audio.crossOrigin,
+      timestamp: new Date().toISOString()
     });
     
     setAudioError(true);
@@ -167,6 +201,12 @@ export default function BackgroundMusicPlayer() {
 
   // Don't render if music is disabled or settings not loaded
   if (isLoadingSettings || !musicSettings?.isEnabled) {
+    return null;
+  }
+
+  // Validate music URL is available
+  if (!musicSettings?.musicUrl) {
+    console.warn('[AUDIO] No music URL available, cannot play background music');
     return null;
   }
 
@@ -185,19 +225,20 @@ export default function BackgroundMusicPlayer() {
         onError={handleAudioError}
         style={{ display: 'none' }}
       >
-        {musicSettings?.musicUrl && (
-          <source 
-            src={musicSettings.musicUrl} 
-            type="audio/mpeg"
-          />
-        )}
+        <source 
+          src={musicSettings.musicUrl} 
+          type="audio/mpeg"
+        />
         {/* Fallback for other audio formats */}
-        {musicSettings?.musicUrl && (
-          <source 
-            src={musicSettings.musicUrl} 
-            type="audio/wav"
-          />
-        )}
+        <source 
+          src={musicSettings.musicUrl} 
+          type="audio/wav"
+        />
+        {/* Fallback for OGG */}
+        <source 
+          src={musicSettings.musicUrl} 
+          type="audio/ogg"
+        />
       </audio>
 
       {/* Music control button - fixed position */}
