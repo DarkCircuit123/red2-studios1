@@ -70,6 +70,7 @@ export const POST: APIRoute = async ({ request }) => {
       fileName: file.name,
     });
 
+    console.log('[MUSIC_UPLOAD] Generated upload URL, preparing file buffer...');
     const buffer = await file.arrayBuffer();
 
     console.log('[MUSIC_UPLOAD] Uploading file bytes to Wix Media Manager...');
@@ -85,7 +86,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (!uploadResponse.ok) {
       const uploadErrorText = await uploadResponse.text().catch(() => '');
       console.error(`[MUSIC_UPLOAD] Media Manager upload failed: ${uploadResponse.status} ${uploadErrorText}`);
-      throw new Error(`Media Manager upload failed with status ${uploadResponse.status}`);
+      throw new Error(`Media Manager upload failed with status ${uploadResponse.status}: ${uploadErrorText}`);
     }
 
     const uploadResult = await uploadResponse.json();
@@ -93,7 +94,7 @@ export const POST: APIRoute = async ({ request }) => {
     const mediaId: string | undefined = uploadResult?.file?.id;
 
     if (!mediaUrl) {
-      console.error('[MUSIC_UPLOAD] Media Manager response missing file URL:', uploadResult);
+      console.error('[MUSIC_UPLOAD] Media Manager response missing file URL:', JSON.stringify(uploadResult));
       throw new Error('Media Manager did not return a file URL');
     }
 

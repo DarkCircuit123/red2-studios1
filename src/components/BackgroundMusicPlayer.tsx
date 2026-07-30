@@ -27,14 +27,24 @@ export default function BackgroundMusicPlayer() {
       try {
         const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
         if (result?.items && result.items.length > 0) {
-          setMusicSettings(result.items[0]);
+          const settings = result.items[0];
+          console.log('[AUDIO] Loaded music settings:', {
+            enabled: settings.isEnabled,
+            hasUrl: !!settings.musicUrl,
+            volume: settings.volume,
+            loop: settings.loopMusic,
+            title: settings.musicTitle
+          });
+          setMusicSettings(settings);
+        } else {
+          console.log('[AUDIO] No music settings found in CMS');
         }
       } catch (error) {
         // Suppress 403 errors from CMS - music is optional
         if (error instanceof Error && error.message.includes('403')) {
           console.log('[AUDIO] CMS access denied for music settings (expected in some environments)');
         } else {
-          console.log('Failed to load music settings:', error);
+          console.log('[AUDIO] Failed to load music settings:', error);
         }
       } finally {
         setIsLoadingSettings(false);
@@ -62,16 +72,18 @@ export default function BackgroundMusicPlayer() {
           audioRef.current!.load();
         }
         
+        console.log('[AUDIO] Attempting autoplay...');
         // Attempt to play immediately
         const playPromise = audioRef.current!.play();
         if (playPromise !== undefined) {
           await playPromise;
+          console.log('[AUDIO] Autoplay successful');
           setIsPlaying(true);
           setAudioError(false);
           setHasInteracted(true);
         }
       } catch (err) {
-        console.log('Autoplay failed, will retry on user interaction:', err);
+        console.log('[AUDIO] Autoplay failed, will retry on user interaction:', err);
         // Autoplay was blocked, will retry on first user interaction
       }
     };
@@ -88,11 +100,12 @@ export default function BackgroundMusicPlayer() {
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
             await playPromise;
+            console.log('[AUDIO] Playback started on user interaction');
             setIsPlaying(true);
             setAudioError(false);
           }
         } catch (err) {
-          console.log('Audio playback failed on user interaction:', err);
+          console.log('[AUDIO] Audio playback failed on user interaction:', err);
           setAudioError(true);
         }
       }
@@ -136,8 +149,19 @@ export default function BackgroundMusicPlayer() {
     setIsPlaying(false);
   };
 
-  const handleAudioError = () => {
-    console.error('[AUDIO] Audio element error event triggered');
+  const handleAudioError = (event: Event) => {
+    const audio = event.target as HTMLAudioElement;
+    const errorCode = audio.error?.code;
+    const errorMessage = audio.error?.message || 'Unknown error';
+    
+    console.error('[AUDIO] Audio element error:', {
+      code: errorCode,
+      message: errorMessage,
+      networkState: audio.networkState,
+      readyState: audio.readyState,
+      src: musicSettings?.musicUrl
+    });
+    
     setAudioError(true);
   };
 
@@ -165,6 +189,13 @@ export default function BackgroundMusicPlayer() {
           <source 
             src={musicSettings.musicUrl} 
             type="audio/mpeg"
+          />
+        )}
+        {/* Fallback for other audio formats */}
+        {musicSettings?.musicUrl && (
+          <source 
+            src={musicSettings.musicUrl} 
+            type="audio/wav"
           />
         )}
       </audio>
