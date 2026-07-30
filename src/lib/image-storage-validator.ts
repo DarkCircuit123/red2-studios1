@@ -42,23 +42,20 @@ export function validateImageStorage(value: string | null | undefined, fieldName
   }
 
   if (typeof value !== 'string') {
-    throw new Error(`[ImageStorageValidator] ${fieldName} must be a string, got ${typeof value}`);
+    throw new Error(`Image upload failed: this file could not be stored. Please retry the upload.`);
   }
 
   // CRITICAL: Block any base64 data URLs
   if (value.startsWith('data:image')) {
     throw new Error(
-      `[ImageStorageValidator] Blocked: Base64 image storage is not allowed in ${fieldName}. ` +
-      `Use Wix Media Manager URLs instead (wix:image://v1/... or https://static.wixstatic.com/media/...). ` +
-      `This prevents WDE0009 "Document is too large" errors.`
+      `Image upload failed: this file could not be stored. Please retry the upload.`
     );
   }
 
   // Also block other data URL types that might slip through
   if (value.startsWith('data:')) {
     throw new Error(
-      `[ImageStorageValidator] Blocked: Data URL storage is not allowed in ${fieldName}. ` +
-      `Use Wix Media Manager URLs instead (wix:image://v1/... or https://static.wixstatic.com/media/...).`
+      `Image upload failed: this file could not be stored. Please retry the upload.`
     );
   }
 
@@ -77,9 +74,7 @@ export function validateImageStorage(value: string | null | undefined, fieldName
   
   if (!isValidWixUrl && !value.startsWith('http')) {
     throw new Error(
-      `[ImageStorageValidator] Invalid URL format in ${fieldName}. ` +
-      `Expected Wix Media Manager URL: https://static.wixstatic.com/media/... or wix:image://v1/... ` +
-      `Got: ${value.substring(0, 50)}...`
+      `Image upload failed: this file could not be stored. Please retry the upload.`
     );
   }
 }

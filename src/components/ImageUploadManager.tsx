@@ -82,7 +82,7 @@ export default function ImageUploadManager({
 
     // Validate file type
     if (!isValidFileType(file)) {
-      setErrorMessage(`Unsupported file type: ${file.type || 'unknown'}. Supported formats: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC, and more.`);
+      setErrorMessage('Image upload failed: this file format is not supported. Please use JPG, PNG, WebP, GIF, SVG, TIFF, or BMP.');
       setUploadStatus('error');
       return;
     }
@@ -104,14 +104,14 @@ export default function ImageUploadManager({
       // Validate that we got a proper Wix media URL (not base64)
       // This prevents WDE0009 errors
       if (MediaUploadService.isDataUrl(result.mediaUrl)) {
-        throw new Error('Upload returned base64 data URL instead of Wix media URL. This would cause WDE0009 error.');
+        throw new Error('Image upload failed: this file could not be stored. Please retry the upload.');
       }
 
       // FINAL HARDENING: Validate image storage before CMS update
       try {
         validateImageStorage(result.mediaUrl, fieldName || 'image');
       } catch (validationError) {
-        throw new Error(`Image storage validation failed: ${validationError instanceof Error ? validationError.message : String(validationError)}`);
+        throw new Error('Image upload failed: this file could not be stored. Please retry the upload.');
       }
 
       // Save media URL (not base64) to CMS if collection info provided
@@ -130,7 +130,7 @@ export default function ImageUploadManager({
           setTimeout(() => setUploadStatus('idle'), 3000);
         } catch (cmsError) {
           console.error('CMS update failed:', cmsError);
-          setErrorMessage('Failed to save image reference to CMS. Please try again.');
+          setErrorMessage('Image upload failed: could not save to database. Please retry the upload.');
           setUploadStatus('error');
         }
       } else {
@@ -141,10 +141,8 @@ export default function ImageUploadManager({
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      const errorMsg = error && typeof error === 'object' && 'message' in error
-        ? (error as any).message
-        : 'Failed to upload image. Please try again.';
-      setErrorMessage(errorMsg);
+      // Use user-friendly message instead of technical details
+      setErrorMessage('Image upload failed: this file could not be stored. Please retry the upload.');
       setUploadStatus('error');
     } finally {
       setIsProcessing(false);
