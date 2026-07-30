@@ -10,7 +10,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ClientProofingGalleries } from '@/entities';
 
-export default function ClientGalleryDashboardPageContent() {
+function ClientGalleryDashboardPageContent() {
   const navigate = useNavigate();
   const { member, actions } = useMember();
   const [galleries, setGalleries] = useState<ClientProofingGalleries[]>([]);

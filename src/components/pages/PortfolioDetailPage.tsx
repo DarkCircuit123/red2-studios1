@@ -182,7 +182,7 @@ export default function PortfolioDetailPage() {
               </span>
             )}
           </div>
-        </motion.div>
+        </ScrollReveal>
 
         {/* Main Image - Photography-First with Aspect Ratio Preservation */}
         <motion.div
