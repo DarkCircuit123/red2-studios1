@@ -1,15 +1,12 @@
 import type { APIRoute } from 'astro';
+import { BaseCrudService } from '@/integrations';
 
 /**
  * Secure Admin Authentication Check
  * 
- * This endpoint validates admin credentials server-side using environment variables.
+ * This endpoint validates admin credentials server-side.
+ * Credentials can be stored in CMS (adminCredentials collection) or environment variables.
  * NEVER expose credentials in frontend code.
- * 
- * Environment Variables Required:
- * - ADMIN_USERNAME: Admin username (stored securely)
- * - ADMIN_PASSWORD_HASH: Hashed admin password (never plaintext)
- * - ADMIN_SECRET: Secret token for session validation
  */
 
 export const POST: APIRoute = async ({ request }) => {
@@ -34,12 +31,30 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Get credentials from environment variables with fallback
-    const adminUsername = import.meta.env.ADMIN_USERNAME || 'admin';
-    const adminPassword = import.meta.env.ADMIN_PASSWORD || 'Iloveanna1!';
+    // Try to get credentials from CMS first
+    let adminUsername = '';
+    let adminPassword = '';
+    
+    try {
+      const credentialsResult = await BaseCrudService.getAll('admincredentials', {}, { limit: 1 });
+      if (credentialsResult?.items && credentialsResult.items.length > 0) {
+        const creds = credentialsResult.items[0] as any;
+        adminUsername = creds.username || '';
+        adminPassword = creds.password || '';
+        console.log('[ADMIN AUTH] Loaded credentials from CMS');
+      }
+    } catch (cmsError) {
+      console.warn('[ADMIN AUTH] CMS credentials not available, falling back to env vars');
+    }
+
+    // Fallback to environment variables if CMS credentials not found
+    if (!adminUsername || !adminPassword) {
+      adminUsername = import.meta.env.ADMIN_USERNAME || 'admin';
+      adminPassword = import.meta.env.ADMIN_PASSWORD || 'Iloveanna1!';
+      console.log('[ADMIN AUTH] Using environment variable credentials');
+    }
 
     // Validate credentials
-    // In production, use bcrypt or similar for password hashing
     const isValid = username === adminUsername && password === adminPassword;
 
     if (!isValid) {
@@ -53,7 +68,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Credentials are valid - return success
-    // In production, generate a secure session token here
+    console.log(`[ADMIN AUTH] Successful login for user: ${username}`);
     return new Response(
       JSON.stringify({ 
         authenticated: true,

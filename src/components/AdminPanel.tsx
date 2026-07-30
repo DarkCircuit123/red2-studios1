@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, LogOut, Music, Calendar, Activity } from 'lucide-react';
+import { Settings, X, Edit2, LogOut, Music, Calendar, Activity, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
@@ -27,6 +27,12 @@ interface MusicSettings {
 
 interface AboutSettings extends AboutSection {}
 
+interface AdminCredentials {
+  _id: string;
+  username: string;
+  password: string;
+}
+
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { isAdminAuthenticated, logout } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('photos');
@@ -37,11 +43,17 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [aboutSettings, setAboutSettings] = useState<AboutSettings | null>(null);
+  const [adminCredentials, setAdminCredentials] = useState<AdminCredentials | null>(null);
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [credentialsError, setCredentialsError] = useState('');
+  const [credentialsSuccess, setCredentialsSuccess] = useState('');
+  const [isSavingCredentials, setIsSavingCredentials] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingAbout, setIsSavingAbout] = useState(false);
 
   useEffect(() => {
-    const loadImages = async () => {
+    const loadData = async () => {
       if (!isOpen) return;
       
       setIsLoading(true);
@@ -94,19 +106,72 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
         } catch (error) {
           setAboutSettings(null);
         }
+
+        try {
+          const credsResult = await BaseCrudService.getAll<AdminCredentials>('admincredentials', {}, { limit: 1 });
+          if (credsResult?.items && credsResult.items.length > 0) {
+            const creds = credsResult.items[0];
+            setAdminCredentials(creds);
+            setNewUsername(creds.username || '');
+            setNewPassword(creds.password || '');
+          }
+        } catch (error) {
+          console.log('[ADMIN PANEL] Admin credentials not found in CMS');
+        }
       } catch (error) {
-        setHomepageImages(null);
-        setPortfolioItems([]);
-        setSponsors([]);
-        setMusicSettings(null);
-        setAboutSettings(null);
+        console.error('[ADMIN PANEL] Error loading data:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadImages();
+    loadData();
   }, [isOpen]);
+
+  const handleSaveCredentials = async () => {
+    setCredentialsError('');
+    setCredentialsSuccess('');
+
+    if (!newUsername || !newPassword) {
+      setCredentialsError('Username and password are required');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setCredentialsError('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsSavingCredentials(true);
+    try {
+      if (adminCredentials) {
+        // Update existing credentials
+        await BaseCrudService.update('admincredentials', {
+          _id: adminCredentials._id,
+          username: newUsername,
+          password: newPassword
+        });
+        setAdminCredentials({ ...adminCredentials, username: newUsername, password: newPassword });
+      } else {
+        // Create new credentials
+        const newCreds = {
+          _id: crypto.randomUUID(),
+          username: newUsername,
+          password: newPassword
+        };
+        await BaseCrudService.create('admincredentials', newCreds);
+        setAdminCredentials(newCreds);
+      }
+      setCredentialsSuccess('Credentials saved successfully! New credentials will be active on next login.');
+      playClickSound();
+      setTimeout(() => setCredentialsSuccess(''), 3000);
+    } catch (error) {
+      console.error('[ADMIN PANEL] Error saving credentials:', error);
+      setCredentialsError('Failed to save credentials. Please try again.');
+    } finally {
+      setIsSavingCredentials(false);
+    }
+  };
 
   if (!isAdminAuthenticated) {
     return null;
@@ -236,6 +301,17 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 Text Content
               </button>
               <button
+                onClick={() => setActiveTab('credentials')}
+                className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap flex items-center gap-1 ${
+                  activeTab === 'credentials'
+                    ? 'bg-white text-black'
+                    : 'bg-black text-white hover:text-red-500'
+                }`}
+              >
+                <Lock className="w-3 h-3" />
+                Credentials
+              </button>
+              <button
                 onClick={() => setActiveTab('bookings')}
                 className={`px-4 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded transition-all whitespace-nowrap flex items-center gap-1 ${
                   activeTab === 'bookings'
@@ -249,8 +325,88 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             </div>
 
             <div className="p-6 space-y-8">
-              {activeTab === 'health' && (
-                <MediaHealthTab />
+              {activeTab === 'credentials' && (
+                <div>
+                  <h3 className="text-sm font-heading font-bold text-black mb-6 uppercase tracking-wide flex items-center gap-2">
+                    <Lock className="w-4 h-4" />
+                    Admin Credentials
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                      <h4 className="text-xs font-heading font-bold text-blue-600 mb-2">ℹ️ Credentials Management</h4>
+                      <p className="text-xs text-blue-600/70">
+                        Set your admin login credentials here. These credentials will be stored in the CMS and used for authentication. Changes take effect on your next login.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                        Admin Username
+                      </label>
+                      <input
+                        type="text"
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value)}
+                        placeholder="Enter admin username"
+                        className="w-full px-4 py-2 border border-black/10 rounded text-sm text-black focus:outline-none focus:border-black/30 transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
+                        Admin Password
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter admin password (min 6 characters)"
+                        className="w-full px-4 py-2 border border-black/10 rounded text-sm text-black focus:outline-none focus:border-black/30 transition-all"
+                      />
+                      <p className="text-xs text-black/40 mt-1">Minimum 6 characters required</p>
+                    </div>
+
+                    {credentialsError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-2"
+                      >
+                        <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-red-600">{credentialsError}</p>
+                      </motion.div>
+                    )}
+
+                    {credentialsSuccess && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 flex items-start gap-2"
+                      >
+                        <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-green-600">{credentialsSuccess}</p>
+                      </motion.div>
+                    )}
+
+                    <button
+                      onClick={handleSaveCredentials}
+                      disabled={isSavingCredentials || !newUsername || !newPassword}
+                      className="w-full px-4 py-3 bg-black text-white rounded text-sm font-heading font-bold uppercase tracking-wide hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {isSavingCredentials ? 'Saving...' : 'Save Credentials'}
+                    </button>
+
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                      <h4 className="text-xs font-heading font-bold text-yellow-600 mb-2">⚠️ Important</h4>
+                      <ul className="text-xs text-yellow-600/70 space-y-1">
+                        <li>• Credentials are stored securely in the CMS</li>
+                        <li>• You'll need to log in again with new credentials</li>
+                        <li>• Keep your password safe and unique</li>
+                        <li>• Changes take effect immediately</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {activeTab === 'bookings' && (
