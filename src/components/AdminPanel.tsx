@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, LogOut, Music, Calendar } from 'lucide-react';
+import { Settings, X, Edit2, LogOut, Music, Calendar, Activity } from 'lucide-react';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import MusicManager from './MusicManager';
 import BookingManagerPro from './BookingManagerPro';
+import MediaHealthTab from './AdminPanel/MediaHealthTab';
 import { BaseCrudService } from '@/integrations';
 import { Services, HomepageImages, Portfolio, ClientsPress, AboutSection } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
@@ -248,6 +249,10 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             </div>
 
             <div className="p-6 space-y-8">
+              {activeTab === 'health' && (
+                <MediaHealthTab />
+              )}
+
               {activeTab === 'bookings' && (
                 <div className="bg-gradient-to-b from-black to-black/95 border border-white/10 rounded-lg p-6">
                   <BookingManagerPro />
