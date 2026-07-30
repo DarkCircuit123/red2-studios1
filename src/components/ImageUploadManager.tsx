@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
+import MediaUploadService, { MediaUploadProgress } from '@/lib/media-upload-service';
 
 interface ImageUploadManagerProps {
   onImageUpload: (imageUrl: string) => void;
@@ -45,7 +46,18 @@ export default function ImageUploadManager({
   const [isDeleting, setIsDeleting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        MediaUploadService.revokePreviewUrl(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const isValidFileType = (file: File): boolean => {
     if (acceptedFormats && acceptedFormats.length > 0) {
@@ -64,6 +76,7 @@ export default function ImageUploadManager({
   const processImage = async (file: File) => {
     setErrorMessage('');
     setUploadStatus('idle');
+    setUploadProgress(0);
 
     // Validate file type
     if (!isValidFileType(file)) {
@@ -72,61 +85,49 @@ export default function ImageUploadManager({
       return;
     }
 
-    // Validate file size (max 50MB)
-    const maxSize = 50 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setErrorMessage(`File size exceeds 50MB limit. Your file: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-      setUploadStatus('error');
-      return;
-    }
-
     setIsProcessing(true);
+
     try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
+      // Create local preview URL using URL.createObjectURL (not base64)
+      const localPreviewUrl = MediaUploadService.createPreviewUrl(file);
+      setPreviewUrl(localPreviewUrl);
+
+      // Upload to Wix Media Manager
+      const result = await MediaUploadService.uploadImage(file, (progress: MediaUploadProgress) => {
+        setUploadProgress(progress.percentage);
+      });
+
+      // Save media URL (not base64) to CMS if collection info provided
+      if (collectionId && itemId && fieldName) {
         try {
-          const base64 = event.target?.result as string;
-          
-          // If collection info provided, save to CMS
-          if (collectionId && itemId && fieldName) {
-            try {
-              await BaseCrudService.update(collectionId, {
-                _id: itemId,
-                [fieldName]: base64
-              });
-              onImageUpload(base64);
-              setUploadStatus('success');
-              setTimeout(() => setUploadStatus('idle'), 3000);
-            } catch (cmsError) {
-              console.error('CMS update failed:', cmsError);
-              setErrorMessage('Failed to save image to CMS. Please try again.');
-              setUploadStatus('error');
-            }
-          } else {
-            // No CMS info, just update locally
-            onImageUpload(base64);
-            setUploadStatus('success');
-            setTimeout(() => setUploadStatus('idle'), 3000);
-          }
-          setIsProcessing(false);
-        } catch (error) {
-          console.error('Error processing image:', error);
-          setErrorMessage('Failed to process image. Please try again.');
+          await BaseCrudService.update(collectionId, {
+            _id: itemId,
+            [fieldName]: result.mediaUrl
+          });
+          onImageUpload(result.mediaUrl);
+          setUploadStatus('success');
+          setTimeout(() => setUploadStatus('idle'), 3000);
+        } catch (cmsError) {
+          console.error('CMS update failed:', cmsError);
+          setErrorMessage('Failed to save image reference to CMS. Please try again.');
           setUploadStatus('error');
-          setIsProcessing(false);
         }
-      };
-      reader.onerror = () => {
-        setErrorMessage('Failed to read file. Please try again.');
-        setUploadStatus('error');
-        setIsProcessing(false);
-      };
-      reader.readAsDataURL(file);
+      } else {
+        // No CMS info, just update locally with media URL
+        onImageUpload(result.mediaUrl);
+        setUploadStatus('success');
+        setTimeout(() => setUploadStatus('idle'), 3000);
+      }
     } catch (error) {
-      console.error('Error processing image:', error);
-      setErrorMessage('Error processing image. Please try again.');
+      console.error('Error uploading image:', error);
+      const errorMsg = error && typeof error === 'object' && 'message' in error
+        ? (error as any).message
+        : 'Failed to upload image. Please try again.';
+      setErrorMessage(errorMsg);
       setUploadStatus('error');
+    } finally {
       setIsProcessing(false);
+      setUploadProgress(0);
     }
   };
 
@@ -214,7 +215,18 @@ export default function ImageUploadManager({
         {isProcessing ? (
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            <p className="text-sm text-white/60">Processing image...</p>
+            <p className="text-sm text-white/60">Uploading image...</p>
+            {uploadProgress > 0 && (
+              <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white/60 transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            )}
+            {uploadProgress > 0 && (
+              <p className="text-xs text-white/40">{uploadProgress}%</p>
+            )}
           </div>
         ) : uploadStatus === 'success' ? (
           <div className="flex flex-col items-center gap-3">
@@ -281,7 +293,7 @@ export default function ImageUploadManager({
       {/* Supported formats info */}
       <div className="text-xs text-white/40 space-y-1">
         <p>Supported formats: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC</p>
-        <p>Max file size: 50MB</p>
+        <p>Max file size: 100MB</p>
       </div>
     </div>
   );

@@ -1,19 +1,38 @@
 import type { APIRoute } from 'astro';
 
+/**
+ * DEPRECATED: This endpoint is kept for backward compatibility only.
+ * 
+ * DO NOT USE FOR NEW CODE - Use /api/media/upload instead
+ * 
+ * This endpoint previously stored base64 images in CMS, which caused:
+ * - WDE0009: Document is too large errors
+ * - 33% data overhead from base64 encoding
+ * - Slow CMS operations
+ * - Memory issues
+ * 
+ * New architecture:
+ * 1. Upload files to Wix Media Manager via /api/media/upload
+ * 2. Store only media URL in CMS
+ * 3. Use URL.createObjectURL for previews instead of base64
+ */
+
 export const POST: APIRoute = async ({ request }) => {
   const startTime = Date.now();
   
   try {
-    // Check if request has a body
     if (!request.body) {
       console.error('[IMAGE_UPLOAD] No request body provided');
       return new Response(
-        JSON.stringify({ error: 'No file provided' }),
+        JSON.stringify({ 
+          error: 'No file provided',
+          warning: 'This endpoint is deprecated. Use /api/media/upload instead.'
+        }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[IMAGE_UPLOAD] Starting upload process...');
+    console.warn('[IMAGE_UPLOAD] DEPRECATED: Use /api/media/upload instead');
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -54,8 +73,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Validate file size (max 100MB - reasonable limit for images)
-    // NOTE: We're NOT using base64 encoding anymore, so no 33% overhead
+    // Validate file size (max 100MB)
     const MAX_FILE_SIZE = 100 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       console.error(`[IMAGE_UPLOAD] File too large: ${fileSizeMB}MB exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`);
@@ -68,8 +86,8 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Convert file to base64 for storage (with detailed logging)
-    console.log('[IMAGE_UPLOAD] Converting to base64...');
+    // DEPRECATED: Convert file to base64 (DO NOT STORE IN CMS)
+    console.log('[IMAGE_UPLOAD] Converting to base64... (DEPRECATED - use /api/media/upload)');
     const conversionStart = Date.now();
     const buffer = await file.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
@@ -82,7 +100,7 @@ export const POST: APIRoute = async ({ request }) => {
     const dataUrl = `data:${file.type};base64,${base64}`;
 
     const totalTime = Date.now() - startTime;
-    console.log(`[IMAGE_UPLOAD] Upload successful in ${totalTime}ms`);
+    console.log(`[IMAGE_UPLOAD] Upload successful in ${totalTime}ms (DEPRECATED)`);
 
     return new Response(
       JSON.stringify({ 
@@ -90,6 +108,7 @@ export const POST: APIRoute = async ({ request }) => {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
+        warning: 'DEPRECATED: This endpoint returns base64 which causes WDE0009 errors. Use /api/media/upload instead.',
         debug: {
           originalSizeMB: fileSizeMB,
           base64SizeMB,
