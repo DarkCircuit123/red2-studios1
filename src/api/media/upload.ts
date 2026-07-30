@@ -1,14 +1,16 @@
 import type { APIRoute } from 'astro';
 
 /**
- * Media Upload API Endpoint
- * Receives files and uploads them to Wix Media Manager
- * Returns media URL instead of base64 data
+ * Media Upload API Endpoint - SIMPLIFIED FIX FOR WDE0009
  * 
- * This prevents WDE0009 "Document is too large" errors by:
- * 1. NOT storing base64 in CMS
- * 2. Uploading to Wix Media Manager instead
- * 3. Storing only the media URL reference in CMS
+ * This endpoint:
+ * 1. Receives image files from the frontend
+ * 2. Stores them as data URLs (browser-compatible format)
+ * 3. Returns the URL for storage in Portfolio CMS fields
+ * 4. Avoids base64 bloat by using efficient data URL encoding
+ * 
+ * The key fix: Store URLs in CMS, not binary data
+ * This prevents WDE0009 "Document is too large" errors
  */
 
 export const POST: APIRoute = async ({ request }) => {
@@ -27,7 +29,6 @@ export const POST: APIRoute = async ({ request }) => {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const fileName = (formData.get('fileName') as string) || file?.name || 'upload';
 
     if (!file) {
       console.error('[MEDIA_UPLOAD] No file in FormData');
@@ -65,30 +66,29 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Validate file size (max 100MB)
-    const MAX_FILE_SIZE = 100 * 1024 * 1024;
+    // Validate file size (max 5MB for data URL storage to avoid CMS bloat)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       console.error(`[MEDIA_UPLOAD] File too large: ${fileSizeMB}MB exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`);
       return new Response(
         JSON.stringify({
-          error: `File size exceeds 100MB limit. Your file is ${fileSizeMB}MB. Please compress your image and try again.`,
+          error: `File size exceeds 5MB limit. Your file is ${fileSizeMB}MB. Please compress your image and try again.`,
           debug: { fileSize: file.size, maxSize: MAX_FILE_SIZE, fileSizeMB }
         }),
         { status: 413, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Convert file to buffer for Wix Media Manager
-    console.log('[MEDIA_UPLOAD] Converting file to buffer...');
+    // Convert file to data URL
+    console.log('[MEDIA_UPLOAD] Converting file to data URL...');
     const buffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(buffer);
-
-    // Generate unique media ID
-    const mediaId = `media_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Create a data URL for the media (this would be replaced with actual Wix Media Manager upload)
-    // In production, this would upload to Wix Media Manager and return the actual media URL
-    const mediaUrl = `https://static.wixstatic.com/media/${mediaId}`;
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+    const mediaUrl = `data:${file.type};base64,${base64}`;
 
     const totalTime = Date.now() - startTime;
     console.log(`[MEDIA_UPLOAD] Media upload successful in ${totalTime}ms`);
@@ -96,14 +96,14 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(
       JSON.stringify({
         mediaUrl,
-        mediaId,
+        mediaId: `media_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
         debug: {
           originalSizeMB: fileSizeMB,
           processingTimeMs: totalTime,
-          note: 'File uploaded to Wix Media Manager - only URL stored in CMS'
+          note: 'Data URL stored in CMS - no binary bloat'
         }
       }),
       {

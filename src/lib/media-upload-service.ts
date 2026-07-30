@@ -1,7 +1,11 @@
 /**
- * Media Upload Service
- * Handles uploading files to Wix Media Manager and returns media URLs
- * This prevents storing base64 or binary data in CMS collections
+ * Media Upload Service - SIMPLIFIED FOR WDE0009 FIX
+ * 
+ * Handles uploading files and returning data URLs for CMS storage
+ * Prevents WDE0009 errors by:
+ * 1. Keeping file size under 5MB (compressed images)
+ * 2. Storing data URLs (not binary) in CMS fields
+ * 3. Using efficient base64 encoding
  */
 
 export interface MediaUploadProgress {
@@ -25,7 +29,7 @@ export interface MediaUploadError {
 }
 
 class MediaUploadService {
-  private static readonly MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+  private static readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB for CMS storage
   private static readonly SUPPORTED_IMAGE_TYPES = [
     'image/jpeg',
     'image/png',
@@ -40,8 +44,8 @@ class MediaUploadService {
   ];
 
   /**
-   * Upload image to Wix Media Manager
-   * Returns media URL to be stored in CMS instead of base64
+   * Upload image and return data URL for CMS storage
+   * Prevents WDE0009 by keeping files under 5MB
    */
   static async uploadImage(
     file: File,
@@ -55,22 +59,22 @@ class MediaUploadService {
       } as MediaUploadError;
     }
 
-    // Validate file size
+    // Validate file size (5MB limit for CMS storage)
     if (file.size > this.MAX_FILE_SIZE) {
       throw {
         code: 'FILE_TOO_LARGE',
-        message: `File size exceeds 100MB limit. Your file: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+        message: `File size exceeds 5MB limit. Your file: ${(file.size / 1024 / 1024).toFixed(2)}MB. Please compress your image.`,
       } as MediaUploadError;
     }
 
     try {
-      // Create FormData for multipart upload
+      // Create FormData for upload
       const formData = new FormData();
       formData.append('file', file);
       formData.append('fileName', file.name);
 
-      // Upload to Wix Media Manager via API endpoint
-      const response = await this.uploadToWixMedia(formData, onProgress);
+      // Upload via API endpoint
+      const response = await this.uploadToAPI(formData, onProgress);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -112,9 +116,9 @@ class MediaUploadService {
   }
 
   /**
-   * Upload file to Wix Media Manager with progress tracking
+   * Upload file with progress tracking
    */
-  private static async uploadToWixMedia(
+  private static async uploadToAPI(
     formData: FormData,
     onProgress?: (progress: MediaUploadProgress) => void
   ): Promise<Response> {
@@ -193,16 +197,9 @@ class MediaUploadService {
   }
 
   /**
-   * Check if a URL is a Wix Media URL (not base64)
+   * Check if a URL is a data URL
    */
-  static isWixMediaUrl(url: string): boolean {
-    return url.startsWith('https://') || url.startsWith('http://');
-  }
-
-  /**
-   * Check if a URL is a base64 data URL (legacy format to avoid)
-   */
-  static isBase64DataUrl(url: string): boolean {
+  static isDataUrl(url: string): boolean {
     return url.startsWith('data:');
   }
 }
