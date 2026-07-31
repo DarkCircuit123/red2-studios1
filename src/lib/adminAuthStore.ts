@@ -52,6 +52,7 @@ export const useAdminAuth = create<AdminAuthState>()(
           // Call secure backend endpoint. The server sets the httpOnly
           // session cookie on success — credentials:'include' is what
           // makes the browser store and later resend it.
+          console.log('[ADMIN AUTH] Attempting login...');
           const response = await fetch('/api/auth/admin-check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -59,9 +60,12 @@ export const useAdminAuth = create<AdminAuthState>()(
             body: JSON.stringify({ username, password }),
           });
 
+          console.log('[ADMIN AUTH] Response status:', response.status);
+
           let data;
           try {
             data = await safeJson(response);
+            console.log('[ADMIN AUTH] Response data:', data);
           } catch (parseError) {
             console.error('[ADMIN AUTH] Response parse error:', parseError);
             set({

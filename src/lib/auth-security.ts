@@ -27,7 +27,12 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     // 1. process.env (Node.js environment variables)
     // 2. import.meta.env (Vite environment variables)
     // 3. globalThis (for Cloudflare Workers / Wix runtime)
-    let raw = process.env[name] || import.meta.env[name];
+    let raw = process.env[name];
+    
+    // Try import.meta.env if process.env didn't have it
+    if (!raw && typeof import.meta !== 'undefined' && import.meta.env) {
+      raw = (import.meta.env as any)[name];
+    }
     
     // For Cloudflare Workers, secrets might be available on globalThis
     if (!raw && typeof globalThis !== 'undefined') {

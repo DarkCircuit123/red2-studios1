@@ -64,22 +64,42 @@ export const POST: APIRoute = async ({ request }) => {
     const adminUsername = readSecret('ADMIN_USERNAME');
     const adminPassword = readSecret('ADMIN_PASSWORD');
 
+    // DEBUG: Log what we're getting
+    console.log('[DEBUG] readSecret result - ADMIN_USERNAME:', adminUsername ? '(set)' : '(not set)');
+    console.log('[DEBUG] readSecret result - ADMIN_PASSWORD:', adminPassword ? '(set)' : '(not set)');
+    console.log('[DEBUG] process.env.ADMIN_USERNAME:', process.env.ADMIN_USERNAME ? '(set)' : '(not set)');
+    console.log('[DEBUG] process.env.ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? '(set)' : '(not set)');
+    console.log('[DEBUG] import.meta.env.ADMIN_USERNAME:', (import.meta.env as any).ADMIN_USERNAME ? '(set)' : '(not set)');
+    console.log('[DEBUG] import.meta.env.ADMIN_PASSWORD:', (import.meta.env as any).ADMIN_PASSWORD ? '(set)' : '(not set)');
+
     // Verify credentials exist
     if (!adminUsername || !adminPassword) {
       console.error('[SECURITY] Admin credentials not configured in Secrets Manager');
+      console.error('[DEBUG] Missing credentials - username:', !adminUsername, 'password:', !adminPassword);
       return new Response(
-        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ authenticated: false, error: 'Server configuration error: Admin credentials not configured' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     // CRITICAL: Use constant-time comparison to prevent timing attacks
+    console.log('[DEBUG] Comparing credentials...');
+    console.log('[DEBUG] Input username length:', sanitizedUsername.length);
+    console.log('[DEBUG] Stored username length:', adminUsername.length);
+    console.log('[DEBUG] Input password length:', sanitizedPassword.length);
+    console.log('[DEBUG] Stored password length:', adminPassword.length);
+    
     const usernameMatch = constantTimeEqual(sanitizedUsername, adminUsername);
     const passwordMatch = constantTimeEqual(sanitizedPassword, adminPassword);
+    
+    console.log('[DEBUG] Username match:', usernameMatch);
+    console.log('[DEBUG] Password match:', passwordMatch);
+    
     const isValid = usernameMatch && passwordMatch;
 
     if (!isValid) {
       console.warn(`[SECURITY] Failed admin login attempt from IP: ${clientIP}`);
+      console.warn('[DEBUG] Credentials do not match');
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
