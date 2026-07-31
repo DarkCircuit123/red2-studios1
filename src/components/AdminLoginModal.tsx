@@ -121,6 +121,7 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }: Adm
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Enter username"
                       disabled={isLoading}
+                      autoComplete="username"
                       className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50"
                     />
                   </div>
@@ -139,6 +140,7 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }: Adm
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter password"
                       disabled={isLoading}
+                      autoComplete="current-password"
                       className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50"
                     />
                   </div>
