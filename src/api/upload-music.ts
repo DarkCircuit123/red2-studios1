@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
+import { MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
 export const POST: APIRoute = async ({ request }) => {
   const startTime = Date.now();
@@ -30,29 +31,16 @@ export const POST: APIRoute = async ({ request }) => {
     const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
     console.log(`[MUSIC_UPLOAD] File received: ${file.name}, Size: ${fileSizeMB}MB, Type: ${file.type}`);
 
-    // Validate file type - support all common MP3 MIME types
-    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/x-mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'];
-    if (!validTypes.includes(file.type)) {
-      console.error(`[MUSIC_UPLOAD] Invalid file type: ${file.type}`);
+    // Validation now comes from the single shared config (src/lib/upload-config.ts)
+    // instead of a number/list hard-coded separately in this file - this is
+    // exactly what drifted out of sync with the frontend earlier (50MB vs
+    // 200MB, missing audio/x-mpeg in one copy but not the other).
+    const validation = validateFileAgainstConfig(file, MUSIC_UPLOAD_CONFIG);
+    if (!validation.valid) {
+      console.error(`[MUSIC_UPLOAD] Rejected: ${validation.error}`);
       return new Response(
-        JSON.stringify({
-          error: `Invalid audio file type: ${file.type}. Supported: MP3, WAV, OGG, WebM`,
-          debug: { receivedType: file.type, validTypes }
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate file size (max 500MB - Wix Media Manager limit)
-    const MAX_FILE_SIZE = 500 * 1024 * 1024;
-    if (file.size > MAX_FILE_SIZE) {
-      console.error(`[MUSIC_UPLOAD] File too large: ${fileSizeMB}MB exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`);
-      return new Response(
-        JSON.stringify({
-          error: `File size exceeds 500MB limit. Your file is ${fileSizeMB}MB. Please try a smaller file.`,
-          debug: { fileSize: file.size, maxSize: MAX_FILE_SIZE, fileSizeMB }
-        }),
-        { status: 413, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: validation.error, debug: { receivedType: file.type, fileSizeMB } }),
+        { status: file.size > MUSIC_UPLOAD_CONFIG.maxSizeBytes ? 413 : 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
+import { IMAGE_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
 /**
  * Media Upload API Endpoint - REAL FIX FOR WDE0009
@@ -52,41 +53,15 @@ export const POST: APIRoute = async ({ request }) => {
     const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
     console.log(`[MEDIA_UPLOAD] File received: ${file.name}, Size: ${fileSizeMB}MB, Type: ${file.type}`);
 
-    // Validate file type
-    const validImageTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif',
-      'image/svg+xml',
-      'image/tiff',
-      'image/bmp',
-      'image/x-icon',
-      'image/heic',
-      'image/heif'
-    ];
-
-    if (!validImageTypes.includes(file.type) && !file.type.startsWith('image/')) {
-      console.error(`[MEDIA_UPLOAD] Invalid file type: ${file.type}`);
+    // Validation from the single shared config (src/lib/upload-config.ts) -
+    // same rules the frontend and the new direct-upload route enforce, so
+    // this proxy fallback can never quietly drift out of sync with them.
+    const validation = validateFileAgainstConfig(file, IMAGE_UPLOAD_CONFIG);
+    if (!validation.valid) {
+      console.error(`[MEDIA_UPLOAD] Rejected: ${validation.error}`);
       return new Response(
-        JSON.stringify({
-          error: `Invalid image file type: ${file.type}. Supported: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC`,
-          debug: { receivedType: file.type, validTypes: validImageTypes }
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate file size (Wix Media Manager limit is 100MB)
-    const MAX_FILE_SIZE = 100 * 1024 * 1024;
-    if (file.size > MAX_FILE_SIZE) {
-      console.error(`[MEDIA_UPLOAD] File too large: ${fileSizeMB}MB exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`);
-      return new Response(
-        JSON.stringify({
-          error: `File size exceeds 100MB limit. Your file is ${fileSizeMB}MB.`,
-          debug: { fileSize: file.size, maxSize: MAX_FILE_SIZE, fileSizeMB }
-        }),
-        { status: 413, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: validation.error, debug: { receivedType: file.type, fileSizeMB } }),
+        { status: file.size > IMAGE_UPLOAD_CONFIG.maxSizeBytes ? 413 : 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 

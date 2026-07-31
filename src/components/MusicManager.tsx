@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, Music, Loader, FileAudio } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
-import { safeJson } from '@/lib/safeJson';
+import { uploadMedia } from '@/lib/direct-media-upload';
+import { MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
 interface MusicManagerProps {
   label: string;
@@ -60,18 +61,9 @@ export default function MusicManager({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type - support all common MP3 MIME types
-    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/x-mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'];
-    if (!validTypes.includes(file.type)) {
-      setError('Please upload a valid audio file (MP3, WAV, OGG, or WebM)');
-      return;
-    }
-
-    // Validate file size (max 500MB - Wix Media Manager limit)
-    const MAX_SIZE_MB = 500;
-    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
-    if (file.size > MAX_SIZE_BYTES) {
-      setError(`File size must be less than ${MAX_SIZE_MB}MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
+    const validation = validateFileAgainstConfig(file, MUSIC_UPLOAD_CONFIG);
+    if (!validation.valid) {
+      setError(validation.error);
       return;
     }
 
@@ -79,32 +71,13 @@ export default function MusicManager({
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload-music', {
-        method: 'POST',
-        body: formData,
-      });
-
-      // Parse via safeJson before deciding what to throw, so a non-2xx
-      // response surfaces the server's real error message instead of a
-      // generic one, and a stray non-JSON body (HTML error page) fails
-      // with a readable "Expected JSON, got ..." message rather than the
-      // raw, meaningless "Unexpected token '<'" parse crash.
-      let data;
-      try {
-        data = await safeJson(response);
-      } catch (parseError) {
-        console.error('Failed to parse upload response:', parseError);
-        throw parseError;
-      }
-
-      if (!response.ok) {
-        throw new Error(data?.error || `Failed to upload music file (HTTP ${response.status})`);
-      }
-
-      const musicUrl = data.url;
+      // Shared upload engine: uploads directly from the browser to Wix
+      // Media Manager (our backend only issues a signed URL, never
+      // touches the file bytes), with an automatic fallback to the old
+      // proxy-through-backend route if the direct path is ever blocked
+      // at the network level. See src/lib/direct-media-upload.ts.
+      const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
+      const musicUrl = result.mediaUrl;
 
       if (itemId) {
         await BaseCrudService.update(collectionId, {
@@ -117,7 +90,12 @@ export default function MusicManager({
       setError(null);
       setShowMediaLibrary(false);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to upload music';
+      const errorMessage =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : err instanceof Error
+            ? err.message
+            : 'Failed to upload music';
       setError(errorMessage);
       console.error('Music upload error:', err);
     } finally {
@@ -289,7 +267,7 @@ export default function MusicManager({
       )}
 
       <p className="text-xs text-black/50">
-        Supported formats: MP3, WAV, OGG, WebM (Max 500MB)
+        Supported formats: MP3, WAV, OGG, WebM (Max {MUSIC_UPLOAD_CONFIG.maxSizeLabel})
       </p>
     </div>
   );

@@ -1,26 +1,24 @@
 /**
- * Media Upload Service - REFACTORED FOR WDE0009 FIX
- * 
- * This service now uses Wix Media Manager instead of base64 storage.
- * 
- * Key changes:
- * 1. Removed base64 encoding (was causing WDE0009)
- * 2. Upload to Wix Media Manager returns proper URLs
- * 3. Store only URL strings in CMS (tiny payload)
- * 4. Use URL.createObjectURL for previews (not base64)
- * 
- * Result:
- * - Before: 2.67MB base64 string in CMS = WDE0009 error
- * - After: ~50 byte URL string in CMS = No error
+ * Media Upload Service - now a thin wrapper around the shared
+ * direct-media-upload engine (see src/lib/direct-media-upload.ts).
+ *
+ * History, for context: this used to fabricate a fake static.wixstatic.com
+ * URL without uploading anything (never fixed WDE0009), then was fixed to
+ * proxy the file through our own /api/media/upload Cloudflare Worker
+ * route (fixed WDE0009, but a Worker buffering the whole file in memory
+ * is fragile for larger files and was the direct cause of the
+ * "Unexpected token '<'" failures diagnosed this session). It now uploads
+ * directly from the browser to Wix Media Manager, with the old
+ * proxy-through-backend route kept alive only as an automatic fallback.
+ *
+ * Public API is unchanged on purpose so existing callers (e.g.
+ * ImageUploadManager.tsx) don't need to change.
  */
 
-import { safeJson } from './safeJson';
+import { uploadMedia, UploadProgress as SharedUploadProgress } from './direct-media-upload';
+import { IMAGE_UPLOAD_CONFIG } from './upload-config';
 
-export interface MediaUploadProgress {
-  loaded: number;
-  total: number;
-  percentage: number;
-}
+export type MediaUploadProgress = SharedUploadProgress;
 
 export interface MediaUploadResult {
   mediaUrl: string;
@@ -37,162 +35,31 @@ export interface MediaUploadError {
 }
 
 class MediaUploadService {
-  private static readonly MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB - Wix Media Manager limit
-  private static readonly SUPPORTED_IMAGE_TYPES = [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'image/gif',
-    'image/svg+xml',
-    'image/tiff',
-    'image/bmp',
-    'image/x-icon',
-    'image/heic',
-    'image/heif'
-  ];
-
   /**
-   * Upload image to Wix Media Manager
-   * Returns a Wix media URL (not base64)
+   * Upload image to Wix Media Manager (direct-from-browser, with an
+   * automatic fallback to the proxy route if that's ever blocked).
+   * Returns a real Wix media URL (not base64, not fabricated).
    */
   static async uploadImage(
     file: File,
     onProgress?: (progress: MediaUploadProgress) => void
   ): Promise<MediaUploadResult> {
-    // Validate file type
-    if (!this.SUPPORTED_IMAGE_TYPES.includes(file.type) && !file.type.startsWith('image/')) {
-      throw {
-        code: 'INVALID_FILE_TYPE',
-        message: `Unsupported file type: ${file.type}. Supported: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC`,
-      } as MediaUploadError;
-    }
-
-    // Validate file size (Wix Media Manager limit)
-    if (file.size > this.MAX_FILE_SIZE) {
-      throw {
-        code: 'FILE_TOO_LARGE',
-        message: `File size exceeds 100MB limit. Your file: ${(file.size / 1024 / 1024).toFixed(2)}MB.`,
-      } as MediaUploadError;
-    }
-
     try {
-      // Create FormData for upload
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('fileName', file.name);
-
-      // Upload via API endpoint (which uploads to Wix Media Manager)
-      const response = await this.uploadToAPI(formData, onProgress);
-
-      if (!response.ok) {
-        const errorData = await safeJson(response).catch(() => ({} as any));
-        throw {
-          code: 'UPLOAD_FAILED',
-          message: errorData.error || `Upload failed with status ${response.status}`,
-          details: errorData.debug?.errorType,
-        } as MediaUploadError;
-      }
-
-      // safeJson (not raw response.json()) so a non-JSON body - e.g. an
-      // HTML error/404 page returned with a 200 status by an edge/CDN
-      // layer in front of the route - produces a diagnostic
-      // "Expected JSON, got text/html..." message instead of the opaque
-      // native "Unexpected token '<'" parse crash.
-      const result = await safeJson(response);
-
-      // Validate response structure
-      if (!result.mediaUrl || !result.mediaId) {
-        throw {
-          code: 'INVALID_RESPONSE',
-          message: 'Server returned invalid media response',
-        } as MediaUploadError;
-      }
-
+      const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG, onProgress);
       return {
         mediaUrl: result.mediaUrl,
-        mediaId: result.mediaId,
-        fileName: file.name,
-        fileSize: file.size,
-        mimeType: file.type,
+        mediaId: result.mediaId || '',
+        fileName: result.fileName,
+        fileSize: result.fileSize,
+        mimeType: result.mimeType,
       };
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error) {
-        throw error;
+        throw error as MediaUploadError;
       }
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
-      throw {
-        code: 'UPLOAD_ERROR',
-        message: errorMessage,
-      } as MediaUploadError;
+      throw { code: 'UPLOAD_ERROR', message: errorMessage } as MediaUploadError;
     }
-  }
-
-  /**
-   * Upload file with progress tracking
-   */
-  private static async uploadToAPI(
-    formData: FormData,
-    onProgress?: (progress: MediaUploadProgress) => void
-  ): Promise<Response> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-
-      // Track upload progress
-      if (onProgress) {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            onProgress({
-              loaded: event.loaded,
-              total: event.total,
-              percentage: Math.round((event.loaded / event.total) * 100),
-            });
-          }
-        });
-      }
-
-      // Handle completion
-      xhr.addEventListener('load', () => {
-        // BUG FIX: this used to hard-code 'Content-Type': 'application/json'
-        // on every 2xx response regardless of what the server actually
-        // sent. If a route ever fell through to a 200-status HTML page
-        // (an SPA/CDN catch-all, a stale deploy, an edge cache hit) the
-        // wrapped Response would *claim* to be JSON while actually
-        // holding "<!DOCTYPE html>...", and safeJson/.json() would blow
-        // up with the opaque "Unexpected token '<'" error further down -
-        // exactly the symptom reported in production. Pass through the
-        // real header xhr received so JSON-vs-HTML detection is honest.
-        const contentType = xhr.getResponseHeader('Content-Type') || 'application/octet-stream';
-        resolve(
-          new Response(xhr.responseText, {
-            status: xhr.status,
-            statusText: xhr.statusText,
-            headers: new Headers({
-              'Content-Type': contentType,
-            }),
-          })
-        );
-      });
-
-      // Handle errors
-      xhr.addEventListener('error', () => {
-        reject(new Error('Network error during upload'));
-      });
-
-      xhr.addEventListener('abort', () => {
-        reject(new Error('Upload was aborted'));
-      });
-
-      // Set timeout (30 seconds)
-      xhr.timeout = 30000;
-      xhr.addEventListener('timeout', () => {
-        reject(new Error('Upload timeout'));
-      });
-
-      // Send request
-      xhr.open('POST', '/api/media/upload');
-      xhr.send(formData);
-    });
   }
 
   /**
