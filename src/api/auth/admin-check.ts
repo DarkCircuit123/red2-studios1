@@ -77,6 +77,8 @@ export const POST: APIRoute = async ({ request }) => {
     // trims whitespace, which matters - a value pasted into the dashboard
     // can carry a trailing newline that would otherwise fail the
     // constant-time comparison below with no visible cause.
+    console.log('[DEBUG] ===== ADMIN LOGIN ATTEMPT =====');
+    console.log('[DEBUG] Attempting to read ADMIN_USERNAME and ADMIN_PASSWORD from Secrets Manager');
     const adminUsername = readSecret('ADMIN_USERNAME');
     const adminPassword = readSecret('ADMIN_PASSWORD');
 
@@ -84,6 +86,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (!adminUsername || !adminPassword) {
       console.error('[SECURITY] Admin credentials not configured in Secrets Manager');
       console.error('[DEBUG] adminUsername exists:', !!adminUsername, 'adminPassword exists:', !!adminPassword);
+      console.error('[DEBUG] This is a CONFIGURATION ERROR - check Wix Secrets Manager');
       recordFailedAttempt(clientIP);
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Server configuration error' }),
@@ -92,17 +95,30 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // DEBUG: Log credential details (masking password for security)
-    console.log('[DEBUG] Credentials loaded from Secrets Manager');
+    console.log('[DEBUG] ===== CREDENTIALS LOADED =====');
     console.log('[DEBUG] adminUsername length:', adminUsername.length, 'value:', adminUsername);
-    console.log('[DEBUG] adminPassword length:', adminPassword.length, 'masked:', '*'.repeat(Math.min(adminPassword.length, 10)));
+    console.log('[DEBUG] adminPassword length:', adminPassword.length, 'first 5 chars:', adminPassword.substring(0, 5));
     console.log('[DEBUG] Incoming username length:', sanitizedUsername.length, 'value:', sanitizedUsername);
-    console.log('[DEBUG] Incoming password length:', sanitizedPassword.length, 'masked:', '*'.repeat(Math.min(sanitizedPassword.length, 10)));
+    console.log('[DEBUG] Incoming password length:', sanitizedPassword.length, 'first 5 chars:', sanitizedPassword.substring(0, 5));
+    
+    // Character-by-character comparison for debugging
+    console.log('[DEBUG] ===== CHARACTER COMPARISON =====');
+    if (sanitizedUsername.length === adminUsername.length) {
+      for (let i = 0; i < sanitizedUsername.length; i++) {
+        if (sanitizedUsername[i] !== adminUsername[i]) {
+          console.log(`[DEBUG] Username mismatch at position ${i}: incoming='${sanitizedUsername[i]}' (code ${sanitizedUsername.charCodeAt(i)}) vs stored='${adminUsername[i]}' (code ${adminUsername.charCodeAt(i)})`);
+        }
+      }
+    } else {
+      console.log(`[DEBUG] Username length mismatch: incoming=${sanitizedUsername.length} vs stored=${adminUsername.length}`);
+    }
 
     // CRITICAL: Use constant-time comparison to prevent timing attacks
     const usernameMatch = constantTimeEqual(sanitizedUsername, adminUsername);
     const passwordMatch = constantTimeEqual(sanitizedPassword, adminPassword);
     const isValid = usernameMatch && passwordMatch;
 
+    console.log('[DEBUG] ===== COMPARISON RESULTS =====');
     console.log('[DEBUG] Username match:', usernameMatch);
     console.log('[DEBUG] Password match:', passwordMatch);
     console.log('[DEBUG] Overall valid:', isValid);

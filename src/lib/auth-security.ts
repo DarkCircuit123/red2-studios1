@@ -4,8 +4,8 @@
  */
 
 /**
- * Reads a secret from process.env / import.meta.env, checking each
- * candidate name in order and returning the first one that's set.
+ * Reads a secret from Wix Secrets Manager (or fallback to process.env/import.meta.env).
+ * Checking each candidate name in order and returning the first one that's set.
  *
  * Trims surrounding whitespace, which matters because pasting a value
  * into the Secrets Manager dashboard easily leaves a trailing newline.
@@ -23,11 +23,27 @@
  */
 export function readSecret(...candidateEnvNames: string[]): string | undefined {
   for (const name of candidateEnvNames) {
-    const raw = process.env[name] || import.meta.env[name];
-    if (!raw) continue;
+    // Try multiple sources in order:
+    // 1. process.env (Node.js environment variables)
+    // 2. import.meta.env (Vite environment variables)
+    // 3. globalThis (for Cloudflare Workers / Wix runtime)
+    let raw = process.env[name] || import.meta.env[name];
+    
+    // For Cloudflare Workers, secrets might be available on globalThis
+    if (!raw && typeof globalThis !== 'undefined') {
+      raw = (globalThis as any)[name];
+    }
+    
+    if (!raw) {
+      console.log(`[DEBUG] readSecret('${name}') - not found in process.env, import.meta.env, or globalThis`);
+      continue;
+    }
 
     const trimmed = raw.trim();
-    if (!trimmed) continue;
+    if (!trimmed) {
+      console.log(`[DEBUG] readSecret('${name}') - found but empty after trim`);
+      continue;
+    }
 
     // Only strip a prefix that is exactly this key's own name.
     const selfPrefix = new RegExp(`^${name}\\s*=\\s*([\\s\\S]*)$`);
@@ -35,11 +51,11 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     const value = match ? match[1].trim() : trimmed;
 
     if (value) {
-      console.log(`[DEBUG] readSecret('${name}') found, length: ${value.length}`);
+      console.log(`[DEBUG] readSecret('${name}') found, length: ${value.length}, first 10 chars: ${value.substring(0, 10)}`);
       return value;
     }
   }
-  console.log(`[DEBUG] readSecret(${candidateEnvNames.join(', ')}) - none found`);
+  console.log(`[DEBUG] readSecret(${candidateEnvNames.join(', ')}) - none found in any source`);
   return undefined;
 }
 
