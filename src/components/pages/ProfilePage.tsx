@@ -50,10 +50,32 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        // Handle non-JSON responses (e.g., HTML error pages)
+        const contentType = response.headers.get('content-type');
+        let errorData;
+        
+        if (contentType?.includes('application/json')) {
+          try {
+            errorData = await response.json();
+          } catch {
+            errorData = { message: `Server error: ${response.status}` };
+          }
+        } else {
+          // Response is not JSON (likely HTML error page)
+          errorData = { message: `Server error: ${response.status}` };
+        }
+        
         throw new Error(errorData.message || 'Failed to update profile');
       }
 
+      // Verify response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        throw new Error('Invalid server response: expected JSON');
+      }
+
+      const data = await response.json();
+      
       setSuccess(true);
       setIsEditingName(false);
       

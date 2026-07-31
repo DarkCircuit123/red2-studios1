@@ -49,7 +49,22 @@ export default function PrivatePage() {
         body: JSON.stringify({ password }),
       });
 
-      const data = await response.json();
+      // Handle non-JSON responses (e.g., HTML error pages)
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        setError('Server error. Please try again.');
+        console.error('Invalid response type:', contentType);
+        return;
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        setError('Server error. Please try again.');
+        console.error('Failed to parse response:', parseErr);
+        return;
+      }
 
       if (data.authenticated) {
         setIsUnlocked(true);

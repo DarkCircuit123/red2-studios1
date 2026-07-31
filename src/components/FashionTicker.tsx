@@ -77,7 +77,21 @@ export default function FashionTicker() {
             });
             
             if (response.ok) {
-              const data = await response.json();
+              // Verify response is JSON before parsing
+              const contentType = response.headers.get('content-type');
+              if (!contentType?.includes('application/json')) {
+                console.warn(`Invalid response type from ${feed.source}:`, contentType);
+                continue;
+              }
+
+              let data;
+              try {
+                data = await response.json();
+              } catch (parseErr) {
+                console.warn(`Failed to parse ${feed.source} response:`, parseErr);
+                continue;
+              }
+
               if (data.items && Array.isArray(data.items)) {
                 const feedNews = data.items.slice(0, 5).map((item: any, idx: number) => ({
                   id: `${feed.source}-${idx}-${Date.now()}`,
