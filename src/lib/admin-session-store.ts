@@ -11,7 +11,6 @@ export type AdminAuthState =
   | 'loading'
   | 'authenticated'
   | 'failed'
-  | 'locked'
   | 'expired';
 
 interface AdminSessionStore {
@@ -27,10 +26,8 @@ interface AdminSessionStore {
   setLoading: () => void;
   setAuthenticated: (username: string, sessionToken: string) => void;
   setFailed: (error: string) => void;
-  setLocked: () => void;
   setExpired: () => void;
   reset: () => void;
-  recordFailedAttempt: () => void;
   recordSuccessfulAttempt: () => void;
   updateActivityTime: () => void;
   logout: () => void;
@@ -44,7 +41,6 @@ interface AdminSessionStore {
 }
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-const MAX_FAILED_ATTEMPTS = 5;
 
 export const useAdminSession = create<AdminSessionStore>()(
   persist(
@@ -75,32 +71,11 @@ export const useAdminSession = create<AdminSessionStore>()(
       },
 
       setFailed: (error: string) => {
-        const current = get();
-        const newAttempts = current.failedAttempts + 1;
-        
-        if (newAttempts >= MAX_FAILED_ATTEMPTS) {
-          set({
-            state: 'locked',
-            failedAttempts: newAttempts,
-            error: 'Too many failed attempts. Please try again later.',
-          });
-          console.warn('[ADMIN SESSION] Account locked due to failed attempts');
-        } else {
-          set({
-            state: 'failed',
-            failedAttempts: newAttempts,
-            error,
-          });
-          console.warn(`[ADMIN SESSION] Login failed: ${error} (${newAttempts}/${MAX_FAILED_ATTEMPTS})`);
-        }
-      },
-
-      setLocked: () => {
         set({
-          state: 'locked',
-          error: 'Account is locked. Please try again later.',
+          state: 'failed',
+          error,
         });
-        console.warn('[ADMIN SESSION] Account locked');
+        console.warn(`[ADMIN SESSION] Login failed: ${error}`);
       },
 
       setExpired: () => {
@@ -124,21 +99,9 @@ export const useAdminSession = create<AdminSessionStore>()(
       },
 
       recordFailedAttempt: () => {
-        const current = get();
-        const newAttempts = current.failedAttempts + 1;
-        
-        if (newAttempts >= MAX_FAILED_ATTEMPTS) {
-          set({
-            failedAttempts: newAttempts,
-            state: 'locked',
-            error: 'Too many failed attempts. Account locked.',
-          });
-        } else {
-          set({
-            failedAttempts: newAttempts,
-            error: `Failed attempt ${newAttempts}/${MAX_FAILED_ATTEMPTS}`,
-          });
-        }
+        set({
+          error: 'Login failed. Please try again.',
+        });
       },
 
       recordSuccessfulAttempt: () => {
@@ -182,12 +145,11 @@ export const useAdminSession = create<AdminSessionStore>()(
       },
 
       isLoading: () => get().state === 'loading',
-      isLocked: () => get().state === 'locked',
       isExpired: () => get().state === 'expired',
 
       canAttemptLogin: () => {
         const current = get();
-        return current.state !== 'loading' && current.state !== 'locked';
+        return current.state !== 'loading';
       },
     }),
     {

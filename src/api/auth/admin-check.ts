@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { BaseCrudService } from '@/integrations';
-import { constantTimeEqual, checkRateLimit, recordFailedAttempt, getClientIP, signAdminToken, readSecret } from '@/lib/auth-security';
+import { constantTimeEqual, getClientIP, signAdminToken, readSecret } from '@/lib/auth-security';
 
 /**
  * Secure Admin Authentication Check - P1 HARDENED
@@ -45,7 +45,6 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Validate input
     if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
-      recordFailedAttempt(clientIP);
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Invalid credentials format' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -78,7 +77,6 @@ export const POST: APIRoute = async ({ request }) => {
     if (!adminUsername || !adminPassword) {
       console.error('[SECURITY] Admin credentials not configured');
       console.error('[DEBUG] adminUsername exists:', !!adminUsername, 'adminPassword exists:', !!adminPassword);
-      recordFailedAttempt(clientIP);
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Server configuration error' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -115,7 +113,6 @@ export const POST: APIRoute = async ({ request }) => {
     console.log('[DEBUG] Overall valid:', isValid);
 
     if (!isValid) {
-      recordFailedAttempt(clientIP);
       console.warn(`[SECURITY] Failed admin login attempt from IP: ${clientIP}`);
       console.warn('[DEBUG] Credential mismatch - username match:', usernameMatch, 'password match:', passwordMatch);
       
