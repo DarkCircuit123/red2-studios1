@@ -209,11 +209,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`px-3 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                        activeTab === tab.id
-                          ? 'bg-black text-white shadow-md'
-                          : 'bg-black/5 text-black hover:bg-black/10'
-                      }`}
+                      className={`px-3 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === tab.id ? 'bg-black text-white shadow-md' : 'bg-black/5 text-black hover:bg-black/10'}`}
                     >
                       <Icon className="w-3 h-3" />
                       {tab.label}
