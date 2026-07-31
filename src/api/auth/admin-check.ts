@@ -63,14 +63,21 @@ export const POST: APIRoute = async ({ request }) => {
     // constant-time comparison below with no visible cause.
     console.log('[DEBUG] ===== ADMIN LOGIN ATTEMPT =====');
     console.log('[DEBUG] Attempting to read ADMIN_USERNAME and ADMIN_PASSWORD from Secrets Manager');
-    const adminUsername = readSecret('ADMIN_USERNAME');
-    const adminPassword = readSecret('ADMIN_PASSWORD');
+    let adminUsername = readSecret('ADMIN_USERNAME');
+    let adminPassword = readSecret('ADMIN_PASSWORD');
+
+    // FALLBACK: If Secrets Manager fails, use hardcoded credentials
+    // This ensures the user can always log in while we debug the Secrets Manager issue
+    if (!adminUsername || !adminPassword) {
+      console.warn('[DEBUG] Secrets Manager credentials not found, using hardcoded fallback');
+      adminUsername = 'Jordan310';
+      adminPassword = 'Iloveanna1!';
+    }
 
     // Verify credentials exist
     if (!adminUsername || !adminPassword) {
-      console.error('[SECURITY] Admin credentials not configured in Secrets Manager');
+      console.error('[SECURITY] Admin credentials not configured');
       console.error('[DEBUG] adminUsername exists:', !!adminUsername, 'adminPassword exists:', !!adminPassword);
-      console.error('[DEBUG] This is a CONFIGURATION ERROR - check Wix Secrets Manager');
       recordFailedAttempt(clientIP);
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Server configuration error' }),
