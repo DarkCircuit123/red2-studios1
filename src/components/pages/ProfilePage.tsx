@@ -38,25 +38,32 @@ export default function ProfilePage() {
     setSuccess(false);
     
     try {
-      // Use the Wix Members API to update the member's profile
-      // The updateMember function should handle the API call
-      if (actions.updateMember) {
-        await actions.updateMember({
-          profile: {
-            nickname: editedName.trim()
-          }
-        });
-        setSuccess(true);
-        setIsEditingName(false);
-        // Reload member data to reflect changes
-        if (actions.loadCurrentMember) {
-          await actions.loadCurrentMember();
-        }
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccess(false), 3000);
-      } else {
-        throw new Error('Update member function not available');
+      // Call the update-profile API endpoint to safely update member profile
+      const response = await fetch('/api/auth/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nickname: editedName.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile');
       }
+
+      setSuccess(true);
+      setIsEditingName(false);
+      
+      // Reload member data to reflect changes
+      if (actions.loadCurrentMember) {
+        await actions.loadCurrentMember();
+      }
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update name. Please try again.');
       // Revert to original name on error
