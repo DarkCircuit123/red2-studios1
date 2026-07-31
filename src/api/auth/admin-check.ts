@@ -71,6 +71,7 @@ export const POST: APIRoute = async ({ request }) => {
       console.warn('[DEBUG] Secrets Manager credentials not found, using hardcoded fallback');
       adminUsername = 'Jordan310';
       adminPassword = 'Iloveanna1!';
+      console.log('[DEBUG] FALLBACK CREDENTIALS SET - username:', adminUsername, 'password length:', adminPassword.length);
     }
 
     // Verify credentials exist
@@ -83,24 +84,37 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // DEBUG: Log credential details (masking password for security)
+    // DEBUG: Log credential details with FULL VALUES for diagnosis
     console.log('[DEBUG] ===== CREDENTIALS LOADED =====');
     console.log('[DEBUG] adminUsername length:', adminUsername.length, 'value:', adminUsername);
     console.log('[DEBUG] adminPassword length:', adminPassword.length, 'first 5 chars:', adminPassword.substring(0, 5));
+    console.log('[DEBUG] adminPassword FULL VALUE:', adminPassword);
     console.log('[DEBUG] Incoming username length:', sanitizedUsername.length, 'value:', sanitizedUsername);
     console.log('[DEBUG] Incoming password length:', sanitizedPassword.length, 'first 5 chars:', sanitizedPassword.substring(0, 5));
+    console.log('[DEBUG] Incoming password FULL VALUE:', sanitizedPassword);
     
     // Character-by-character comparison for debugging
     console.log('[DEBUG] ===== CHARACTER COMPARISON =====');
+    
+    // Username comparison
+    console.log('[DEBUG] ===== USERNAME COMPARISON =====');
     if (sanitizedUsername.length === adminUsername.length) {
       for (let i = 0; i < sanitizedUsername.length; i++) {
         if (sanitizedUsername[i] !== adminUsername[i]) {
-          console.log(`[DEBUG] Username mismatch at position ${i}: incoming='${sanitizedUsername[i]}' (code ${sanitizedUsername.charCodeAt(i)}) vs stored='${adminUsername[i]}' (code ${adminUsername.charCodeAt(i)})`);
-        }
+          console.log(`[DEBUG] Username mismatch at position ${i}: incoming='${sanitizedUsername[i]}' (code ${sanitizedUsername.charCodeAt(i)}) vs stored='${adminUsername[i]}' (code ${adminUsername.charCodeAt(i)})`);\n        }
       }
     } else {
-      console.log(`[DEBUG] Username length mismatch: incoming=${sanitizedUsername.length} vs stored=${adminUsername.length}`);
-    }
+      console.log(`[DEBUG] Username length mismatch: incoming=${sanitizedUsername.length} vs stored=${adminUsername.length}`);\n    }
+    
+    // Password comparison
+    console.log('[DEBUG] ===== PASSWORD COMPARISON =====');
+    if (sanitizedPassword.length === adminPassword.length) {
+      for (let i = 0; i < sanitizedPassword.length; i++) {
+        if (sanitizedPassword[i] !== adminPassword[i]) {
+          console.log(`[DEBUG] Password mismatch at position ${i}: incoming='${sanitizedPassword[i]}' (code ${sanitizedPassword.charCodeAt(i)}) vs stored='${adminPassword[i]}' (code ${adminPassword.charCodeAt(i)})`);\n        }
+      }
+    } else {
+      console.log(`[DEBUG] Password length mismatch: incoming=${sanitizedPassword.length} vs stored=${adminPassword.length}`);\n    }
 
     // CRITICAL: Use constant-time comparison to prevent timing attacks
     const usernameMatch = constantTimeEqual(sanitizedUsername, adminUsername);
