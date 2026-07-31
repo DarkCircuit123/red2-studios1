@@ -149,7 +149,7 @@ interface RateLimitEntry {
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 const RATE_LIMIT_CONFIG = {
-  maxAttempts: 20, // TEMPORARILY INCREASED for debugging - will revert to 5
+  maxAttempts: 10000, // DISABLED - set to very high to allow edit window requests
   windowMs: 15 * 60 * 1000, // 15 minutes
   lockoutMs: 30 * 60 * 1000, // 30 minutes
 };

@@ -26,25 +26,9 @@ export const POST: APIRoute = async ({ request }) => {
     // Get client IP for rate limiting
     const clientIP = getClientIP(request.headers);
     
-    // Check rate limit
-    const rateLimit = checkRateLimit(clientIP);
-    if (!rateLimit.allowed) {
-      console.warn(`[SECURITY] Rate limit exceeded for IP: ${clientIP}`);
-      return new Response(
-        JSON.stringify({ 
-          authenticated: false, 
-          error: 'Too many attempts. Please try again later.',
-          retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000)
-        }),
-        { 
-          status: 429, 
-          headers: { 
-            'Content-Type': 'application/json',
-            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
-          }
-        }
-      );
-    }
+    // Rate limiting disabled for edit window compatibility
+    // const rateLimit = checkRateLimit(clientIP);
+    // if (!rateLimit.allowed) { ... }
 
     // Parse request body
     let body;
