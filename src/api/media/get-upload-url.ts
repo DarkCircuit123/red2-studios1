@@ -33,7 +33,10 @@ export const POST: APIRoute = async ({ request }) => {
     const sizeInBytes: number | undefined = body?.sizeInBytes;
     const kind: 'image' | 'music' = body?.kind === 'music' ? 'music' : 'image';
 
+    console.log(`[GET_UPLOAD_URL] Request received: fileName=${fileName}, mimeType=${mimeType}, sizeInBytes=${sizeInBytes}, kind=${kind}`);
+
     if (!fileName || !mimeType || typeof sizeInBytes !== 'number') {
+      console.error('[GET_UPLOAD_URL] Missing required parameters');
       return new Response(
         JSON.stringify({ error: 'fileName, mimeType, and sizeInBytes are required' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -43,18 +46,22 @@ export const POST: APIRoute = async ({ request }) => {
     const config = kind === 'music' ? MUSIC_UPLOAD_CONFIG : IMAGE_UPLOAD_CONFIG;
     const validation = validateFileAgainstConfig({ type: mimeType, size: sizeInBytes }, config);
     if (!validation.valid) {
+      console.error(`[GET_UPLOAD_URL] Validation failed: ${validation.error}`);
       return new Response(
         JSON.stringify({ error: validation.error }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log('[GET_UPLOAD_URL] Calling files.generateFileUploadUrl...');
     const { uploadUrl } = await files.generateFileUploadUrl(mimeType, { fileName });
 
     if (!uploadUrl) {
+      console.error('[GET_UPLOAD_URL] Wix Media Manager did not return an upload URL');
       throw new Error('Wix Media Manager did not return an upload URL');
     }
 
+    console.log('[GET_UPLOAD_URL] Successfully generated upload URL');
     return new Response(
       JSON.stringify({ uploadUrl, fileName }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }

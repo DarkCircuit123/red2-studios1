@@ -112,6 +112,7 @@ async function getSignedUploadUrl(
   file: File,
   kind: 'image' | 'music'
 ): Promise<{ uploadUrl: string; fileName: string }> {
+  console.log(`[GET_UPLOAD_URL] Requesting signed upload URL for ${kind}: ${file.name}`);
   const response = await fetch('/api/media/get-upload-url', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -124,16 +125,19 @@ async function getSignedUploadUrl(
   });
 
   const data = await safeJson(response).catch((parseError) => {
+    console.error(`[GET_UPLOAD_URL] Failed to parse response:`, parseError.message);
     throw { code: 'GET_UPLOAD_URL_FAILED', message: parseError.message } as UploadError;
   });
 
   if (!response.ok || !data.uploadUrl) {
+    console.error(`[GET_UPLOAD_URL] Failed with status ${response.status}:`, data);
     throw {
       code: 'GET_UPLOAD_URL_FAILED',
       message: data?.error || `Failed to get upload URL (HTTP ${response.status})`,
     } as UploadError;
   }
 
+  console.log(`[GET_UPLOAD_URL] Successfully got upload URL`);
   return { uploadUrl: data.uploadUrl, fileName: data.fileName || file.name };
 }
 
@@ -144,6 +148,7 @@ async function uploadViaProxy(
   onProgress?: (p: UploadProgress) => void
 ): Promise<UploadResult> {
   const endpoint = kind === 'music' ? '/api/upload-music' : '/api/media/upload';
+  console.log(`[UPLOAD_PROXY] Uploading via proxy endpoint: ${endpoint}`);
   const formData = new FormData();
   formData.append('file', file);
 
@@ -170,19 +175,30 @@ async function uploadViaProxy(
         })
       );
     });
-    xhr.addEventListener('error', () => reject(new Error('Network error during fallback upload')));
-    xhr.addEventListener('abort', () => reject(new Error('Fallback upload was aborted')));
+    xhr.addEventListener('error', () => {
+      console.error('[UPLOAD_PROXY] Network error during fallback upload');
+      reject(new Error('Network error during fallback upload'));
+    });
+    xhr.addEventListener('abort', () => {
+      console.error('[UPLOAD_PROXY] Fallback upload was aborted');
+      reject(new Error('Fallback upload was aborted'));
+    });
     xhr.timeout = 120000;
-    xhr.addEventListener('timeout', () => reject(new Error('Fallback upload timed out')));
+    xhr.addEventListener('timeout', () => {
+      console.error('[UPLOAD_PROXY] Fallback upload timed out');
+      reject(new Error('Fallback upload timed out'));
+    });
     xhr.open('POST', endpoint);
     xhr.send(formData);
   });
 
   const data = await safeJson(response).catch((parseError) => {
+    console.error(`[UPLOAD_PROXY] Failed to parse response:`, parseError.message);
     throw { code: 'INVALID_RESPONSE', message: parseError.message } as UploadError;
   });
 
   if (!response.ok) {
+    console.error(`[UPLOAD_PROXY] Proxy upload failed with status ${response.status}:`, data);
     throw {
       code: 'UPLOAD_FAILED',
       message: data?.error || `Upload failed (HTTP ${response.status})`,
@@ -191,9 +207,11 @@ async function uploadViaProxy(
 
   const mediaUrl = data.mediaUrl || data.url;
   if (!mediaUrl) {
+    console.error(`[UPLOAD_PROXY] Server returned no media URL. Response:`, data);
     throw { code: 'INVALID_RESPONSE', message: 'Server returned no media URL' } as UploadError;
   }
 
+  console.log(`[UPLOAD_PROXY] Proxy upload successful: ${mediaUrl}`);
   return {
     mediaUrl,
     mediaId: data.mediaId,
@@ -216,15 +234,19 @@ export async function uploadMedia(
 
   try {
     // Tier 1: direct browser-to-Wix upload.
+    console.log(`[UPLOAD] Starting ${kind} upload for file: ${file.name} (${file.size} bytes)`);
     const { uploadUrl, fileName } = await getSignedUploadUrl(file, kind);
+    console.log(`[UPLOAD] Got signed upload URL, uploading to Wix Media Manager...`);
     const putUrl = `${uploadUrl}?filename=${encodeURIComponent(fileName)}`;
     const response = await xhrPut(putUrl, file, onProgress);
 
     const data = await safeJson(response).catch((parseError) => {
+      console.error(`[UPLOAD] Failed to parse response as JSON:`, parseError.message);
       throw { code: 'INVALID_RESPONSE', message: parseError.message } as UploadError;
     });
 
     if (!response.ok) {
+      console.error(`[UPLOAD] Direct upload failed with status ${response.status}:`, data);
       throw {
         code: 'UPLOAD_FAILED',
         message: data?.message || data?.error || `Direct upload failed (HTTP ${response.status})`,
@@ -233,10 +255,14 @@ export async function uploadMedia(
 
     const mediaUrl: string | undefined = data?.file?.url;
     const mediaId: string | undefined = data?.file?.id;
+    console.log(`[UPLOAD] Response received. mediaUrl: ${mediaUrl}, mediaId: ${mediaId}`);
+    
     if (!mediaUrl) {
+      console.error(`[UPLOAD] Wix Media Manager response missing file URL. Full response:`, JSON.stringify(data));
       throw { code: 'INVALID_RESPONSE', message: 'Wix Media Manager response missing file URL' } as UploadError;
     }
 
+    console.log(`[UPLOAD] Direct upload successful: ${mediaUrl}`);
     return { mediaUrl, mediaId, fileName: file.name, fileSize: file.size, mimeType: file.type };
   } catch (error) {
     // Only fall back on a genuine network/transport-level failure - never
@@ -246,6 +272,7 @@ export async function uploadMedia(
       console.warn('[UPLOAD] Direct-to-Wix upload failed at the network level, falling back to proxy path:', error.message);
       return uploadViaProxy(file, kind, onProgress);
     }
+    console.error('[UPLOAD] Upload failed with error:', error);
     throw error;
   }
 }

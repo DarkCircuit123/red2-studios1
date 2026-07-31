@@ -102,29 +102,37 @@ export default function ImageUploadManager({
       // This is memory-efficient and doesn't bloat the CMS
       const localPreviewUrl = MediaUploadService.createPreviewUrl(file);
       setPreviewUrl(localPreviewUrl);
+      console.log('[ImageUploadManager] Created preview URL');
 
       // Upload to Wix Media Manager
       // Returns a Wix media URL (wix:image:// or https://static.wixstatic.com/)
+      console.log('[ImageUploadManager] Calling MediaUploadService.uploadImage...');
       const result = await MediaUploadService.uploadImage(file, (progress: MediaUploadProgress) => {
         setUploadProgress(progress.percentage);
       });
+      console.log('[ImageUploadManager] Upload service returned:', { mediaUrl: result.mediaUrl, mediaId: result.mediaId });
 
       // Validate that we got a proper Wix media URL (not base64)
       // This prevents WDE0009 errors
       if (MediaUploadService.isDataUrl(result.mediaUrl)) {
+        console.error('[ImageUploadManager] ERROR: Got data URL instead of Wix media URL:', result.mediaUrl.substring(0, 50));
         throw new Error('Image upload failed: this file could not be stored. Please retry the upload.');
       }
 
       // Use WixImageResolver to validate the URL format
       const resolved = WixImageResolver.resolve(result.mediaUrl);
+      console.log('[ImageUploadManager] WixImageResolver result:', { isValid: resolved.isValid, isFallback: resolved.isFallback });
       if (!resolved.isValid || resolved.isFallback) {
+        console.error('[ImageUploadManager] ERROR: Invalid URL format from resolver');
         throw new Error('Image upload failed: invalid URL format returned. Please retry the upload.');
       }
 
       // FINAL HARDENING: Validate image storage before CMS update
       try {
         validateImageStorage(result.mediaUrl, fieldName || 'image');
+        console.log('[ImageUploadManager] Image storage validation passed');
       } catch (validationError) {
+        console.error('[ImageUploadManager] ERROR: Image storage validation failed:', validationError);
         throw new Error('Image upload failed: this file could not be stored. Please retry the upload.');
       }
 
@@ -136,25 +144,29 @@ export default function ImageUploadManager({
             _id: itemId,
             [fieldName]: result.mediaUrl
           };
+          console.log('[ImageUploadManager] Validating CMS payload...');
           validateCMSUpdatePayload(collectionId, updatePayload);
 
+          console.log('[ImageUploadManager] Updating CMS with media URL...');
           await BaseCrudService.update(collectionId, updatePayload);
+          console.log('[ImageUploadManager] CMS update successful');
           onImageUpload(result.mediaUrl);
           setUploadStatus('success');
           setTimeout(() => setUploadStatus('idle'), 3000);
         } catch (cmsError) {
-          console.error('CMS update failed:', cmsError);
+          console.error('[ImageUploadManager] CMS update failed:', cmsError);
           setErrorMessage('Image upload failed: could not save to database. Please retry the upload.');
           setUploadStatus('error');
         }
       } else {
         // No CMS info, just update locally with media URL
+        console.log('[ImageUploadManager] No CMS info provided, updating locally');
         onImageUpload(result.mediaUrl);
         setUploadStatus('success');
         setTimeout(() => setUploadStatus('idle'), 3000);
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('[ImageUploadManager] Error uploading image:', error);
       // Use user-friendly message instead of technical details
       setErrorMessage('Image upload failed: this file could not be stored. Please retry the upload.');
       setUploadStatus('error');
