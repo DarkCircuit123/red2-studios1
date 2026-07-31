@@ -60,14 +60,18 @@ export default function MusicManager({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm'];
+    // Validate file type - support all common MP3 MIME types
+    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/x-mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'];
     if (!validTypes.includes(file.type)) {
       setError('Please upload a valid audio file (MP3, WAV, OGG, or WebM)');
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      setError('File size must be less than 50MB');
+    // Validate file size (max 500MB - Wix Media Manager limit)
+    const MAX_SIZE_MB = 500;
+    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+    if (file.size > MAX_SIZE_BYTES) {
+      setError(`File size must be less than ${MAX_SIZE_MB}MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
       return;
     }
 
@@ -285,7 +289,7 @@ export default function MusicManager({
       )}
 
       <p className="text-xs text-black/50">
-        Supported formats: MP3, WAV, OGG, WebM (Max 50MB)
+        Supported formats: MP3, WAV, OGG, WebM (Max 500MB)
       </p>
     </div>
   );

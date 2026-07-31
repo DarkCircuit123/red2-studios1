@@ -30,8 +30,8 @@ export const POST: APIRoute = async ({ request }) => {
     const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
     console.log(`[MUSIC_UPLOAD] File received: ${file.name}, Size: ${fileSizeMB}MB, Type: ${file.type}`);
 
-    // Validate file type
-    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm'];
+    // Validate file type - support all common MP3 MIME types
+    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/x-mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'];
     if (!validTypes.includes(file.type)) {
       console.error(`[MUSIC_UPLOAD] Invalid file type: ${file.type}`);
       return new Response(
@@ -43,14 +43,13 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Validate file size (max 200MB - supports high-quality full-length songs)
-    // Wix Media Manager supports up to 500MB, but we're conservative here
-    const MAX_FILE_SIZE = 200 * 1024 * 1024;
+    // Validate file size (max 500MB - Wix Media Manager limit)
+    const MAX_FILE_SIZE = 500 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       console.error(`[MUSIC_UPLOAD] File too large: ${fileSizeMB}MB exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`);
       return new Response(
         JSON.stringify({
-          error: `File size exceeds 200MB limit. Your file is ${fileSizeMB}MB. Please try a smaller file.`,
+          error: `File size exceeds 500MB limit. Your file is ${fileSizeMB}MB. Please try a smaller file.`,
           debug: { fileSize: file.size, maxSize: MAX_FILE_SIZE, fileSizeMB }
         }),
         { status: 413, headers: { 'Content-Type': 'application/json' } }
