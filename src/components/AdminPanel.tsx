@@ -782,7 +782,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mt-6">
                           <h4 className="text-xs font-heading font-bold text-blue-600 mb-2">ℹ️ Music Upload</h4>
                           <p className="text-xs text-blue-600/70">
-                            Click "Upload Music" to select an audio file from your computer. Supported formats: MP3, WAV, OGG, WebM (Max 50MB). The file will be automatically uploaded and saved to the CMS.
+                            Click "Upload Music" to select an audio file from your computer. Supported formats: MP3, WAV, OGG, WebM (Max 500MB). The file will be automatically uploaded and saved to the CMS.
                           </p>
                         </div>
                       </>
