@@ -1161,7 +1161,7 @@ export default function HangmanGamePage() {
           onClick={() => navigate('/')}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-black/70 backdrop-blur-md border-2 border-cyan-400/60 rounded-lg text-cyan-300 font-mono text-sm uppercase tracking-widest hover:border-cyan-300 hover:bg-black/90 transition-all"
+          className="fixed top-4 left-4 z-[60] flex items-center gap-2 px-4 py-2 bg-black/70 backdrop-blur-md border-2 border-cyan-400/60 rounded-lg text-cyan-300 font-mono text-sm uppercase tracking-widest hover:border-cyan-300 hover:bg-black/90 transition-all"
           aria-label="Exit to home page"
         >
           <Home className="w-4 h-4" />
