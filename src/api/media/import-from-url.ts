@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { getSecureContext } from '@wix/sdk';
 import { files } from '@wix/media';
 import { IMAGE_UPLOAD_CONFIG, MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
@@ -27,8 +28,9 @@ function extensionMimeGuess(url: string): string | undefined {
   return ext ? map[ext] : undefined;
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
   try {
+    const request = context.request;
     const body = await request.json().catch(() => null);
     const rawUrl: string | undefined = body?.url;
     const kind: 'image' | 'music' = body?.kind === 'music' ? 'music' : 'image';
@@ -119,11 +121,30 @@ export const POST: APIRoute = async ({ request }) => {
     const fileName = decodeURIComponent(parsed.pathname.split('/').pop() || `${kind}-import`);
     console.log(`[IMPORT_FROM_URL] Link tested OK (type=${detectedType}, size=${detectedSize ?? 'unknown'}). Importing into Wix Media Manager...`);
 
-    const importResult = await files.importFile(parsed.toString(), {
-      mimeType: detectedType,
-      displayName: fileName,
-      mediaType: kind === 'music' ? 'AUDIO' : 'IMAGE',
-    });
+    // Initialize Wix SDK context
+    console.log('[IMPORT_FROM_URL] Initializing Wix SDK context...');
+    let wixContext;
+    try {
+      wixContext = getSecureContext(context);
+      console.log('[IMPORT_FROM_URL] Wix SDK context initialized');
+    } catch (contextError) {
+      console.error('[IMPORT_FROM_URL] Failed to initialize Wix SDK context:', contextError);
+      throw new Error(`SDK context initialization failed: ${contextError instanceof Error ? contextError.message : String(contextError)}`);
+    }
+
+    let importResult;
+    try {
+      const filesClient = files(wixContext);
+      importResult = await filesClient.importFile(parsed.toString(), {
+        mimeType: detectedType,
+        displayName: fileName,
+        mediaType: kind === 'music' ? 'AUDIO' : 'IMAGE',
+      });
+      console.log('[IMPORT_FROM_URL] File imported successfully');
+    } catch (importError) {
+      console.error('[IMPORT_FROM_URL] Failed to import file:', importError);
+      throw new Error(`Failed to import file: ${importError instanceof Error ? importError.message : String(importError)}`);
+    }
 
     const mediaUrl = importResult?.file?.url;
     const mediaId = importResult?.file?._id;
@@ -149,8 +170,9 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     console.error('[IMPORT_FROM_URL] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to import from link';
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to import from link' }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

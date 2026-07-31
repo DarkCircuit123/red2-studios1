@@ -1,12 +1,14 @@
 import type { APIRoute } from 'astro';
+import { getSecureContext } from '@wix/sdk';
 import { files } from '@wix/media';
 import { MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
   const startTime = Date.now();
 
   try {
     // Check if request has a body
+    const request = context.request;
     if (!request.body) {
       console.error('[MUSIC_UPLOAD] No request body provided');
       return new Response(
@@ -44,6 +46,17 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    // Initialize Wix SDK context
+    console.log('[MUSIC_UPLOAD] Initializing Wix SDK context...');
+    let wixContext;
+    try {
+      wixContext = getSecureContext(context);
+      console.log('[MUSIC_UPLOAD] Wix SDK context initialized');
+    } catch (contextError) {
+      console.error('[MUSIC_UPLOAD] Failed to initialize Wix SDK context:', contextError);
+      throw new Error(`SDK context initialization failed: ${contextError instanceof Error ? contextError.message : String(contextError)}`);
+    }
+
     // Upload to the real Wix Media Manager instead of base64-encoding the
     // file into a data: URL. The old approach stored the entire encoded
     // audio file (often several MB) directly in a CMS field, which is the
@@ -55,7 +68,8 @@ export const POST: APIRoute = async ({ request }) => {
     console.log('[MUSIC_UPLOAD] Requesting Wix Media Manager upload URL...');
     let uploadUrl: string;
     try {
-      const uploadUrlResponse = await files.generateFileUploadUrl(file.type, {
+      const filesClient = files(wixContext);
+      const uploadUrlResponse = await filesClient.generateFileUploadUrl(file.type, {
         fileName: file.name,
       });
       uploadUrl = uploadUrlResponse.uploadUrl;

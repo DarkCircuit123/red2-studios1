@@ -131,9 +131,11 @@ async function getSignedUploadUrl(
 
   if (!response.ok || !data.uploadUrl) {
     console.error(`[GET_UPLOAD_URL] Failed with status ${response.status}:`, data);
+    const errorMsg = data?.error || data?.details || `Failed to get upload URL (HTTP ${response.status})`;
     throw {
       code: 'GET_UPLOAD_URL_FAILED',
-      message: data?.error || `Failed to get upload URL (HTTP ${response.status})`,
+      message: errorMsg,
+      details: data?.details
     } as UploadError;
   }
 
@@ -272,6 +274,19 @@ export async function uploadMedia(
       console.warn('[UPLOAD] Direct-to-Wix upload failed at the network level, falling back to proxy path:', error.message);
       return uploadViaProxy(file, kind, onProgress);
     }
+    
+    // If we get a GET_UPLOAD_URL_FAILED error (SDK context or permissions issue),
+    // also try the fallback since it might work through the proxy path
+    if ((error as any)?.code === 'GET_UPLOAD_URL_FAILED') {
+      console.warn('[UPLOAD] Failed to get signed upload URL, attempting fallback proxy path:', (error as any)?.message);
+      try {
+        return await uploadViaProxy(file, kind, onProgress);
+      } catch (fallbackError) {
+        console.error('[UPLOAD] Fallback proxy upload also failed:', fallbackError);
+        throw error; // Throw the original error if fallback fails
+      }
+    }
+    
     console.error('[UPLOAD] Upload failed with error:', error);
     throw error;
   }

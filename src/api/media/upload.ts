@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { getSecureContext } from '@wix/sdk';
 import { files } from '@wix/media';
 import { IMAGE_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
@@ -25,10 +26,11 @@ import { IMAGE_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-con
  * AND actually hosts the image somewhere resolvable.
  */
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
   const startTime = Date.now();
 
   try {
+    const request = context.request;
     if (!request.body) {
       console.error('[MEDIA_UPLOAD] No request body provided');
       return new Response(
@@ -53,9 +55,7 @@ export const POST: APIRoute = async ({ request }) => {
     const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
     console.log(`[MEDIA_UPLOAD] File received: ${file.name}, Size: ${fileSizeMB}MB, Type: ${file.type}`);
 
-    // Validation from the single shared config (src/lib/upload-config.ts) -
-    // same rules the frontend and the new direct-upload route enforce, so
-    // this proxy fallback can never quietly drift out of sync with them.
+    // ... keep existing code (validation) ...
     const validation = validateFileAgainstConfig(file, IMAGE_UPLOAD_CONFIG);
     if (!validation.valid) {
       console.error(`[MEDIA_UPLOAD] Rejected: ${validation.error}`);
@@ -65,12 +65,32 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    // Initialize Wix SDK context
+    console.log('[MEDIA_UPLOAD] Initializing Wix SDK context...');
+    let wixContext;
+    try {
+      wixContext = getSecureContext(context);
+      console.log('[MEDIA_UPLOAD] Wix SDK context initialized');
+    } catch (contextError) {
+      console.error('[MEDIA_UPLOAD] Failed to initialize Wix SDK context:', contextError);
+      throw new Error(`SDK context initialization failed: ${contextError instanceof Error ? contextError.message : String(contextError)}`);
+    }
+
     // Upload to the REAL Wix Media Manager - two-step flow: request an
     // upload URL, then PUT the actual file bytes to it.
     console.log('[MEDIA_UPLOAD] Requesting Wix Media Manager upload URL...');
-    const { uploadUrl } = await files.generateFileUploadUrl(file.type, {
-      fileName: file.name,
-    });
+    let uploadUrl: string;
+    try {
+      const filesClient = files(wixContext);
+      const uploadUrlResponse = await filesClient.generateFileUploadUrl(file.type, {
+        fileName: file.name,
+      });
+      uploadUrl = uploadUrlResponse.uploadUrl;
+      console.log('[MEDIA_UPLOAD] Generated upload URL successfully');
+    } catch (urlError) {
+      console.error('[MEDIA_UPLOAD] Failed to generate upload URL:', urlError);
+      throw new Error(`Failed to generate Wix Media Manager upload URL: ${urlError instanceof Error ? urlError.message : String(urlError)}`);
+    }
 
     const buffer = await file.arrayBuffer();
 
