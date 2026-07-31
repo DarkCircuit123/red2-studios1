@@ -14,8 +14,8 @@ interface MusicSettings {
 
 // Default music URL - direct audio file (not a webpage)
 // Use a direct MP3 URL from Wix Media Manager or a CDN that supports CORS
-// The Epidemic Sound URL was a webpage and blocked by CORS
-const DEFAULT_MUSIC_URL = 'https://static.wixstatic.com/media/default-background-music.mp3';
+// Empty string means no default music - user must upload one in admin panel
+const DEFAULT_MUSIC_URL = '';
 
 export default function BackgroundMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);

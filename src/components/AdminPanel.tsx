@@ -209,9 +209,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`px-3 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5 ${\n                        activeTab === tab.id
+                      className={`px-3 py-2 text-xs font-heading font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                        activeTab === tab.id
                           ? 'bg-black text-white shadow-md'
-                          : 'bg-black/5 text-black hover:bg-black/10'\n                      }`}
+                          : 'bg-black/5 text-black hover:bg-black/10'
+                      }`}
                     >
                       <Icon className="w-3 h-3" />
                       {tab.label}
@@ -568,11 +570,243 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 console.error('Error updating music settings:', error);
                               }
                             }}
-                            className={`w-full px-4 py-2 rounded-lg text-sm font-heading font-bold uppercase tracking-wide transition-all ${\n                              musicSettings.isEnabled\n                                ? 'bg-green-500 text-white hover:bg-green-600'\n                                : 'bg-gray-300 text-white hover:bg-gray-400'\n                            }`}\n                          >\n                            {musicSettings.isEnabled ? '✓ Enabled' : '✗ Disabled'}\n                          </button>\n                        </div>
+                            className={`w-full px-4 py-2 rounded-lg text-sm font-heading font-bold uppercase tracking-wide transition-all ${
+                              musicSettings.isEnabled
+                                ? 'bg-green-500 text-white hover:bg-green-600'
+                                : 'bg-gray-300 text-white hover:bg-gray-400'
+                            }`}
+                          >
+                            {musicSettings.isEnabled ? '✓ Enabled' : '✗ Disabled'}
+                          </button>
+                        </div>
 
                         <div>
                           <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
                             Loop Music
-                          </label>\n                          <button\n                            onClick={async () => {\n                              try {\n                                const newState = !musicSettings.loopMusic;\n                                await BaseCrudService.update('musicsettings', {\n                                  _id: musicSettings._id,\n                                  loopMusic: newState\n                                });\n                                setMusicSettings({ ...musicSettings, loopMusic: newState });\n                              } catch (error) {\n                                console.error('Error updating loop setting:', error);\n                              }\n                            }}\n                            className={`w-full px-4 py-2 rounded-lg text-sm font-heading font-bold uppercase tracking-wide transition-all ${\n                              musicSettings.loopMusic\n                                ? 'bg-blue-500 text-white hover:bg-blue-600'\n                                : 'bg-gray-300 text-white hover:bg-gray-400'\n                            }`}\n                          >\n                            {musicSettings.loopMusic ? '✓ Looping' : '✗ No Loop'}\n                          </button>\n                        </div>\n                      </div>
+                          </label>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const newState = !musicSettings.loopMusic;
+                                await BaseCrudService.update('musicsettings', {
+                                  _id: musicSettings._id,
+                                  loopMusic: newState
+                                });
+                                setMusicSettings({ ...musicSettings, loopMusic: newState });
+                              } catch (error) {
+                                console.error('Error updating loop setting:', error);
+                              }
+                            }}
+                            className={`w-full px-4 py-2 rounded-lg text-sm font-heading font-bold uppercase tracking-wide transition-all ${
+                              musicSettings.loopMusic
+                                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                : 'bg-gray-300 text-white hover:bg-gray-400'
+                            }`}
+                          >
+                            {musicSettings.loopMusic ? '✓ Looping' : '✗ No Loop'}
+                          </button>
+                        </div>
+                      </div>
 
-                      <div>\n                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">\n                          Music Title\n                        </label>\n                        <TextEditableField\n                          value={musicSettings.musicTitle || ''}\n                          onSave={async (newTitle) => {\n                            try {\n                              await BaseCrudService.update('musicsettings', {\n                                _id: musicSettings._id,\n                                musicTitle: newTitle\n                              });\n                              setMusicSettings({ ...musicSettings, musicTitle: newTitle });\n                            } catch (error) {\n                              console.error('Error updating music title:', error);\n                            }\n                          }}\n                          className="text-sm text-black"\n                        />\n                      </div>\n\n                      <div>\n                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">\n                          Volume: {musicSettings.volume || 50}%\n                        </label>\n                        <input\n                          type="range"\n                          min="0"\n                          max="100"\n                          value={musicSettings.volume || 50}\n                          onChange={async (e) => {\n                            const newVolume = parseInt(e.target.value);\n                            setMusicSettings({ ...musicSettings, volume: newVolume });\n                            try {\n                              await BaseCrudService.update('musicsettings', {\n                                _id: musicSettings._id,\n                                volume: newVolume\n                              });\n                            } catch (error) {\n                              console.error('Error updating volume:', error);\n                            }\n                          }}\n                          className="w-full h-2 bg-black/20 rounded-lg appearance-none cursor-pointer"\n                        />\n                      </div>\n                    </div>\n                  ) : (\n                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">\n                      <p className="text-sm text-yellow-700 mb-3">No music settings found.</p>\n                      <a\n                        href="https://manage.wix.com/dashboard"\n                        target="_blank"\n                        rel="noopener noreferrer"\n                        className="inline-block px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-700 transition-all"\n                      >\n                        Open CMS to Add Music Settings\n                      </a>\n                    </div>\n                  )}\n                </div>\n              )}\n\n              {/* About Tab */}\n              {activeTab === 'about' && (\n                <div className="space-y-6">\n                  <div>\n                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">\n                      About Section\n                    </h3>\n                    <p className="text-xs text-black/60">Edit about section content</p>\n                  </div>\n\n                  {aboutSettings ? (\n                    <div className="space-y-6">\n                      <div>\n                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">\n                          About Text\n                        </label>\n                        <textarea\n                          value={aboutSettings.aboutText || ''}\n                          onChange={(e) => {\n                            setAboutSettings({ ...aboutSettings, aboutText: e.target.value });\n                          }}\n                          className="w-full p-3 border border-black/10 rounded-lg text-sm text-black resize-none h-32 focus:outline-none focus:ring-2 focus:ring-black/20"\n                          placeholder="Enter about section text..."\n                        />\n                      </div>\n\n                      <div>\n                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">\n                          Font Family\n                        </label>\n                        <select\n                          value={aboutSettings.fontFamily || 'cormorant-garamond-v2'}\n                          onChange={(e) => {\n                            setAboutSettings({ ...aboutSettings, fontFamily: e.target.value });\n                          }}\n                          className="w-full p-3 border border-black/10 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20"\n                        >\n                          <option value=\"cormorant-garamond-v2\">Cormorant Garamond</option>\n                          <option value=\"font-heading\">Heading Font</option>\n                          <option value=\"font-paragraph\">Paragraph Font</option>\n                          <option value=\"roboto\">Roboto</option>\n                          <option value=\"montserrat\">Montserrat</option>\n                          <option value=\"poppins-extralight\">Poppins</option>\n                          <option value=\"cinzel\">Cinzel</option>\n                        </select>\n                      </div>\n\n                      <button\n                        onClick={async () => {\n                          setIsSavingAbout(true);\n                          try {\n                            await BaseCrudService.update('about', {\n                              _id: aboutSettings._id,\n                              aboutText: aboutSettings.aboutText,\n                              fontFamily: aboutSettings.fontFamily\n                            });\n                            playClickSound();\n                          } catch (error) {\n                            console.error('Error saving about settings:', error);\n                          } finally {\n                            setIsSavingAbout(false);\n                          }\n                        }}\n                        disabled={isSavingAbout}\n                        className="w-full px-4 py-3 bg-black text-white rounded-lg text-sm font-heading font-bold uppercase tracking-wide hover:bg-black/90 disabled:opacity-50 transition-all"\n                      >\n                        {isSavingAbout ? 'Saving...' : 'Apply Changes'}\n                      </button>\n                    </div>\n                  ) : (\n                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">\n                      <p className="text-sm text-yellow-700 mb-3">No about settings found.</p>\n                      <a\n                        href="https://manage.wix.com/dashboard"\n                        target="_blank"\n                        rel="noopener noreferrer"\n                        className="inline-block px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-700 transition-all"\n                      >\n                        Open CMS to Add About Settings\n                      </a>\n                    </div>\n                  )}\n                </div>\n              )}\n\n              {/* Text Tab */}\n              {activeTab === 'text' && (\n                <div className="space-y-6">\n                  <div>\n                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">\n                      Site Text\n                    </h3>\n                    <p className="text-xs text-black/60">Edit site title and tagline</p>\n                  </div>\n\n                  <div className="space-y-4">\n                    <div>\n                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">\n                        Site Title\n                      </label>\n                      <TextEditableField\n                        value={siteTitle}\n                        onSave={setSiteTitle}\n                        className=\"text-lg font-heading font-bold text-black\"\n                      />\n                    </div>\n                    <div>\n                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">\n                        Tagline\n                      </label>\n                      <TextEditableField\n                        value={siteTagline}\n                        onSave={setSiteTagline}\n                        className=\"text-sm text-black/70\"\n                      />\n                    </div>\n                  </div>\n                </div>\n              )}\n\n              {/* Media Health Tab */}\n              {activeTab === 'media-health' && (\n                <div>\n                  <MediaHealthTab />\n                </div>\n              )}\n\n              {/* Data Tab */}\n              {activeTab === 'data' && (\n                <div>\n                  <DataManagementTab />\n                </div>\n              )}\n            </div>\n          </motion.div>\n        </>\n      )}\n    </AnimatePresence>\n  );\n}
+                      <div>
+                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
+                          Music Title
+                        </label>
+                        <TextEditableField
+                          value={musicSettings.musicTitle || ''}
+                          onSave={async (newTitle) => {
+                            try {
+                              await BaseCrudService.update('musicsettings', {
+                                _id: musicSettings._id,
+                                musicTitle: newTitle
+                              });
+                              setMusicSettings({ ...musicSettings, musicTitle: newTitle });
+                            } catch (error) {
+                              console.error('Error updating music title:', error);
+                            }
+                          }}
+                          className="text-sm text-black"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
+                          Volume: {musicSettings.volume || 50}%
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={musicSettings.volume || 50}
+                          onChange={async (e) => {
+                            const newVolume = parseInt(e.target.value);
+                            setMusicSettings({ ...musicSettings, volume: newVolume });
+                            try {
+                              await BaseCrudService.update('musicsettings', {
+                                _id: musicSettings._id,
+                                volume: newVolume
+                              });
+                            } catch (error) {
+                              console.error('Error updating volume:', error);
+                            }
+                          }}
+                          className="w-full h-2 bg-black/20 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-yellow-700 mb-3">No music settings found.</p>
+                      <a
+                        href="https://manage.wix.com/dashboard"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-700 transition-all"
+                      >
+                        Open CMS to Add Music Settings
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* About Tab */}
+              {activeTab === 'about' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
+                      About Section
+                    </h3>
+                    <p className="text-xs text-black/60">Edit about section content</p>
+                  </div>
+
+                  {aboutSettings ? (
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
+                          About Text
+                        </label>
+                        <textarea
+                          value={aboutSettings.aboutText || ''}
+                          onChange={(e) => {
+                            setAboutSettings({ ...aboutSettings, aboutText: e.target.value });
+                          }}
+                          className="w-full p-3 border border-black/10 rounded-lg text-sm text-black resize-none h-32 focus:outline-none focus:ring-2 focus:ring-black/20"
+                          placeholder="Enter about section text..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
+                          Font Family
+                        </label>
+                        <select
+                          value={aboutSettings.fontFamily || 'cormorant-garamond-v2'}
+                          onChange={(e) => {
+                            setAboutSettings({ ...aboutSettings, fontFamily: e.target.value });
+                          }}
+                          className="w-full p-3 border border-black/10 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20"
+                        >
+                          <option value="cormorant-garamond-v2">Cormorant Garamond</option>
+                          <option value="font-heading">Heading Font</option>
+                          <option value="font-paragraph">Paragraph Font</option>
+                          <option value="roboto">Roboto</option>
+                          <option value="montserrat">Montserrat</option>
+                          <option value="poppins-extralight">Poppins</option>
+                          <option value="cinzel">Cinzel</option>
+                        </select>
+                      </div>
+
+                      <button
+                        onClick={async () => {
+                          setIsSavingAbout(true);
+                          try {
+                            await BaseCrudService.update('about', {
+                              _id: aboutSettings._id,
+                              aboutText: aboutSettings.aboutText,
+                              fontFamily: aboutSettings.fontFamily
+                            });
+                            playClickSound();
+                          } catch (error) {
+                            console.error('Error saving about settings:', error);
+                          } finally {
+                            setIsSavingAbout(false);
+                          }
+                        }}
+                        disabled={isSavingAbout}
+                        className="w-full px-4 py-3 bg-black text-white rounded-lg text-sm font-heading font-bold uppercase tracking-wide hover:bg-black/90 disabled:opacity-50 transition-all"
+                      >
+                        {isSavingAbout ? 'Saving...' : 'Apply Changes'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                      <p className="text-sm text-yellow-700 mb-3">No about settings found.</p>
+                      <a
+                        href="https://manage.wix.com/dashboard"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-700 transition-all"
+                      >
+                        Open CMS to Add About Settings
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Text Tab */}
+              {activeTab === 'text' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
+                      Site Text
+                    </h3>
+                    <p className="text-xs text-black/60">Edit site title and tagline</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
+                        Site Title
+                      </label>
+                      <TextEditableField
+                        value={siteTitle}
+                        onSave={setSiteTitle}
+                        className="text-lg font-heading font-bold text-black"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
+                        Tagline
+                      </label>
+                      <TextEditableField
+                        value={siteTagline}
+                        onSave={setSiteTagline}
+                        className="text-sm text-black/70"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Media Health Tab */}
+              {activeTab === 'media-health' && (
+                <div>
+                  <MediaHealthTab />
+                </div>
+              )}
+
+              {/* Data Tab */}
+              {activeTab === 'data' && (
+                <div>
+                  <DataManagementTab />
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
