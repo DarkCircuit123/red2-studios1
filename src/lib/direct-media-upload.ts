@@ -249,3 +249,39 @@ export async function uploadMedia(
     throw error;
   }
 }
+
+/**
+ * "Paste a link" path. The link is tested server-side (reachability,
+ * real content-type, real size) before anything is imported - see
+ * src/api/media/import-from-url.ts for exactly what's checked and why
+ * each failure gets its own specific message rather than a generic one.
+ */
+export async function importMediaFromUrl(
+  url: string,
+  kind: 'image' | 'music'
+): Promise<UploadResult> {
+  const response = await fetch('/api/media/import-from-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, kind }),
+  });
+
+  const data = await safeJson(response).catch((parseError) => {
+    throw { code: 'INVALID_RESPONSE', message: parseError.message } as UploadError;
+  });
+
+  if (!response.ok || !data?.success) {
+    throw {
+      code: 'UPLOAD_FAILED',
+      message: data?.error || `Could not import that link (HTTP ${response.status}).`,
+    } as UploadError;
+  }
+
+  return {
+    mediaUrl: data.mediaUrl,
+    mediaId: data.mediaId,
+    fileName: data.fileName || url,
+    fileSize: data.detectedSizeBytes || 0,
+    mimeType: data.detectedType || '',
+  };
+}

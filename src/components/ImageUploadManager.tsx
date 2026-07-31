@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3 } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3, Link2, Loader } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import MediaUploadService, { MediaUploadProgress } from '@/lib/media-upload-service';
+import { importMediaFromUrl } from '@/lib/direct-media-upload';
 import WDE0009FixValidator from '@/lib/wde0009-fix-validation';
 import { validateImageStorage, validateCMSUpdatePayload } from '@/lib/image-storage-validator';
 import WixImageResolver from '@/lib/wix-image-resolver';
@@ -52,6 +53,12 @@ export default function ImageUploadManager({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // "Paste a link" state, kept separate from file-upload status above.
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkValue, setLinkValue] = useState('');
+  const [linkStatus, setLinkStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [linkMessage, setLinkMessage] = useState<string | null>(null);
 
   // Cleanup preview URL on unmount
   useEffect(() => {
@@ -154,6 +161,52 @@ export default function ImageUploadManager({
     } finally {
       setIsProcessing(false);
       setUploadProgress(0);
+    }
+  };
+
+  const handleLinkImport = async () => {
+    const url = linkValue.trim();
+    if (!url) {
+      setLinkStatus('error');
+      setLinkMessage('Paste a link first.');
+      return;
+    }
+
+    setLinkStatus('testing');
+    setLinkMessage('Testing link...');
+
+    try {
+      // Server-side: checks the link is reachable, confirms the real
+      // content-type and size, THEN imports it into Wix Media Manager.
+      // Every way this can fail returns its own specific message - see
+      // src/api/media/import-from-url.ts.
+      const result = await importMediaFromUrl(url, 'image');
+
+      if (collectionId && itemId && fieldName) {
+        const updatePayload = { _id: itemId, [fieldName]: result.mediaUrl };
+        validateCMSUpdatePayload(collectionId, updatePayload);
+        await BaseCrudService.update(collectionId, updatePayload);
+      }
+
+      onImageUpload(result.mediaUrl);
+      setLinkStatus('success');
+      setLinkMessage(`Link verified (${result.mimeType || 'image'}${result.fileSize ? `, ${(result.fileSize / 1024 / 1024).toFixed(2)}MB` : ''}) and added.`);
+      setLinkValue('');
+      setTimeout(() => {
+        setLinkStatus('idle');
+        setLinkMessage(null);
+        setShowLinkInput(false);
+      }, 3000);
+    } catch (err) {
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : err instanceof Error
+            ? err.message
+            : 'Could not import that link.';
+      setLinkStatus('error');
+      setLinkMessage(message);
+      console.error('Image link import error:', err);
     }
   };
 
@@ -304,6 +357,76 @@ export default function ImageUploadManager({
           </div>
         )}
       </motion.div>
+
+      {/* Paste a link */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setShowLinkInput((prev) => !prev);
+            setLinkStatus('idle');
+            setLinkMessage(null);
+          }}
+          disabled={isProcessing}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/20 rounded text-xs text-white/60 hover:text-white/80 transition-all duration-200 disabled:opacity-50"
+        >
+          <Link2 className="w-3 h-3" />
+          {showLinkInput ? 'Cancel link' : 'Paste a Link'}
+        </button>
+      </div>
+
+      {showLinkInput && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/5 border border-white/20 rounded-lg p-3 space-y-2"
+        >
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={linkValue}
+              onChange={(e) => setLinkValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && linkStatus !== 'testing') {
+                  e.preventDefault();
+                  handleLinkImport();
+                }
+              }}
+              placeholder="https://example.com/image.jpg"
+              disabled={linkStatus === 'testing'}
+              className="flex-1 bg-black/30 border border-white/20 rounded px-2 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-white/40 disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={handleLinkImport}
+              disabled={linkStatus === 'testing'}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/40 rounded text-xs text-blue-400 transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
+            >
+              {linkStatus === 'testing' ? (
+                <>
+                  <Loader className="w-3 h-3 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                'Test & Add'
+              )}
+            </button>
+          </div>
+          {linkMessage && (
+            <p
+              className={`text-xs ${
+                linkStatus === 'error'
+                  ? 'text-red-400'
+                  : linkStatus === 'success'
+                  ? 'text-green-400'
+                  : 'text-white/50'
+              }`}
+            >
+              {linkMessage}
+            </p>
+          )}
+        </motion.div>
+      )}
 
       {/* Error message */}
       {errorMessage && (

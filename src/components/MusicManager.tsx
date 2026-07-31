@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, X, Music, Loader, FileAudio } from 'lucide-react';
+import { Upload, X, Music, Loader, FileAudio, Link2, CheckCircle2 } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
-import { uploadMedia } from '@/lib/direct-media-upload';
+import { uploadMedia, importMediaFromUrl } from '@/lib/direct-media-upload';
 import { MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
 interface MusicManagerProps {
@@ -35,6 +35,14 @@ export default function MusicManager({
   const [storedMusic, setStoredMusic] = useState<StoredMusic[]>([]);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // "Paste a link" state - kept separate from the file-upload error/
+  // status state above so testing a link never clobbers or gets
+  // clobbered by an in-progress file upload's own status.
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkValue, setLinkValue] = useState('');
+  const [linkStatus, setLinkStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [linkMessage, setLinkMessage] = useState<string | null>(null);
 
   const loadStoredMusic = async () => {
     setIsLoadingLibrary(true);
@@ -103,6 +111,54 @@ export default function MusicManager({
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  const handleLinkImport = async () => {
+    const url = linkValue.trim();
+    if (!url) {
+      setLinkStatus('error');
+      setLinkMessage('Paste a link first.');
+      return;
+    }
+
+    setLinkStatus('testing');
+    setLinkMessage('Testing link...');
+
+    try {
+      // Server-side: checks the link is reachable, confirms the real
+      // content-type and size, THEN imports it into Wix Media Manager.
+      // Every way this can fail returns its own specific message - see
+      // src/api/media/import-from-url.ts.
+      const result = await importMediaFromUrl(url, 'music');
+      const musicUrl = result.mediaUrl;
+
+      if (itemId) {
+        await BaseCrudService.update(collectionId, {
+          _id: itemId,
+          [fieldName]: musicUrl,
+        });
+      }
+
+      onMusicUpload(musicUrl);
+      setLinkStatus('success');
+      setLinkMessage(`Link verified (${result.mimeType || 'audio'}${result.fileSize ? `, ${(result.fileSize / 1024 / 1024).toFixed(2)}MB` : ''}) and added.`);
+      setLinkValue('');
+      setTimeout(() => {
+        setLinkStatus('idle');
+        setLinkMessage(null);
+        setShowLinkInput(false);
+      }, 3000);
+    } catch (err) {
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : err instanceof Error
+            ? err.message
+            : 'Could not import that link.';
+      setLinkStatus('error');
+      setLinkMessage(message);
+      console.error('Music link import error:', err);
     }
   };
 
@@ -179,7 +235,67 @@ export default function MusicManager({
           <FileAudio className="w-3 h-3" />
           {showMediaLibrary ? 'Hide' : 'Select from Media'}
         </button>
+
+        <button
+          onClick={() => {
+            setShowLinkInput(!showLinkInput);
+            setLinkStatus('idle');
+            setLinkMessage(null);
+          }}
+          disabled={isUploading}
+          className="flex items-center gap-2 px-3 py-2 bg-white border border-black/20 text-black rounded text-xs font-heading font-bold uppercase tracking-wide hover:bg-black/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Link2 className="w-3 h-3" />
+          {showLinkInput ? 'Hide' : 'Paste a Link'}
+        </button>
       </div>
+
+      {showLinkInput && (
+        <div className="bg-black/5 border border-black/10 rounded-lg p-3 space-y-2">
+          <label className="text-xs text-black/60 uppercase tracking-wide block">
+            Import from a direct file link
+          </label>
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              type="url"
+              value={linkValue}
+              onChange={(e) => setLinkValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleLinkImport(); }}
+              placeholder="https://example.com/song.mp3"
+              disabled={linkStatus === 'testing'}
+              className="flex-1 min-w-[200px] px-3 py-2 text-xs border border-black/20 rounded bg-white text-black placeholder:text-black/30 disabled:opacity-50"
+            />
+            <button
+              onClick={handleLinkImport}
+              disabled={linkStatus === 'testing' || !linkValue.trim()}
+              className="flex items-center gap-2 px-3 py-2 bg-black text-white rounded text-xs font-heading font-bold uppercase tracking-wide hover:bg-black/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {linkStatus === 'testing' ? (
+                <>
+                  <Loader className="w-3 h-3 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                'Test & Add'
+              )}
+            </button>
+          </div>
+          {linkMessage && (
+            <div
+              className={`flex items-start gap-2 text-xs rounded p-2 ${
+                linkStatus === 'success'
+                  ? 'bg-green-500/10 text-green-700 border border-green-500/20'
+                  : linkStatus === 'error'
+                    ? 'bg-red-500/10 text-red-600 border border-red-500/20'
+                    : 'bg-blue-500/10 text-blue-700 border border-blue-500/20'
+              }`}
+            >
+              {linkStatus === 'success' && <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />}
+              <span>{linkMessage}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 rounded p-2">
