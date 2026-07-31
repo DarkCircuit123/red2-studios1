@@ -11,6 +11,7 @@ import { constantTimeEqual, getClientIP, signAdminToken, readSecret } from '@/li
  * - Session token generation for httpOnly cookies
  * - Server-side session validation
  * - No hardcoded credentials in code
+ * - No debug logging of credentials or comparison details
  */
 
 export const POST: APIRoute = async ({ request }) => {
@@ -36,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
       body = await request.json();
     } catch (e) {
       return new Response(
-        JSON.stringify({ authenticated: false, error: 'Invalid request body' }),
+        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -46,7 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Validate input
     if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
       return new Response(
-        JSON.stringify({ authenticated: false, error: 'Invalid credentials format' }),
+        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -55,83 +56,32 @@ export const POST: APIRoute = async ({ request }) => {
     const sanitizedUsername = username.trim().substring(0, 100);
     const sanitizedPassword = password.substring(0, 500);
 
-    // Get credentials from environment (NEVER from CMS for admin auth).
+    // Get credentials from Secrets Manager (NEVER from CMS for admin auth).
     // Both live in Secrets Manager under these exact names. readSecret()
     // trims whitespace, which matters - a value pasted into the dashboard
     // can carry a trailing newline that would otherwise fail the
     // constant-time comparison below with no visible cause.
-    console.log('[DEBUG] ===== ADMIN LOGIN ATTEMPT =====');
-    console.log('[DEBUG] Attempting to read ADMIN_USERNAME and ADMIN_PASSWORD from Secrets Manager');
-    let adminUsername = readSecret('ADMIN_USERNAME');
-    let adminPassword = readSecret('ADMIN_PASSWORD');
-
-    // FALLBACK: If Secrets Manager fails, use hardcoded credentials
-    // This ensures the user can always log in while we debug the Secrets Manager issue
-    if (!adminUsername || !adminPassword) {
-      console.warn('[DEBUG] Secrets Manager credentials not found, using hardcoded fallback');
-      adminUsername = 'Jordan310';
-      adminPassword = 'Iloveanna1!';
-      console.log('[DEBUG] FALLBACK CREDENTIALS SET - username:', adminUsername, 'password length:', adminPassword.length);
-    }
+    const adminUsername = readSecret('ADMIN_USERNAME');
+    const adminPassword = readSecret('ADMIN_PASSWORD');
 
     // Verify credentials exist
     if (!adminUsername || !adminPassword) {
-      console.error('[SECURITY] Admin credentials not configured');
-      console.error('[DEBUG] adminUsername exists:', !!adminUsername, 'adminPassword exists:', !!adminPassword);
+      console.error('[SECURITY] Admin credentials not configured in Secrets Manager');
       return new Response(
-        JSON.stringify({ authenticated: false, error: 'Server configuration error' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
-
-    // DEBUG: Log credential details with FULL VALUES for diagnosis
-    console.log('[DEBUG] ===== CREDENTIALS LOADED =====');
-    console.log('[DEBUG] adminUsername length:', adminUsername.length, 'value:', adminUsername);
-    console.log('[DEBUG] adminPassword length:', adminPassword.length, 'first 5 chars:', adminPassword.substring(0, 5));
-    console.log('[DEBUG] adminPassword FULL VALUE:', adminPassword);
-    console.log('[DEBUG] Incoming username length:', sanitizedUsername.length, 'value:', sanitizedUsername);
-    console.log('[DEBUG] Incoming password length:', sanitizedPassword.length, 'first 5 chars:', sanitizedPassword.substring(0, 5));
-    console.log('[DEBUG] Incoming password FULL VALUE:', sanitizedPassword);
-    
-    // Character-by-character comparison for debugging
-    console.log('[DEBUG] ===== CHARACTER COMPARISON =====');
-    
-    // Username comparison
-    console.log('[DEBUG] ===== USERNAME COMPARISON =====');
-    if (sanitizedUsername.length === adminUsername.length) {
-      for (let i = 0; i < sanitizedUsername.length; i++) {
-        if (sanitizedUsername[i] !== adminUsername[i]) {
-          console.log(`[DEBUG] Username mismatch at position ${i}: incoming='${sanitizedUsername[i]}' (code ${sanitizedUsername.charCodeAt(i)}) vs stored='${adminUsername[i]}' (code ${adminUsername.charCodeAt(i)})`);\n        }
-      }
-    } else {
-      console.log(`[DEBUG] Username length mismatch: incoming=${sanitizedUsername.length} vs stored=${adminUsername.length}`);\n    }
-    
-    // Password comparison
-    console.log('[DEBUG] ===== PASSWORD COMPARISON =====');
-    if (sanitizedPassword.length === adminPassword.length) {
-      for (let i = 0; i < sanitizedPassword.length; i++) {
-        if (sanitizedPassword[i] !== adminPassword[i]) {
-          console.log(`[DEBUG] Password mismatch at position ${i}: incoming='${sanitizedPassword[i]}' (code ${sanitizedPassword.charCodeAt(i)}) vs stored='${adminPassword[i]}' (code ${adminPassword.charCodeAt(i)})`);\n        }
-      }
-    } else {
-      console.log(`[DEBUG] Password length mismatch: incoming=${sanitizedPassword.length} vs stored=${adminPassword.length}`);\n    }
 
     // CRITICAL: Use constant-time comparison to prevent timing attacks
     const usernameMatch = constantTimeEqual(sanitizedUsername, adminUsername);
     const passwordMatch = constantTimeEqual(sanitizedPassword, adminPassword);
     const isValid = usernameMatch && passwordMatch;
 
-    console.log('[DEBUG] ===== COMPARISON RESULTS =====');
-    console.log('[DEBUG] Username match:', usernameMatch);
-    console.log('[DEBUG] Password match:', passwordMatch);
-    console.log('[DEBUG] Overall valid:', isValid);
-
     if (!isValid) {
       console.warn(`[SECURITY] Failed admin login attempt from IP: ${clientIP}`);
-      console.warn('[DEBUG] Credential mismatch - username match:', usernameMatch, 'password match:', passwordMatch);
-      
       return new Response(
-        JSON.stringify({ authenticated: false, error: 'Invalid credentials' }),
+        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -144,14 +94,14 @@ export const POST: APIRoute = async ({ request }) => {
     try {
       sessionToken = await signAdminToken(sanitizedUsername, 30 * 60 * 1000);
     } catch (signError) {
-      console.error('[SECURITY] Failed to sign session token (SESSION_SECRET missing?):', signError);
+      console.error('[SECURITY] Failed to sign session token (SESSION_SECRET missing?)');
       return new Response(
-        JSON.stringify({ authenticated: false, error: 'Server configuration error' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[ADMIN AUTH] Successful login for user: ${sanitizedUsername} from IP: ${clientIP}`);
+    console.log(`[ADMIN AUTH] Successful login from IP: ${clientIP}`);
 
     // Return success with session token
     // In production, this should be set as httpOnly cookie via Set-Cookie header
@@ -173,10 +123,10 @@ export const POST: APIRoute = async ({ request }) => {
     );
 
   } catch (error) {
-    console.error('[ERROR] Admin check endpoint error:', error);
+    console.error('[ERROR] Admin check endpoint error');
     return new Response(
-      JSON.stringify({ authenticated: false, error: 'Server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };

@@ -12,8 +12,10 @@ interface MusicSettings {
   musicTitle?: string;
 }
 
-// Default music URL - high-quality background music
-const DEFAULT_MUSIC_URL = 'https://www.epidemicsound.com/music/tracks/0077f7bc-f9cc-4042-83b3-7504bb14def6/';
+// Default music URL - direct audio file (not a webpage)
+// Use a direct MP3 URL from Wix Media Manager or a CDN that supports CORS
+// The Epidemic Sound URL was a webpage and blocked by CORS
+const DEFAULT_MUSIC_URL = 'https://static.wixstatic.com/media/default-background-music.mp3';
 
 export default function BackgroundMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -33,17 +35,8 @@ export default function BackgroundMusicPlayer() {
           const settings = result.items[0];
           // Use CMS URL if available, otherwise use default
           const musicUrl = settings.musicUrl || DEFAULT_MUSIC_URL;
-          console.log('[AUDIO] Loaded music settings:', {
-            enabled: settings.isEnabled,
-            hasUrl: !!musicUrl,
-            volume: settings.volume,
-            loop: settings.loopMusic,
-            title: settings.musicTitle,
-            source: settings.musicUrl ? 'CMS' : 'DEFAULT'
-          });
           setMusicSettings({ ...settings, musicUrl });
         } else {
-          console.log('[AUDIO] No music settings found in CMS, using defaults');
           // Create default settings
           setMusicSettings({
             _id: 'default',
@@ -55,12 +48,7 @@ export default function BackgroundMusicPlayer() {
           });
         }
       } catch (error) {
-        // Suppress 403 errors from CMS - music is optional
-        if (error instanceof Error && error.message.includes('403')) {
-          console.log('[AUDIO] CMS access denied for music settings (expected in some environments), using defaults');
-        } else {
-          console.log('[AUDIO] Failed to load music settings:', error);
-        }
+        // Suppress errors - music is optional
         // Use default settings on error
         setMusicSettings({
           _id: 'default',
@@ -96,19 +84,17 @@ export default function BackgroundMusicPlayer() {
           audioRef.current!.load();
         }
         
-        console.log('[AUDIO] Attempting autoplay...');
         // Attempt to play immediately
         const playPromise = audioRef.current!.play();
         if (playPromise !== undefined) {
           await playPromise;
-          console.log('[AUDIO] Autoplay successful');
           setIsPlaying(true);
           setAudioError(false);
           setHasInteracted(true);
         }
       } catch (err) {
-        console.log('[AUDIO] Autoplay failed, will retry on user interaction:', err);
         // Autoplay was blocked, will retry on first user interaction
+        // Silently fail - don't log errors
       }
     };
 
@@ -124,12 +110,11 @@ export default function BackgroundMusicPlayer() {
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
             await playPromise;
-            console.log('[AUDIO] Playback started on user interaction');
             setIsPlaying(true);
             setAudioError(false);
           }
         } catch (err) {
-          console.log('[AUDIO] Audio playback failed on user interaction:', err);
+          // Silently fail - don't log errors
           setAudioError(true);
         }
       }
@@ -176,26 +161,8 @@ export default function BackgroundMusicPlayer() {
   const handleAudioError = (event: Event) => {
     const audio = event.target as HTMLAudioElement;
     const errorCode = audio.error?.code;
-    const errorMessage = audio.error?.message || 'Unknown error';
     
-    const errorCodeMap: { [key: number]: string } = {
-      1: 'MEDIA_ERR_ABORTED',
-      2: 'MEDIA_ERR_NETWORK',
-      3: 'MEDIA_ERR_DECODE',
-      4: 'MEDIA_ERR_SRC_NOT_SUPPORTED'
-    };
-    
-    console.error('[AUDIO] Audio element error:', {
-      code: errorCode,
-      codeType: errorCodeMap[errorCode || 0] || 'UNKNOWN',
-      message: errorMessage,
-      networkState: audio.networkState,
-      readyState: audio.readyState,
-      src: musicSettings?.musicUrl,
-      crossOrigin: audio.crossOrigin,
-      timestamp: new Date().toISOString()
-    });
-    
+    // Silently fail - don't log errors for audio playback
     setAudioError(true);
   };
 
@@ -206,7 +173,6 @@ export default function BackgroundMusicPlayer() {
 
   // Validate music URL is available
   if (!musicSettings?.musicUrl) {
-    console.warn('[AUDIO] No music URL available, cannot play background music');
     return null;
   }
 

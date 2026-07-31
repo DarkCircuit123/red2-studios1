@@ -35,13 +35,11 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     }
     
     if (!raw) {
-      console.log(`[DEBUG] readSecret('${name}') - not found in process.env, import.meta.env, or globalThis`);
       continue;
     }
 
     const trimmed = raw.trim();
     if (!trimmed) {
-      console.log(`[DEBUG] readSecret('${name}') - found but empty after trim`);
       continue;
     }
 
@@ -51,11 +49,9 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     const value = match ? match[1].trim() : trimmed;
 
     if (value) {
-      console.log(`[DEBUG] readSecret('${name}') found, length: ${value.length}, first 10 chars: ${value.substring(0, 10)}`);
       return value;
     }
   }
-  console.log(`[DEBUG] readSecret(${candidateEnvNames.join(', ')}) - none found in any source`);
   return undefined;
 }
 
@@ -208,10 +204,8 @@ function base64UrlDecode(str: string): Uint8Array {
 async function getSigningKey(): Promise<CryptoKey> {
   const secret = readSecret('SESSION_SECRET');
   if (!secret) {
-    console.error('[DEBUG] SESSION_SECRET not found in Secrets Manager');
     throw new Error('SESSION_SECRET is not configured in Secrets Manager');
   }
-  console.log('[DEBUG] SESSION_SECRET loaded, length:', secret.length);
   const encoder = new TextEncoder();
   return crypto.subtle.importKey(
     'raw',
