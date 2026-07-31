@@ -89,24 +89,16 @@ export const useAdminAuth = create<AdminAuthState>()(
             return true;
           }
 
-          // Handle failed attempt
+          // Handle failed attempt - do NOT lock out client-side
+          // Rate limiting is handled server-side only
           const currentState = get();
           const newAttempts = currentState.failedAttempts + 1;
 
-          if (newAttempts >= MAX_FAILED_ATTEMPTS) {
-            set({
-              failedAttempts: newAttempts,
-              isLoading: false,
-              error: 'Too many failed attempts. Please try again later.',
-            });
-            console.warn('[ADMIN AUTH] Account locked due to too many failed attempts');
-          } else {
-            set({
-              failedAttempts: newAttempts,
-              isLoading: false,
-              error: data.error || 'Authentication failed',
-            });
-          }
+          set({
+            failedAttempts: newAttempts,
+            isLoading: false,
+            error: data.error || 'Authentication failed',
+          });
 
           return false;
         } catch (error) {

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, User, AlertCircle } from 'lucide-react';
-import { useAdminAuth, MAX_FAILED_ATTEMPTS } from '@/lib/adminAuthStore';
+import { useAdminAuth } from '@/lib/adminAuthStore';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -42,24 +42,9 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }: Adm
         // destructured value above, which is captured at render time and
         // would be one attempt stale inside this same call.
         const storeError = useAdminAuth.getState().error;
-        const currentFailedAttempts = useAdminAuth.getState().failedAttempts;
 
-        // IMPORTANT: only show the "invalid password" messaging when the
-        // server actually said the credentials were wrong. Previously this
-        // branch showed that message unconditionally, which is why a dead
-        // API route, a missing SESSION_SECRET, or a plain network error
-        // all looked identical to a wrong password — the real cause was
-        // invisible. Every other failure now shows its real message.
-        if (storeError === 'Invalid credentials') {
-          const remainingAttempts = Math.max(0, MAX_FAILED_ATTEMPTS - currentFailedAttempts);
-          setError(
-            remainingAttempts > 0
-              ? `Invalid username or password. ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.`
-              : 'Too many failed attempts. Please try again later.'
-          );
-        } else {
-          setError(storeError || 'Login failed for an unknown reason. Check the browser console for details.');
-        }
+        // Show the actual error from the server
+        setError(storeError || 'Login failed for an unknown reason. Check the browser console for details.');
         setPassword('');
       }
     } catch (err) {
