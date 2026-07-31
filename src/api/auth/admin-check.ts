@@ -83,6 +83,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Verify credentials exist
     if (!adminUsername || !adminPassword) {
       console.error('[SECURITY] Admin credentials not configured in Secrets Manager');
+      console.error('[DEBUG] adminUsername exists:', !!adminUsername, 'adminPassword exists:', !!adminPassword);
       recordFailedAttempt(clientIP);
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Server configuration error' }),
@@ -90,14 +91,26 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    // DEBUG: Log credential details (masking password for security)
+    console.log('[DEBUG] Credentials loaded from Secrets Manager');
+    console.log('[DEBUG] adminUsername length:', adminUsername.length, 'value:', adminUsername);
+    console.log('[DEBUG] adminPassword length:', adminPassword.length, 'masked:', '*'.repeat(Math.min(adminPassword.length, 10)));
+    console.log('[DEBUG] Incoming username length:', sanitizedUsername.length, 'value:', sanitizedUsername);
+    console.log('[DEBUG] Incoming password length:', sanitizedPassword.length, 'masked:', '*'.repeat(Math.min(sanitizedPassword.length, 10)));
+
     // CRITICAL: Use constant-time comparison to prevent timing attacks
     const usernameMatch = constantTimeEqual(sanitizedUsername, adminUsername);
     const passwordMatch = constantTimeEqual(sanitizedPassword, adminPassword);
     const isValid = usernameMatch && passwordMatch;
 
+    console.log('[DEBUG] Username match:', usernameMatch);
+    console.log('[DEBUG] Password match:', passwordMatch);
+    console.log('[DEBUG] Overall valid:', isValid);
+
     if (!isValid) {
       recordFailedAttempt(clientIP);
       console.warn(`[SECURITY] Failed admin login attempt from IP: ${clientIP}`);
+      console.warn('[DEBUG] Credential mismatch - username match:', usernameMatch, 'password match:', passwordMatch);
       
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Invalid credentials' }),

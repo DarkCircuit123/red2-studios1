@@ -34,8 +34,12 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     const match = trimmed.match(selfPrefix);
     const value = match ? match[1].trim() : trimmed;
 
-    if (value) return value;
+    if (value) {
+      console.log(`[DEBUG] readSecret('${name}') found, length: ${value.length}`);
+      return value;
+    }
   }
+  console.log(`[DEBUG] readSecret(${candidateEnvNames.join(', ')}) - none found`);
   return undefined;
 }
 
@@ -265,8 +269,10 @@ function base64UrlDecode(str: string): Uint8Array {
 async function getSigningKey(): Promise<CryptoKey> {
   const secret = readSecret('SESSION_SECRET');
   if (!secret) {
+    console.error('[DEBUG] SESSION_SECRET not found in Secrets Manager');
     throw new Error('SESSION_SECRET is not configured in Secrets Manager');
   }
+  console.log('[DEBUG] SESSION_SECRET loaded, length:', secret.length);
   const encoder = new TextEncoder();
   return crypto.subtle.importKey(
     'raw',
