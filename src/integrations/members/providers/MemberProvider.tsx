@@ -71,6 +71,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
             isLoading: false,
           });
         } else {
+          // No member - this is normal for anonymous/unauthenticated users
           updateState({
             member: null,
             isAuthenticated: false,
@@ -78,8 +79,9 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
           });
         }
       } catch (err) {
+        // Silently handle errors - getCurrentMember already filters expected errors
+        // This catch block should rarely be hit since the service handles errors gracefully
         updateState({
-          error: err instanceof Error ? err.message : 'Failed to load member',
           member: null,
           isAuthenticated: false,
           isLoading: false,

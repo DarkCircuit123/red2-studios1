@@ -19,6 +19,8 @@ const isExpectedAuthError = (error: unknown): boolean => {
     'UNKNOWN',
     'Forbidden',
     '403',
+    '401',
+    'Unauthorized',
   ];
 
   return expectedPatterns.some(pattern => 
@@ -42,6 +44,7 @@ export const getCurrentMember = async (): Promise<Member | null> => {
     // Check if this is an expected "no session" error
     if (isExpectedAuthError(error)) {
       // Expected - no member logged in, return null silently
+      // This is normal for anonymous/unauthenticated visitors
       return null;
     }
 
