@@ -1,437 +1,496 @@
-# Advanced Upload System Guide
+# Unified Upload System - Vibe Best Practices
 
 ## Overview
 
-The new upload system has been completely redesigned to prevent HTTP 413 (Payload Too Large) errors and provide a robust, user-friendly experience. The system now:
+The upload system has been completely revamped to follow Vibe best practices with:
 
-- **Uploads files sequentially** (one at a time, never batched)
-- **Optimizes images** before upload (resizing, quality adjustment)
-- **Validates file sizes** and types before processing
-- **Implements automatic retry logic** with exponential backoff
-- **Provides detailed progress tracking** with estimated times
-- **Logs comprehensive error information** (size, type, error code)
-- **Allows individual file retry** without restarting the queue
-- **Continues uploading** even if one file fails
+- **Single source of truth** for upload logic (no duplicate code)
+- **Unified validation** across frontend and backend
+- **Proper error handling** with retry logic
+- **Progress tracking** with detailed metrics
+- **Type-safe operations** throughout
+- **CMS integration** for storing media URLs
+- **Security hardening** with proper validation
 
 ## Architecture
 
 ### Core Components
 
-#### 1. **UploadQueueManager** (`/src/lib/upload-queue.ts`)
-The central orchestrator for all upload operations.
+```
+src/lib/
+├── upload-config.ts       # Single source of truth for validation rules
+├── upload-service.ts      # Core upload engine (direct + fallback)
+├── upload-storage.ts      # CMS storage operations
+└── upload-hooks.ts        # React hooks for uploads
 
-**Key Features:**
-- Sequential file processing (one file at a time)
-- Automatic image optimization (resize, quality adjustment)
-- Retry logic with exponential backoff
-- State management and listener pattern
-- Detailed error tracking with error codes
+src/components/ui/
+└── file-upload.tsx        # Reusable upload UI components
 
-**Usage:**
-```typescript
-import UploadQueueManager from '@/lib/upload-queue';
-
-const queue = new UploadQueueManager({
-  maxRetries: 3,
-  retryDelay: 1000,
-  optimizeImages: true,
-  maxImageSize: 5 * 1024 * 1024, // 5MB
-  imageQuality: 0.8,
-});
-
-// Register upload callback
-queue.onUpload(async (file, state) => {
-  const formData = new FormData();
-  formData.append('file', file.file);
-  
-  const response = await fetch('/api/upload-image', {
-    method: 'POST',
-    body: formData,
-  });
-  
-  if (!response.ok) throw new Error('Upload failed');
-  
-  const data = await response.json();
-  file.uploadedUrl = data.url;
-});
-
-// Subscribe to state changes
-queue.subscribe((state) => {
-  console.log(`Progress: ${state.totalProgress}%`);
-  console.log(`Completed: ${state.successCount}/${state.files.length}`);
-});
-
-// Add files and start
-queue.addFiles([file1, file2, file3]);
-await queue.start();
+src/api/media/
+├── get-upload-url.ts      # Get signed Wix Media Manager URL
+├── upload.ts              # Fallback proxy upload (images)
+└── import-from-url.ts     # Import from external URL
 ```
 
-#### 2. **UploadQueueUI** (`/src/components/UploadQueueUI.tsx`)
-Visual component displaying upload progress and status.
+## Upload Flow
 
-**Features:**
-- Real-time progress bars for each file
-- Overall queue progress
-- Expandable file details (error messages, timing, retry count)
-- Individual retry buttons
-- Clear completed files
-- Cancel queue operations
+### Direct Upload (Primary)
 
-#### 3. **Updated ImageUploadManager** (`/src/components/ImageUploadManager.tsx`)
-Enhanced image upload component using the new queue system.
-
-**Changes:**
-- Uses UploadQueueManager internally
-- Automatic image optimization
-- Sequential uploads
-- Better error handling
-
-#### 4. **Updated MusicUploadManager** (`/src/components/MusicUploadManager.tsx`)
-Enhanced music upload component using the new queue system.
-
-**Changes:**
-- Uses UploadQueueManager internally
-- Sequential uploads (never batched)
-- Better error handling
-
-## How It Works
-
-### Upload Flow
-
-1. **File Selection**
-   - User selects file(s)
-   - Client-side validation (type, size)
-   - Files added to queue
-
-2. **Optimization** (Images only)
-   - Check if file exceeds max size
-   - If yes: resize to max dimensions (2000px)
-   - Convert to JPEG with quality setting
-   - Update file reference
-
-3. **Upload**
-   - Create FormData with single file
-   - POST to `/api/upload-image` or `/api/upload-music`
-   - Track progress
-   - Handle response
-
-4. **Error Handling**
-   - If upload fails: extract error code
-   - If retries remaining: wait (exponential backoff)
-   - Retry the same file
-   - If max retries exceeded: mark as failed
-
-5. **Completion**
-   - Update CMS if needed
-   - Call success callback
-   - Move to next file
-
-### Error Codes
-
-The system automatically detects and categorizes errors:
-
-| Code | Meaning | Cause |
-|------|---------|-------|
-| `PAYLOAD_TOO_LARGE` | HTTP 413 | File too large for single request |
-| `BAD_REQUEST` | HTTP 400 | Invalid file format or missing data |
-| `UNAUTHORIZED` | HTTP 401 | Authentication failed |
-| `FORBIDDEN` | HTTP 403 | Permission denied |
-| `NOT_FOUND` | HTTP 404 | Endpoint not found |
-| `SERVER_ERROR` | HTTP 500 | Server-side error |
-| `TIMEOUT` | Network | Request timeout |
-| `NETWORK_ERROR` | Network | Connection failed |
-| `UNKNOWN_ERROR` | Other | Unclassified error |
-
-### Retry Strategy
-
-**Exponential Backoff:**
-- Attempt 1: Immediate
-- Attempt 2: Wait 1000ms
-- Attempt 3: Wait 2000ms
-- Attempt 4: Wait 3000ms
-- Max 3 retries (configurable)
-
-**When Retry Happens:**
-- Only the failed file is retried
-- Other files continue normally
-- User can manually retry from UI
-
-## Configuration
-
-### UploadQueueManager Options
-
-```typescript
-interface UploadQueueConfig {
-  maxRetries?: number;           // Default: 3
-  retryDelay?: number;           // Default: 1000ms
-  optimizeImages?: boolean;      // Default: true
-  optimizeAudio?: boolean;       // Default: true
-  maxImageSize?: number;         // Default: 5MB
-  maxAudioSize?: number;         // Default: 10MB
-  imageQuality?: number;         // Default: 0.8 (0-1)
-  audioQuality?: number;         // Default: 0.9 (0-1)
-}
+```
+Browser
+  ↓
+1. Validate file locally (upload-config.ts)
+  ↓
+2. Call /api/media/get-upload-url
+  ↓ (returns signed URL)
+  ↓
+3. PUT file directly to Wix Media Manager
+  ↓ (browser → Wix, bypasses our server)
+  ↓
+4. Get media URL from Wix response
+  ↓
+5. Store URL in CMS collection
+  ↓
+Done ✓
 ```
 
-### Image Optimization
+### Fallback Upload (Network Failure)
 
-**Default Behavior:**
-- Max dimensions: 2000px (longest side)
-- Format: JPEG
-- Quality: 0.8 (80%)
-- Reduces file size by ~60-80%
-
-**Custom Optimization:**
-```typescript
-queue.registerOptimizer('image/png', async (file) => {
-  // Custom PNG optimization logic
-  return optimizedFile;
-});
+```
+If direct upload fails at network level:
+  ↓
+1. Retry via proxy: POST to /api/media/upload
+  ↓ (our server receives file, uploads to Wix)
+  ↓
+2. Get media URL from Wix
+  ↓
+3. Store URL in CMS collection
+  ↓
+Done ✓
 ```
 
-## API Endpoints
+## Usage
 
-### `/api/upload-image`
-- **Method:** POST
-- **Body:** FormData with `file` field
-- **Max Size:** 100MB
-- **Returns:** `{ url: string, fileName: string, fileSize: number, fileType: string }`
-
-### `/api/upload-music`
-- **Method:** POST
-- **Body:** FormData with `file` field
-- **Max Size:** 50MB
-- **Returns:** `{ url: string, fileName: string, fileSize: number, fileType: string }`
-
-## Usage Examples
-
-### Basic Image Upload
+### Basic File Upload
 
 ```typescript
-import ImageUploadManager from '@/components/ImageUploadManager';
+import { FileUpload } from '@/components/ui/file-upload';
+import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 
-export default function MyComponent() {
-  const handleImageUpload = (imageUrl: string) => {
-    console.log('Image uploaded:', imageUrl);
-    // Update state or CMS
-  };
-
+export function MyComponent() {
   return (
-    <ImageUploadManager
-      label="Upload Profile Picture"
-      onImageUpload={handleImageUpload}
-      collectionId="users"
-      itemId="user-123"
-      fieldName="profileImage"
+    <FileUpload
+      kind="image"
+      config={IMAGE_UPLOAD_CONFIG}
+      onSuccess={(result) => {
+        console.log('Uploaded:', result.mediaUrl);
+      }}
+      onError={(error) => {
+        console.error('Upload failed:', error.message);
+      }}
     />
   );
 }
 ```
 
-### Batch Upload with Queue UI
+### Upload with CMS Storage
 
 ```typescript
-import { useState, useRef } from 'react';
-import UploadQueueManager from '@/lib/upload-queue';
-import UploadQueueUI from '@/components/UploadQueueUI';
+import { useUpload } from '@/lib/upload-hooks';
+import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 
-export default function BatchUploadPage() {
-  const [queueState, setQueueState] = useState(null);
-  const queueRef = useRef(null);
+export function MyComponent() {
+  const { upload, isUploading, error, result } = useUpload({
+    kind: 'image',
+    config: IMAGE_UPLOAD_CONFIG,
+    storage: {
+      collectionId: 'portfolio',
+      itemId: 'item-123',
+      fieldName: 'mainImage',
+    },
+    onSuccess: (result) => {
+      console.log('Stored in CMS:', result.mediaUrl);
+    },
+  });
 
-  const handleUpload = async (files: File[]) => {
-    const queue = new UploadQueueManager({
-      maxRetries: 3,
-      optimizeImages: true,
-    });
+  return (
+    <div>
+      <input
+        type="file"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) upload(file);
+        }}
+        disabled={isUploading}
+      />
+      {error && <p className="text-red-600">{error}</p>}
+      {result && <p className="text-green-600">Uploaded!</p>}
+    </div>
+  );
+}
+```
 
-    queue.onUpload(async (file, state) => {
-      const formData = new FormData();
-      formData.append('file', file.file);
-      
-      const response = await fetch('/api/upload-image', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) throw new Error('Upload failed');
-      
-      const data = await response.json();
-      file.uploadedUrl = data.url;
-    });
+### Compact Upload Button
 
-    queue.subscribe(setQueueState);
-    queueRef.current = queue;
+```typescript
+import { CompactUploadButton } from '@/components/ui/file-upload';
+import { MUSIC_UPLOAD_CONFIG } from '@/lib/upload-config';
 
-    queue.addFiles(files);
-    await queue.start();
-  };
+export function MusicUploadButton() {
+  return (
+    <CompactUploadButton
+      kind="music"
+      config={MUSIC_UPLOAD_CONFIG}
+      onSuccess={(result) => {
+        console.log('Music uploaded:', result.mediaUrl);
+      }}
+      label="Upload Background Music"
+      size="md"
+    />
+  );
+}
+```
+
+### Multiple File Uploads
+
+```typescript
+import { useMultiUpload } from '@/lib/upload-hooks';
+import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
+
+export function GalleryUpload() {
+  const { uploadMultiple, isUploading, results, errors } = useMultiUpload({
+    kind: 'image',
+    config: IMAGE_UPLOAD_CONFIG,
+  });
 
   return (
     <div>
       <input
         type="file"
         multiple
-        onChange={(e) => handleUpload(Array.from(e.target.files || []))}
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          uploadMultiple(files);
+        }}
+        disabled={isUploading}
       />
-      
-      <UploadQueueUI
-        state={queueState}
-        onRetry={(fileId) => queueRef.current?.retryFile(fileId)}
-        onClear={() => queueRef.current?.clearCompleted()}
-        onCancel={() => queueRef.current?.cancel()}
-        isVisible={!!queueState}
-      />
+      {errors.size > 0 && (
+        <div>
+          {Array.from(errors.entries()).map(([fileId, error]) => (
+            <p key={fileId} className="text-red-600">{error}</p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 ```
 
-## Troubleshooting
+### Direct Upload Service
 
-### Still Getting 413 Errors?
+```typescript
+import { uploadFile } from '@/lib/upload-service';
+import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 
-1. **Check file size before upload:**
-   ```typescript
-   const maxSize = 100 * 1024 * 1024; // 100MB
-   if (file.size > maxSize) {
-     console.error('File too large');
-   }
-   ```
+async function uploadImage(file: File) {
+  try {
+    const result = await uploadFile(file, 'image', IMAGE_UPLOAD_CONFIG, {
+      onProgress: (progress) => {
+        console.log(`${progress.percentage}% - ${progress.message}`);
+      },
+      maxRetries: 2,
+      timeoutMs: 120000,
+    });
 
-2. **Verify optimization is working:**
-   - Check browser console for `[UPLOAD_QUEUE]` logs
-   - Look for "Optimized" message showing size reduction
+    console.log('Media URL:', result.mediaUrl);
+    console.log('Upload took:', result.duration, 'ms');
+  } catch (error) {
+    console.error('Upload failed:', error.message);
+  }
+}
+```
 
-3. **Check API endpoint limits:**
-   - Ensure `/api/upload-image` and `/api/upload-music` accept the file size
-   - Check server configuration for request body limits
+### CMS Storage Operations
 
-### Upload Stuck?
+```typescript
+import { storeMediaUrl, removeMediaUrl, getStoredMediaUrls } from '@/lib/upload-storage';
+import type { UploadResult } from '@/lib/upload-service';
 
-1. **Check network tab:**
-   - Look for failed requests
-   - Check response status and body
+// Store a media URL
+async function saveToPortfolio(uploadResult: UploadResult) {
+  const result = await storeMediaUrl(uploadResult, {
+    collectionId: 'portfolio',
+    itemId: 'item-123',
+    fieldName: 'mainImage',
+  });
 
-2. **Check browser console:**
-   - Look for error messages
-   - Check error codes
+  if (result.success) {
+    console.log('Stored:', result.mediaUrl);
+  }
+}
 
-3. **Manual retry:**
-   - Click "Retry" button in UploadQueueUI
-   - Or call `queue.retryFile(fileId)`
+// Get stored URLs
+async function getPortfolioImages(itemId: string) {
+  const urls = await getStoredMediaUrls('portfolio', itemId, 'mainImage');
+  console.log('Images:', urls);
+}
 
-### Files Not Optimizing?
+// Remove a URL
+async function removeImage(itemId: string, mediaUrl: string) {
+  const success = await removeMediaUrl(mediaUrl, {
+    collectionId: 'portfolio',
+    itemId,
+    fieldName: 'mainImage',
+  });
+}
+```
 
-1. **Verify optimization is enabled:**
-   ```typescript
-   const queue = new UploadQueueManager({
-     optimizeImages: true,  // Must be true
-   });
-   ```
+## Configuration
 
-2. **Check file type:**
-   - Only images are optimized by default
-   - Audio optimization requires custom implementation
+### Upload Limits
 
-3. **Check max size:**
-   - Files smaller than `maxImageSize` are not optimized
-   - Increase `maxImageSize` to force optimization
+Edit `/src/lib/upload-config.ts`:
 
-## Performance Metrics
+```typescript
+export const IMAGE_UPLOAD_CONFIG: UploadConfig = {
+  label: 'image',
+  acceptedMimeTypes: [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    // ... add more types
+  ],
+  acceptedPrefix: 'image/',
+  maxSizeBytes: 100 * 1024 * 1024, // 100MB
+  maxSizeLabel: '100MB',
+};
 
-### Typical Upload Times
+export const MUSIC_UPLOAD_CONFIG: UploadConfig = {
+  label: 'audio',
+  acceptedMimeTypes: [
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/wav',
+    // ... add more types
+  ],
+  acceptedPrefix: 'audio/',
+  maxSizeBytes: 500 * 1024 * 1024, // 500MB
+  maxSizeLabel: '500MB',
+};
+```
 
-| File Size | Format | With Optimization | Time |
-|-----------|--------|-------------------|------|
-| 10MB | JPEG | No | ~2-3s |
-| 10MB | PNG | Yes | ~1-2s |
-| 50MB | MP3 | No | ~5-8s |
-| 100MB | JPEG | Yes | ~3-5s |
+## Error Handling
 
-### Optimization Results
+### Error Codes
 
-| Original | Optimized | Reduction |
-|----------|-----------|-----------|
-| 25MB PNG | 4MB JPEG | 84% |
-| 15MB PNG | 2.5MB JPEG | 83% |
-| 8MB JPEG | 1.2MB JPEG | 85% |
+- `VALIDATION_ERROR` - File failed validation (type/size)
+- `FILE_TOO_LARGE` - File exceeds size limit
+- `INVALID_FILE_TYPE` - File type not supported
+- `NETWORK_ERROR` - Network-level failure (retryable)
+- `SERVER_ERROR` - Server returned error (retryable if 5xx)
+- `INVALID_RESPONSE` - Server response invalid
+- `TIMEOUT` - Upload timed out (retryable)
+- `UNKNOWN` - Unknown error
 
-## Best Practices
+### Retry Logic
 
-1. **Always validate before upload:**
-   - Check file type
-   - Check file size
-   - Show user feedback
+```typescript
+// Automatic retry on network failures
+const result = await uploadFile(file, 'image', config, {
+  maxRetries: 2,        // Retry up to 2 times
+  timeoutMs: 120000,    // 2 minute timeout
+});
+```
 
-2. **Use appropriate limits:**
-   - Images: 5-10MB max
-   - Audio: 10-50MB max
-   - Videos: 100-500MB max
+### Error Recovery
 
-3. **Provide user feedback:**
-   - Show progress bars
-   - Display error messages
-   - Allow manual retry
+```typescript
+import { uploadFile, type UploadError } from '@/lib/upload-service';
 
-4. **Handle errors gracefully:**
-   - Don't retry indefinitely
-   - Show clear error messages
-   - Suggest solutions
+try {
+  const result = await uploadFile(file, 'image', config);
+} catch (error) {
+  if (error instanceof Error && 'retryable' in error) {
+    const uploadError = error as UploadError;
+    if (uploadError.retryable) {
+      console.log('Retryable error, user can try again');
+    } else {
+      console.log('Non-retryable error:', uploadError.message);
+    }
+  }
+}
+```
 
-5. **Monitor uploads:**
-   - Log upload metrics
-   - Track error rates
-   - Identify problematic files
+## Progress Tracking
+
+```typescript
+import { uploadFile, type UploadProgress } from '@/lib/upload-service';
+
+await uploadFile(file, 'image', config, {
+  onProgress: (progress: UploadProgress) => {
+    console.log({
+      percentage: progress.percentage,      // 0-100
+      loaded: progress.loaded,              // bytes
+      total: progress.total,                // bytes
+      status: progress.status,              // 'pending' | 'uploading' | 'processing' | 'complete'
+      message: progress.message,            // Human-readable message
+    });
+  },
+});
+```
+
+## Security
+
+### Validation
+
+- **Frontend**: Immediate validation before upload
+- **Backend**: Re-validation on server (never trust client)
+- **Wix**: Final validation by Wix Media Manager
+
+### File Type Checking
+
+```typescript
+// Validates both MIME type and file extension
+const validation = validateFileAgainstConfig(file, IMAGE_UPLOAD_CONFIG);
+
+if (!validation.valid) {
+  console.error(validation.error);
+}
+```
+
+### Size Limits
+
+- Images: 100MB (configurable)
+- Audio: 500MB (configurable)
+- Enforced at: frontend, backend, Wix
+
+### URL Storage
+
+- Only real Wix Media Manager URLs stored in CMS
+- No base64 data
+- No fabricated URLs
+- Prevents WDE0009 "Document too large" errors
 
 ## Migration Guide
 
 ### From Old System
 
-**Before:**
+**Old:**
 ```typescript
-const formData = new FormData();
-formData.append('file', file);
-const response = await fetch('/api/upload-image', {
-  method: 'POST',
-  body: formData,
+import { uploadMedia } from '@/lib/direct-media-upload';
+
+const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
+```
+
+**New:**
+```typescript
+import { uploadFile } from '@/lib/upload-service';
+
+const result = await uploadFile(file, 'image', IMAGE_UPLOAD_CONFIG);
+```
+
+**Old (with CMS):**
+```typescript
+const result = await uploadMedia(file, 'image', config);
+await BaseCrudService.update('portfolio', {
+  _id: itemId,
+  mainImage: result.mediaUrl,
 });
 ```
 
-**After:**
+**New (with CMS):**
 ```typescript
-const queue = new UploadQueueManager();
-queue.onUpload(async (file) => {
-  const formData = new FormData();
-  formData.append('file', file.file);
-  const response = await fetch('/api/upload-image', {
-    method: 'POST',
-    body: formData,
-  });
-  if (!response.ok) throw new Error('Upload failed');
-  const data = await response.json();
-  file.uploadedUrl = data.url;
+const { upload } = useUpload({
+  kind: 'image',
+  config,
+  storage: {
+    collectionId: 'portfolio',
+    itemId,
+    fieldName: 'mainImage',
+  },
 });
-queue.addFiles([file]);
-await queue.start();
+
+await upload(file);
 ```
 
-## Future Enhancements
+## Troubleshooting
 
-- [ ] Pause/resume uploads
-- [ ] Bandwidth throttling
-- [ ] Chunk-based uploads for large files
-- [ ] Audio compression before upload
-- [ ] Video transcoding
-- [ ] Duplicate file detection
-- [ ] Upload history tracking
-- [ ] Analytics integration
+### Upload Fails Immediately
+
+1. Check file type is in `acceptedMimeTypes`
+2. Check file size is under `maxSizeBytes`
+3. Check browser console for validation errors
+
+### Upload Times Out
+
+1. Increase `timeoutMs` option
+2. Check network connection
+3. Check file size (very large files may need more time)
+
+### "Network error during direct upload"
+
+1. This is normal - system will automatically retry via proxy
+2. Check browser console for details
+3. If persists, check CORS settings
+
+### Media URL Not Stored in CMS
+
+1. Check `collectionId` and `fieldName` are correct
+2. Check user has permission to update collection
+3. Check browser console for storage errors
+
+## Best Practices
+
+1. **Always provide feedback** - Show progress to users
+2. **Handle errors gracefully** - Don't just show generic "failed" message
+3. **Validate early** - Check file before uploading
+4. **Use appropriate timeouts** - Longer for large files
+5. **Store URLs only** - Never store base64 or file data in CMS
+6. **Test with real files** - Test with actual file sizes you expect
+7. **Monitor uploads** - Log upload metrics for debugging
+
+## Performance
+
+### Metrics
+
+- Direct upload: ~100-500ms for small files (depends on network)
+- Fallback proxy: ~200-1000ms (includes server processing)
+- CMS storage: ~50-200ms
+
+### Optimization
+
+1. Use direct upload (primary path) - fastest
+2. Compress images before upload
+3. Use appropriate file formats (WebP for images, MP3 for audio)
+4. Batch uploads for multiple files
 
 ## Support
 
 For issues or questions:
-1. Check browser console for error logs
-2. Review error codes in troubleshooting section
-3. Check file size and type validation
-4. Verify API endpoints are working
-5. Contact support with error code and file details
+
+1. Check browser console for error messages
+2. Check `/src/lib/upload-service.ts` for implementation details
+3. Check `/src/api/media/` for backend routes
+4. Review error codes and retry logic
+
+## Files Modified/Created
+
+### New Files
+- `/src/lib/upload-service.ts` - Core upload engine
+- `/src/lib/upload-storage.ts` - CMS storage operations
+- `/src/lib/upload-hooks.ts` - React hooks
+- `/src/components/ui/file-upload.tsx` - UI components
+
+### Existing Files (Unchanged)
+- `/src/lib/upload-config.ts` - Validation rules (no changes)
+- `/src/lib/direct-media-upload.ts` - Legacy (kept for compatibility)
+- `/src/api/media/get-upload-url.ts` - Backend (no changes)
+- `/src/api/media/upload.ts` - Backend (no changes)
+- `/src/api/media/import-from-url.ts` - Backend (no changes)
+
+## Next Steps
+
+1. Update existing upload components to use new system
+2. Test with real files and network conditions
+3. Monitor upload metrics in production
+4. Gather user feedback on UX
