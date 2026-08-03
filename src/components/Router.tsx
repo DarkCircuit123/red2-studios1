@@ -30,8 +30,6 @@ const Red2TerminalPage = lazy(() => import('./pages/Red2TerminalPage'));
 const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage'));
 const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage'));
 const UploadTestPage = lazy(() => import('./pages/UploadTestPage'));
-const AuthenticationVerificationTest = lazy(() => import('./AuthenticationVerificationTest'));
-const AuthMigrationVerificationPage = lazy(() => import('./pages/AuthMigrationVerificationPage'));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
@@ -248,22 +246,6 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<div />}>
             <UploadTestPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "auth-verification",
-        element: (
-          <Suspense fallback={<div />}>
-            <AuthenticationVerificationTest />
-          </Suspense>
-        ),
-      },
-      {
-        path: "auth-migration-verify",
-        element: (
-          <Suspense fallback={<div />}>
-            <AuthMigrationVerificationPage />
           </Suspense>
         ),
       },

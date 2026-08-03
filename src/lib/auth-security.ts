@@ -389,6 +389,8 @@ export async function verifyMemberToken(sessionToken: string): Promise<{ memberI
       const hasAdminTag = member.tags?.includes('admin');
 
       const isAdminMember = role === 'admin' || isAdmin || hasAdminTag;
+      
+      console.log('[MEMBER-TOKEN] Admin status check - role:', role, 'isAdmin:', isAdmin, 'hasAdminTag:', hasAdminTag, 'result:', isAdminMember);
 
       return {
         memberId: member.id,

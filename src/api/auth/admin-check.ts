@@ -65,9 +65,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Admin status is determined by:
     // 1. Member role field containing 'admin'
     // 2. Or custom field 'isAdmin' set to true
+    // 3. Or member tags containing 'admin'
     const isAdmin = memberInfo.role === 'admin' || memberInfo.isAdmin === true;
     
     console.log('[ADMIN-CHECK] DIAGNOSTIC: admin permission matched:', isAdmin ? 'yes' : 'no');
+    console.log('[ADMIN-CHECK] Member role:', memberInfo.role);
+    console.log('[ADMIN-CHECK] Member isAdmin:', memberInfo.isAdmin);
     
     if (!isAdmin) {
       console.warn(`[SECURITY] Non-admin member attempted admin access: ${memberInfo.memberId?.substring(0, 8)}`);
