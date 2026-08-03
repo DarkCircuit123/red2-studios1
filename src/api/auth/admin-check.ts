@@ -81,11 +81,25 @@ export const POST: APIRoute = async ({ request }) => {
     console.log('[ADMIN-CHECK] import.meta.env.ADMIN_USERNAME:', (import.meta.env as any).ADMIN_USERNAME ? '(set)' : '(not set)');
     console.log('[ADMIN-CHECK] import.meta.env.ADMIN_PASSWORD:', (import.meta.env as any).ADMIN_PASSWORD ? '(set)' : '(not set)');
 
-    // Fallback to hardcoded credentials if Secrets Manager is not configured
-    // This is a temporary measure for development/testing. In production,
-    // credentials MUST be set in Secrets Manager.
+    // Fallback to CMS collection if Secrets Manager is not configured
     if (!adminUsername || !adminPassword) {
-      console.warn('[ADMIN-CHECK] Admin credentials not found in Secrets Manager. Please set ADMIN_USERNAME and ADMIN_PASSWORD in Secrets Manager.');
+      console.log('[ADMIN-CHECK] Credentials not in Secrets Manager, checking CMS collection...');
+      try {
+        const cmsCredentials = await BaseCrudService.getAll('admincredentials');
+        if (cmsCredentials.items && cmsCredentials.items.length > 0) {
+          const cred = cmsCredentials.items[0];
+          adminUsername = cred.username;
+          adminPassword = cred.password;
+          console.log('[ADMIN-CHECK] Credentials loaded from CMS collection - username:', adminUsername ? '(present)' : '(missing)', 'password:', adminPassword ? '(present)' : '(missing)');
+        }
+      } catch (cmsError) {
+        console.warn('[ADMIN-CHECK] Failed to fetch credentials from CMS:', cmsError);
+      }
+    }
+
+    // If still no credentials, fail
+    if (!adminUsername || !adminPassword) {
+      console.warn('[ADMIN-CHECK] Admin credentials not found in Secrets Manager or CMS. Please configure ADMIN_USERNAME and ADMIN_PASSWORD.');
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Credentials not configured' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
