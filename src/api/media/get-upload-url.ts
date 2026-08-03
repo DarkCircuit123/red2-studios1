@@ -44,6 +44,15 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
+    // Reject PSD files explicitly
+    if (mimeType === 'image/vnd.adobe.photoshop' || fileName.toLowerCase().endsWith('.psd')) {
+      console.error('[GET_UPLOAD_URL] PSD file rejected');
+      return new Response(
+        JSON.stringify({ error: 'PSD files are not supported. Please export your image as JPEG or PNG first.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const config = kind === 'music' ? MUSIC_UPLOAD_CONFIG : IMAGE_UPLOAD_CONFIG;
     const validation = validateFileAgainstConfig({ type: mimeType, size: sizeInBytes }, config);
     if (!validation.valid) {
@@ -54,7 +63,7 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    console.log('[GET_UPLOAD_URL] Calling files.generateFileUploadUrl...');
+    console.log('[GET_UPLOAD_URL] Requesting Wix Media Manager upload URL...');
     let uploadUrl: string;
     try {
       const filesClient = files();

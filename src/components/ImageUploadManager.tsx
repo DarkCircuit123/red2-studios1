@@ -20,7 +20,7 @@ interface ImageUploadManagerProps {
   acceptedFormats?: string[];
 }
 
-// Supported image formats with MIME types
+// Web display formats only (no PSD, no proprietary formats)
 const SUPPORTED_FORMATS = {
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
@@ -30,9 +30,13 @@ const SUPPORTED_FORMATS = {
   'image/tiff': ['.tiff', '.tif'],
   'image/bmp': ['.bmp'],
   'image/x-icon': ['.ico'],
-  'image/vnd.adobe.photoshop': ['.psd'],
   'image/heic': ['.heic'],
   'image/heif': ['.heif'],
+};
+
+// Explicitly rejected formats
+const REJECTED_FORMATS = {
+  'image/vnd.adobe.photoshop': ['.psd'],
 };
 
 export default function ImageUploadManager({
@@ -70,6 +74,11 @@ export default function ImageUploadManager({
   }, [previewUrl]);
 
   const isValidFileType = (file: File): boolean => {
+    // Reject PSD files explicitly
+    if (file.type === 'image/vnd.adobe.photoshop' || file.name.toLowerCase().endsWith('.psd')) {
+      return false;
+    }
+    
     if (acceptedFormats && acceptedFormats.length > 0) {
       return acceptedFormats.some(format => file.type === format || file.name.toLowerCase().endsWith(format));
     }
@@ -88,7 +97,13 @@ export default function ImageUploadManager({
     setUploadStatus('idle');
     setUploadProgress(0);
 
-    // Validate file type
+    // Validate file type - reject PSD with specific message
+    if (file.type === 'image/vnd.adobe.photoshop' || file.name.toLowerCase().endsWith('.psd')) {
+      setErrorMessage('PSD files are not supported. Please export your image as JPEG or PNG first.');
+      setUploadStatus('error');
+      return;
+    }
+
     if (!isValidFileType(file)) {
       setErrorMessage('Image upload failed: this file format is not supported. Please use JPG, PNG, WebP, GIF, SVG, TIFF, or BMP.');
       setUploadStatus('error');
@@ -455,6 +470,7 @@ export default function ImageUploadManager({
       <div className="text-xs text-white/40 space-y-1">
         <p>Supported formats: JPG, PNG, WebP, GIF, SVG, TIFF, BMP, HEIC</p>
         <p>Max file size: 100MB</p>
+        <p className="text-red-400/60">PSD files not supported - please export as JPEG or PNG</p>
       </div>
     </div>
   );
