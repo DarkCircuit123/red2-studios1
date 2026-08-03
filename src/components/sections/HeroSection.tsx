@@ -12,12 +12,18 @@ export default function HeroSection() {
       const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
       if (homepageImages?.items && homepageImages.items.length > 0) {
         const images = homepageImages.items[0] as any;
-        if (images?.heroImage) {
+        // Only set if there's a valid URL (not null, not undefined, not empty string)
+        if (images?.heroImage && typeof images.heroImage === 'string' && images.heroImage.trim()) {
           setHeroImage(images.heroImage);
+        } else {
+          setHeroImage(null);
         }
+      } else {
+        setHeroImage(null);
       }
     } catch (error) {
       console.error('[HeroSection] Failed to load hero image:', error);
+      setHeroImage(null);
     } finally {
       setIsLoading(false);
     }
@@ -49,6 +55,9 @@ export default function HeroSection() {
       )}
       {!heroImage && !isLoading && (
         <div className="w-full h-full bg-gradient-to-b from-slate-900 to-black" />
+      )}
+      {isLoading && (
+        <div className="w-full h-full bg-black" />
       )}
     </section>
   );

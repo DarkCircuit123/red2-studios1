@@ -4,6 +4,7 @@ import { Settings, X, Edit2, LogOut, Music, Calendar, Lock, AlertCircle, CheckCi
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
+import HeroImageUploader from './HeroImageUploader';
 import MusicManager from './MusicManager';
 import BookingManagerPro from './BookingManagerPro';
 import MediaHealthTab from './AdminPanel/MediaHealthTab';
@@ -29,7 +30,7 @@ interface MusicSettings {
 interface AboutSettings extends AboutSection {}
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
-  const { isAdminAuthenticated, logout } = useAdminAuth();
+  const { isAdminAuthenticated, logout, adminToken } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('photos');
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');

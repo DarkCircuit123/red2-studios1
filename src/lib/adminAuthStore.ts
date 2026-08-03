@@ -9,6 +9,7 @@ const MAX_VERIFICATION_ATTEMPTS = 1;
 interface AdminAuthState {
   isAdminAuthenticated: boolean;
   adminUsername: string | null;
+  adminToken: string | null;
   failedAttempts: number;
   isLoading: boolean;
   isVerifying: boolean;
@@ -80,9 +81,12 @@ export const useAdminAuth = create<AdminAuthState>()(
           }
 
           if (data.authenticated) {
+            // Generate a simple token for API calls (base64 encoded username:password)
+            const token = btoa(`${username}:${password}`);
             set({
               isAdminAuthenticated: true,
               adminUsername: username,
+              adminToken: token,
               failedAttempts: 0,
               isLoading: false,
               isVerifying: false,
@@ -134,6 +138,7 @@ export const useAdminAuth = create<AdminAuthState>()(
         set({
           isAdminAuthenticated: false,
           adminUsername: null,
+          adminToken: null,
           error: null,
         });
         console.log('[ADMIN AUTH] Logout successful');
@@ -192,7 +197,7 @@ export const useAdminAuth = create<AdminAuthState>()(
             });
             return true;
           } else {
-            set({ isAdminAuthenticated: false, adminUsername: null, isVerifying: false });
+            set({ isAdminAuthenticated: false, adminUsername: null, adminToken: null, isVerifying: false });
             return false;
           }
         } catch (error) {
