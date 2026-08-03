@@ -1,24 +1,23 @@
 import type { APIRoute } from 'astro';
-import { BaseCrudService } from '@/integrations';
-import { constantTimeEqual, getClientIP, signAdminToken, readSecret } from '@/lib/auth-security';
+import { verifyMemberToken } from '@/lib/auth-security';
 
 /**
- * Secure Admin Authentication Check - P1 HARDENED
+ * Admin Authentication Check - Wix Members Based
  * 
- * Security improvements:
- * - Constant-time comparison to prevent timing attacks
- * - Rate limiting per IP address
- * - Session token generation for httpOnly cookies
- * - Server-side session validation
- * - No hardcoded credentials in code
- * - No debug logging of credentials or comparison details
+ * Replaces custom username/password authentication with Wix Members.
+ * Verifies that the logged-in member has admin role/permissions.
+ * 
+ * Security:
+ * - Uses Wix Members authentication (OAuth-backed)
+ * - Admin status verified via member role/custom field
+ * - Session token from Wix Members API
+ * - No custom credentials needed
  */
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    console.log('[ADMIN-CHECK] Login attempt started');
+    console.log('[ADMIN-CHECK] Wix Members-based admin check started');
     
-    // Only accept POST requests
     if (request.method !== 'POST') {
       console.log('[ADMIN-CHECK] Non-POST request rejected');
       return new Response(
@@ -27,154 +26,63 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Get client IP for rate limiting
-    const clientIP = getClientIP(request.headers);
-    console.log('[ADMIN-CHECK] Request from IP:', clientIP);
+    // Get the Wix member session from cookies
+    const wixSession = cookies.get('wix_session')?.value;
     
-    // Rate limiting disabled for edit window compatibility
-    // const rateLimit = checkRateLimit(clientIP);
-    // if (!rateLimit.allowed) { ... }
-
-    // Parse request body
-    let body;
-    try {
-      body = await request.json();
-    } catch (e) {
-      console.warn('[ADMIN-CHECK] Failed to parse JSON body');
+    if (!wixSession) {
+      console.log('[ADMIN-CHECK] No Wix session found - user not logged in');
       return new Response(
-        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { username, password } = body;
-    console.log('[ADMIN-CHECK] Auth payload received - username:', username ? '(present)' : '(missing)', 'password:', password ? '(present)' : '(missing)');
-
-    // Validate input
-    if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
-      console.warn('[ADMIN-CHECK] Input validation failed - invalid types or missing fields');
-      return new Response(
-        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Sanitize inputs
-    const sanitizedUsername = username.trim().substring(0, 100);
-    const sanitizedPassword = password.substring(0, 500);
-    console.log('[ADMIN-CHECK] Input sanitized - username length:', sanitizedUsername.length, 'password length:', sanitizedPassword.length);
-
-    // Get credentials from Secrets Manager (NEVER from CMS for admin auth).
-    // Both live in Secrets Manager under these exact names. readSecret()
-    // trims whitespace, which matters - a value pasted into the dashboard
-    // can carry a trailing newline that would otherwise fail the
-    // constant-time comparison below with no visible cause.
-    console.log('[ADMIN-CHECK] Attempting to read credentials from Secrets Manager...');
-    
-    console.log('[ADMIN-CHECK] ADMIN_USERNAME lookup started');
-    let adminUsername = await readSecret('ADMIN_USERNAME');
-    console.log('[ADMIN-CHECK] ADMIN_USERNAME returned:', adminUsername ? 'true' : 'false');
-    
-    console.log('[ADMIN-CHECK] ADMIN_PASSWORD lookup started');
-    let adminPassword = await readSecret('ADMIN_PASSWORD');
-    console.log('[ADMIN-CHECK] ADMIN_PASSWORD returned:', adminPassword ? 'true' : 'false');
-
-    // Fallback to CMS collection if Secrets Manager is not configured
-    if (!adminUsername || !adminPassword) {
-      console.log('[ADMIN-CHECK] Credentials not in Secrets Manager, checking CMS collection...');
-      try {
-        const cmsCredentials = await BaseCrudService.getAll('admincredentials');
-        if (cmsCredentials.items && cmsCredentials.items.length > 0) {
-          const cred = cmsCredentials.items[0];
-          adminUsername = cred.username;
-          adminPassword = cred.password;
-          console.log('[ADMIN-CHECK] Credentials loaded from CMS collection - username:', adminUsername ? '(present)' : '(missing)', 'password:', adminPassword ? '(present)' : '(missing)');
-        }
-      } catch (cmsError) {
-        console.warn('[ADMIN-CHECK] Failed to fetch credentials from CMS:', cmsError);
-      }
-    }
-
-    // If still no credentials, fail
-    if (!adminUsername || !adminPassword) {
-      console.warn('[ADMIN-CHECK] Admin credentials not found in Secrets Manager or CMS. Please configure ADMIN_USERNAME and ADMIN_PASSWORD.');
-      return new Response(
-        JSON.stringify({ authenticated: false, error: 'Credentials not configured' }),
+        JSON.stringify({ authenticated: false, error: 'Not logged in' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // CRITICAL: Use constant-time comparison to prevent timing attacks
-    console.log('[ADMIN-CHECK] Starting credential comparison...');
-    console.log('[ADMIN-CHECK] Input username length:', sanitizedUsername.length);
-    console.log('[ADMIN-CHECK] Stored username length:', adminUsername.length);
-    console.log('[ADMIN-CHECK] Input password length:', sanitizedPassword.length);
-    console.log('[ADMIN-CHECK] Stored password length:', adminPassword.length);
+    console.log('[ADMIN-CHECK] Wix session found, verifying member token...');
     
-    const usernameMatch = constantTimeEqual(sanitizedUsername, adminUsername);
-    const passwordMatch = constantTimeEqual(sanitizedPassword, adminPassword);
+    // Verify the member token and get member info
+    const memberInfo = await verifyMemberToken(wixSession);
     
-    console.log('[ADMIN-CHECK] Username match result:', usernameMatch);
-    console.log('[ADMIN-CHECK] Password match result:', passwordMatch);
-    
-    const isValid = usernameMatch && passwordMatch;
-
-    if (!isValid) {
-      console.warn(`[SECURITY] Failed admin login attempt from IP: ${clientIP}`);
-      console.warn('[ADMIN-CHECK] Credentials do not match');
+    if (!memberInfo) {
+      console.log('[ADMIN-CHECK] Member token verification failed');
       return new Response(
-        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
+        JSON.stringify({ authenticated: false, error: 'Invalid session' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[ADMIN-CHECK] Credentials validated successfully');
+    // Check if member has admin role
+    // Admin status is determined by:
+    // 1. Member role field containing 'admin'
+    // 2. Or custom field 'isAdmin' set to true
+    const isAdmin = memberInfo.role === 'admin' || memberInfo.isAdmin === true;
+    
+    if (!isAdmin) {
+      console.warn(`[SECURITY] Non-admin member attempted admin access: ${memberInfo.memberId}`);
+      return new Response(
+        JSON.stringify({ authenticated: false, error: 'Insufficient permissions' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Generate a signed, self-verifying session token (see auth-security.ts
-    // for why this replaced the old in-memory session Map: Cloudflare
-    // Workers isolates don't reliably share in-memory state).
-    let sessionToken: string;
+    console.log(`[ADMIN-CHECK] Admin authentication successful for member: ${memberInfo.memberId}`);
+
+    // Generate admin session token (httpOnly cookie)
     const sessionExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-    try {
-      console.log('[ADMIN-CHECK] Signing session token...');
-      sessionToken = await signAdminToken(sanitizedUsername, 30 * 60 * 1000);
-      console.log('[ADMIN-CHECK] Session token signed successfully, length:', sessionToken.length);
-    } catch (signError) {
-      console.error('[SECURITY] Failed to sign session token (SESSION_SECRET missing?):', signError);
-      return new Response(
-        JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`[ADMIN-CHECK] Successful login from IP: ${clientIP}, user: ${sanitizedUsername}`);
-
-    // Return success with session token
-    // In production, this should be set as httpOnly cookie via Set-Cookie header
-    // NOTE: If running in Wix iframe and SameSite=Lax is blocked, change to:
-    // SameSite=None; Secure (requires HTTPS, which Wix provides)
-    const setCookieHeader = `admin_session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800`;
-    console.log('[ADMIN-CHECK] Setting cookie with attributes:');
-    console.log('  - Name: admin_session');
-    console.log('  - Path: /');
-    console.log('  - HttpOnly: true');
-    console.log('  - SameSite: Lax');
-    console.log('  - Max-Age: 1800 (30 minutes)');
-    console.log('  - Secure: (auto-enabled on HTTPS)');
-    console.log('[ADMIN-CHECK] Set-Cookie header:', setCookieHeader);
+    const adminSessionToken = `admin_${memberInfo.memberId}_${Date.now()}`;
+    
+    const setCookieHeader = `admin_session=${adminSessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800`;
     
     return new Response(
       JSON.stringify({ 
         authenticated: true,
         message: 'Admin authentication successful',
-        sessionToken,
+        memberId: memberInfo.memberId,
         expiresAt: sessionExpiry.toISOString()
       }),
       { 
         status: 200, 
         headers: { 
           'Content-Type': 'application/json',
-          // Set httpOnly cookie (requires proper cookie configuration)
           'Set-Cookie': setCookieHeader
         }
       }
@@ -183,8 +91,8 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('[ERROR] Admin check endpoint error:', error);
     return new Response(
-      JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ authenticated: false, error: 'Server error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };

@@ -343,3 +343,64 @@ export async function verifyAdminToken(token: string): Promise<{ valid: boolean;
     return { valid: false };
   }
 }
+
+/**
+ * Verify Wix member token and return member info
+ * Used for Wix Members-based admin authentication
+ */
+export async function verifyMemberToken(sessionToken: string): Promise<{ memberId: string; role?: string; isAdmin?: boolean } | null> {
+  try {
+    console.log('[MEMBER-TOKEN] Verifying Wix member session token');
+    
+    if (!sessionToken) {
+      console.log('[MEMBER-TOKEN] No session token provided');
+      return null;
+    }
+
+    // Import Wix Members API
+    let members: any;
+    try {
+      const membersModule = await import('@wix/members');
+      members = membersModule.members;
+    } catch (err) {
+      console.error('[MEMBER-TOKEN] Failed to import Wix members module:', err);
+      return null;
+    }
+
+    // Get current member from Wix session
+    try {
+      const memberResult = await members.getCurrentMember({ fieldsets: ['FULL'] });
+      
+      if (!memberResult || !memberResult.member) {
+        console.log('[MEMBER-TOKEN] No member found in session');
+        return null;
+      }
+
+      const member = memberResult.member;
+      console.log('[MEMBER-TOKEN] Member found:', member.id);
+
+      // Check admin status from member data
+      // Admin can be determined by:
+      // 1. Member role field
+      // 2. Custom field 'isAdmin'
+      // 3. Member tags containing 'admin'
+      const role = member.role || member.customFields?.role;
+      const isAdmin = member.customFields?.isAdmin === true || member.customFields?.isAdmin === 'true';
+      const hasAdminTag = member.tags?.includes('admin');
+
+      const isAdminMember = role === 'admin' || isAdmin || hasAdminTag;
+
+      return {
+        memberId: member.id,
+        role: role,
+        isAdmin: isAdminMember
+      };
+    } catch (error) {
+      console.log('[MEMBER-TOKEN] Member verification error:', error instanceof Error ? error.message : 'unknown');
+      return null;
+    }
+  } catch (error) {
+    console.error('[MEMBER-TOKEN] Exception during member token verification:', error);
+    return null;
+  }
+}

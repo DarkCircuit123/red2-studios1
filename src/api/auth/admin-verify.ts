@@ -4,17 +4,13 @@
  * Verifies that the admin session is still valid before allowing mutations.
  * Called on admin panel mount and by all admin-mutating functions.
  *
- * NOTE: This used to check an in-memory Map of active sessions. That does
- * not work reliably on Cloudflare Workers (this site's deploy target) —
- * different edge isolates can each hold their own empty copy of the Map,
- * so a session created on one request could appear invalid on the very
- * next one. Verification now checks a signed token's own signature and
- * expiry instead (see verifyAdminToken in @/lib/auth-security), which
- * requires no shared server state at all.
+ * Supports both:
+ * 1. Legacy signed admin tokens (for backward compatibility)
+ * 2. Wix Members-based authentication (new approach)
  */
 
 import type { APIRoute } from 'astro';
-import { verifyAdminToken, getClientIP } from '@/lib/auth-security';
+import { verifyAdminToken, getClientIP, verifyMemberToken } from '@/lib/auth-security';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
@@ -38,15 +34,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       console.log('[ADMIN-VERIFY] Logout action triggered');
       console.log('[ADMIN-VERIFY] Clearing admin_session cookie');
       console.log('[ADMIN-VERIFY] Set-Cookie header: admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
-      console.log('[ADMIN-VERIFY] NOTE: If SameSite=Lax is blocked in Wix iframe, change to: SameSite=None; Secure');
       return new Response(
         JSON.stringify({ valid: false, loggedOut: true }),
         {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
-            // NOTE: If SameSite=Lax is blocked in Wix iframe, change to:
-            // 'Set-Cookie': 'admin_session=; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=0'
             'Set-Cookie': 'admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0',
           },
         }
@@ -68,12 +61,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (!sessionToken) {
       console.warn('[ADMIN-VERIFY] No session token found (cookie or body)');
-      console.log('[ADMIN-VERIFY] Request headers:', {
-        'cookie': request.headers.get('cookie'),
-        'user-agent': request.headers.get('user-agent'),
-        'origin': request.headers.get('origin'),
-        'referer': request.headers.get('referer'),
-      });
       return new Response(
         JSON.stringify({ valid: false, error: 'Missing session token' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -83,28 +70,41 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const clientIP = getClientIP(request.headers);
     console.log('[ADMIN-VERIFY] Verifying token from IP:', clientIP);
     
-    const validation = await verifyAdminToken(sessionToken);
-    console.log('[ADMIN-VERIFY] Token validation result:', {
-      valid: validation.valid,
-      username: validation.username || '(none)',
-    });
-
-    if (!validation.valid) {
-      console.warn(`[SECURITY] Session verification failed from IP: ${clientIP}`);
+    // First try verifying as admin token (for backward compatibility)
+    let validation = await verifyAdminToken(sessionToken);
+    
+    if (validation.valid) {
+      console.log('[ADMIN-VERIFY] Session valid for user:', validation.username);
       return new Response(
-        JSON.stringify({ valid: false, error: 'Invalid or expired session' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          valid: true,
+          username: validation.username,
+          message: 'Session is valid'
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[ADMIN-VERIFY] Session valid for user:', validation.username);
+    // If admin token verification failed, try Wix member token verification
+    console.log('[ADMIN-VERIFY] Admin token verification failed, trying Wix member verification...');
+    const memberInfo = await verifyMemberToken(sessionToken);
+    
+    if (memberInfo && memberInfo.isAdmin) {
+      console.log('[ADMIN-VERIFY] Session valid for admin member:', memberInfo.memberId);
+      return new Response(
+        JSON.stringify({
+          valid: true,
+          memberId: memberInfo.memberId,
+          message: 'Session is valid'
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.warn(`[SECURITY] Session verification failed from IP: ${clientIP}`);
     return new Response(
-      JSON.stringify({
-        valid: true,
-        username: validation.username,
-        message: 'Session is valid'
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ valid: false, error: 'Invalid or expired session' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {

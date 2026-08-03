@@ -8,13 +8,13 @@ const MAX_VERIFICATION_ATTEMPTS = 1;
 
 interface AdminAuthState {
   isAdminAuthenticated: boolean;
-  adminUsername: string | null;
+  adminMemberId: string | null;
   adminToken: string | null;
   failedAttempts: number;
   isLoading: boolean;
   isVerifying: boolean;
   error: string | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: () => Promise<boolean>;
   logout: () => Promise<void>;
   resetFailedAttempts: () => void;
   verifySession: () => Promise<boolean>;
@@ -23,19 +23,18 @@ interface AdminAuthState {
 export const MAX_FAILED_ATTEMPTS = 5;
 
 /**
- * SECURITY NOTE:
- * - Credentials validated server-side via /api/auth/admin-check
- * - Session proof lives ONLY in an httpOnly, Secure, SameSite=Strict
+ * SECURITY NOTE - Wix Members Based Authentication:
+ * - Admin status verified via Wix Members API
+ * - Member must be logged in via Wix authentication
+ * - Admin role/permission checked server-side via /api/auth/admin-check
+ * - Session proof lives ONLY in an httpOnly, Secure, SameSite=Lax
  *   cookie set by the server. The client never holds the raw session
  *   token in memory or in localStorage — it only tracks the boolean
- *   UI state (isAdminAuthenticated / adminUsername), confirmed by
+ *   UI state (isAdminAuthenticated / adminMemberId), confirmed by
  *   calling /api/auth/admin-verify, which reads the cookie directly.
- * - Constant-time comparison prevents timing attacks (admin-check.ts)
- * - Rate limiting per IP address (admin-check.ts)
  * - Server-side session validation for all mutations (admin-mutation-verify.ts)
  *
- * Only `failedAttempts` is persisted to localStorage — it's not sensitive,
- * it just keeps the "attempts remaining" hint stable across a refresh.
+ * Only `failedAttempts` is persisted to localStorage — it's not sensitive.
  * Everything else starts from a clean 'unverified' state on every page
  * load and is reconciled by calling verifySession() (see Header.tsx's
  * mount effect), which is the only source of truth for auth state.
@@ -44,25 +43,25 @@ export const useAdminAuth = create<AdminAuthState>()(
   persist(
     (set, get) => ({
       isAdminAuthenticated: false,
-      adminUsername: null,
+      adminMemberId: null,
+      adminToken: null,
       failedAttempts: 0,
       isLoading: false,
       isVerifying: true,
       error: null,
 
-      login: async (username: string, password: string) => {
+      // Login via Wix Members authentication
+      // No username/password needed - uses existing Wix member session
+      login: async () => {
         set({ isLoading: true, error: null });
 
         try {
-          // Call secure backend endpoint. The server sets the httpOnly
-          // session cookie on success — credentials:'include' is what
-          // makes the browser store and later resend it.
-          console.log('[ADMIN AUTH] Attempting login...');
+          console.log('[ADMIN AUTH] Attempting Wix Members-based admin login...');
           const response = await fetch('/api/auth/admin-check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ username, password }),
+            body: JSON.stringify({}),
           });
 
           console.log('[ADMIN AUTH] Response status:', response.status);
@@ -81,24 +80,21 @@ export const useAdminAuth = create<AdminAuthState>()(
           }
 
           if (data.authenticated) {
-            // Generate a simple token for API calls (base64 encoded username:password)
-            const token = btoa(`${username}:${password}`);
             set({
               isAdminAuthenticated: true,
-              adminUsername: username,
-              adminToken: token,
+              adminMemberId: data.memberId,
+              adminToken: data.sessionToken,
               failedAttempts: 0,
               isLoading: false,
               isVerifying: false,
               error: null,
             });
 
-            console.log('[ADMIN AUTH] Login successful for', username);
+            console.log('[ADMIN AUTH] Login successful for member:', data.memberId);
             return true;
           }
 
-          // Handle failed attempt - do NOT lock out client-side
-          // Rate limiting is handled server-side only
+          // Handle failed attempt
           const currentState = get();
           const newAttempts = currentState.failedAttempts + 1;
 
@@ -122,9 +118,6 @@ export const useAdminAuth = create<AdminAuthState>()(
       logout: async () => {
         try {
           // action:'logout' tells the server to clear the httpOnly cookie
-          // (see admin-verify.ts). Without this, the cookie stayed valid
-          // until its natural expiry and a refresh right after "logging
-          // out" would silently re-authenticate the admin.
           await fetch('/api/auth/admin-verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -137,7 +130,7 @@ export const useAdminAuth = create<AdminAuthState>()(
 
         set({
           isAdminAuthenticated: false,
-          adminUsername: null,
+          adminMemberId: null,
           adminToken: null,
           error: null,
         });
@@ -151,11 +144,7 @@ export const useAdminAuth = create<AdminAuthState>()(
         });
       },
 
-      // Authoritative check against the server. Called on mount (see
-      // Header.tsx) so a page refresh reflects the real cookie-backed
-      // session instead of trusting stale client state. No token needs to
-      // be supplied here — credentials:'include' sends the httpOnly
-      // cookie automatically, and the server reads it directly.
+      // Authoritative check against the server
       verifySession: async () => {
         // Prevent infinite retry loops - only verify once per session
         if (verificationAttemptCount >= MAX_VERIFICATION_ATTEMPTS) {
@@ -178,7 +167,7 @@ export const useAdminAuth = create<AdminAuthState>()(
           if (!response.ok) {
             if (response.status === 400 || response.status === 401 || response.status === 403) {
               // Expected responses for unauthenticated users
-              set({ isAdminAuthenticated: false, adminUsername: null, isVerifying: false });
+              set({ isAdminAuthenticated: false, adminMemberId: null, isVerifying: false });
               return false;
             }
             // Log unexpected errors but don't crash
@@ -192,12 +181,12 @@ export const useAdminAuth = create<AdminAuthState>()(
           if (data.valid) {
             set({
               isAdminAuthenticated: true,
-              adminUsername: data.username ?? get().adminUsername,
+              adminMemberId: data.memberId ?? get().adminMemberId,
               isVerifying: false,
             });
             return true;
           } else {
-            set({ isAdminAuthenticated: false, adminUsername: null, adminToken: null, isVerifying: false });
+            set({ isAdminAuthenticated: false, adminMemberId: null, adminToken: null, isVerifying: false });
             return false;
           }
         } catch (error) {
