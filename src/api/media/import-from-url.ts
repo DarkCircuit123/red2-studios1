@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { getSecureContext } from '@wix/sdk';
 import { files } from '@wix/media';
 import { IMAGE_UPLOAD_CONFIG, MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
@@ -123,8 +122,7 @@ export const POST: APIRoute = async (context) => {
 
     let importResult;
     try {
-      const wixContext = getSecureContext();
-      const filesClient = files(wixContext);
+      const filesClient = files();
       importResult = await filesClient.importFile(parsed.toString(), {
         mimeType: detectedType,
         displayName: fileName,
