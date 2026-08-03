@@ -1,16 +1,15 @@
 /**
- * Wix Media Upload Service - Direct browser-to-Wix Media Manager uploads
+ * Wix Media Upload Service - Client-side browser uploads
  * 
- * This service uses the current supported Wix Media Manager API to:
- * 1. Generate a signed upload URL on the backend
- * 2. Upload the file directly from the browser to that URL
- * 3. Return a real Wix media URL (not base64, not fabricated)
+ * This service handles:
+ * 1. Requesting signed upload URLs from the backend (server-only SDK logic)
+ * 2. Uploading files directly from the browser to Wix Media Manager
+ * 3. Returning media URLs
  * 
+ * Server-side SDK logic (getSecureContext, media client) is confined to backend endpoints.
  * No file bytes pass through our backend - only metadata for URL generation.
  */
 
-import { getSecureContext } from '@wix/sdk';
-import { media } from '@wix/media';
 import { safeJson } from './safeJson';
 import { UploadConfig, validateFileAgainstConfig } from './upload-config';
 
@@ -35,27 +34,40 @@ export interface UploadError {
 }
 
 /**
- * Generate a signed upload URL from Wix Media Manager
+ * Request a signed upload URL from the backend
+ * The backend uses server-only Wix SDK to generate the URL
  */
 async function generateUploadUrl(
   file: File,
   kind: 'image' | 'music'
 ): Promise<{ uploadUrl: string; fileName: string }> {
-  console.log(`[WIX_MEDIA] Generating upload URL for ${kind}: ${file.name}`);
+  console.log(`[WIX_MEDIA] Requesting upload URL for ${kind}: ${file.name}`);
   
   try {
-    const wixContext = getSecureContext();
-    const mediaClient = media(wixContext);
-    const result = await mediaClient.files.generateFileUploadUrl(file.type, { 
-      fileName: file.name 
+    // Call backend endpoint to generate signed URL (server-only SDK logic)
+    const response = await fetch('/api/media/generate-upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        mimeType: file.type,
+        kind
+      })
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Failed to generate upload URL: HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
     
-    if (!result.uploadUrl) {
-      throw new Error('Wix Media Manager did not return an upload URL');
+    if (!data.uploadUrl) {
+      throw new Error('Backend did not return an upload URL');
     }
     
-    console.log('[WIX_MEDIA] Successfully generated upload URL');
-    return { uploadUrl: result.uploadUrl, fileName: file.name };
+    console.log('[WIX_MEDIA] Successfully received upload URL from backend');
+    return { uploadUrl: data.uploadUrl, fileName: file.name };
   } catch (error) {
     console.error('[WIX_MEDIA] Failed to generate upload URL:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -123,27 +135,33 @@ function uploadToWix(
 }
 
 /**
- * Get media URL from Wix Media Manager after upload
+ * Get media URL from backend after upload
+ * The backend uses server-only Wix SDK to retrieve the URL
  */
 async function getMediaUrl(fileName: string): Promise<string> {
   console.log('[WIX_MEDIA] Retrieving media URL for:', fileName);
   
   try {
-    const wixContext = getSecureContext();
-    const mediaClient = media(wixContext);
+    // Call backend endpoint to get media URL (server-only SDK logic)
+    const response = await fetch('/api/media/get-media-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Failed to get media URL: HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
     
-    // List files to find the one we just uploaded
-    const files = await mediaClient.files.listFiles();
-    
-    // Find the file by name (most recent first)
-    const uploadedFile = files.items?.find(f => f.fileName === fileName);
-    
-    if (!uploadedFile || !uploadedFile.url) {
+    if (!data.mediaUrl) {
       throw new Error(`Could not find uploaded file: ${fileName}`);
     }
     
-    console.log('[WIX_MEDIA] Retrieved media URL:', uploadedFile.url);
-    return uploadedFile.url;
+    console.log('[WIX_MEDIA] Retrieved media URL:', data.mediaUrl);
+    return data.mediaUrl;
   } catch (error) {
     console.error('[WIX_MEDIA] Failed to get media URL:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -177,13 +195,13 @@ export async function uploadMedia(
   }
 
   try {
-    // Step 1: Generate signed upload URL
+    // Step 1: Request signed upload URL from backend
     const { uploadUrl, fileName } = await generateUploadUrl(file, kind);
 
     // Step 2: Upload file directly to Wix
     await uploadToWix(file, uploadUrl, onProgress);
 
-    // Step 3: Get the media URL
+    // Step 3: Get the media URL from backend
     const mediaUrl = await getMediaUrl(fileName);
 
     console.log(`[WIX_MEDIA] ${kind} upload complete:`, { mediaUrl, fileName });

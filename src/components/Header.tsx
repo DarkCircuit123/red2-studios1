@@ -1,14 +1,16 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
-import AdminPanel from './AdminPanel';
 import AdminLoginModal from './AdminLoginModal';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
 import { debugLog } from '@/lib/debug-logger';
+
+// Lazy load AdminPanel to prevent loading upload code on every page
+const AdminPanel = lazy(() => import('./AdminPanel'));
 
 export default function Header() {
   const navigate = useNavigate();
@@ -285,8 +287,12 @@ export default function Header() {
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={() => setIsAdminOpen(true)}
       />
-      {/* Admin Panel */}
-      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+      {/* Admin Panel - Lazy loaded to prevent loading upload code on every page */}
+      {isAdminOpen && (
+        <Suspense fallback={null}>
+          <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+        </Suspense>
+      )}
       {/* Mobile Navigation */}
       {isOpen && (
         <motion.div
