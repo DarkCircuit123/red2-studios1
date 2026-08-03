@@ -207,7 +207,10 @@ function base64UrlDecode(str: string): Uint8Array {
 }
 
 async function getSigningKey(): Promise<CryptoKey> {
+  console.log('[SIGNING-KEY] Attempting to read SESSION_SECRET...');
   let secret = readSecret('SESSION_SECRET');
+  
+  console.log('[SIGNING-KEY] readSecret result:', secret ? '(set, length: ' + secret.length + ')' : '(not set)');
   
   // Fallback to a default secret if not configured
   // This is a temporary measure for development/testing. In production,
@@ -217,14 +220,19 @@ async function getSigningKey(): Promise<CryptoKey> {
     secret = 'dev-session-secret-change-in-production-12345678901234567890';
   }
   
+  console.log('[SIGNING-KEY] Using secret of length:', secret.length);
+  
   const encoder = new TextEncoder();
-  return crypto.subtle.importKey(
+  const key = await crypto.subtle.importKey(
     'raw',
     encoder.encode(secret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign', 'verify']
   );
+  
+  console.log('[SIGNING-KEY] CryptoKey imported successfully');
+  return key;
 }
 
 /**
@@ -233,18 +241,30 @@ async function getSigningKey(): Promise<CryptoKey> {
  * and fail closed (500), never fall back to an unsigned token.
  */
 export async function signAdminToken(username: string, ttlMs: number = 30 * 60 * 1000): Promise<string> {
+  console.log('[TOKEN-SIGN] Creating session token for user:', username, 'TTL:', ttlMs, 'ms');
+  
+  const now = Date.now();
   const payload: AdminTokenPayload = {
     username,
-    iat: Date.now(),
-    exp: Date.now() + ttlMs,
+    iat: now,
+    exp: now + ttlMs,
   };
+  console.log('[TOKEN-SIGN] Payload - iat:', new Date(payload.iat).toISOString(), 'exp:', new Date(payload.exp).toISOString());
+  
   const payloadB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+  console.log('[TOKEN-SIGN] Payload encoded, length:', payloadB64.length);
 
   const key = await getSigningKey();
+  console.log('[TOKEN-SIGN] Signing key obtained');
+  
   const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payloadB64));
   const sigB64 = base64UrlEncode(new Uint8Array(signature));
+  console.log('[TOKEN-SIGN] Signature computed, length:', sigB64.length);
 
-  return `${payloadB64}.${sigB64}`;
+  const token = `${payloadB64}.${sigB64}`;
+  console.log('[TOKEN-SIGN] Token created, total length:', token.length);
+  
+  return token;
 }
 
 /**
@@ -253,25 +273,43 @@ export async function signAdminToken(username: string, ttlMs: number = 30 * 60 *
  */
 export async function verifyAdminToken(token: string): Promise<{ valid: boolean; username?: string }> {
   try {
+    console.log('[TOKEN-VERIFY] Verifying token, length:', token.length);
+    
     const [payloadB64, sigB64] = token.split('.');
-    if (!payloadB64 || !sigB64) return { valid: false };
+    console.log('[TOKEN-VERIFY] Token parts - payload:', payloadB64 ? '(present)' : '(missing)', 'signature:', sigB64 ? '(present)' : '(missing)');
+    
+    if (!payloadB64 || !sigB64) {
+      console.warn('[TOKEN-VERIFY] Token malformed - missing payload or signature');
+      return { valid: false };
+    }
 
     const key = await getSigningKey();
+    console.log('[TOKEN-VERIFY] Signing key obtained');
+    
     const expectedSig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payloadB64));
     const expectedSigB64 = base64UrlEncode(new Uint8Array(expectedSig));
+    console.log('[TOKEN-VERIFY] Expected signature computed');
 
     if (!constantTimeEqual(sigB64, expectedSigB64)) {
+      console.warn('[TOKEN-VERIFY] Signature mismatch - token tampered or wrong secret');
       return { valid: false };
     }
+
+    console.log('[TOKEN-VERIFY] Signature verified');
 
     const payload: AdminTokenPayload = JSON.parse(new TextDecoder().decode(base64UrlDecode(payloadB64)));
+    console.log('[TOKEN-VERIFY] Payload decoded - username:', payload.username, 'iat:', new Date(payload.iat).toISOString(), 'exp:', new Date(payload.exp).toISOString());
 
-    if (Date.now() > payload.exp) {
+    const now = Date.now();
+    if (now > payload.exp) {
+      console.warn('[TOKEN-VERIFY] Token expired - now:', new Date(now).toISOString(), 'exp:', new Date(payload.exp).toISOString());
       return { valid: false };
     }
 
+    console.log('[TOKEN-VERIFY] Token valid for user:', payload.username);
     return { valid: true, username: payload.username };
-  } catch {
+  } catch (error) {
+    console.error('[TOKEN-VERIFY] Exception during verification:', error);
     return { valid: false };
   }
 }

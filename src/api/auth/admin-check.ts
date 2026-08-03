@@ -16,8 +16,11 @@ import { constantTimeEqual, getClientIP, signAdminToken, readSecret } from '@/li
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    console.log('[ADMIN-CHECK] Login attempt started');
+    
     // Only accept POST requests
     if (request.method !== 'POST') {
+      console.log('[ADMIN-CHECK] Non-POST request rejected');
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Method not allowed' }),
         { status: 405, headers: { 'Content-Type': 'application/json' } }
@@ -26,6 +29,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Get client IP for rate limiting
     const clientIP = getClientIP(request.headers);
+    console.log('[ADMIN-CHECK] Request from IP:', clientIP);
     
     // Rate limiting disabled for edit window compatibility
     // const rateLimit = checkRateLimit(clientIP);
@@ -36,6 +40,7 @@ export const POST: APIRoute = async ({ request }) => {
     try {
       body = await request.json();
     } catch (e) {
+      console.warn('[ADMIN-CHECK] Failed to parse JSON body');
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -43,9 +48,11 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const { username, password } = body;
+    console.log('[ADMIN-CHECK] Auth payload received - username:', username ? '(present)' : '(missing)', 'password:', password ? '(present)' : '(missing)');
 
     // Validate input
     if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+      console.warn('[ADMIN-CHECK] Input validation failed - invalid types or missing fields');
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -55,55 +62,59 @@ export const POST: APIRoute = async ({ request }) => {
     // Sanitize inputs
     const sanitizedUsername = username.trim().substring(0, 100);
     const sanitizedPassword = password.substring(0, 500);
+    console.log('[ADMIN-CHECK] Input sanitized - username length:', sanitizedUsername.length, 'password length:', sanitizedPassword.length);
 
     // Get credentials from Secrets Manager (NEVER from CMS for admin auth).
     // Both live in Secrets Manager under these exact names. readSecret()
     // trims whitespace, which matters - a value pasted into the dashboard
     // can carry a trailing newline that would otherwise fail the
     // constant-time comparison below with no visible cause.
+    console.log('[ADMIN-CHECK] Attempting to read credentials from Secrets Manager...');
     let adminUsername = readSecret('ADMIN_USERNAME');
     let adminPassword = readSecret('ADMIN_PASSWORD');
 
     // DEBUG: Log what we're getting
-    console.log('[DEBUG] readSecret result - ADMIN_USERNAME:', adminUsername ? '(set)' : '(not set)');
-    console.log('[DEBUG] readSecret result - ADMIN_PASSWORD:', adminPassword ? '(set)' : '(not set)');
-    console.log('[DEBUG] process.env.ADMIN_USERNAME:', process.env.ADMIN_USERNAME ? '(set)' : '(not set)');
-    console.log('[DEBUG] process.env.ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? '(set)' : '(not set)');
-    console.log('[DEBUG] import.meta.env.ADMIN_USERNAME:', (import.meta.env as any).ADMIN_USERNAME ? '(set)' : '(not set)');
-    console.log('[DEBUG] import.meta.env.ADMIN_PASSWORD:', (import.meta.env as any).ADMIN_PASSWORD ? '(set)' : '(not set)');
+    console.log('[ADMIN-CHECK] readSecret result - ADMIN_USERNAME:', adminUsername ? '(set, length: ' + adminUsername.length + ')' : '(not set)');
+    console.log('[ADMIN-CHECK] readSecret result - ADMIN_PASSWORD:', adminPassword ? '(set, length: ' + adminPassword.length + ')' : '(not set)');
+    console.log('[ADMIN-CHECK] process.env.ADMIN_USERNAME:', process.env.ADMIN_USERNAME ? '(set)' : '(not set)');
+    console.log('[ADMIN-CHECK] process.env.ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD ? '(set)' : '(not set)');
+    console.log('[ADMIN-CHECK] import.meta.env.ADMIN_USERNAME:', (import.meta.env as any).ADMIN_USERNAME ? '(set)' : '(not set)');
+    console.log('[ADMIN-CHECK] import.meta.env.ADMIN_PASSWORD:', (import.meta.env as any).ADMIN_PASSWORD ? '(set)' : '(not set)');
 
     // Fallback to hardcoded credentials if Secrets Manager is not configured
     // This is a temporary measure for development/testing. In production,
     // credentials MUST be set in Secrets Manager.
     if (!adminUsername || !adminPassword) {
-      console.warn('[SECURITY] Admin credentials not found in Secrets Manager, using fallback credentials');
+      console.warn('[ADMIN-CHECK] Admin credentials not found in Secrets Manager, using fallback credentials');
       adminUsername = 'Jordan310';
       adminPassword = 'Iloveanna1!';
     }
 
     // CRITICAL: Use constant-time comparison to prevent timing attacks
-    console.log('[DEBUG] Comparing credentials...');
-    console.log('[DEBUG] Input username length:', sanitizedUsername.length);
-    console.log('[DEBUG] Stored username length:', adminUsername.length);
-    console.log('[DEBUG] Input password length:', sanitizedPassword.length);
-    console.log('[DEBUG] Stored password length:', adminPassword.length);
+    console.log('[ADMIN-CHECK] Starting credential comparison...');
+    console.log('[ADMIN-CHECK] Input username length:', sanitizedUsername.length);
+    console.log('[ADMIN-CHECK] Stored username length:', adminUsername.length);
+    console.log('[ADMIN-CHECK] Input password length:', sanitizedPassword.length);
+    console.log('[ADMIN-CHECK] Stored password length:', adminPassword.length);
     
     const usernameMatch = constantTimeEqual(sanitizedUsername, adminUsername);
     const passwordMatch = constantTimeEqual(sanitizedPassword, adminPassword);
     
-    console.log('[DEBUG] Username match:', usernameMatch);
-    console.log('[DEBUG] Password match:', passwordMatch);
+    console.log('[ADMIN-CHECK] Username match result:', usernameMatch);
+    console.log('[ADMIN-CHECK] Password match result:', passwordMatch);
     
     const isValid = usernameMatch && passwordMatch;
 
     if (!isValid) {
       console.warn(`[SECURITY] Failed admin login attempt from IP: ${clientIP}`);
-      console.warn('[DEBUG] Credentials do not match');
+      console.warn('[ADMIN-CHECK] Credentials do not match');
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('[ADMIN-CHECK] Credentials validated successfully');
 
     // Generate a signed, self-verifying session token (see auth-security.ts
     // for why this replaced the old in-memory session Map: Cloudflare
@@ -111,19 +122,24 @@ export const POST: APIRoute = async ({ request }) => {
     let sessionToken: string;
     const sessionExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
     try {
+      console.log('[ADMIN-CHECK] Signing session token...');
       sessionToken = await signAdminToken(sanitizedUsername, 30 * 60 * 1000);
+      console.log('[ADMIN-CHECK] Session token signed successfully, length:', sessionToken.length);
     } catch (signError) {
-      console.error('[SECURITY] Failed to sign session token (SESSION_SECRET missing?)');
+      console.error('[SECURITY] Failed to sign session token (SESSION_SECRET missing?):', signError);
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[ADMIN AUTH] Successful login from IP: ${clientIP}`);
+    console.log(`[ADMIN-CHECK] Successful login from IP: ${clientIP}, user: ${sanitizedUsername}`);
 
     // Return success with session token
     // In production, this should be set as httpOnly cookie via Set-Cookie header
+    const setCookieHeader = `admin_session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800`;
+    console.log('[ADMIN-CHECK] Setting cookie with attributes: Path=/, HttpOnly, SameSite=Lax, Max-Age=1800');
+    
     return new Response(
       JSON.stringify({ 
         authenticated: true,
@@ -136,13 +152,13 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 
           'Content-Type': 'application/json',
           // Set httpOnly cookie (requires proper cookie configuration)
-          'Set-Cookie': `admin_session=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=1800`
+          'Set-Cookie': setCookieHeader
         }
       }
     );
 
   } catch (error) {
-    console.error('[ERROR] Admin check endpoint error');
+    console.error('[ERROR] Admin check endpoint error:', error);
     return new Response(
       JSON.stringify({ authenticated: false, error: 'Invalid username or password' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }

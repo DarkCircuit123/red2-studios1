@@ -19,6 +19,7 @@ import { verifyAdminToken, getClientIP } from '@/lib/auth-security';
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     if (request.method !== 'POST') {
+      console.log('[ADMIN-VERIFY] Non-POST request rejected');
       return new Response(
         JSON.stringify({ valid: false, error: 'Method not allowed' }),
         { status: 405, headers: { 'Content-Type': 'application/json' } }
@@ -26,6 +27,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const body = await request.json().catch(() => ({}));
+    console.log('[ADMIN-VERIFY] Request received, action:', body?.action || 'verify');
 
     // Explicit logout: always clear the cookie regardless of whether the
     // token was still valid. Previously logout only cleared client-side
@@ -33,25 +35,40 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // expiry — a refresh right after "logging out" would silently log the
     // admin back in.
     if (body?.action === 'logout') {
+      console.log('[ADMIN-VERIFY] Logout action triggered');
       return new Response(
         JSON.stringify({ valid: false, loggedOut: true }),
         {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
-            'Set-Cookie': 'admin_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0',
+            'Set-Cookie': 'admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0',
           },
         }
       );
     }
 
+    // Log cookie state
+    console.log('[ADMIN-VERIFY] Checking for admin_session cookie...');
+    const cookieValue = cookies.get('admin_session')?.value;
+    console.log('[ADMIN-VERIFY] Cookie from request:', cookieValue ? '(present, length: ' + cookieValue.length + ')' : '(missing)');
+    
     // Prefer the httpOnly cookie — it's the tamper-proof source and lets
     // the client verify a session (e.g. on page refresh) without ever
     // having to hold the raw token in JS. Fall back to a body-supplied
     // token for backward compatibility with any existing caller.
-    const sessionToken = cookies.get('admin_session')?.value || body?.sessionToken;
+    const sessionToken = cookieValue || body?.sessionToken;
+    
+    console.log('[ADMIN-VERIFY] Session token source:', cookieValue ? 'cookie' : (body?.sessionToken ? 'body' : 'none'));
 
     if (!sessionToken) {
+      console.warn('[ADMIN-VERIFY] No session token found (cookie or body)');
+      console.log('[ADMIN-VERIFY] Request headers:', {
+        'cookie': request.headers.get('cookie'),
+        'user-agent': request.headers.get('user-agent'),
+        'origin': request.headers.get('origin'),
+        'referer': request.headers.get('referer'),
+      });
       return new Response(
         JSON.stringify({ valid: false, error: 'Missing session token' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -59,7 +76,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const clientIP = getClientIP(request.headers);
+    console.log('[ADMIN-VERIFY] Verifying token from IP:', clientIP);
+    
     const validation = await verifyAdminToken(sessionToken);
+    console.log('[ADMIN-VERIFY] Token validation result:', {
+      valid: validation.valid,
+      username: validation.username || '(none)',
+    });
 
     if (!validation.valid) {
       console.warn(`[SECURITY] Session verification failed from IP: ${clientIP}`);
@@ -69,6 +92,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    console.log('[ADMIN-VERIFY] Session valid for user:', validation.username);
     return new Response(
       JSON.stringify({
         valid: true,
