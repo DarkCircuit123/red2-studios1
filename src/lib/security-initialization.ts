@@ -231,10 +231,16 @@ function initializeZeroDayProtection(): void {
   try {
     zeroDayProtection.establishBaseline();
 
-    // Periodic anomaly detection
-    setInterval(() => {
+    // Periodic anomaly detection - store interval ID for cleanup
+    const anomalyCheckInterval = setInterval(() => {
       zeroDayProtection.detectAnomaly();
     }, 10000); // Check every 10 seconds
+
+    // Store interval for cleanup on page unload
+    if (typeof window !== 'undefined') {
+      const cleanup = () => clearInterval(anomalyCheckInterval);
+      window.addEventListener('beforeunload', cleanup, { once: true });
+    }
   } catch (error) {
     // Silently fail
   }
@@ -279,8 +285,8 @@ function isSuspiciousError(message: string): boolean {
  * Setup Periodic Security Checks
  */
 function setupPeriodicSecurityChecks(): void {
-  // Check every 30 seconds
-  setInterval(() => {
+  // Check every 30 seconds - store interval ID for cleanup
+  const securityCheckInterval = setInterval(() => {
     // Verify SRI on all scripts
     try {
       sriEnforcer.validateAllScripts();
@@ -305,6 +311,12 @@ function setupPeriodicSecurityChecks(): void {
       console.error('[SECURITY] Session validation error', error);
     }
   }, 30000);
+
+  // Store interval for cleanup on page unload
+  if (typeof window !== 'undefined') {
+    const cleanup = () => clearInterval(securityCheckInterval);
+    window.addEventListener('beforeunload', cleanup, { once: true });
+  }
 }
 
 /**

@@ -138,19 +138,24 @@ const Red2TerminalPage: React.FC = () => {
     if (stage !== 'typing') return;
 
     let currentIndex = 0;
+    let timeoutId: NodeJS.Timeout | null = null;
+    
     const typingInterval = setInterval(() => {
       if (currentIndex <= fullText.length) {
         setDisplayText(fullText.substring(0, currentIndex));
         currentIndex++;
       } else {
         clearInterval(typingInterval);
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           setStage('glitch');
         }, 500);
       }
     }, 30);
 
-    return () => clearInterval(typingInterval);
+    return () => {
+      clearInterval(typingInterval);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [stage]);
 
   // Stage 3: Glitch effect
