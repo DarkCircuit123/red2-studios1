@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { getSecureContext } from '@wix/sdk';
 import { media } from '@wix/media';
 
 /**
@@ -111,7 +110,7 @@ export const POST: APIRoute = async (context) => {
     console.log(`[UPLOAD_HERO] Request ${requestId} getting Wix context`, {
       timestamp: new Date().toISOString(),
     });
-    const wixContext = getSecureContext();
+    const wixContext = context;
     const mediaClient = media(wixContext);
 
     // Generate upload URL

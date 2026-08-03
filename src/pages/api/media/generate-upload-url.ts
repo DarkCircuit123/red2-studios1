@@ -1,6 +1,6 @@
 /**
  * Backend endpoint to generate signed upload URLs
- * Uses server-only Wix SDK (getSecureContext)
+ * Uses server-side Wix SDK (media client from @wix/astro integration)
  * 
  * This endpoint:
  * 1. Validates incoming filename and MIME type

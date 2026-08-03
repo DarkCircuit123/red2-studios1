@@ -1,6 +1,6 @@
 /**
  * Backend endpoint to retrieve media URLs after upload
- * Uses server-only Wix SDK (getSecureContext)
+ * Uses server-side Wix SDK (media client from @wix/astro integration)
  * 
  * This endpoint:
  * 1. Accepts a fileName from the upload response

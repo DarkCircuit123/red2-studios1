@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { getSecureContext } from '@wix/sdk';
 import { media } from '@wix/media';
 import { MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
@@ -57,7 +56,7 @@ export const POST: APIRoute = async (context) => {
     console.log('[MUSIC_UPLOAD] Requesting Wix Media Manager upload URL...');
     let uploadUrl: string;
     try {
-      const wixContext = getSecureContext();
+      const wixContext = context;
       const mediaClient = media(wixContext);
       const uploadUrlResponse = await mediaClient.files.generateFileUploadUrl(file.type, {
         fileName: file.name,
