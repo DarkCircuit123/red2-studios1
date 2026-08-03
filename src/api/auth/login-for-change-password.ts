@@ -1,4 +1,3 @@
-import { getSecureContext } from '@wix/sdk';
 import { members } from '@wix/members';
 import { authentication } from '@wix/members';
 import { BaseCrudService } from '@/integrations';
@@ -33,7 +32,7 @@ async function logPasswordChangeAttempt(
   }
 }
 
-export async function POST({ request }: { request: Request }) {
+export async function POST({ request, locals }: { request: Request; locals: any }) {
   const ipAddress = getClientIp(request);
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
@@ -47,8 +46,8 @@ export async function POST({ request }: { request: Request }) {
       );
     }
 
-    // Get the secure backend context
-    const context = getSecureContext();
+    // Get the context from locals (provided by @wix/astro integration)
+    const context = locals;
     const membersClient = members(context);
     const authClient = authentication(context);
 

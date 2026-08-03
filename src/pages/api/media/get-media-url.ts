@@ -10,7 +10,6 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSecureContext } from '@wix/sdk';
 import { media } from '@wix/media';
 
 interface GetMediaUrlRequest {
@@ -66,7 +65,7 @@ export const POST: APIRoute = async (context) => {
     
     let wixContext;
     try {
-      wixContext = getSecureContext();
+      wixContext = context;
     } catch (contextError) {
       console.error(`[GET_MEDIA_URL] Request ${requestId} failed to get Wix context`, {
         error: contextError instanceof Error ? contextError.message : String(contextError),

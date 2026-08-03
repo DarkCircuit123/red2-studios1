@@ -1,7 +1,6 @@
-import { getSecureContext } from '@wix/sdk';
 import { members } from '@wix/members';
 
-export async function POST({ request }: { request: Request }) {
+export async function POST({ request, locals }: { request: Request; locals: any }) {
   try {
     const { nickname } = await request.json();
 
@@ -13,8 +12,8 @@ export async function POST({ request }: { request: Request }) {
       );
     }
 
-    // Get the secure context for backend operations
-    const context = getSecureContext();
+    // Get the context from locals (provided by @wix/astro integration)
+    const context = locals;
     const membersClient = members(context);
 
     try {

@@ -1,15 +1,14 @@
-import { getSecureContext } from '@wix/sdk';
 import { members } from '@wix/members';
 
 export async function POST(context: any) {
   try {
     const { returnToUrl } = context.url.searchParams;
     
-    // Get the Wix SDK context
-    const wixContext = getSecureContext(context);
+    // Get the Wix SDK context from locals (provided by @wix/astro integration)
+    const wixContext = context.locals;
     
     // Get the login URL from Wix Members API
-    const membersClient = members.Members(wixContext);
+    const membersClient = members(wixContext);
     
     // Generate login URL - this will redirect to Wix login
     const loginUrl = await membersClient.generateLoginUrl({

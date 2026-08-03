@@ -11,7 +11,6 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSecureContext } from '@wix/sdk';
 import { media } from '@wix/media';
 
 interface GenerateUploadUrlRequest {
@@ -138,7 +137,9 @@ export const POST: APIRoute = async (context) => {
 
     let wixContext;
     try {
-      wixContext = getSecureContext();
+      // Get Wix context from the Astro context (provided by @wix/astro integration)
+      // The context object contains the Wix SDK client
+      wixContext = context;
       console.log(`[GENERATE_UPLOAD_URL] Request ${requestId} Wix context obtained`, {
         contextType: typeof wixContext,
         hasContext: !!wixContext,

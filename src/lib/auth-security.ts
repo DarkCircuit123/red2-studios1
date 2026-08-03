@@ -6,9 +6,9 @@
 /**
  * Reads a secret from Wix Secrets Manager.
  * 
- * Wix Secrets Manager stores secrets server-side and makes them available
- * via getSecureContext().secrets.get(name). This is the ONLY way to access
- * secrets in Wix backend code - they are NOT environment variables.
+ * Wix Secrets Manager stores secrets server-side. In the current Wix SDK,
+ * secrets are exposed via process.env (provided by the @wix/astro integration).
+ * The getSecureContext() export is NOT available in this SDK version.
  *
  * Trims surrounding whitespace, which matters because pasting a value
  * into the Secrets Manager dashboard easily leaves a trailing newline.
@@ -25,71 +25,27 @@
  * names are given they're checked in order, first one that resolves wins.
  */
 export function readSecret(...candidateEnvNames: string[]): string | undefined {
-  // Import getSecureContext from Wix SDK to access Secrets Manager
-  let getSecureContext: any;
-  try {
-    // Dynamically import to avoid breaking in non-Wix environments
-    const wixSdk = require('@wix/sdk');
-    getSecureContext = wixSdk.getSecureContext;
-  } catch (e) {
-    console.warn('[READ-SECRET] @wix/sdk not available, falling back to environment variables');
-    getSecureContext = null;
-  }
-
   for (const name of candidateEnvNames) {
     let raw: string | undefined;
 
-    // FIRST: Try Wix Secrets Manager (primary source in Wix backend)
-    if (getSecureContext) {
-      try {
-        const context = getSecureContext();
-        if (context && context.secrets) {
-          raw = context.secrets.get(name);
-          if (raw) {
-            console.log(`[READ-SECRET] Secret "${name}" found in Wix Secrets Manager (length: ${raw.length})`);
-          } else {
-            console.log(`[READ-SECRET] Secret "${name}" not found in Wix Secrets Manager`);
-          }
-        } else {
-          console.warn('[READ-SECRET] Wix context or secrets object not available');
-        }
-      } catch (e) {
-        console.warn(`[READ-SECRET] Failed to access Wix Secrets Manager for "${name}":`, e instanceof Error ? e.message : String(e));
-      }
-    }
-
-    // FALLBACK: Try environment variables if Secrets Manager didn't have it
-    if (!raw) {
+    // PRIMARY: Wix Secrets Manager via process.env (exposed by @wix/astro integration)
+    console.log(`[SECRETS] Requesting secret: ${name}`);
+    
+    if (process.env[name]) {
       raw = process.env[name];
-      if (raw) {
-        console.log(`[READ-SECRET] Secret "${name}" found in process.env (length: ${raw.length})`);
-      }
-    }
-
-    // FALLBACK: Try import.meta.env if process.env didn't have it
-    if (!raw && typeof import.meta !== 'undefined' && import.meta.env) {
-      raw = (import.meta.env as any)[name];
-      if (raw) {
-        console.log(`[READ-SECRET] Secret "${name}" found in import.meta.env (length: ${raw.length})`);
-      }
-    }
-
-    // FALLBACK: Try globalThis (for Cloudflare Workers)
-    if (!raw && typeof globalThis !== 'undefined') {
-      raw = (globalThis as any)[name];
-      if (raw) {
-        console.log(`[READ-SECRET] Secret "${name}" found in globalThis (length: ${raw.length})`);
-      }
+      console.log(`[SECRETS] Found: true`);
+      console.log(`[SECRETS] Source: Wix Secrets Manager`);
+    } else {
+      console.log(`[SECRETS] Found: false`);
     }
 
     if (!raw) {
-      console.log(`[READ-SECRET] Secret "${name}" not found in any source`);
       continue;
     }
 
     const trimmed = raw.trim();
     if (!trimmed) {
-      console.log(`[READ-SECRET] Secret "${name}" is empty after trimming`);
+      console.log(`[SECRETS] Secret "${name}" is empty after trimming`);
       continue;
     }
 
@@ -99,12 +55,12 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     const value = match ? match[1].trim() : trimmed;
 
     if (value) {
-      console.log(`[READ-SECRET] Secret "${name}" resolved successfully (length: ${value.length})`);
+      console.log(`[SECRETS] Secret "${name}" resolved successfully`);
       return value;
     }
   }
   
-  console.log(`[READ-SECRET] No secret found for any of: ${candidateEnvNames.join(', ')}`);
+  console.log(`[SECRETS] No secret found for any of: ${candidateEnvNames.join(', ')}`);
   return undefined;
 }
 

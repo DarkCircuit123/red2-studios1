@@ -1,13 +1,12 @@
-import { getSecureContext } from '@wix/sdk';
 import { members } from '@wix/members';
 
 export async function POST(context: any) {
   try {
-    // Get the Wix SDK context
-    const wixContext = getSecureContext(context);
+    // Get the Wix SDK context from locals (provided by @wix/astro integration)
+    const wixContext = context.locals;
     
     // Get the logout URL from Wix Members API
-    const membersClient = members.Members(wixContext);
+    const membersClient = members(wixContext);
     
     // Generate logout URL
     const logoutUrl = await membersClient.generateLogoutUrl({
