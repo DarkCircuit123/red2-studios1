@@ -8,6 +8,7 @@ import AdminLoginModal from './AdminLoginModal';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
+import { debugLog } from '@/lib/debug-logger';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ export default function Header() {
   useEffect(() => {
     verifySession().catch(err => {
       // Silently handle verification errors - expected for unauthenticated users
-      console.log('[HEADER] Admin session verification skipped (not authenticated)');
+      debugLog('[HEADER] Admin session verification skipped (not authenticated)');
     });
   }, [verifySession]);
 

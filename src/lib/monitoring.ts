@@ -149,6 +149,12 @@ export class PerformanceMonitor {
   }
 
   destroy(): void {
+    // Clear memory monitoring interval
+    if (this.memoryCheckInterval) {
+      clearInterval(this.memoryCheckInterval);
+      this.memoryCheckInterval = null;
+    }
+
     // Clean up all observers
     this.performanceObservers.forEach(observer => {
       try {
@@ -158,12 +164,6 @@ export class PerformanceMonitor {
       }
     });
     this.performanceObservers = [];
-
-    // Clear memory check interval
-    if (this.memoryCheckInterval) {
-      clearInterval(this.memoryCheckInterval);
-      this.memoryCheckInterval = null;
-    }
 
     // Clear observers
     this.observers.clear();

@@ -100,11 +100,18 @@ function initializeSessionProtection(): void {
     sessionHijackingPrevention.generateFingerprint();
 
     // Validate session on page visibility change
-    document.addEventListener('visibilitychange', () => {
+    const visibilityHandler = () => {
       if (!document.hidden) {
         sessionHijackingPrevention.validateSession();
       }
-    });
+    };
+
+    document.addEventListener('visibilitychange', visibilityHandler);
+
+    // Cleanup on unload
+    window.addEventListener('beforeunload', () => {
+      document.removeEventListener('visibilitychange', visibilityHandler);
+    }, { once: true });
   } catch (error) {
     // Silently fail
   }
