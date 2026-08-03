@@ -29,7 +29,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Get the Wix member session from cookies
     const wixSession = cookies.get('wix_session')?.value;
     
+    console.log('[ADMIN-CHECK] Wix session cookie check:', wixSession ? 'present' : 'missing');
+    
     if (!wixSession) {
+      console.log('[ADMIN-CHECK] DIAGNOSTIC: member ID detected: no');
+      console.log('[ADMIN-CHECK] DIAGNOSTIC: member logged in: no');
+      console.log('[ADMIN-CHECK] DIAGNOSTIC: admin permission matched: no');
       console.log('[ADMIN-CHECK] No Wix session found - user not logged in');
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Not logged in' }),
@@ -43,6 +48,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const memberInfo = await verifyMemberToken(wixSession);
     
     if (!memberInfo) {
+      console.log('[ADMIN-CHECK] DIAGNOSTIC: member ID detected: no');
+      console.log('[ADMIN-CHECK] DIAGNOSTIC: member logged in: no');
+      console.log('[ADMIN-CHECK] DIAGNOSTIC: admin permission matched: no');
       console.log('[ADMIN-CHECK] Member token verification failed');
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Invalid session' }),
@@ -50,21 +58,26 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    console.log('[ADMIN-CHECK] DIAGNOSTIC: member ID detected: yes');
+    console.log('[ADMIN-CHECK] DIAGNOSTIC: member logged in: yes');
+
     // Check if member has admin role
     // Admin status is determined by:
     // 1. Member role field containing 'admin'
     // 2. Or custom field 'isAdmin' set to true
     const isAdmin = memberInfo.role === 'admin' || memberInfo.isAdmin === true;
     
+    console.log('[ADMIN-CHECK] DIAGNOSTIC: admin permission matched:', isAdmin ? 'yes' : 'no');
+    
     if (!isAdmin) {
-      console.warn(`[SECURITY] Non-admin member attempted admin access: ${memberInfo.memberId}`);
+      console.warn(`[SECURITY] Non-admin member attempted admin access: ${memberInfo.memberId?.substring(0, 8)}`);
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Insufficient permissions' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[ADMIN-CHECK] Admin authentication successful for member: ${memberInfo.memberId}`);
+    console.log(`[ADMIN-CHECK] Admin authentication successful for member: ${memberInfo.memberId?.substring(0, 8)}`);
 
     // Generate admin session token (httpOnly cookie)
     const sessionExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
@@ -90,6 +103,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   } catch (error) {
     console.error('[ERROR] Admin check endpoint error:', error);
+    console.log('[ADMIN-CHECK] DIAGNOSTIC: member ID detected: no');
+    console.log('[ADMIN-CHECK] DIAGNOSTIC: member logged in: no');
+    console.log('[ADMIN-CHECK] DIAGNOSTIC: admin permission matched: no');
     return new Response(
       JSON.stringify({ authenticated: false, error: 'Server error' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
