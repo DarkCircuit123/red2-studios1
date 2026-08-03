@@ -29,6 +29,7 @@ interface Booking {
 export default function BookingPage() {
   const [bookings, setBookings] = useState<BookingAvailability[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<BookingAvailability | null>(null);
   const [formData, setFormData] = useState<BookingRequest>({
     name: '',
@@ -47,6 +48,7 @@ export default function BookingPage() {
         
         if (!result.success) {
           console.error('Error loading bookings:', result.error);
+          setLoadError(result.error || 'Availability is temporarily unavailable');
           setBookings([]);
         } else {
           const allBookings = result.data || [];
@@ -57,9 +59,11 @@ export default function BookingPage() {
           });
           
           setBookings(validBookings);
+          setLoadError(null);
         }
       } catch (error) {
         console.error('Error loading bookings:', error);
+        setLoadError('Availability is temporarily unavailable');
         setBookings([]);
       } finally {
         setIsLoading(false);
@@ -321,6 +325,15 @@ export default function BookingPage() {
             <div className="flex items-center justify-center py-20">
               <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             </div>
+          ) : loadError ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-20"
+            >
+              <p className="text-white/60">{loadError}</p>
+              <p className="text-white/40 text-sm mt-2">Please try again later or contact us directly.</p>
+            </motion.div>
           ) : bookings.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}

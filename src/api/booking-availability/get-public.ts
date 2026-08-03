@@ -1,35 +1,34 @@
 /**
  * Backend endpoint for fetching available booking slots (public)
  * Used by the public booking page
- * Uses elevated permissions to bypass frontend restrictions
+ * No authentication required - returns only available slots
  * 
  * This endpoint filters for available slots only and returns them
  * to public users without exposing admin operations.
  */
 
-// Import Wix backend APIs - these run with elevated permissions
-import wixData from 'wix-data';
+import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
 
 export async function GET({ request }: { request: Request }) {
   try {
     console.log('[Backend] GET /api/booking-availability/get-public - Fetching public available slots');
 
-    // Use wixData.query with elevated permissions (backend-only)
-    // Filter for available slots only
-    const results = await wixData.query('bookingavailability')
-      .eq('isAvailable', true)
-      .limit(500)
-      .find({ suppressAuth: true });
+    // Use BaseCrudService to fetch available slots
+    // No authentication required for public endpoint
+    const result = await BaseCrudService.getAll<BookingAvailability>('bookingavailability');
 
-    console.log('[Backend] Fetched available slots:', results.items?.length || 0);
+    // Filter for available slots only
+    const availableSlots = (result.items || []).filter(slot => slot.isAvailable === true);
+
+    console.log('[Backend] Fetched available slots:', availableSlots.length);
 
     return new Response(
       JSON.stringify({
         success: true,
-        data: results.items || [],
-        totalCount: results.totalCount || 0,
-        hasNext: results.hasNext || false
+        data: availableSlots,
+        totalCount: availableSlots.length,
+        hasNext: false
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
@@ -38,12 +37,16 @@ export async function GET({ request }: { request: Request }) {
     console.error('[Backend] Error details:', error instanceof Error ? error.message : 'Unknown error');
     console.error('[Backend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
+    // Return 200 with empty slots on error instead of 500
+    // This prevents the booking page from crashing
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch available slots'
+        data: [],
+        error: 'Availability is temporarily unavailable',
+        errorCode: 'AVAILABILITY_FETCH_ERROR'
       }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
