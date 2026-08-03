@@ -129,8 +129,10 @@ const RubberBandCarouselSection: React.FC = () => {
       : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c5) + 1;
   };
 
-  // Step 4: Main animation loop
+  // Step 4: Main animation loop - optimized to avoid unnecessary state updates
   useEffect(() => {
+    let lastScrollPosition = 0;
+    
     const animate = () => {
       // Base auto-scroll speed (pixels per frame)
       const baseSpeed = 0.5;
@@ -145,7 +147,12 @@ const RubberBandCarouselSection: React.FC = () => {
 
       // Loop the scroll position
       const loopedPosition = baseScrollRef.current % totalWidth;
-      setScrollPosition(loopedPosition);
+      
+      // Only update state if position changed significantly to avoid excessive renders
+      if (Math.abs(loopedPosition - lastScrollPosition) > 0.1) {
+        lastScrollPosition = loopedPosition;
+        setScrollPosition(loopedPosition);
+      }
 
       animationFrameRef.current = requestAnimationFrame(animate);
     };

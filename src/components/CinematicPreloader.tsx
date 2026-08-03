@@ -44,7 +44,8 @@ export default function CinematicPreloader({ onComplete, isLoading }: CinematicP
 
     // Add listeners for user interaction to trigger sound
     document.addEventListener('click', handlePlaySound, { once: true });
-    document.addEventListener('touchstart', handlePlaySound, { once: true });
+    // Use passive listener for touchstart since preventDefault is not needed
+    document.addEventListener('touchstart', handlePlaySound, { once: true, passive: true });
 
     return () => {
       document.removeEventListener('click', handlePlaySound);

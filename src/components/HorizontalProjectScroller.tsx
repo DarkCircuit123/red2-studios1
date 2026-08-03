@@ -50,8 +50,9 @@ export default function HorizontalProjectScroller({
     checkScroll();
     const container = scrollContainerRef.current;
     if (container) {
-      container.addEventListener('scroll', checkScroll);
-      window.addEventListener('resize', checkScroll);
+      // Use passive listeners for scroll and resize events since preventDefault is not needed
+      container.addEventListener('scroll', checkScroll, { passive: true });
+      window.addEventListener('resize', checkScroll, { passive: true });
       return () => {
         container.removeEventListener('scroll', checkScroll);
         window.removeEventListener('resize', checkScroll);

@@ -21,10 +21,11 @@ export default function ImageLightbox({
   // Store previous focus and lock body scroll
   useEffect(() => {
     previousFocusRef.current = document.activeElement as HTMLElement;
+    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = originalOverflow;
       previousFocusRef.current?.focus();
     };
   }, []);

@@ -122,7 +122,8 @@ export default function BackgroundMusicPlayer() {
 
     // Use { once: true } to automatically remove listener after first trigger
     document.addEventListener('click', handleUserInteraction, { once: true });
-    document.addEventListener('touchstart', handleUserInteraction, { once: true });
+    // Use passive listener for touchstart since preventDefault is not needed
+    document.addEventListener('touchstart', handleUserInteraction, { once: true, passive: true });
     document.addEventListener('keydown', handleUserInteraction, { once: true });
 
     return () => {

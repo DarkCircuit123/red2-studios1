@@ -28,9 +28,10 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
   const gap = 12;
   const totalWidth = displayItems.length * (itemWidth + gap);
 
-  // Continuous smooth scrolling
+  // Continuous smooth scrolling - optimized to avoid excessive state updates
   useEffect(() => {
     let lastTime = Date.now();
+    let lastScrollPosition = 0;
     const scrollSpeed = 0.05; // Pixels per millisecond (slower)
 
     const animate = () => {
@@ -38,14 +39,19 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
       const deltaTime = now - lastTime;
       lastTime = now;
 
-      setScrollPosition(prev => {
-        let newPos = prev + scrollSpeed * deltaTime;
-        // Loop infinitely
-        if (newPos > totalWidth) {
-          newPos = 0;
-        }
-        return newPos;
-      });
+      let newPos = lastScrollPosition + scrollSpeed * deltaTime;
+      // Loop infinitely
+      if (newPos > totalWidth) {
+        newPos = 0;
+        lastScrollPosition = 0;
+      } else {
+        lastScrollPosition = newPos;
+      }
+      
+      // Only update state if position changed significantly to avoid excessive renders
+      if (Math.abs(newPos - scrollPosition) > 0.5) {
+        setScrollPosition(newPos);
+      }
 
       animationRef.current = requestAnimationFrame(animate);
     };
@@ -57,7 +63,7 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [totalWidth]);
+  }, [totalWidth, scrollPosition]);
 
   // Track mouse position for parallax and rubber band effect
   useEffect(() => {
@@ -79,7 +85,8 @@ export default function DraggableCarousel({ items, isLoading }: DraggableCarouse
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    // Use passive listener for mousemove since preventDefault is not needed
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [isHovering]);
 

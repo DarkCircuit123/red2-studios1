@@ -17,7 +17,8 @@ export function useCinematicSound() {
     };
 
     document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('touchstart', handleUserInteraction);
+    // Use passive listener for touchstart since preventDefault is not needed
+    document.addEventListener('touchstart', handleUserInteraction, { passive: true });
 
     return () => {
       document.removeEventListener('click', handleUserInteraction);

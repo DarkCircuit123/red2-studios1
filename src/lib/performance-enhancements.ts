@@ -113,8 +113,9 @@ export const optimizeAnimationPerformance = (element: HTMLElement) => {
     element.style.willChange = 'auto';
   };
 
-  element.addEventListener('animationend', removeWillChange, { once: true });
-  element.addEventListener('transitionend', removeWillChange, { once: true });
+  // Use passive listeners since preventDefault is not needed
+  element.addEventListener('animationend', removeWillChange, { once: true, passive: true });
+  element.addEventListener('transitionend', removeWillChange, { once: true, passive: true });
 };
 
 // 9. Reduce motion for users who prefer it
