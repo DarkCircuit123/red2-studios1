@@ -30,15 +30,13 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
 
     // PRIMARY: Wix Secrets Manager via process.env (exposed by @wix/astro integration)
     // The @wix/astro integration automatically injects secrets into process.env at runtime
-    console.log(`[SECRETS DEBUG] Secret requested: ${name}`);
+    const isAvailable = name in process.env;
+    console.log(`[SECRET DEBUG] name requested: ${name}`);
+    console.log(`[SECRET DEBUG] available: ${isAvailable}`);
+    console.log(`[SECRET DEBUG] provider: Wix Secrets Manager`);
     
     if (process.env[name]) {
       raw = process.env[name];
-      console.log(`[SECRETS DEBUG] Secret found: true`);
-      console.log(`[SECRETS DEBUG] Retrieval method: Wix Secrets Manager`);
-    } else {
-      console.log(`[SECRETS DEBUG] Secret found: false`);
-      console.log(`[SECRETS DEBUG] Retrieval method: Wix Secrets Manager`);
     }
 
     if (!raw) {
@@ -47,7 +45,7 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
 
     const trimmed = raw.trim();
     if (!trimmed) {
-      console.log(`[SECRETS DEBUG] Secret "${name}" is empty after trimming`);
+      console.log(`[SECRET DEBUG] Secret "${name}" is empty after trimming`);
       continue;
     }
 
@@ -57,12 +55,12 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     const value = match ? match[1].trim() : trimmed;
 
     if (value) {
-      console.log(`[SECRETS DEBUG] Secret "${name}" resolved successfully (length: ${value.length})`);
+      console.log(`[SECRET DEBUG] Secret "${name}" resolved successfully (length: ${value.length})`);
       return value;
     }
   }
   
-  console.log(`[SECRETS DEBUG] No secret found for any of: ${candidateEnvNames.join(', ')}`);
+  console.log(`[SECRET DEBUG] No secret found for any of: ${candidateEnvNames.join(', ')}`);
   return undefined;
 }
 
