@@ -70,23 +70,9 @@ export const POST: APIRoute = async ({ request }) => {
     // can carry a trailing newline that would otherwise fail the
     // constant-time comparison below with no visible cause.
     console.log('[ADMIN-CHECK] Attempting to read credentials from Secrets Manager...');
-    console.log('[ADMIN-CHECK] ========== DIAGNOSTIC: SECRET RETRIEVAL START ==========');
     
     let adminUsername = readSecret('ADMIN_USERNAME');
     let adminPassword = readSecret('ADMIN_PASSWORD');
-
-    // DIAGNOSTIC: Log what we're getting (without logging actual values)
-    console.log('[ADMIN-CHECK] ADMIN_USERNAME exists:', adminUsername ? 'true' : 'false');
-    if (adminUsername) console.log('[ADMIN-CHECK] ADMIN_USERNAME length:', adminUsername.length);
-    
-    console.log('[ADMIN-CHECK] ADMIN_PASSWORD exists:', adminPassword ? 'true' : 'false');
-    if (adminPassword) console.log('[ADMIN-CHECK] ADMIN_PASSWORD length:', adminPassword.length);
-    
-    console.log('[ADMIN-CHECK] process.env.ADMIN_USERNAME exists:', process.env.ADMIN_USERNAME ? 'true' : 'false');
-    console.log('[ADMIN-CHECK] process.env.ADMIN_PASSWORD exists:', process.env.ADMIN_PASSWORD ? 'true' : 'false');
-    console.log('[ADMIN-CHECK] import.meta.env.ADMIN_USERNAME exists:', (import.meta.env as any).ADMIN_USERNAME ? 'true' : 'false');
-    console.log('[ADMIN-CHECK] import.meta.env.ADMIN_PASSWORD exists:', (import.meta.env as any).ADMIN_PASSWORD ? 'true' : 'false');
-    console.log('[ADMIN-CHECK] ========== DIAGNOSTIC: SECRET RETRIEVAL END ==========');
 
     // Fallback to CMS collection if Secrets Manager is not configured
     if (!adminUsername || !adminPassword) {

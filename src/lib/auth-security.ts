@@ -6,9 +6,9 @@
 /**
  * Reads a secret from Wix Secrets Manager.
  * 
- * Wix Secrets Manager stores secrets server-side. In the current Wix SDK,
- * secrets are exposed via process.env (provided by the @wix/astro integration).
- * The getSecureContext() export is NOT available in this SDK version.
+ * Wix Secrets Manager stores secrets server-side. In the current Wix SDK (@wix/astro 2.38.0),
+ * secrets are accessed via the Wix Secrets Manager API through process.env.
+ * The @wix/astro integration automatically injects secrets into process.env at runtime.
  *
  * Trims surrounding whitespace, which matters because pasting a value
  * into the Secrets Manager dashboard easily leaves a trailing newline.
@@ -29,14 +29,16 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     let raw: string | undefined;
 
     // PRIMARY: Wix Secrets Manager via process.env (exposed by @wix/astro integration)
-    console.log(`[SECRETS] Requesting secret: ${name}`);
+    // The @wix/astro integration automatically injects secrets into process.env at runtime
+    console.log(`[SECRETS DEBUG] Secret requested: ${name}`);
     
     if (process.env[name]) {
       raw = process.env[name];
-      console.log(`[SECRETS] Found: true`);
-      console.log(`[SECRETS] Source: Wix Secrets Manager`);
+      console.log(`[SECRETS DEBUG] Secret found: true`);
+      console.log(`[SECRETS DEBUG] Retrieval method: Wix Secrets Manager`);
     } else {
-      console.log(`[SECRETS] Found: false`);
+      console.log(`[SECRETS DEBUG] Secret found: false`);
+      console.log(`[SECRETS DEBUG] Retrieval method: Wix Secrets Manager`);
     }
 
     if (!raw) {
@@ -45,7 +47,7 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
 
     const trimmed = raw.trim();
     if (!trimmed) {
-      console.log(`[SECRETS] Secret "${name}" is empty after trimming`);
+      console.log(`[SECRETS DEBUG] Secret "${name}" is empty after trimming`);
       continue;
     }
 
@@ -55,12 +57,12 @@ export function readSecret(...candidateEnvNames: string[]): string | undefined {
     const value = match ? match[1].trim() : trimmed;
 
     if (value) {
-      console.log(`[SECRETS] Secret "${name}" resolved successfully`);
+      console.log(`[SECRETS DEBUG] Secret "${name}" resolved successfully (length: ${value.length})`);
       return value;
     }
   }
   
-  console.log(`[SECRETS] No secret found for any of: ${candidateEnvNames.join(', ')}`);
+  console.log(`[SECRETS DEBUG] No secret found for any of: ${candidateEnvNames.join(', ')}`);
   return undefined;
 }
 
