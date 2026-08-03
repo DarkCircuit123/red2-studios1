@@ -36,12 +36,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // admin back in.
     if (body?.action === 'logout') {
       console.log('[ADMIN-VERIFY] Logout action triggered');
+      console.log('[ADMIN-VERIFY] Clearing admin_session cookie');
+      console.log('[ADMIN-VERIFY] Set-Cookie header: admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+      console.log('[ADMIN-VERIFY] NOTE: If SameSite=Lax is blocked in Wix iframe, change to: SameSite=None; Secure');
       return new Response(
         JSON.stringify({ valid: false, loggedOut: true }),
         {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
+            // NOTE: If SameSite=Lax is blocked in Wix iframe, change to:
+            // 'Set-Cookie': 'admin_session=; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=0'
             'Set-Cookie': 'admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0',
           },
         }

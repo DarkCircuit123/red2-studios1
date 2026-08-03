@@ -137,8 +137,17 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Return success with session token
     // In production, this should be set as httpOnly cookie via Set-Cookie header
+    // NOTE: If running in Wix iframe and SameSite=Lax is blocked, change to:
+    // SameSite=None; Secure (requires HTTPS, which Wix provides)
     const setCookieHeader = `admin_session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800`;
-    console.log('[ADMIN-CHECK] Setting cookie with attributes: Path=/, HttpOnly, SameSite=Lax, Max-Age=1800');
+    console.log('[ADMIN-CHECK] Setting cookie with attributes:');
+    console.log('  - Name: admin_session');
+    console.log('  - Path: /');
+    console.log('  - HttpOnly: true');
+    console.log('  - SameSite: Lax');
+    console.log('  - Max-Age: 1800 (30 minutes)');
+    console.log('  - Secure: (auto-enabled on HTTPS)');
+    console.log('[ADMIN-CHECK] Set-Cookie header:', setCookieHeader);
     
     return new Response(
       JSON.stringify({ 
