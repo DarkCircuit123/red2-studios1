@@ -162,11 +162,10 @@ export function optimizeFontLoading() {
 export function monitorPerformance() {
   if (typeof window === 'undefined') return;
 
-  // Navigation Timing
-  window.addEventListener('load', () => {
+  // Navigation Timing - single event listener
+  const handleLoad = () => {
     const perfData = window.performance.timing;
     const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
-    console.log('Page Load Time:', pageLoadTime, 'ms');
 
     // Report to analytics if needed
     if (window.gtag) {
@@ -174,11 +173,12 @@ export function monitorPerformance() {
         value: pageLoadTime,
       });
     }
-  });
 
-  // Resource Timing
-  const resources = window.performance.getEntriesByType('resource');
-  console.log('Resources loaded:', resources.length);
+    // Cleanup
+    window.removeEventListener('load', handleLoad);
+  };
+
+  window.addEventListener('load', handleLoad, { once: true });
 }
 
 /**
@@ -194,7 +194,10 @@ export function initializeSEOPerformance() {
   initializeCoreWebVitals();
 
   // Lazy load images after page load
-  window.addEventListener('load', () => {
+  const handleLoad = () => {
     optimizeImageLoading();
-  });
+    window.removeEventListener('load', handleLoad);
+  };
+
+  window.addEventListener('load', handleLoad, { once: true });
 }

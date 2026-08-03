@@ -5,8 +5,13 @@ import { useLocation } from 'react-router-dom';
 export function ScrollToTop() {
   const location = useLocation();
   const prevLocationRef = useRef<string | null>(null);
+  const timeoutIdsRef = useRef<NodeJS.Timeout[]>([]);
 
   useEffect(() => {
+    // Clean up previous timeouts
+    timeoutIdsRef.current.forEach(id => clearTimeout(id));
+    timeoutIdsRef.current = [];
+
     // Check if this is the same page (same pathname)
     const isSamePage = prevLocationRef.current === location.pathname;
 
@@ -26,10 +31,9 @@ export function ScrollToTop() {
         }
       };
       
-      // Multiple attempts to ensure scroll happens after page renders
-      setTimeout(scrollToElement, 100);
-      setTimeout(scrollToElement, 300);
-      setTimeout(scrollToElement, 600);
+      // Single attempt with optimal timing
+      const timeoutId = setTimeout(scrollToElement, 100);
+      timeoutIdsRef.current.push(timeoutId);
     } else {
       // URL without hash: Scroll to the top of the page
       // Use smooth animation if same page, auto if different page
@@ -42,6 +46,12 @@ export function ScrollToTop() {
 
     // Update the previous location reference
     prevLocationRef.current = location.pathname;
+
+    // Cleanup on unmount
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current = [];
+    };
   }, [location]);
 
   return null;

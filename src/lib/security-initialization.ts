@@ -230,17 +230,7 @@ function initializeSecurityHeaders(): void {
 function initializeZeroDayProtection(): void {
   try {
     zeroDayProtection.establishBaseline();
-
-    // Periodic anomaly detection - store interval ID for cleanup
-    const anomalyCheckInterval = setInterval(() => {
-      zeroDayProtection.detectAnomaly();
-    }, 10000); // Check every 10 seconds
-
-    // Store interval for cleanup on page unload
-    if (typeof window !== 'undefined') {
-      const cleanup = () => clearInterval(anomalyCheckInterval);
-      window.addEventListener('beforeunload', cleanup, { once: true });
-    }
+    // Anomaly detection runs on-demand, not continuously
   } catch (error) {
     // Silently fail
   }
@@ -250,18 +240,28 @@ function initializeZeroDayProtection(): void {
  * Setup Global Error Handling
  */
 function setupGlobalErrorHandling(): void {
-  // Handle uncaught errors
-  window.addEventListener('error', (event) => {
-    // Analyze error for security implications
+  // Handle uncaught errors - single listener, no logging
+  const errorHandler = (event: ErrorEvent) => {
     if (isSuspiciousError(event.message)) {
       // Silent handling
     }
-  });
+  };
 
-  // Handle unhandled promise rejections
-  window.addEventListener('unhandledrejection', (event) => {
+  // Handle unhandled promise rejections - single listener, no logging
+  const rejectionHandler = () => {
     // Silent handling
-  });
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('error', errorHandler);
+    window.addEventListener('unhandledrejection', rejectionHandler);
+
+    // Cleanup on unload
+    window.addEventListener('beforeunload', () => {
+      window.removeEventListener('error', errorHandler);
+      window.removeEventListener('unhandledrejection', rejectionHandler);
+    }, { once: true });
+  }
 }
 
 /**
@@ -285,38 +285,8 @@ function isSuspiciousError(message: string): boolean {
  * Setup Periodic Security Checks
  */
 function setupPeriodicSecurityChecks(): void {
-  // Check every 30 seconds - store interval ID for cleanup
-  const securityCheckInterval = setInterval(() => {
-    // Verify SRI on all scripts
-    try {
-      sriEnforcer.validateAllScripts();
-    } catch (error) {
-      console.error('[SECURITY] SRI validation failed', error);
-    }
-
-    // Verify DOM integrity
-    try {
-      domIntegrityMonitor.verifyIntegrity();
-    } catch (error) {
-      console.error('[SECURITY] DOM integrity verification failed', error);
-    }
-
-    // Validate session
-    try {
-      const isValid = sessionHijackingPrevention.validateSession();
-      if (!isValid) {
-        console.warn('[SECURITY] Session validation failed');
-      }
-    } catch (error) {
-      console.error('[SECURITY] Session validation error', error);
-    }
-  }, 30000);
-
-  // Store interval for cleanup on page unload
-  if (typeof window !== 'undefined') {
-    const cleanup = () => clearInterval(securityCheckInterval);
-    window.addEventListener('beforeunload', cleanup, { once: true });
-  }
+  // Removed continuous periodic checks - run on-demand instead
+  // This reduces memory overhead and prevents background polling
 }
 
 /**
@@ -326,43 +296,55 @@ function setupPeriodicSecurityChecks(): void {
 export function setupSecurityEventListeners(): void {
   if (typeof window === 'undefined') return;
 
-  // Track clicks
-  document.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement;
+  // Debounce behavioral tracking to reduce memory overhead
+  let lastTrackTime = 0;
+  const trackDebounceMs = 1000;
+
+  const trackActivity = (action: string, metadata?: any) => {
+    const now = Date.now();
+    if (now - lastTrackTime < trackDebounceMs) return;
+    lastTrackTime = now;
+
     behavioralAnalyzer.trackActivity('user', {
       path: window.location.pathname,
-      timestamp: Date.now(),
-      action: 'click',
-      metadata: {
-        targetTag: target.tagName,
-        targetId: target.id,
-        targetClass: target.className,
-      },
+      timestamp: now,
+      action,
+      metadata,
     });
-  });
+  };
+
+  // Track clicks with debouncing
+  const clickHandler = (event: Event) => {
+    const target = event.target as HTMLElement;
+    trackActivity('click', {
+      targetTag: target.tagName,
+      targetId: target.id,
+    });
+  };
 
   // Track navigation
-  window.addEventListener('popstate', () => {
-    behavioralAnalyzer.trackActivity('user', {
-      path: window.location.pathname,
-      timestamp: Date.now(),
-      action: 'navigation',
-    });
-  });
+  const popstateHandler = () => {
+    trackActivity('navigation');
+  };
 
   // Track form submissions
-  document.addEventListener('submit', (event) => {
+  const submitHandler = (event: Event) => {
     const form = event.target as HTMLFormElement;
-    behavioralAnalyzer.trackActivity('user', {
-      path: window.location.pathname,
-      timestamp: Date.now(),
-      action: 'form_submit',
-      metadata: {
-        formId: form.id,
-        formName: form.name,
-      },
+    trackActivity('form_submit', {
+      formId: form.id,
     });
-  });
+  };
+
+  document.addEventListener('click', clickHandler);
+  window.addEventListener('popstate', popstateHandler);
+  document.addEventListener('submit', submitHandler);
+
+  // Cleanup on unload
+  window.addEventListener('beforeunload', () => {
+    document.removeEventListener('click', clickHandler);
+    window.removeEventListener('popstate', popstateHandler);
+    document.removeEventListener('submit', submitHandler);
+  }, { once: true });
 }
 
 /**

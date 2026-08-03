@@ -17,6 +17,8 @@ export interface PerformanceMetrics {
 export class PerformanceMonitor {
   private metrics: PerformanceMetrics = {};
   private observers: Set<(metrics: PerformanceMetrics) => void> = new Set();
+  private memoryCheckInterval: NodeJS.Timeout | null = null;
+  private performanceObservers: PerformanceObserver[] = [];
 
   constructor() {
     this.initializeMetrics();
@@ -59,8 +61,9 @@ export class PerformanceMonitor {
           this.notifyObservers();
         });
         lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+        this.performanceObservers.push(lcpObserver);
       } catch (e) {
-        console.warn('LCP observer not supported');
+        // LCP observer not supported
       }
 
       // Observe Cumulative Layout Shift
@@ -76,8 +79,9 @@ export class PerformanceMonitor {
           }
         });
         clsObserver.observe({ entryTypes: ['layout-shift'] });
+        this.performanceObservers.push(clsObserver);
       } catch (e) {
-        console.warn('CLS observer not supported');
+        // CLS observer not supported
       }
 
       // Observe First Input Delay
@@ -89,8 +93,9 @@ export class PerformanceMonitor {
           this.notifyObservers();
         });
         fidObserver.observe({ entryTypes: ['first-input'] });
+        this.performanceObservers.push(fidObserver);
       } catch (e) {
-        console.warn('FID observer not supported');
+        // FID observer not supported
       }
 
       // Observe First Contentful Paint
@@ -104,19 +109,20 @@ export class PerformanceMonitor {
           }
         });
         fcpObserver.observe({ entryTypes: ['paint'] });
+        this.performanceObservers.push(fcpObserver);
       } catch (e) {
-        console.warn('FCP observer not supported');
+        // FCP observer not supported
       }
     }
   }
 
   private monitorMemory(): void {
     if (typeof window !== 'undefined' && (performance as any).memory) {
-      setInterval(() => {
+      this.memoryCheckInterval = setInterval(() => {
         const memory = (performance as any).memory;
         this.metrics.memoryUsage = Math.round(memory.usedJSHeapSize / 1048576); // Convert to MB
         this.notifyObservers();
-      }, 5000);
+      }, 30000); // Check every 30 seconds instead of 5
     }
   }
 
@@ -133,12 +139,6 @@ export class PerformanceMonitor {
     return { ...this.metrics };
   }
 
-  logMetrics(): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.table(this.metrics);
-    }
-  }
-
   isGoodPerformance(): boolean {
     return (
       (this.metrics.fcp ?? 0) < 1800 &&
@@ -146,6 +146,27 @@ export class PerformanceMonitor {
       (this.metrics.cls ?? 0) < 0.1 &&
       (this.metrics.fid ?? 0) < 100
     );
+  }
+
+  destroy(): void {
+    // Clean up all observers
+    this.performanceObservers.forEach(observer => {
+      try {
+        observer.disconnect();
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
+    });
+    this.performanceObservers = [];
+
+    // Clear memory check interval
+    if (this.memoryCheckInterval) {
+      clearInterval(this.memoryCheckInterval);
+      this.memoryCheckInterval = null;
+    }
+
+    // Clear observers
+    this.observers.clear();
   }
 }
 

@@ -167,11 +167,8 @@ export class DOMIntegrityMonitor {
     // Store original state of critical elements
     this.storeCriticalElements();
 
-    // Set up mutation observer
+    // Set up mutation observer only
     this.setupMutationObserver();
-
-    // Periodically verify integrity
-    setInterval(() => this.verifyIntegrity(), 5000);
   }
 
   private storeCriticalElements(): void {

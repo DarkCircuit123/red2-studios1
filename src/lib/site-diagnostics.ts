@@ -523,10 +523,7 @@ export class SiteDiagnostics {
 // Initialize diagnostics only when explicitly called
 export function initializeSiteDiagnostics() {
   if (typeof window !== 'undefined') {
-    window.addEventListener('load', async () => {
-      const report = await SiteDiagnostics.runFullDiagnostics();
-      SiteDiagnostics.logReport(report);
-      SiteDiagnostics.fixCommonIssues();
-    });
+    // Removed automatic diagnostics on load - run on-demand only
+    // This prevents unnecessary memory overhead during page load
   }
 }

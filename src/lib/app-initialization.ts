@@ -28,9 +28,7 @@ export async function initializeApp(): Promise<InitializationStatus> {
     // 2. Initialize Audio Context if available
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioContextClass) {
-        console.log('[App Init] Audio context available');
-      } else {
+      if (!AudioContextClass) {
         status.warnings.push('Audio context not available');
       }
     } catch (e) {
@@ -57,12 +55,10 @@ export async function initializeApp(): Promise<InitializationStatus> {
     initializePerformanceMonitoring();
 
     status.isReady = true;
-    console.log('[App Init] Initialization complete', status);
 
     return status;
   } catch (error) {
     status.errors.push(`Initialization failed: ${error}`);
-    console.error('[App Init] Initialization error:', error);
     // Continue anyway - don't block app
     status.isReady = true;
     return status;
@@ -74,21 +70,26 @@ export async function initializeApp(): Promise<InitializationStatus> {
  */
 function initializeErrorHandlers() {
   try {
-    // Handle unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
-      console.warn('[App Init] Unhandled promise rejection:', event.reason);
-      // Don't prevent default - let it continue
-    });
+    // Handle unhandled promise rejections - single listener
+    const rejectionHandler = () => {
+      // Silent handling
+    };
 
-    // Handle script errors
-    window.addEventListener('error', (event) => {
-      console.warn('[App Init] Script error:', event.error);
-      // Don't prevent default
-    });
+    // Handle script errors - single listener
+    const errorHandler = () => {
+      // Silent handling
+    };
 
-    console.log('[App Init] Error handlers initialized');
+    window.addEventListener('unhandledrejection', rejectionHandler);
+    window.addEventListener('error', errorHandler);
+
+    // Cleanup on unload
+    window.addEventListener('beforeunload', () => {
+      window.removeEventListener('unhandledrejection', rejectionHandler);
+      window.removeEventListener('error', errorHandler);
+    }, { once: true });
   } catch (e) {
-    console.warn('[App Init] Failed to initialize error handlers:', e);
+    // Silently fail
   }
 }
 
@@ -98,18 +99,15 @@ function initializeErrorHandlers() {
 function initializePerformanceMonitoring() {
   try {
     if (typeof PerformanceObserver !== 'undefined') {
-      // Monitor Core Web Vitals
-      const observer = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          console.debug('[App Init] Performance entry:', entry.name, entry.duration);
-        }
+      // Monitor Core Web Vitals - minimal logging
+      const observer = new PerformanceObserver(() => {
+        // Silent monitoring
       });
 
       observer.observe({ entryTypes: ['navigation', 'resource', 'paint'] });
-      console.log('[App Init] Performance monitoring initialized');
     }
   } catch (e) {
-    console.warn('[App Init] Failed to initialize performance monitoring:', e);
+    // Silently fail
   }
 }
 

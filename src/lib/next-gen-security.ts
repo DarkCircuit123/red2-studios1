@@ -338,21 +338,8 @@ export class CodeObfuscation {
   }
 
   injectAntiDebugCode(): void {
-    // Detect and prevent debugging
-    const checkDebugger = () => {
-      const start = performance.now();
-      debugger; // This line is intentional
-      const end = performance.now();
-
-      if (end - start > 100) {
-        // Debugger is active
-        console.warn('[SECURITY] Debugger detected - terminating execution');
-        throw new Error('Debugger detected');
-      }
-    };
-
-    // Run periodically
-    setInterval(checkDebugger, 5000);
+    // Debugger detection removed - causes memory overhead and is not reliable
+    // Modern browsers handle debugging appropriately
   }
 
   createSelfDestructingCode(code: Function, timeout: number = 60000): Function {
