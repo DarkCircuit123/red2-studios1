@@ -16,25 +16,27 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
   // Initialize state from localStorage or defaults
   const [state, setState] = useState<MemberState>(() => {
     let storedMemberData: Member | null = null;
+    let storedIsAuthenticated = false;
 
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(MEMBER_STORAGE_KEY);
         if (stored) {
           const parsedData = JSON.parse(stored);
-          // Only use member data from localStorage, not authentication status
-          storedMemberData = parsedData;
+          // Restore both member data and authentication status
+          storedMemberData = parsedData.member || null;
+          storedIsAuthenticated = parsedData.isAuthenticated || false;
         }
       } catch (error) {
         console.error('Error loading member state from localStorage:', error);
       }
     }
 
-    // Always start with loading true and not authenticated
-    // We'll verify authentication with the server on mount
+    // Start with loading true to verify authentication with server
+    // Use stored authentication status as initial value
     return {
       member: storedMemberData,
-      isAuthenticated: false,
+      isAuthenticated: storedIsAuthenticated,
       isLoading: true,
       error: null,
     };
@@ -44,13 +46,16 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        // Only save member data, not authentication status
-        localStorage.setItem(MEMBER_STORAGE_KEY, JSON.stringify(state.member));
+        // Save both member data and authentication status for persistent login
+        localStorage.setItem(MEMBER_STORAGE_KEY, JSON.stringify({
+          member: state.member,
+          isAuthenticated: state.isAuthenticated,
+        }));
       } catch (error) {
         console.error('Error saving member state to localStorage:', error);
       }
     }
-  }, [state.member]);
+  }, [state.member, state.isAuthenticated]);
 
   // Update state helper
   const updateState = useCallback((updates: Partial<MemberState>) => {

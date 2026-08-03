@@ -1,28 +1,39 @@
 import { Image } from '@/components/ui/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BaseCrudService } from '@/integrations';
 
 export default function HeroSection() {
   const [heroImage, setHeroImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const loadHeroImage = async () => {
+    try {
+      const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+      if (homepageImages?.items && homepageImages.items.length > 0) {
+        const images = homepageImages.items[0] as any;
+        if (images?.heroImage) {
+          setHeroImage(images.heroImage);
+        }
+      }
+    } catch (error) {
+      console.error('[HeroSection] Failed to load hero image:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadHeroImage = async () => {
-      try {
-        const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-        if (homepageImages?.items && homepageImages.items.length > 0) {
-          const images = homepageImages.items[0] as any;
-          if (images?.heroImage) {
-            setHeroImage(images.heroImage);
-          }
-        }
-      } catch (error) {
-        console.error('[HeroSection] Failed to load hero image:', error);
-      } finally {
-        setIsLoading(false);
+    loadHeroImage();
+    
+    // Poll for image updates every 2 seconds to catch admin panel changes
+    refreshIntervalRef.current = setInterval(loadHeroImage, 2000);
+    
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
       }
     };
-    loadHeroImage();
   }, []);
 
   return (

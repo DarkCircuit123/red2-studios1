@@ -1,10 +1,11 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import { BaseCrudService } from '@/integrations';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -16,9 +17,38 @@ export default function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
+  const [contactBackgroundImage, setContactBackgroundImage] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const statusTimeoutRef = useRef<NodeJS.Timeout>();
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
+
+  const loadContactBackground = async () => {
+    try {
+      const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+      if (homepageImages?.items && homepageImages.items.length > 0) {
+        const images = homepageImages.items[0] as any;
+        if (images?.contactBackgroundImage) {
+          setContactBackgroundImage(images.contactBackgroundImage);
+        }
+      }
+    } catch (error) {
+      console.error('[ContactSection] Failed to load contact background:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadContactBackground();
+    
+    // Poll for updates every 2 seconds to catch admin panel changes
+    refreshIntervalRef.current = setInterval(loadContactBackground, 2000);
+    
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

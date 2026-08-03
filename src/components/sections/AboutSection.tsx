@@ -16,44 +16,50 @@ export default function AboutSection() {
   const fetchedRef = useRef(false);
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
 
+  const loadAboutData = async () => {
+    try {
+      // Load from HomepageImages collection first
+      const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+      if (homepageImages?.items && homepageImages.items.length > 0) {
+        const images = homepageImages.items[0] as any;
+        if (images?.aboutSectionImage) {
+          setAboutImage(images.aboutSectionImage);
+        }
+      }
+
+      // Load about settings
+      try {
+        const aboutResult = await BaseCrudService.getAll('about', {}, { limit: 1 });
+        if (aboutResult?.items && aboutResult.items.length > 0) {
+          const about = aboutResult.items[0] as any;
+          if (about?.aboutText) {
+            setAboutText(about.aboutText);
+          }
+          if (about?.fontFamily) {
+            setFontFamily(about.fontFamily);
+          }
+        }
+      } catch (error) {
+        console.error('[AboutSection] Error loading about settings:', error);
+      }
+    } catch (error) {
+      console.error('[AboutSection] Error loading about data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Prevent duplicate fetches
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
-    const loadAboutData = async () => {
-      try {
-        // Load from HomepageImages collection first
-        const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-        if (homepageImages?.items && homepageImages.items.length > 0) {
-          const images = homepageImages.items[0] as any;
-          if (images?.aboutSectionImage) {
-            setAboutImage(images.aboutSectionImage);
-          }
-        }
-
-        // Load about settings
-        try {
-          const aboutResult = await BaseCrudService.getAll('about', {}, { limit: 1 });
-          if (aboutResult?.items && aboutResult.items.length > 0) {
-            const about = aboutResult.items[0] as any;
-            if (about?.aboutText) {
-              setAboutText(about.aboutText);
-            }
-            if (about?.fontFamily) {
-              setFontFamily(about.fontFamily);
-            }
-          }
-        } catch (error) {
-          console.error('[AboutSection] Error loading about settings:', error);
-        }
-      } catch (error) {
-        console.error('[AboutSection] Error loading about data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     loadAboutData();
+    
+    // Poll for updates every 2 seconds to catch admin panel changes
+    const refreshInterval = setInterval(loadAboutData, 2000);
+    
+    return () => clearInterval(refreshInterval);
   }, []);
 
   const statVariants = {
