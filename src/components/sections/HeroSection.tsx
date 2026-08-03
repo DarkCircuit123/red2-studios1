@@ -1,18 +1,10 @@
-import { motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
 import { Image } from '@/components/ui/image';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { BaseCrudService } from '@/integrations';
-import { playClickSound } from '@/lib/click-sound';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { scrollAnimationVariants } from '@/lib/scroll-animation-variants';
-import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function HeroSection() {
-  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_b9430cdc87784b7f83662a269ab0d2aa~mv2.jpg');
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [scrollY, setScrollY] = useState(0);
-  const { ref: contentRef, isVisible: contentVisible } = useScrollAnimation({ triggerOnce: true });
+  const [heroImage, setHeroImage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadHeroImage = async () => {
@@ -26,50 +18,16 @@ export default function HeroSection() {
         }
       } catch (error) {
         console.error('[HeroSection] Failed to load hero image:', error);
-        // Use default image
+      } finally {
+        setIsLoading(false);
       }
     };
     loadHeroImage();
   }, []);
 
-  // Parallax effect with passive listener
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY * 0.5);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToGallery = useCallback(() => {
-    playClickSound();
-    const element = document.getElementById('portfolio');
-    element?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  const handleContactClick = useCallback(() => {
-    playClickSound();
-    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
   return (
-    <section ref={contentRef} className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
-      {/* Parallax image with depth */}
-      <motion.div
-        className="absolute inset-0 z-0"
-        style={{ y: scrollY }}
-      >
-        {videoUrl ? (
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover"
-          >
-            <source src={videoUrl} type="video/mp4" />
-          </video>
-        ) : null}
+    <section className="relative w-full h-screen flex items-center justify-center overflow-hidden bg-black">
+      {heroImage && (
         <Image
           src={heroImage}
           alt="Hero background"
@@ -77,9 +35,10 @@ export default function HeroSection() {
           width={1920}
           height={1080}
         />
-      </motion.div>
-
-
+      )}
+      {!heroImage && !isLoading && (
+        <div className="w-full h-full bg-gradient-to-b from-slate-900 to-black" />
+      )}
     </section>
   );
 }
