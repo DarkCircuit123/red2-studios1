@@ -41,12 +41,13 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(MEMBER_STORAGE_KEY, JSON.stringify(state));
+        // Only save member data, not authentication status
+        localStorage.setItem(MEMBER_STORAGE_KEY, JSON.stringify(state.member));
       } catch (error) {
         console.error('Error saving member state to localStorage:', error);
       }
     }
-  }, [state]);
+  }, [state.member]);
 
   // Update state helper
   const updateState = useCallback((updates: Partial<MemberState>) => {
@@ -166,7 +167,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
   // Load member on mount
   useEffect(() => {
     actions.loadCurrentMember();
-  }, [actions]);
+  }, []);
 
   return (
     <MemberContext.Provider value={{ ...state, actions }}>
