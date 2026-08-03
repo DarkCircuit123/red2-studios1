@@ -1,8 +1,11 @@
-import { BaseCrudService } from '@wix/sdk';
+import { BaseCrudService as WixBaseCrudService } from '@wix/codegen-framework-packages';
 
 /**
  * CMS Service - Wrapper around BaseCrudService for type-safe operations
  */
+
+// Re-export BaseCrudService for direct use
+export const BaseCrudService = WixBaseCrudService;
 
 export const cmsService = {
   /**
@@ -14,7 +17,7 @@ export const cmsService = {
     options?: { limit?: number; skip?: number }
   ) => {
     try {
-      return await BaseCrudService.getAll<T>(collectionId, refs || {}, options);
+      return await WixBaseCrudService.getAll<T>(collectionId, refs || {}, options);
     } catch (error) {
       console.error(`[CMS] Error fetching from ${collectionId}:`, error);
       throw error;
@@ -30,7 +33,7 @@ export const cmsService = {
     refs?: { singleRef?: string[]; multiRef?: string[] }
   ) => {
     try {
-      return await BaseCrudService.getById<T>(collectionId, itemId, refs);
+      return await WixBaseCrudService.getById<T>(collectionId, itemId, refs);
     } catch (error) {
       console.error(`[CMS] Error fetching ${itemId} from ${collectionId}:`, error);
       throw error;
@@ -46,7 +49,7 @@ export const cmsService = {
     multiRefs?: Record<string, string[]>
   ) => {
     try {
-      return await BaseCrudService.create(collectionId, itemData, multiRefs);
+      return await WixBaseCrudService.create(collectionId, itemData, multiRefs);
     } catch (error) {
       console.error(`[CMS] Error creating in ${collectionId}:`, error);
       throw error;
@@ -61,7 +64,7 @@ export const cmsService = {
     itemData: Partial<T> & { _id: string }
   ) => {
     try {
-      return await BaseCrudService.update(collectionId, itemData);
+      return await WixBaseCrudService.update(collectionId, itemData);
     } catch (error) {
       console.error(`[CMS] Error updating in ${collectionId}:`, error);
       throw error;
@@ -73,7 +76,7 @@ export const cmsService = {
    */
   delete: async (collectionId: string, itemId: string) => {
     try {
-      return await BaseCrudService.delete(collectionId, itemId);
+      return await WixBaseCrudService.delete(collectionId, itemId);
     } catch (error) {
       console.error(`[CMS] Error deleting from ${collectionId}:`, error);
       throw error;
@@ -89,7 +92,7 @@ export const cmsService = {
     refs: Record<string, string[]>
   ) => {
     try {
-      return await BaseCrudService.addReferences(collectionId, itemId, refs);
+      return await WixBaseCrudService.addReferences(collectionId, itemId, refs);
     } catch (error) {
       console.error(`[CMS] Error adding references in ${collectionId}:`, error);
       throw error;
@@ -105,7 +108,7 @@ export const cmsService = {
     refs: Record<string, string[]>
   ) => {
     try {
-      return await BaseCrudService.removeReferences(collectionId, itemId, refs);
+      return await WixBaseCrudService.removeReferences(collectionId, itemId, refs);
     } catch (error) {
       console.error(`[CMS] Error removing references in ${collectionId}:`, error);
       throw error;
