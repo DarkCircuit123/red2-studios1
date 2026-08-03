@@ -4,11 +4,11 @@
  */
 
 /**
- * Reads a secret from Wix Secrets Manager.
+ * Reads a secret from Wix Secrets Manager using the backend API.
  * 
- * Wix Secrets Manager stores secrets server-side. In the current Wix SDK (@wix/astro 2.38.0),
- * secrets are accessed via the Wix Secrets Manager API through process.env.
- * The @wix/astro integration automatically injects secrets into process.env at runtime.
+ * Wix Secrets Manager stores secrets server-side and provides them via
+ * the wix-secrets-backend module. This function retrieves secrets directly
+ * from Wix Secrets Manager without relying on environment variables.
  *
  * Trims surrounding whitespace, which matters because pasting a value
  * into the Secrets Manager dashboard easily leaves a trailing newline.
@@ -21,46 +21,63 @@
  * password like "ABC=123" would be truncated to "123" and every login
  * would fail for a reason nothing in the logs would explain.
  *
- * Usage: readSecret('ADMIN_USERNAME') checks ADMIN_USERNAME. If several
+ * Usage: await readSecret('ADMIN_USERNAME') checks ADMIN_USERNAME. If several
  * names are given they're checked in order, first one that resolves wins.
  */
-export function readSecret(...candidateEnvNames: string[]): string | undefined {
+export async function readSecret(...candidateEnvNames: string[]): Promise<string | undefined> {
+  // Import the Wix Secrets Manager backend module
+  let getSecret: any;
+  try {
+    // Try wix-secrets-backend.v2 first (newer API)
+    const secretsModule = await import('wix-secrets-backend.v2');
+    getSecret = secretsModule.getSecret;
+  } catch {
+    try {
+      // Fall back to wix-secrets-backend (older API)
+      const secretsModule = await import('wix-secrets-backend');
+      getSecret = secretsModule.getSecret;
+    } catch {
+      console.error('[SECRET CHECK] Failed to import Wix Secrets Manager module');
+      return undefined;
+    }
+  }
+
   for (const name of candidateEnvNames) {
-    let raw: string | undefined;
+    try {
+      console.log(`[SECRET CHECK] Attempting to retrieve: ${name}`);
+      
+      // Call the Wix Secrets Manager API
+      const raw = await getSecret(name);
+      
+      if (!raw) {
+        console.log(`[SECRET CHECK] ${name} exists: false`);
+        continue;
+      }
 
-    // PRIMARY: Wix Secrets Manager via process.env (exposed by @wix/astro integration)
-    // The @wix/astro integration automatically injects secrets into process.env at runtime
-    const isAvailable = name in process.env;
-    console.log(`[SECRET DEBUG] name requested: ${name}`);
-    console.log(`[SECRET DEBUG] available: ${isAvailable}`);
-    console.log(`[SECRET DEBUG] provider: Wix Secrets Manager`);
-    
-    if (process.env[name]) {
-      raw = process.env[name];
-    }
+      console.log(`[SECRET CHECK] ${name} exists: true`);
 
-    if (!raw) {
+      const trimmed = raw.trim();
+      if (!trimmed) {
+        console.log(`[SECRET CHECK] Secret "${name}" is empty after trimming`);
+        continue;
+      }
+
+      // Only strip a prefix that is exactly this key's own name.
+      const selfPrefix = new RegExp(`^${name}\\s*=\\s*([\\s\\S]*)$`);
+      const match = trimmed.match(selfPrefix);
+      const value = match ? match[1].trim() : trimmed;
+
+      if (value) {
+        console.log(`[SECRET CHECK] Secret "${name}" resolved successfully (length: ${value.length})`);
+        return value;
+      }
+    } catch (error) {
+      console.log(`[SECRET CHECK] ${name} exists: false (error: ${error instanceof Error ? error.message : 'unknown'})`);
       continue;
-    }
-
-    const trimmed = raw.trim();
-    if (!trimmed) {
-      console.log(`[SECRET DEBUG] Secret "${name}" is empty after trimming`);
-      continue;
-    }
-
-    // Only strip a prefix that is exactly this key's own name.
-    const selfPrefix = new RegExp(`^${name}\\s*=\\s*([\\s\\S]*)$`);
-    const match = trimmed.match(selfPrefix);
-    const value = match ? match[1].trim() : trimmed;
-
-    if (value) {
-      console.log(`[SECRET DEBUG] Secret "${name}" resolved successfully (length: ${value.length})`);
-      return value;
     }
   }
   
-  console.log(`[SECRET DEBUG] No secret found for any of: ${candidateEnvNames.join(', ')}`);
+  console.log(`[SECRET CHECK] No secret found for any of: ${candidateEnvNames.join(', ')}`);
   return undefined;
 }
 
@@ -212,7 +229,7 @@ function base64UrlDecode(str: string): Uint8Array {
 
 async function getSigningKey(): Promise<CryptoKey> {
   console.log('[SIGNING-KEY] Attempting to read SESSION_SECRET...');
-  let secret = readSecret('SESSION_SECRET');
+  let secret = await readSecret('SESSION_SECRET');
   
   console.log('[SIGNING-KEY] readSecret result:', secret ? '(set, length: ' + secret.length + ')' : '(not set)');
   

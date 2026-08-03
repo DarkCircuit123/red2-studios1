@@ -71,8 +71,8 @@ export const POST: APIRoute = async ({ request }) => {
     // constant-time comparison below with no visible cause.
     console.log('[ADMIN-CHECK] Attempting to read credentials from Secrets Manager...');
     
-    let adminUsername = readSecret('ADMIN_USERNAME');
-    let adminPassword = readSecret('ADMIN_PASSWORD');
+    let adminUsername = await readSecret('ADMIN_USERNAME');
+    let adminPassword = await readSecret('ADMIN_PASSWORD');
 
     // Fallback to CMS collection if Secrets Manager is not configured
     if (!adminUsername || !adminPassword) {
