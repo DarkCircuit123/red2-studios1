@@ -9,7 +9,7 @@ import { scrollAnimationVariants } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function HeroSection() {
-  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_c01a98369e0e46449c4db84b41fdb2dc~mv2.jpg');
+  const [heroImage, setHeroImage] = useState('https://static.wixstatic.com/media/e9d727_b9430cdc87784b7f83662a269ab0d2aa~mv2.jpg');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [scrollY, setScrollY] = useState(0);
   const { ref: contentRef, isVisible: contentVisible } = useScrollAnimation({ triggerOnce: true });
