@@ -10,6 +10,9 @@ interface MemberProviderProps {
 }
 
 export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
+  // Guard against duplicate calls in React Strict Mode
+  const memberLoadInitiatedRef = useRef(false);
+
   // Initialize state from localStorage or defaults
   const [state, setState] = useState<MemberState>(() => {
     let storedMemberData: Member | null = null;
