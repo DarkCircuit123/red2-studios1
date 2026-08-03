@@ -24,8 +24,8 @@ interface CookieInfo {
 }
 
 export default function AuthenticationVerificationTest() {
-  const [username, setUsername] = useState('Jordan310');
-  const [password, setPassword] = useState('Iloveanna1!');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [steps, setSteps] = useState<TestStep[]>([
     { name: 'Login Flow', status: 'pending', message: 'Waiting to start' },
     { name: 'Session Token Creation', status: 'pending', message: 'Waiting for login' },

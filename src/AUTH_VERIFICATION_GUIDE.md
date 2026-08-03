@@ -10,8 +10,9 @@ This guide explains how to run the authentication verification test and interpre
    - You should see the "Authentication Verification Test" component
 
 2. **Enter credentials:**
-   - Username: `Jordan310`
-   - Password: `Iloveanna1!`
+   - Username: (use credentials from Secrets Manager - ADMIN_USERNAME)
+   - Password: (use credentials from Secrets Manager - ADMIN_PASSWORD)
+   - **Note:** These credentials are stored securely and should never be hardcoded
 
 3. **Click "Start Authentication Verification"**
    - The test will run through 7 steps automatically
@@ -108,7 +109,7 @@ This guide explains how to run the authentication verification test and interpre
 **Expected result:**
 - Status: 200
 - Response includes `valid: true`
-- Response includes `username: "Jordan310"`
+- Response includes `username: "(admin username)"`
 
 **If it fails:**
 - Check that `/src/api/auth/admin-verify.ts` is deployed

@@ -24,7 +24,7 @@ All hardcoded credentials have been removed from the frontend codebase and moved
 **Issue:** Hardcoded admin credentials in frontend store
 ```typescript
 // BEFORE (VULNERABLE)
-const ADMIN_USERNAME = 'Jordan310';
+const ADMIN_USERNAME = 'your_admin_username';
 const ADMIN_PASSWORD = '[REDACTED-ROTATE-IN-WIX-ENV-VARS]';
 ```
 

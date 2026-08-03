@@ -85,9 +85,11 @@ export const POST: APIRoute = async ({ request }) => {
     // This is a temporary measure for development/testing. In production,
     // credentials MUST be set in Secrets Manager.
     if (!adminUsername || !adminPassword) {
-      console.warn('[ADMIN-CHECK] Admin credentials not found in Secrets Manager, using fallback credentials');
-      adminUsername = 'Jordan310';
-      adminPassword = 'Iloveanna1!';
+      console.warn('[ADMIN-CHECK] Admin credentials not found in Secrets Manager. Please set ADMIN_USERNAME and ADMIN_PASSWORD in Secrets Manager.');
+      return new Response(
+        JSON.stringify({ authenticated: false, error: 'Credentials not configured' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     // CRITICAL: Use constant-time comparison to prevent timing attacks

@@ -52,7 +52,7 @@ The booking availability system is **functionally complete and production-ready*
 
 **Previous Code (INSECURE):**
 ```typescript
-const ADMIN_USERNAME = 'Jordan310';
+const ADMIN_USERNAME = 'your_admin_username';
 const ADMIN_PASSWORD = '[REDACTED-ROTATE-IN-WIX-ENV-VARS]';  // ← EXPOSED
 ```
 

@@ -64,8 +64,9 @@ http://your-site.com/auth-verification
 ```
 
 ### Step 2: Enter Credentials
-- Username: `Jordan310`
-- Password: `Iloveanna1!`
+- Username: (use credentials from Secrets Manager - ADMIN_USERNAME)
+- Password: (use credentials from Secrets Manager - ADMIN_PASSWORD)
+- **Note:** These credentials are stored securely and should never be hardcoded
 
 ### Step 3: Click "Start Authentication Verification"
 
@@ -195,7 +196,7 @@ Before proceeding to production upload test, verify:
   - Status: ✅ Success
   - Response: 200
   - Contains: `valid: true`
-  - Contains: `username: "Jordan310"`
+  - Contains: `username: "(admin username)"`
 
 - [ ] **Step 7: Iframe Compatibility**
   - Status: ✅ Success
@@ -213,8 +214,8 @@ Before proceeding to production upload test, verify:
 - `signAdminToken()` failing
 
 **Fix:**
-1. Verify credentials: `Jordan310` / `Iloveanna1!`
-2. Check Secrets Manager has `ADMIN_USERNAME` and `ADMIN_PASSWORD`
+1. Verify credentials are set in Secrets Manager (ADMIN_USERNAME and ADMIN_PASSWORD)
+2. Check Secrets Manager has both values configured
 3. Check `/src/lib/auth-security.ts` for errors
 
 ### Issue: Step 3 fails (Cookie not created)

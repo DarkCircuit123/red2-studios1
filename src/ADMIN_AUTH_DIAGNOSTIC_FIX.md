@@ -105,7 +105,7 @@ Added logging for:
 [ADMIN-CHECK] Username match result: true
 [ADMIN-CHECK] Password match result: true
 [ADMIN-CHECK] Credentials validated successfully
-[TOKEN-SIGN] Creating session token for user: Jordan310 TTL: 1800000 ms
+[TOKEN-SIGN] Creating session token for user: (admin username) TTL: 1800000 ms
 [TOKEN-SIGN] Payload - iat: 2026-08-03T... exp: 2026-08-03T...
 [TOKEN-SIGN] Payload encoded, length: XXX
 [SIGNING-KEY] Attempting to read SESSION_SECRET...
@@ -114,7 +114,7 @@ Added logging for:
 [SIGNING-KEY] CryptoKey imported successfully
 [TOKEN-SIGN] Signature computed, length: XXX
 [TOKEN-SIGN] Token created, total length: XXX
-[ADMIN-CHECK] Successful login from IP: xxx.xxx.xxx.xxx, user: Jordan310
+[ADMIN-CHECK] Successful login from IP: xxx.xxx.xxx.xxx, user: (admin username)
 [ADMIN-CHECK] Setting cookie with attributes: Path=/, HttpOnly, SameSite=Lax, Max-Age=1800
    ↓
 Response: HTTP 200 with Set-Cookie header
@@ -138,11 +138,11 @@ Response: HTTP 200 with Set-Cookie header
 [TOKEN-VERIFY] Signing key obtained
 [TOKEN-VERIFY] Expected signature computed
 [TOKEN-VERIFY] Signature verified
-[TOKEN-VERIFY] Payload decoded - username: Jordan310 iat: 2026-08-03T... exp: 2026-08-03T...
-[TOKEN-VERIFY] Token valid for user: Jordan310
-[ADMIN-VERIFY] Session valid for user: Jordan310
+[TOKEN-VERIFY] Payload decoded - username: (admin username) iat: 2026-08-03T... exp: 2026-08-03T...
+[TOKEN-VERIFY] Token valid for user: (admin username)
+[ADMIN-VERIFY] Session valid for user: (admin username)
    ↓
-Response: HTTP 200 { valid: true, username: "Jordan310" }
+Response: HTTP 200 { valid: true, username: "(admin username)" }
 ```
 
 ## Debugging Guide
@@ -189,10 +189,11 @@ Response: HTTP 200 { valid: true, username: "Jordan310" }
    ```bash
    curl -X POST http://localhost:3000/api/auth/admin-check \
      -H "Content-Type: application/json" \
-     -d '{"username":"Jordan310","password":"Iloveanna1!"}'
+     -d '{"username":"YOUR_ADMIN_USERNAME","password":"YOUR_ADMIN_PASSWORD"}'
    ```
    - Expected: HTTP 200 with `authenticated: true`
    - Check logs for `[ADMIN-CHECK]` entries
+   - **Note:** Use credentials from Secrets Manager (ADMIN_USERNAME and ADMIN_PASSWORD)
 
 2. **Verify Test (with cookie):**
    ```bash
@@ -221,8 +222,8 @@ The UploadProductionTest component will:
 
 ### Secrets Manager (Wix Dashboard)
 Ensure these are set in Wix Secrets Manager:
-- `ADMIN_USERNAME` = `Jordan310`
-- `ADMIN_PASSWORD` = `Iloveanna1!`
+- `ADMIN_USERNAME` = (set in Secrets Manager)
+- `ADMIN_PASSWORD` = (set in Secrets Manager)
 - `SESSION_SECRET` = (any secure random string, 32+ chars)
 
 If not set, the code falls back to hardcoded values (development only).
@@ -230,8 +231,8 @@ If not set, the code falls back to hardcoded values (development only).
 ### Environment Variables (Development)
 For local testing, set in `.env`:
 ```
-ADMIN_USERNAME=Jordan310
-ADMIN_PASSWORD=Iloveanna1!
+ADMIN_USERNAME=<your_admin_username>
+ADMIN_PASSWORD=<your_admin_password>
 SESSION_SECRET=dev-session-secret-change-in-production-12345678901234567890
 ```
 
