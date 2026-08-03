@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, LogOut, Music, Calendar, Lock, AlertCircle, CheckCircle, Upload, Zap, Database } from 'lucide-react';
+import { Settings, X, Edit2, LogOut, Music, Calendar, Lock, AlertCircle, CheckCircle, Upload, Zap, Database, TestTube } from 'lucide-react';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
@@ -9,6 +9,7 @@ import MusicManager from './MusicManager';
 import BookingManagerPro from './BookingManagerPro';
 import MediaHealthTab from './AdminPanel/MediaHealthTab';
 import DataManagementTab from './AdminPanel/DataManagementTab';
+import UploadProductionTest from './UploadProductionTest';
 import { BaseCrudService } from '@/integrations';
 import { Services, HomepageImages, Portfolio, ClientsPress, AboutSection } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
@@ -147,6 +148,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     { id: 'media-health', label: 'Health', icon: Zap },
     { id: 'data', label: 'Data', icon: Database },
     { id: 'bookings', label: 'Bookings', icon: Calendar },
+    { id: 'upload-test', label: 'Test', icon: TestTube },
     { id: 'credentials', label: 'Creds', icon: Lock },
   ];
 
@@ -798,6 +800,20 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               {activeTab === 'data' && (
                 <div>
                   <DataManagementTab />
+                </div>
+              )}
+
+              {/* Upload Test Tab */}
+              {activeTab === 'upload-test' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide flex items-center gap-2">
+                      <TestTube className="w-4 h-4" />
+                      Production Upload Test
+                    </h3>
+                    <p className="text-xs text-black/60">Execute a complete end-to-end upload test with real JPG file</p>
+                  </div>
+                  <UploadProductionTest />
                 </div>
               )}
             </div>

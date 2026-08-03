@@ -3,8 +3,8 @@
  * Uses server-only Wix SDK (getSecureContext)
  * 
  * This endpoint:
- * 1. Accepts a file ID from the upload response
- * 2. Queries Wix Media Manager to get the permanent media URL
+ * 1. Accepts a fileName from the upload response
+ * 2. Queries Wix Media Manager to find the file by name
  * 3. Returns the media URL with metadata
  * 4. Includes structured logging for debugging
  */
@@ -14,13 +14,14 @@ import { getSecureContext } from '@wix/sdk';
 import { media } from '@wix/media';
 
 interface GetMediaUrlRequest {
-  fileId: string;
+  fileName: string;
 }
 
 interface GetMediaUrlResponse {
   success: true;
   mediaUrl: string;
-  fileId: string;
+  mediaId?: string;
+  fileName: string;
 }
 
 interface ErrorResponse {
@@ -35,25 +36,24 @@ export const POST: APIRoute = async (context) => {
   try {
     // Parse request body
     const body = await context.request.json() as GetMediaUrlRequest;
-    const { fileId } = body;
+    const { fileName } = body;
 
     // Structured logging: incoming request
     console.log(`[GET_MEDIA_URL] Request ${requestId} started`, {
-      fileId,
+      fileName,
       timestamp: new Date().toISOString(),
     });
 
     // Validate required field
-    if (!fileId) {
+    if (!fileName || typeof fileName !== 'string' || fileName.trim().length === 0) {
       console.warn(`[GET_MEDIA_URL] Request ${requestId} validation failed`, {
-        missingFields: {
-          fileId: !fileId,
-        },
+        fileName,
+        timestamp: new Date().toISOString(),
       });
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Missing required field: fileId'
+          error: 'Missing or invalid fileName'
         } as ErrorResponse),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
@@ -63,21 +63,45 @@ export const POST: APIRoute = async (context) => {
     console.log(`[GET_MEDIA_URL] Request ${requestId} getting Wix context`, {
       timestamp: new Date().toISOString(),
     });
-    const wixContext = getSecureContext();
-    const mediaClient = media(wixContext);
+    
+    let wixContext;
+    try {
+      wixContext = getSecureContext();
+    } catch (contextError) {
+      console.error(`[GET_MEDIA_URL] Request ${requestId} failed to get Wix context`, {
+        error: contextError instanceof Error ? contextError.message : String(contextError),
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Failed to initialize Wix SDK: ${contextError instanceof Error ? contextError.message : String(contextError)}`);
+    }
 
-    // Call Wix Media Manager API to get file info
-    console.log(`[GET_MEDIA_URL] Request ${requestId} calling getFileInfo`, {
-      fileId,
+    let mediaClient;
+    try {
+      mediaClient = media(wixContext);
+    } catch (clientError) {
+      console.error(`[GET_MEDIA_URL] Request ${requestId} failed to create media client`, {
+        error: clientError instanceof Error ? clientError.message : String(clientError),
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Failed to create media client: ${clientError instanceof Error ? clientError.message : String(clientError)}`);
+    }
+
+    // Call Wix Media Manager API to list files and find by name
+    console.log(`[GET_MEDIA_URL] Request ${requestId} calling listFiles`, {
+      fileName,
       timestamp: new Date().toISOString(),
     });
 
-    let fileInfo;
+    let listResponse;
     try {
-      fileInfo = await mediaClient.files.getFileInfo(fileId);
+      // List files with a filter for the fileName
+      listResponse = await mediaClient.files.listFiles({
+        sort: 'CREATED_DATE_DESC',
+        limit: 100
+      });
     } catch (apiError) {
       console.error(`[GET_MEDIA_URL] Request ${requestId} Wix API call failed`, {
-        fileId,
+        fileName,
         error: apiError instanceof Error ? apiError.message : String(apiError),
         stack: apiError instanceof Error ? apiError.stack : undefined,
         timestamp: new Date().toISOString(),
@@ -85,26 +109,46 @@ export const POST: APIRoute = async (context) => {
       throw new Error(`Wix Media Manager API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
     }
 
-    // Validate response
-    if (!fileInfo?.file?.url) {
-      console.error(`[GET_MEDIA_URL] Request ${requestId} no media URL in response`, {
-        fileId,
-        response: fileInfo,
+    // Find the file by name
+    const files = listResponse?.items || [];
+    console.log(`[GET_MEDIA_URL] Request ${requestId} found ${files.length} files`, {
+      fileName,
+      timestamp: new Date().toISOString(),
+    });
+
+    const foundFile = files.find((f: any) => f.fileName === fileName || f.displayName === fileName);
+
+    if (!foundFile) {
+      console.warn(`[GET_MEDIA_URL] Request ${requestId} file not found`, {
+        fileName,
+        availableFiles: files.map((f: any) => ({ fileName: f.fileName, displayName: f.displayName })),
         timestamp: new Date().toISOString(),
       });
-      throw new Error('Wix Media Manager did not return a media URL');
+      throw new Error(`File not found: ${fileName}`);
+    }
+
+    // Get the media URL
+    const mediaUrl = foundFile.url || foundFile.downloadUrl;
+    if (!mediaUrl) {
+      console.error(`[GET_MEDIA_URL] Request ${requestId} no media URL in file`, {
+        fileName,
+        file: foundFile,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error('File found but no media URL available');
     }
 
     // Verify media URL is a real Wix domain
-    const mediaUrlObj = new URL(fileInfo.file.url);
+    const mediaUrlObj = new URL(mediaUrl);
     const isValidWixDomain = 
       mediaUrlObj.hostname.includes('wix') ||
       mediaUrlObj.hostname.includes('files') ||
-      mediaUrlObj.hostname.includes('media');
+      mediaUrlObj.hostname.includes('media') ||
+      mediaUrlObj.hostname.includes('wixmp');
 
     if (!isValidWixDomain) {
       console.error(`[GET_MEDIA_URL] Request ${requestId} invalid media URL domain`, {
-        mediaUrl: fileInfo.file.url,
+        mediaUrl,
         hostname: mediaUrlObj.hostname,
         timestamp: new Date().toISOString(),
       });
@@ -115,7 +159,8 @@ export const POST: APIRoute = async (context) => {
 
     // Structured logging: success
     console.log(`[GET_MEDIA_URL] Request ${requestId} completed successfully`, {
-      fileId,
+      fileName,
+      mediaId: foundFile.id,
       mediaUrlDomain: mediaUrlObj.hostname,
       duration: `${duration}ms`,
       timestamp: new Date().toISOString(),
@@ -124,8 +169,9 @@ export const POST: APIRoute = async (context) => {
     return new Response(
       JSON.stringify({
         success: true,
-        mediaUrl: fileInfo.file.url,
-        fileId,
+        mediaUrl,
+        mediaId: foundFile.id,
+        fileName,
       } as GetMediaUrlResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
