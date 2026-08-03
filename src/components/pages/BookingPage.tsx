@@ -90,28 +90,46 @@ export default function BookingPage() {
   }, {} as Record<string, BookingAvailability[]>);
 
   const handleSlotClick = (slot: BookingAvailability) => {
-    setSelectedSlot(slot);
-    setSubmitSuccess(false);
-    setFormData({ name: '', email: '', phone: '', message: '' });
+    try {
+      setSelectedSlot(slot);
+      setSubmitSuccess(false);
+      setFormData({ name: '', email: '', phone: '', message: '' });
+    } catch (error) {
+      console.error('Error handling slot click:', error);
+    }
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    try {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+    } catch (error) {
+      console.error('Error handling form change:', error);
+    }
   };
 
   const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSlot) return;
+    if (!selectedSlot) {
+      console.warn('No slot selected for booking');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
+      // Validate form data
+      if (!formData.name || !formData.email || !formData.phone) {
+        alert('Please fill in all required fields');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Use backend API to submit booking with elevated permissions
       const result = await submitPublicBooking(
         formData.name,
         formData.email,
         formData.phone,
-        selectedSlot.sessionType,
+        selectedSlot.sessionType || '',
         selectedSlot.bookingDate,
         typeof selectedSlot.startTime === 'string' ? selectedSlot.startTime : '',
         formData.message,
@@ -121,11 +139,12 @@ export default function BookingPage() {
       if (!result.success) {
         console.error('Error submitting booking:', result.error);
         alert(`Failed to submit booking: ${result.error}`);
+        setIsSubmitting(false);
         return;
       }
 
-      // Update local state
-      setBookings(bookings.filter(b => b._id !== selectedSlot._id));
+      // Update local state - remove booked slot
+      setBookings(prevBookings => prevBookings.filter(b => b._id !== selectedSlot._id));
 
       setSubmitSuccess(true);
       setSelectedSlot(null);
