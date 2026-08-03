@@ -131,8 +131,8 @@ export default function Header() {
             : 'bg-transparent'
         }`}
       >
-        <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-between w-full relative">
-        {/* Logo - Text-based RED² with unified hover behavior */}
+        <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-center w-full relative">
+        {/* Logo - Text-based RED² with unified hover behavior - Positioned absolutely on left */}
         <style>{`
           @keyframes spin-2 {
             from {
@@ -149,7 +149,7 @@ export default function Header() {
         <motion.div
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.98 }}
-          className="logo-container group"
+          className="logo-container group absolute left-6 md:left-8"
         >
           <Link
             to="/"
@@ -171,7 +171,7 @@ export default function Header() {
         </motion.div>
 
         {/* Desktop Navigation - Centered */}
-        <div className="hidden md:flex items-center justify-center gap-12 absolute left-1/2 transform -translate-x-1/2">
+        <div className="hidden md:flex items-center justify-center gap-12">
           {[
             { href: '#about', label: 'About', isAnchor: true },
             { href: '/portfolio', label: 'Work', isLink: true },
@@ -224,7 +224,7 @@ export default function Header() {
         </div>
 
         {/* Admin & Mobile Menu - Right aligned */}
-        <div className="flex items-center gap-6 ml-auto">
+        <div className="flex items-center gap-6 ml-auto absolute right-6 md:right-8">
           {/* Admin gear icon - always show, but behavior changes based on auth */}
           <motion.button
             whileHover={{ scale: 1.1, rotate: 90 }}
