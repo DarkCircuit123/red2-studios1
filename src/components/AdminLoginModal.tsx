@@ -139,7 +139,19 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }: Adm
                     className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-2"
                   >
                     <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-300">{error}</p>
+                    <div className="text-sm text-red-300 space-y-2">
+                      <p>{error}</p>
+                      {error === 'Credentials not configured' && (
+                        <div className="text-xs text-red-200 mt-2 pt-2 border-t border-red-500/30 space-y-1">
+                          <p className="font-bold">Setup Required:</p>
+                          <p>1. Go to Wix Dashboard → Settings → Secrets Manager</p>
+                          <p>2. Add two secrets:</p>
+                          <p className="ml-2">• <code className="bg-red-900/30 px-1 rounded">ADMIN_USERNAME</code></p>
+                          <p className="ml-2">• <code className="bg-red-900/30 px-1 rounded">ADMIN_PASSWORD</code></p>
+                          <p>3. Refresh this page and try again</p>
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 )}
 
