@@ -25,59 +25,68 @@
  * names are given they're checked in order, first one that resolves wins.
  */
 export async function readSecret(...candidateEnvNames: string[]): Promise<string | undefined> {
+  console.log(`[SECRET DEBUG] readSecret() called for: ${candidateEnvNames.join(', ')}`);
+  
   // Import the Wix Secrets Manager backend module
   let getSecret: any;
   try {
     // Try wix-secrets-backend.v2 first (newer API)
+    console.log('[SECRET DEBUG] Attempting to import wix-secrets-backend.v2...');
     const secretsModule = await import('wix-secrets-backend.v2');
     getSecret = secretsModule.getSecret;
-  } catch {
+    console.log('[SECRET DEBUG] Successfully imported wix-secrets-backend.v2');
+  } catch (err1) {
+    console.log('[SECRET DEBUG] wix-secrets-backend.v2 import failed:', err1 instanceof Error ? err1.message : 'unknown error');
     try {
       // Fall back to wix-secrets-backend (older API)
+      console.log('[SECRET DEBUG] Attempting to import wix-secrets-backend...');
       const secretsModule = await import('wix-secrets-backend');
       getSecret = secretsModule.getSecret;
-    } catch {
-      console.error('[SECRET CHECK] Failed to import Wix Secrets Manager module');
+      console.log('[SECRET DEBUG] Successfully imported wix-secrets-backend');
+    } catch (err2) {
+      console.error('[SECRET DEBUG] Both wix-secrets-backend imports failed');
+      console.error('[SECRET DEBUG] wix-secrets-backend error:', err2 instanceof Error ? err2.message : 'unknown error');
       return undefined;
     }
   }
 
   for (const name of candidateEnvNames) {
     try {
-      console.log(`[SECRET CHECK] Attempting to retrieve: ${name}`);
+      console.log(`[SECRET DEBUG] ${name} lookup started`);
       
       // Call the Wix Secrets Manager API
       const raw = await getSecret(name);
       
       if (!raw) {
-        console.log(`[SECRET CHECK] ${name} exists: false`);
+        console.log(`[SECRET DEBUG] ${name} returned: false`);
         continue;
       }
 
-      console.log(`[SECRET CHECK] ${name} exists: true`);
+      console.log(`[SECRET DEBUG] ${name} returned: true`);
 
       const trimmed = raw.trim();
       if (!trimmed) {
-        console.log(`[SECRET CHECK] Secret "${name}" is empty after trimming`);
+        console.log(`[SECRET DEBUG] Secret "${name}" is empty after trimming`);
         continue;
       }
 
       // Only strip a prefix that is exactly this key's own name.
+      // Properly escape the regex: single backslash for \s and \S
       const selfPrefix = new RegExp(`^${name}\\s*=\\s*([\\s\\S]*)$`);
       const match = trimmed.match(selfPrefix);
       const value = match ? match[1].trim() : trimmed;
 
       if (value) {
-        console.log(`[SECRET CHECK] Secret "${name}" resolved successfully (length: ${value.length})`);
+        console.log(`[SECRET DEBUG] ${name} resolved successfully (length: ${value.length})`);
         return value;
       }
     } catch (error) {
-      console.log(`[SECRET CHECK] ${name} exists: false (error: ${error instanceof Error ? error.message : 'unknown'})`);
+      console.log(`[SECRET DEBUG] ${name} lookup error: ${error instanceof Error ? error.message : 'unknown'}`);
       continue;
     }
   }
   
-  console.log(`[SECRET CHECK] No secret found for any of: ${candidateEnvNames.join(', ')}`);
+  console.log(`[SECRET DEBUG] No secret found for any of: ${candidateEnvNames.join(', ')}`);
   return undefined;
 }
 
