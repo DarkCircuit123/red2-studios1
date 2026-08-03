@@ -2,6 +2,10 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { safeJson } from './safeJson';
 
+// Track verification attempts to prevent infinite retries
+let verificationAttemptCount = 0;
+const MAX_VERIFICATION_ATTEMPTS = 1;
+
 interface AdminAuthState {
   isAdminAuthenticated: boolean;
   adminUsername: string | null;
@@ -148,6 +152,13 @@ export const useAdminAuth = create<AdminAuthState>()(
       // be supplied here — credentials:'include' sends the httpOnly
       // cookie automatically, and the server reads it directly.
       verifySession: async () => {
+        // Prevent infinite retry loops - only verify once per session
+        if (verificationAttemptCount >= MAX_VERIFICATION_ATTEMPTS) {
+          set({ isVerifying: false });
+          return false;
+        }
+        verificationAttemptCount++;
+
         set({ isVerifying: true });
 
         try {

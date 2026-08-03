@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { MemberActions, MemberContext, MemberState } from '.';
 import { getCurrentMember, Member } from '..';
 
@@ -164,10 +164,16 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
     }, [updateState]),
   };
 
-  // Load member on mount
+  // Load member on mount - only once to prevent infinite loops
   useEffect(() => {
+    // Guard against duplicate calls in React Strict Mode or accidental re-renders
+    if (memberLoadInitiatedRef.current) {
+      return;
+    }
+    memberLoadInitiatedRef.current = true;
+    
     actions.loadCurrentMember();
-  }, []);
+  }, [actions]);
 
   return (
     <MemberContext.Provider value={{ ...state, actions }}>

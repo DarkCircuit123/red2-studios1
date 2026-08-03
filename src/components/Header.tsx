@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -16,16 +16,23 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const adminVerificationInitiatedRef = useRef(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
   const { isAdminAuthenticated, isVerifying, logout: adminLogout, verifySession } = useAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
-  // Reconcile real auth state from the server on every page load. The
+  // Reconcile real auth state from the server on mount only. The
   // client no longer persists isAdminAuthenticated to localStorage (see
   // adminAuthStore.ts), so without this call every refresh would show
   // "logged out" even with a perfectly valid session cookie — this is
   // what makes a refresh correctly stay logged in.
   useEffect(() => {
+    // Guard against duplicate verification calls in React Strict Mode
+    if (adminVerificationInitiatedRef.current) {
+      return;
+    }
+    adminVerificationInitiatedRef.current = true;
+
     verifySession().catch(err => {
       // Silently handle verification errors - expected for unauthenticated users
       debugLog('[HEADER] Admin session verification skipped (not authenticated)');
