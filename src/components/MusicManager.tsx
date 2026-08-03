@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, Music, Loader, FileAudio, Link2, CheckCircle2 } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
-import { uploadMedia, importMediaFromUrl } from '@/lib/direct-media-upload';
+import { uploadMedia, importMediaFromUrl } from '@/lib/wix-media-upload-service';
 import { MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
 interface MusicManagerProps {
@@ -83,7 +83,7 @@ export default function MusicManager({
       // Media Manager (our backend only issues a signed URL, never
       // touches the file bytes), with an automatic fallback to the old
       // proxy-through-backend route if the direct path is ever blocked
-      // at the network level. See src/lib/direct-media-upload.ts.
+      // See src/lib/wix-media-upload-service.ts.
       const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
       const musicUrl = result.mediaUrl;
 

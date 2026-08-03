@@ -3,8 +3,8 @@ import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3, Link2, Loader } fro
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
-import MediaUploadService, { MediaUploadProgress } from '@/lib/media-upload-service';
-import { importMediaFromUrl } from '@/lib/direct-media-upload';
+import { uploadMedia, importMediaFromUrl, createPreviewUrl, revokePreviewUrl, isDataUrl, type UploadProgress } from '@/lib/wix-media-upload-service';
+import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import WDE0009FixValidator from '@/lib/wde0009-fix-validation';
 import { validateImageStorage, validateCMSUpdatePayload } from '@/lib/image-storage-validator';
 import WixImageResolver from '@/lib/wix-image-resolver';
@@ -19,6 +19,8 @@ interface ImageUploadManagerProps {
   fieldName?: string;
   acceptedFormats?: string[];
 }
+
+type MediaUploadProgress = UploadProgress;
 
 // Web display formats only (no PSD, no proprietary formats)
 const SUPPORTED_FORMATS = {
@@ -68,7 +70,7 @@ export default function ImageUploadManager({
   useEffect(() => {
     return () => {
       if (previewUrl) {
-        MediaUploadService.revokePreviewUrl(previewUrl);
+        revokePreviewUrl(previewUrl);
       }
     };
   }, [previewUrl]);
@@ -115,21 +117,21 @@ export default function ImageUploadManager({
     try {
       // Create local preview URL using URL.createObjectURL (not base64)
       // This is memory-efficient and doesn't bloat the CMS
-      const localPreviewUrl = MediaUploadService.createPreviewUrl(file);
+      const localPreviewUrl = createPreviewUrl(file);
       setPreviewUrl(localPreviewUrl);
       console.log('[ImageUploadManager] Created preview URL');
 
       // Upload to Wix Media Manager
       // Returns a Wix media URL (wix:image:// or https://static.wixstatic.com/)
-      console.log('[ImageUploadManager] Calling MediaUploadService.uploadImage...');
-      const result = await MediaUploadService.uploadImage(file, (progress: MediaUploadProgress) => {
+      console.log('[ImageUploadManager] Calling uploadMedia...');
+      const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG, (progress: MediaUploadProgress) => {
         setUploadProgress(progress.percentage);
       });
       console.log('[ImageUploadManager] Upload service returned:', { mediaUrl: result.mediaUrl, mediaId: result.mediaId });
 
       // Validate that we got a proper Wix media URL (not base64)
       // This prevents WDE0009 errors
-      if (MediaUploadService.isDataUrl(result.mediaUrl)) {
+      if (isDataUrl(result.mediaUrl)) {
         console.error('[ImageUploadManager] ERROR: Got data URL instead of Wix media URL:', result.mediaUrl.substring(0, 50));
         throw new Error('Image upload failed: this file could not be stored. Please retry the upload.');
       }
