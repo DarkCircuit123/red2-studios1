@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { getSecureContext } from '@wix/sdk';
 import { files } from '@wix/media';
 import { IMAGE_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
@@ -65,23 +64,12 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    // Initialize Wix SDK context
-    console.log('[MEDIA_UPLOAD] Initializing Wix SDK context...');
-    let wixContext;
-    try {
-      wixContext = getSecureContext(context);
-      console.log('[MEDIA_UPLOAD] Wix SDK context initialized');
-    } catch (contextError) {
-      console.error('[MEDIA_UPLOAD] Failed to initialize Wix SDK context:', contextError);
-      throw new Error(`SDK context initialization failed: ${contextError instanceof Error ? contextError.message : String(contextError)}`);
-    }
-
     // Upload to the REAL Wix Media Manager - two-step flow: request an
     // upload URL, then PUT the actual file bytes to it.
     console.log('[MEDIA_UPLOAD] Requesting Wix Media Manager upload URL...');
     let uploadUrl: string;
     try {
-      const filesClient = files(wixContext);
+      const filesClient = files();
       const uploadUrlResponse = await filesClient.generateFileUploadUrl(file.type, {
         fileName: file.name,
       });

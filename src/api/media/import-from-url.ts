@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { getSecureContext } from '@wix/sdk';
 import { files } from '@wix/media';
 import { IMAGE_UPLOAD_CONFIG, MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
@@ -121,20 +120,9 @@ export const POST: APIRoute = async (context) => {
     const fileName = decodeURIComponent(parsed.pathname.split('/').pop() || `${kind}-import`);
     console.log(`[IMPORT_FROM_URL] Link tested OK (type=${detectedType}, size=${detectedSize ?? 'unknown'}). Importing into Wix Media Manager...`);
 
-    // Initialize Wix SDK context
-    console.log('[IMPORT_FROM_URL] Initializing Wix SDK context...');
-    let wixContext;
-    try {
-      wixContext = getSecureContext(context);
-      console.log('[IMPORT_FROM_URL] Wix SDK context initialized');
-    } catch (contextError) {
-      console.error('[IMPORT_FROM_URL] Failed to initialize Wix SDK context:', contextError);
-      throw new Error(`SDK context initialization failed: ${contextError instanceof Error ? contextError.message : String(contextError)}`);
-    }
-
     let importResult;
     try {
-      const filesClient = files(wixContext);
+      const filesClient = files();
       importResult = await filesClient.importFile(parsed.toString(), {
         mimeType: detectedType,
         displayName: fileName,

@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { getSecureContext } from '@wix/sdk';
 import { files } from '@wix/media';
 import { IMAGE_UPLOAD_CONFIG, MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
@@ -55,20 +54,10 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    console.log('[GET_UPLOAD_URL] Initializing Wix SDK context...');
-    let wixContext;
-    try {
-      wixContext = getSecureContext(context);
-      console.log('[GET_UPLOAD_URL] Wix SDK context initialized');
-    } catch (contextError) {
-      console.error('[GET_UPLOAD_URL] Failed to initialize Wix SDK context:', contextError);
-      throw new Error(`SDK context initialization failed: ${contextError instanceof Error ? contextError.message : String(contextError)}`);
-    }
-
-    console.log('[GET_UPLOAD_URL] Calling files.generateFileUploadUrl with Wix context...');
+    console.log('[GET_UPLOAD_URL] Calling files.generateFileUploadUrl...');
     let uploadUrl: string;
     try {
-      const filesClient = files(wixContext);
+      const filesClient = files();
       const result = await filesClient.generateFileUploadUrl(mimeType, { fileName });
       uploadUrl = result.uploadUrl;
       console.log('[GET_UPLOAD_URL] Successfully generated upload URL');
