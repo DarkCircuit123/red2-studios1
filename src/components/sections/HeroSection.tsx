@@ -80,10 +80,55 @@ export default function HeroSection() {
       </motion.div>
       {/* Subtle gradient overlay - darker at bottom */}
       <div className="absolute inset-0 z-5 bg-gradient-to-b from-black/20 via-black/40 to-black/70" />
-      {/* Content positioned in lower third with padding */}
+      
+      {/* Content positioned in center */}
+      <div className="relative z-10 max-w-[100rem] mx-auto px-4 md:px-8 text-center flex flex-col items-center justify-center h-full">
+        <ScrollReveal direction="up" delay={200} duration={800}>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={contentVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-5xl md:text-7xl lg:text-8xl font-heading font-black text-white mb-6 tracking-tight"
+          >
+            RED<span className="text-primary">²</span>
+          </motion.h1>
+        </ScrollReveal>
+
+        <ScrollReveal direction="up" delay={400} duration={800}>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={contentVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-lg md:text-xl text-white/70 max-w-2xl mb-12 font-paragraph"
+          >
+            Visual storytelling through the lens of experience
+          </motion.p>
+        </ScrollReveal>
+
+        <ScrollReveal direction="up" delay={600} duration={800}>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <motion.button
+              onClick={scrollToGallery}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-3 bg-primary text-white font-mono text-sm uppercase tracking-widest rounded-lg hover:bg-primary/80 transition-colors duration-300"
+            >
+              View Work
+            </motion.button>
+            <motion.button
+              onClick={handleContactClick}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-3 border border-white/30 text-white font-mono text-sm uppercase tracking-widest rounded-lg hover:border-primary hover:text-primary transition-colors duration-300"
+            >
+              Get In Touch
+            </motion.button>
+          </div>
+        </ScrollReveal>
+      </div>
 
       {/* Enhanced scroll indicator with scroll animation */}
-      <ScrollReveal direction="up" delay={600} duration={800} className="absolute bottom-6 md:bottom-12 left-4 md:left-8 z-10">
+      <ScrollReveal direction="up" delay={800} duration={800} className="absolute bottom-6 md:bottom-12 left-4 md:left-8 z-10">
         <motion.button
           onClick={scrollToGallery}
           whileHover={{ scale: 1.1 }}
