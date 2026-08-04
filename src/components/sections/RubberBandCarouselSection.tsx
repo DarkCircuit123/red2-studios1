@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
@@ -10,6 +10,60 @@ interface CarouselImage {
   focalPointX?: number;
   focalPointY?: number;
 }
+
+interface CarouselImageCardProps {
+  image: CarouselImage;
+}
+
+// Extract CarouselImageCard outside the component to prevent recreation on every render
+const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
+  const [imageDims, setImageDims] = useState({ width: 1920, height: 1080 });
+
+  const { fitting } = useImageFitting({
+    imageWidth: imageDims.width,
+    imageHeight: imageDims.height,
+    containerWidth: typeof window !== 'undefined' ? window.innerWidth : 1920,
+    containerHeight: Math.round((typeof window !== 'undefined' ? window.innerHeight : 1080) * 0.55),
+    focalPoint: {
+      x: image.focalPointX ?? 50,
+      y: image.focalPointY ?? 50,
+    },
+    fitMode: 'cover',
+  });
+
+  const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    setImageDims(prevDims => {
+      // Guard: only update if dimensions actually changed
+      if (prevDims.width === img.naturalWidth && prevDims.height === img.naturalHeight) {
+        return prevDims;
+      }
+      return {
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      };
+    });
+  }, []);
+
+  const imageStyle = useMemo(() => ({
+    objectFit: fitting.objectFit as any,
+    objectPosition: fitting.objectPosition,
+  }), [fitting.objectFit, fitting.objectPosition]);
+
+  return (
+    <Image
+      src={image.url}
+      alt={image.alt}
+      onLoad={handleImageLoad}
+      width={1920}
+      height={1080}
+      className="w-full h-full"
+      style={imageStyle}
+    />
+  );
+});
+
+CarouselImageCard.displayName = 'CarouselImageCard';
 
 const RubberBandCarouselSection: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -185,64 +239,14 @@ const RubberBandCarouselSection: React.FC = () => {
           gap: '8px',
         }}
       >
-        {duplicatedImages.map((image, index) => {
-          const CarouselImageCard = React.memo(() => {
-            const [imageDims, setImageDims] = useState({ width: 1920, height: 1080 });
-
-            const { fitting } = useImageFitting({
-              imageWidth: imageDims.width,
-              imageHeight: imageDims.height,
-              containerWidth: typeof window !== 'undefined' ? window.innerWidth : 1920,
-              containerHeight: Math.round((typeof window !== 'undefined' ? window.innerHeight : 1080) * 0.55),
-              focalPoint: {
-                x: image.focalPointX ?? 50,
-                y: image.focalPointY ?? 50,
-              },
-              fitMode: 'cover',
-            });
-
-            const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-              const img = e.currentTarget;
-              setImageDims(prevDims => {
-                // Guard: only update if dimensions actually changed
-                if (prevDims.width === img.naturalWidth && prevDims.height === img.naturalHeight) {
-                  return prevDims;
-                }
-                return {
-                  width: img.naturalWidth,
-                  height: img.naturalHeight,
-                };
-              });
-            }, []);
-
-            const imageStyle = useMemo(() => ({
-              objectFit: fitting.objectFit as any,
-              objectPosition: fitting.objectPosition,
-            }), [fitting.objectFit, fitting.objectPosition]);
-
-            return (
-              <Image
-                src={image.url}
-                alt={image.alt}
-                onLoad={handleImageLoad}
-                width={1920}
-                height={1080}
-                className="w-full h-full"
-                style={imageStyle}
-              />
-            );
-          });
-          CarouselImageCard.displayName = 'CarouselImageCard';
-
-          return (
-            <div
-              key={`${image.id}-${index}`}
-              className="flex-shrink-0 w-screen h-full"
-            >
-              <CarouselImageCard />
-            </div>
-          );
-        })}
+        {duplicatedImages.map((image, index) => (
+          <div
+            key={`${image.id}-${index}`}
+            className="flex-shrink-0 w-screen h-full"
+          >
+            <CarouselImageCard image={image} />
+          </div>
+        ))}
       </motion.div>
 
       {/* Bottom divider */}

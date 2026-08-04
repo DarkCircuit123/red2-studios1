@@ -2,6 +2,7 @@ import React, { Suspense, useState, useEffect } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
 import SplashScreen from '@/components/SplashScreen';
+import LogoSplash from '@/components/LogoSplash';
 
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -46,6 +47,7 @@ export default function AppRoot() {
 
   return (
     <>
+      <LogoSplash />
       {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
       {splashComplete && (
         <RouterErrorBoundary>
