@@ -103,10 +103,37 @@ export default function Header() {
   const handleLoginModalSubmit = useCallback(async (username: string, password: string) => {
     setIsAuthenticating(true);
     try {
-      // Use the existing Wix login flow
-      // This will redirect to Wix login page
-      memberActions.login();
+      console.log('[HEADER] Attempting login with credentials...');
+      
+      // Call the login API with email and password
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: username,
+          password: password,
+          returnToUrl: window.location.pathname,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Login failed. Please check your credentials.');
+      }
+
+      const data = await response.json();
+      console.log('[HEADER] Login successful, loading member...');
+      
+      // Load the current member to update auth state
+      await memberActions.loadCurrentMember();
+      
+      // Close the modal on successful login
+      setIsLoginModalOpen(false);
     } catch (error) {
+      console.error('[HEADER] Login error:', error);
       throw error;
     } finally {
       setIsAuthenticating(false);

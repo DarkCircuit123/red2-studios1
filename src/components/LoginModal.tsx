@@ -60,7 +60,7 @@ export default function LoginModal({ isOpen, onClose, onSubmit, isLoading = fals
     setError('');
 
     if (!username.trim()) {
-      setUsernameError('Username is required');
+      setUsernameError('Email is required');
       hasErrors = true;
     } else if (!username.includes('@')) {
       setUsernameError('Please enter a valid email address');
@@ -83,7 +83,8 @@ export default function LoginModal({ isOpen, onClose, onSubmit, isLoading = fals
       await onSubmit(username, password);
       // Modal will close automatically after successful login
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      setError(errorMessage);
       setIsSubmitting(false);
     }
   };

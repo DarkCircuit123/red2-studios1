@@ -2,12 +2,50 @@ import { members } from '@wix/members';
 
 export async function POST(context: any) {
   try {
-    const { returnToUrl } = context.url.searchParams;
+    const body = await context.request.json().catch(() => ({}));
+    const { email, password, returnToUrl } = body;
     
-    // Get the Wix SDK context from locals (provided by @wix/astro integration)
+    // If email and password are provided, use them for authentication
+    if (email && password) {
+      console.log('[LOGIN API] Authenticating with email/password...');
+      
+      // Get the Wix SDK context from locals (provided by @wix/astro integration)
+      const wixContext = context.locals;
+      const membersClient = members(wixContext);
+      
+      try {
+        // Attempt to authenticate with email and password
+        const result = await membersClient.authenticate({
+          email,
+          password,
+        });
+        
+        console.log('[LOGIN API] Authentication successful');
+        
+        // Return success response
+        return new Response(JSON.stringify({ 
+          success: true,
+          message: 'Login successful'
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (authError) {
+        console.error('[LOGIN API] Authentication failed:', authError);
+        
+        // Return authentication error
+        return new Response(JSON.stringify({ 
+          error: 'Invalid email or password. Please try again.'
+        }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+    
+    // Otherwise, use the standard Wix login flow (redirect to Wix login page)
+    console.log('[LOGIN API] Using standard Wix login flow...');
     const wixContext = context.locals;
-    
-    // Get the login URL from Wix Members API
     const membersClient = members(wixContext);
     
     // Generate login URL - this will redirect to Wix login
@@ -23,7 +61,7 @@ export async function POST(context: any) {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('[LOGIN API] Error:', error);
     return new Response(JSON.stringify({ error: 'Login failed' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -32,5 +70,28 @@ export async function POST(context: any) {
 }
 
 export async function GET(context: any) {
-  return POST(context);
+  // GET requests should use the standard Wix login flow
+  const { returnToUrl } = context.url.searchParams;
+  
+  try {
+    const wixContext = context.locals;
+    const membersClient = members(wixContext);
+    
+    const loginUrl = await membersClient.generateLoginUrl({
+      redirectUrl: returnToUrl ? decodeURIComponent(returnToUrl) : '/',
+    });
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': loginUrl,
+      },
+    });
+  } catch (error) {
+    console.error('[LOGIN API] GET error:', error);
+    return new Response(JSON.stringify({ error: 'Login failed' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }
