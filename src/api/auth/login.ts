@@ -19,13 +19,15 @@ export async function POST(context: any) {
         
         // Create admin session token
         const adminSessionToken = `admin_hardcoded_${Date.now()}`;
-        const sessionExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-        const setCookieHeader = `admin_session=${adminSessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800`;
+        const setCookieHeader = `admin_session=${adminSessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800; Secure`;
+        
+        console.log('[LOGIN API] Setting admin session cookie:', setCookieHeader);
         
         return new Response(JSON.stringify({ 
           success: true,
           message: 'Admin login successful',
-          isAdmin: true
+          isAdmin: true,
+          adminSessionToken: adminSessionToken
         }), {
           status: 200,
           headers: { 
