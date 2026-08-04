@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
@@ -186,7 +186,7 @@ const RubberBandCarouselSection: React.FC = () => {
         }}
       >
         {duplicatedImages.map((image, index) => {
-          const CarouselImageCard = () => {
+          const CarouselImageCard = React.memo(() => {
             const [imageDims, setImageDims] = useState({ width: 1920, height: 1080 });
 
             const { fitting } = useImageFitting({
@@ -201,13 +201,24 @@ const RubberBandCarouselSection: React.FC = () => {
               fitMode: 'cover',
             });
 
-            const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+            const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
               const img = e.currentTarget;
-              setImageDims({
-                width: img.naturalWidth,
-                height: img.naturalHeight,
+              setImageDims(prevDims => {
+                // Guard: only update if dimensions actually changed
+                if (prevDims.width === img.naturalWidth && prevDims.height === img.naturalHeight) {
+                  return prevDims;
+                }
+                return {
+                  width: img.naturalWidth,
+                  height: img.naturalHeight,
+                };
               });
-            };
+            }, []);
+
+            const imageStyle = useMemo(() => ({
+              objectFit: fitting.objectFit as any,
+              objectPosition: fitting.objectPosition,
+            }), [fitting.objectFit, fitting.objectPosition]);
 
             return (
               <Image
@@ -217,13 +228,11 @@ const RubberBandCarouselSection: React.FC = () => {
                 width={1920}
                 height={1080}
                 className="w-full h-full"
-                style={{
-                  objectFit: fitting.objectFit as any,
-                  objectPosition: fitting.objectPosition,
-                }}
+                style={imageStyle}
               />
             );
-          };
+          });
+          CarouselImageCard.displayName = 'CarouselImageCard';
 
           return (
             <div

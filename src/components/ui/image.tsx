@@ -109,9 +109,10 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
         fieldName: props['data-field-name'] as string | undefined,
         recordId: props['data-record-id'] as string | undefined
       });
-      setImgSrc(resolved.url);
+      // Guard: only update state if the resolved URL is different
+      setImgSrc(prevSrc => prevSrc === resolved.url ? prevSrc : resolved.url);
     }
-  }, [src])
+  }, [src, props['data-field-name'], props['data-record-id']])
 
   if (!imgSrc) {
     return <div data-empty-image ref={ref} {...props} />
