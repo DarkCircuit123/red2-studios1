@@ -77,8 +77,8 @@ const RubberBandCarouselSection: React.FC = () => {
   const isHoveringRef = useRef(false);
   const snapBackAnimationRef = useRef<number>();
 
-  // Sample images - replace with actual portfolio images
-  const images: CarouselImage[] = [
+  // Memoize images array so it doesn't change every render
+  const images: CarouselImage[] = useMemo(() => [
     {
       id: '1',
       url: 'https://static.wixstatic.com/media/e9d727_dc338c865879444cab6ecb545a8e8d0b~mv2.png?originWidth=1920&originHeight=1024',
@@ -109,14 +109,29 @@ const RubberBandCarouselSection: React.FC = () => {
       url: 'https://static.wixstatic.com/media/e9d727_9ddd1fbce8c04f54a8ae54df6c169f95~mv2.png?originWidth=1920&originHeight=1024',
       alt: 'Portfolio work 6',
     },
-  ];
+  ], []);
 
-  // Duplicate images for seamless loop
-  const duplicatedImages = [...images, ...images, ...images];
-  const totalWidth = duplicatedImages.length * 100; // Each image is 100vw
+  // Memoize duplicated images and total width to prevent effect re-runs
+  const { duplicatedImages, totalWidth } = useMemo(() => {
+    const duped = [...images, ...images, ...images];
+    return {
+      duplicatedImages: duped,
+      totalWidth: duped.length * 100, // Each image is 100vw
+    };
+  }, [images]);
 
-  // Step 1 & 2: Track mouse position and calculate pull offset
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Elastic easing function for overshoot snap-back (memoized)
+  const easeOutElastic = useCallback((t: number): number => {
+    const c5 = (2 * Math.PI) / 4.5;
+    return t === 0
+      ? 0
+      : t === 1
+      ? 1
+      : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c5) + 1;
+  }, []);
+
+  // Step 1 & 2: Track mouse position and calculate pull offset (memoized)
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || !isHoveringRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -136,9 +151,9 @@ const RubberBandCarouselSection: React.FC = () => {
       50;
 
     curvedPullRef.current = curvedPull;
-  };
+  }, []);
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     isHoveringRef.current = true;
     mousePercentRef.current = 0;
     curvedPullRef.current = 0;
@@ -147,9 +162,9 @@ const RubberBandCarouselSection: React.FC = () => {
     if (snapBackAnimationRef.current) {
       cancelAnimationFrame(snapBackAnimationRef.current);
     }
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     isHoveringRef.current = false;
 
     // Step 5: Animate snap-back with overshoot
@@ -174,22 +189,13 @@ const RubberBandCarouselSection: React.FC = () => {
     };
 
     snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
-  };
-
-  // Elastic easing function for overshoot snap-back
-  const easeOutElastic = (t: number): number => {
-    const c5 = (2 * Math.PI) / 4.5;
-    return t === 0
-      ? 0
-      : t === 1
-      ? 1
-      : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c5) + 1;
-  };
+  }, [easeOutElastic]);
 
   // Step 4: Main animation loop - optimized to avoid unnecessary state updates
+  // Use a ref to track the last scroll position to prevent excessive state updates
+  const lastScrollPositionRef = useRef(0);
+  
   useEffect(() => {
-    let lastScrollPosition = 0;
-    
     const animate = () => {
       // Base auto-scroll speed (pixels per frame)
       const baseSpeed = 0.5;
@@ -206,8 +212,8 @@ const RubberBandCarouselSection: React.FC = () => {
       const loopedPosition = baseScrollRef.current % totalWidth;
       
       // Only update state if position changed significantly to avoid excessive renders
-      if (Math.abs(loopedPosition - lastScrollPosition) > 0.1) {
-        lastScrollPosition = loopedPosition;
+      if (Math.abs(loopedPosition - lastScrollPositionRef.current) > 0.1) {
+        lastScrollPositionRef.current = loopedPosition;
         setScrollPosition(loopedPosition);
       }
 
