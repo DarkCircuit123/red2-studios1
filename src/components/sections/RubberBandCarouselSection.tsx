@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, memo, useLayoutEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
@@ -198,8 +198,16 @@ const RubberBandCarouselSection: React.FC = () => {
   // Use a ref to track the last scroll position to prevent excessive state updates
   const lastScrollPositionRef = useRef(0);
   
-  useEffect(() => {
+  // Memoize totalWidth to ensure stable dependency
+  const memoizedTotalWidth = useMemo(() => totalWidth, [totalWidth]);
+  
+  useLayoutEffect(() => {
+    let animationFrameId: number;
+    let isAnimating = true;
+
     const animate = () => {
+      if (!isAnimating) return;
+
       // Base auto-scroll speed (pixels per frame)
       const baseSpeed = 0.5;
 
@@ -212,7 +220,7 @@ const RubberBandCarouselSection: React.FC = () => {
       baseScrollRef.current += activeScrollSpeed;
 
       // Loop the scroll position
-      const loopedPosition = baseScrollRef.current % totalWidth;
+      const loopedPosition = baseScrollRef.current % memoizedTotalWidth;
       
       // Only update state if position changed significantly to avoid excessive renders
       if (Math.abs(loopedPosition - lastScrollPositionRef.current) > 0.1) {
@@ -220,17 +228,18 @@ const RubberBandCarouselSection: React.FC = () => {
         setScrollPosition(loopedPosition);
       }
 
-      animationFrameRef.current = requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    animationFrameRef.current = requestAnimationFrame(animate);
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      isAnimating = false;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [totalWidth]);
+  }, [memoizedTotalWidth]);
 
   return (
     <section
