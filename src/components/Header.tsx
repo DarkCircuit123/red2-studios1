@@ -128,6 +128,8 @@ export default function Header() {
           // Trigger admin state check with the hardcoded admin ID
           await checkAdminAccess('admin_hardcoded');
           console.log('[HEADER] Admin access check triggered');
+          // Close the modal immediately after successful admin login
+          setIsLoginModalOpen(false);
         } else {
           console.error('[HEADER] Admin check failed:', adminResponse.status);
           throw new Error('Failed to establish admin session');
@@ -135,10 +137,9 @@ export default function Header() {
       } else {
         // Load the current member to update auth state
         await memberActions.loadCurrentMember();
+        // Close the modal on successful member login
+        setIsLoginModalOpen(false);
       }
-      
-      // Close the modal on successful login
-      setIsLoginModalOpen(false);
     } catch (error) {
       console.error('[HEADER] Login error:', error);
       throw error;
