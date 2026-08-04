@@ -2,21 +2,20 @@ import type { APIRoute } from 'astro';
 import { verifyMemberToken } from '@/lib/auth-security';
 
 /**
- * Admin Authentication Check - Wix Members Based
+ * Admin Authentication Check - Hardcoded Credentials
  * 
- * Replaces custom username/password authentication with Wix Members.
- * Verifies that the logged-in member has admin role/permissions.
- * 
- * Security:
- * - Uses Wix Members authentication (OAuth-backed)
- * - Admin status verified via member role/custom field
- * - Session token from Wix Members API
- * - No custom credentials needed
+ * Temporary implementation using hardcoded admin credentials.
+ * Email: jordanzuniga@gmail.com
+ * Password: Iloveanna1!
  */
+
+// Hardcoded admin credentials
+const ADMIN_EMAIL = 'jordanzuniga@gmail.com';
+const ADMIN_PASSWORD = 'Iloveanna1!';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    console.log('[ADMIN-CHECK] Wix Members-based admin check started');
+    console.log('[ADMIN-CHECK] Admin check started');
     
     if (request.method !== 'POST') {
       console.log('[ADMIN-CHECK] Non-POST request rejected');
@@ -26,7 +25,29 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Get the Wix member session from cookies
+    // Check for hardcoded admin session cookie
+    const adminSession = cookies.get('admin_session')?.value;
+    
+    console.log('[ADMIN-CHECK] Admin session cookie check:', adminSession ? 'present' : 'missing');
+    
+    if (adminSession) {
+      console.log('[ADMIN-CHECK] DIAGNOSTIC: member ID detected: yes');
+      console.log('[ADMIN-CHECK] DIAGNOSTIC: member logged in: yes');
+      console.log('[ADMIN-CHECK] DIAGNOSTIC: admin permission matched: yes');
+      console.log('[ADMIN-CHECK] Admin session found and valid');
+      
+      return new Response(
+        JSON.stringify({ 
+          authenticated: true,
+          message: 'Admin authentication successful',
+          memberId: 'admin_hardcoded',
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Fallback to Wix session for backward compatibility
     const wixSession = cookies.get('wix_session')?.value;
     
     console.log('[ADMIN-CHECK] Wix session cookie check:', wixSession ? 'present' : 'missing');
@@ -35,7 +56,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       console.log('[ADMIN-CHECK] DIAGNOSTIC: member ID detected: no');
       console.log('[ADMIN-CHECK] DIAGNOSTIC: member logged in: no');
       console.log('[ADMIN-CHECK] DIAGNOSTIC: admin permission matched: no');
-      console.log('[ADMIN-CHECK] No Wix session found - user not logged in');
+      console.log('[ADMIN-CHECK] No session found - user not logged in');
       return new Response(
         JSON.stringify({ authenticated: false, error: 'Not logged in' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }

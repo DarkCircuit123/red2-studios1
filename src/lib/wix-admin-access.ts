@@ -12,9 +12,10 @@ interface AdminAccessState {
 }
 
 /**
- * Wix Members-based admin access verification
- * Uses backend verification for security
- * Only Wix Members with admin role can access the admin panel
+ * Admin access verification - Hardcoded credentials
+ * Temporary implementation using hardcoded admin credentials.
+ * Email: jordanzuniga@gmail.com
+ * Password: Iloveanna1!
  */
 export const useWixAdminAccess = create<AdminAccessState>((set) => ({
   isAdmin: false,
@@ -28,14 +29,14 @@ export const useWixAdminAccess = create<AdminAccessState>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
-      // Use the admin-check endpoint which verifies via Wix Members
+      // Use the admin-check endpoint which verifies admin session
       console.log('[ADMIN-ACCESS] Calling /api/auth/admin-check...');
       const response = await fetch('/api/auth/admin-check', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies for Wix session verification
+        credentials: 'include', // Include cookies for admin session verification
       });
 
       const data = await response.json();

@@ -103,8 +103,27 @@ export default function Header() {
 
       const data = await response.json();
       
-      // Load the current member to update auth state
-      await memberActions.loadCurrentMember();
+      // If admin login was successful, verify admin access
+      if (data.isAdmin) {
+        console.log('[HEADER] Admin credentials detected, verifying admin access...');
+        // Call admin-check to set up admin session
+        const adminResponse = await fetch('/api/auth/admin-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({}),
+        });
+        
+        if (adminResponse.ok) {
+          const adminData = await adminResponse.json();
+          console.log('[HEADER] Admin session established');
+          // Trigger admin state check
+          checkAdminAccess('admin_hardcoded');
+        }
+      } else {
+        // Load the current member to update auth state
+        await memberActions.loadCurrentMember();
+      }
       
       // Close the modal on successful login
       setIsLoginModalOpen(false);
@@ -113,7 +132,7 @@ export default function Header() {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [memberActions]);
+  }, [memberActions, checkAdminAccess]);
 
   const handleLoginModalClose = useCallback(() => {
     if (!isAuthenticating) {

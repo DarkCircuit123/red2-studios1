@@ -1,5 +1,9 @@
 import { members } from '@wix/members';
 
+// Hardcoded admin credentials
+const ADMIN_EMAIL = 'jordanzuniga@gmail.com';
+const ADMIN_PASSWORD = 'Iloveanna1!';
+
 export async function POST(context: any) {
   try {
     const body = await context.request.json().catch(() => ({}));
@@ -8,6 +12,28 @@ export async function POST(context: any) {
     // If email and password are provided, use them for authentication
     if (email && password) {
       console.log('[LOGIN API] Authenticating with email/password...');
+      
+      // Check for hardcoded admin credentials
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        console.log('[LOGIN API] Admin credentials matched - setting admin session');
+        
+        // Create admin session token
+        const adminSessionToken = `admin_hardcoded_${Date.now()}`;
+        const sessionExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        const setCookieHeader = `admin_session=${adminSessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800`;
+        
+        return new Response(JSON.stringify({ 
+          success: true,
+          message: 'Admin login successful',
+          isAdmin: true
+        }), {
+          status: 200,
+          headers: { 
+            'Content-Type': 'application/json',
+            'Set-Cookie': setCookieHeader
+          },
+        });
+      }
       
       // Get the Wix SDK context from locals (provided by @wix/astro integration)
       const wixContext = context.locals;
