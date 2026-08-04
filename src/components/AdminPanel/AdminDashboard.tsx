@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import HomePageTab from './tabs/HomePageTab';
-import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog } from 'lucide-react';
+import SplashpageTab from './tabs/SplashpageTab';
+import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('home');
 
   const tabs = [
     { id: 'home', label: 'Home Page', icon: Home, enabled: true },
+    { id: 'splashpage', label: 'Splash Page', icon: Image, enabled: true },
     { id: 'about', label: 'About Page', icon: FileText, enabled: false },
     { id: 'portfolio', label: 'Portfolio', icon: Briefcase, enabled: false },
     { id: 'services', label: 'Services', icon: Settings, enabled: false },
@@ -70,6 +72,10 @@ export default function AdminDashboard() {
             <div className="p-6">
               <TabsContent value="home" className="m-0">
                 <HomePageTab />
+              </TabsContent>
+
+              <TabsContent value="splashpage" className="m-0">
+                <SplashpageTab />
               </TabsContent>
 
               {/* Disabled tabs placeholder */}

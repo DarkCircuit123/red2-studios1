@@ -560,6 +560,27 @@ export interface Services {
 
 
 /**
+ * Collection ID: splashpage
+ * Interface for Splashpage
+ */
+export interface Splashpage {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  logoImage?: string;
+  /** @wixFieldType text */
+  logoName?: string;
+  /** @wixFieldType text */
+  altText?: string;
+  /** @wixFieldType datetime */
+  updatedDate?: Date | string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+}
+
+
+/**
  * Collection ID: storiesinsights
  * Interface for StoriesInsights
  */
