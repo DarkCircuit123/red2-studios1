@@ -1,196 +1,100 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { safeJson } from './safeJson';
-
-// Track verification attempts to prevent infinite retries
-let verificationAttemptCount = 0;
-const MAX_VERIFICATION_ATTEMPTS = 1;
 
 interface AdminAuthState {
-  isAdminAuthenticated: boolean;
-  adminMemberId: string | null;
-  adminToken: string | null;
-  failedAttempts: number;
+  isAuthenticated: boolean;
+  adminUsername: string | null;
   isLoading: boolean;
-  isVerifying: boolean;
   error: string | null;
-  login: () => Promise<boolean>;
+  
+  // Actions
+  login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  resetFailedAttempts: () => void;
-  verifySession: () => Promise<boolean>;
+  checkSession: () => Promise<void>;
+  clearError: () => void;
 }
 
-export const MAX_FAILED_ATTEMPTS = 5;
+export const useAdminAuth = create<AdminAuthState>((set) => ({
+  isAuthenticated: false,
+  adminUsername: null,
+  isLoading: false,
+  error: null,
 
-/**
- * SECURITY NOTE - Wix Members Based Authentication:
- * - Admin status verified via Wix Members API
- * - Member must be logged in via Wix authentication
- * - Admin role/permission checked server-side via /api/auth/admin-check
- * - Session proof lives ONLY in an httpOnly, Secure, SameSite=Lax
- *   cookie set by the server. The client never holds the raw session
- *   token in memory or in localStorage — it only tracks the boolean
- *   UI state (isAdminAuthenticated / adminMemberId), confirmed by
- *   calling /api/auth/admin-verify, which reads the cookie directly.
- * - Server-side session validation for all mutations (admin-mutation-verify.ts)
- *
- * Only `failedAttempts` is persisted to localStorage — it's not sensitive.
- * Everything else starts from a clean 'unverified' state on every page
- * load and is reconciled by calling verifySession() (see Header.tsx's
- * mount effect), which is the only source of truth for auth state.
- */
-export const useAdminAuth = create<AdminAuthState>()(
-  persist(
-    (set, get) => ({
-      isAdminAuthenticated: false,
-      adminMemberId: null,
-      adminToken: null,
-      failedAttempts: 0,
-      isLoading: false,
-      isVerifying: true,
-      error: null,
+  login: async (username: string, password: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
+      });
 
-      // Login via Wix Members authentication
-      // No username/password needed - uses existing Wix member session
-      login: async () => {
-        set({ isLoading: true, error: null });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Login failed');
+      }
 
-        try {
-          const response = await fetch('/api/auth/admin-check', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({}),
-          });
-
-          let data;
-          try {
-            data = await safeJson(response);
-          } catch (parseError) {
-            set({
-              isLoading: false,
-              error: parseError instanceof Error ? parseError.message : 'Invalid server response'
-            });
-            return false;
-          }
-
-          if (data.authenticated) {
-            set({
-              isAdminAuthenticated: true,
-              adminMemberId: data.memberId,
-              adminToken: data.sessionToken,
-              failedAttempts: 0,
-              isLoading: false,
-              isVerifying: false,
-              error: null,
-            });
-
-            return true;
-          }
-
-          // Handle failed attempt
-          const currentState = get();
-          const newAttempts = currentState.failedAttempts + 1;
-
-          set({
-            failedAttempts: newAttempts,
-            isLoading: false,
-            error: data.error || 'Authentication failed',
-          });
-
-          return false;
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : 'Network error. Please try again.',
-          });
-          return false;
-        }
-      },
-
-      logout: async () => {
-        try {
-          // action:'logout' tells the server to clear the httpOnly cookie
-          await fetch('/api/auth/admin-verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ action: 'logout' }),
-          });
-        } catch (error) {
-          // Logout errors are silently ignored
-        }
-
-        set({
-          isAdminAuthenticated: false,
-          adminMemberId: null,
-          adminToken: null,
-          error: null,
-        });
-      },
-
-      resetFailedAttempts: () => {
-        set({
-          failedAttempts: 0,
-          error: null,
-        });
-      },
-
-      // Authoritative check against the server
-      verifySession: async () => {
-        // Prevent infinite retry loops - only verify once per session
-        if (verificationAttemptCount >= MAX_VERIFICATION_ATTEMPTS) {
-          set({ isVerifying: false });
-          return false;
-        }
-        verificationAttemptCount++;
-
-        set({ isVerifying: true });
-
-        try {
-          const response = await fetch('/api/auth/admin-verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({}),
-          });
-
-          // Handle non-OK responses gracefully
-          if (!response.ok) {
-            if (response.status === 400 || response.status === 401 || response.status === 403) {
-              // Expected responses for unauthenticated users
-              set({ isAdminAuthenticated: false, adminMemberId: null, isVerifying: false });
-              return false;
-            }
-            // Log unexpected errors but don't crash
-            set({ isAdminAuthenticated: false, isVerifying: false });
-            return false;
-          }
-
-          const data = await safeJson(response);
-
-          if (data.valid) {
-            set({
-              isAdminAuthenticated: true,
-              adminMemberId: data.memberId ?? get().adminMemberId,
-              isVerifying: false,
-            });
-            return true;
-          } else {
-            set({ isAdminAuthenticated: false, adminMemberId: null, adminToken: null, isVerifying: false });
-            return false;
-          }
-        } catch (error) {
-          set({ isAdminAuthenticated: false, isVerifying: false });
-          return false;
-        }
-      },
-    }),
-    {
-      name: 'admin-auth-storage',
-      partialize: (state) => ({
-        failedAttempts: state.failedAttempts,
-      }),
+      const data = await response.json();
+      set({
+        isAuthenticated: true,
+        adminUsername: data.username,
+        error: null,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Login failed';
+      set({ error: message, isAuthenticated: false, adminUsername: null });
+      throw error;
+    } finally {
+      set({ isLoading: false });
     }
-  )
-);
+  },
+
+  logout: async () => {
+    set({ isLoading: true });
+    try {
+      await fetch('/api/auth/admin-logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } finally {
+      set({
+        isAuthenticated: false,
+        adminUsername: null,
+        isLoading: false,
+        error: null,
+      });
+    }
+  },
+
+  checkSession: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await fetch('/api/auth/admin-check', {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        set({
+          isAuthenticated: true,
+          adminUsername: data.username,
+        });
+      } else {
+        set({
+          isAuthenticated: false,
+          adminUsername: null,
+        });
+      }
+    } catch (error) {
+      set({
+        isAuthenticated: false,
+        adminUsername: null,
+      });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  clearError: () => set({ error: null }),
+}));

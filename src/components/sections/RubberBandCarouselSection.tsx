@@ -192,7 +192,7 @@ const RubberBandCarouselSection: React.FC = () => {
     };
 
     snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
-  }, [easeOutElastic]);
+  }, []);
 
   // Step 4: Main animation loop - optimized to avoid unnecessary state updates
   // Use a ref to track the last scroll position to prevent excessive state updates

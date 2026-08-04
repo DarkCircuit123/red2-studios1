@@ -1,8 +1,7 @@
-import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
-import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
+import { AdminAuthProvider } from '@/components/AdminAuthProvider';
 import { lazy, Suspense } from 'react';
 
 // Lazy load all pages to prevent circular dependencies
@@ -89,11 +88,9 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: (
-          <MemberProtectedRoute>
-            <Suspense fallback={<div />}>
-              <ProfilePage />
-            </Suspense>
-          </MemberProtectedRoute>
+          <Suspense fallback={<div />}>
+            <ProfilePage />
+          </Suspense>
         ),
       },
       {
@@ -270,8 +267,8 @@ const router = createBrowserRouter([
 
 export default function AppRouter() {
   return (
-    <MemberProvider>
+    <AdminAuthProvider>
       <RouterProvider router={router} />
-    </MemberProvider>
+    </AdminAuthProvider>
   );
 }
