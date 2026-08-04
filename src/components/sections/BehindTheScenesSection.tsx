@@ -61,7 +61,7 @@ export default function BehindTheScenesSection() {
           viewport={{ once: true }}
           className="text-center mb-12 md:mb-16"
         >
-          <h2 className="font-heading text-4xl md:text-5xl font-bold mb-4">Behind The Scenes</h2>
+          <h2 className="font-heading text-5xl md:text-6xl font-bold mb-4 text-black">Behind The Scenes</h2>
           <p className="font-paragraph text-lg text-gray-600 max-w-2xl mx-auto">
             Get an exclusive look at our creative process and the moments that make it all happen.
           </p>
