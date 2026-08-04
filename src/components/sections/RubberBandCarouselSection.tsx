@@ -198,9 +198,6 @@ const RubberBandCarouselSection: React.FC = () => {
   // Use a ref to track the last scroll position to prevent excessive state updates
   const lastScrollPositionRef = useRef(0);
   
-  // Memoize totalWidth to ensure stable dependency
-  const memoizedTotalWidth = useMemo(() => totalWidth, [totalWidth]);
-  
   useLayoutEffect(() => {
     let animationFrameId: number;
     let isAnimating = true;
@@ -219,8 +216,8 @@ const RubberBandCarouselSection: React.FC = () => {
       // Update base scroll with modified speed
       baseScrollRef.current += activeScrollSpeed;
 
-      // Loop the scroll position
-      const loopedPosition = baseScrollRef.current % memoizedTotalWidth;
+      // Loop the scroll position - use totalWidth directly (stable from useMemo above)
+      const loopedPosition = baseScrollRef.current % totalWidth;
       
       // Only update state if position changed significantly to avoid excessive renders
       if (Math.abs(loopedPosition - lastScrollPositionRef.current) > 0.1) {
@@ -239,7 +236,7 @@ const RubberBandCarouselSection: React.FC = () => {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [memoizedTotalWidth]);
+  }, [totalWidth]);
 
   return (
     <section
