@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Settings } from 'lucide-react';
+import { Menu, X, Settings, LogIn, LogOut, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
 import { useWixAdminAccess } from '@/lib/wix-admin-access';
@@ -57,6 +57,18 @@ export default function Header() {
       navigate('/');
     }
   }, [isAdmin, isAuthenticated, navigate]);
+
+  const handleAuthClick = useCallback(() => {
+    playClickSound();
+    if (isAuthenticated) {
+      // Navigate to profile page
+      navigate('/profile');
+    } else {
+      // Trigger login via useMember actions
+      const { actions } = useMember();
+      actions.login();
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleMobileMenuClick = useCallback(() => {
     playClickSound();
@@ -212,8 +224,25 @@ export default function Header() {
           ))}
         </div>
 
-        {/* Admin & Mobile Menu - Right aligned */}
-        <div className="flex items-center gap-6 ml-auto absolute right-6 md:right-8">
+        {/* Admin & Auth & Mobile Menu - Right aligned */}
+        <div className="flex items-center gap-4 ml-auto absolute right-6 md:right-8">
+          {/* Login/Profile icon */}
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleAuthClick}
+            disabled={isMemberLoading}
+            className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
+            aria-label={isAuthenticated ? 'View profile' : 'Sign in'}
+            title={isMemberLoading ? 'Loading…' : isAuthenticated ? 'View profile' : 'Sign in'}
+          >
+            {isAuthenticated ? (
+              <User className="w-4 h-4 text-primary hover:text-primary/80 transition-colors" />
+            ) : (
+              <LogIn className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
+            )}
+          </motion.button>
+
           {/* Admin gear icon - only show for authenticated members */}
           {isAuthenticated && (
             <motion.button
@@ -221,7 +250,7 @@ export default function Header() {
               whileTap={{ scale: 0.95 }}
               onClick={handleAdminClick}
               disabled={isMemberLoading || isAdminLoading}
-              className={`p-2 transition-colors duration-300 rounded-lg ${
+              className={`p-2 transition-colors duration-300 rounded-lg hidden md:block ${
                 isMemberLoading || isAdminLoading
                   ? 'opacity-50 cursor-wait'
                   : isAdmin
@@ -270,6 +299,28 @@ export default function Header() {
           className="md:hidden bg-black/95 border-t border-primary/30 backdrop-blur-md"
         >
           <div className="max-w-[120rem] mx-auto px-8 py-6 flex flex-col gap-6">
+            {/* Mobile Auth Button */}
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0 }}
+              onClick={handleAuthClick}
+              disabled={isMemberLoading}
+              className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit"
+            >
+              {isAuthenticated ? (
+                <>
+                  <User className="w-4 h-4" />
+                  Profile
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </>
+              )}
+            </motion.button>
+
             {[
               { href: '#about', label: 'About', isAnchor: true },
               { href: '/portfolio', label: 'Work', isLink: true },
@@ -281,7 +332,7 @@ export default function Header() {
                 key={i}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
+                transition={{ delay: (i + 1) * 0.05 }}
               >
                 {item.isAnchor ? (
                   <a
