@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Settings, LogIn, LogOut, User } from 'lucide-react';
+import { Menu, X, Settings, LogIn, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
 import { useWixAdminAccess } from '@/lib/wix-admin-access';
@@ -15,16 +15,24 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const { member, isAuthenticated, isLoading: isMemberLoading } = useMember();
-  const { isAdmin, isLoading: isAdminLoading, checkAdminAccess } = useWixAdminAccess();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { member, isAuthenticated, isLoading: isMemberLoading, actions: memberActions } = useMember();
+  const { isAdmin, isLoading: isAdminLoading, checkAdminAccess, reset: resetAdminState } = useWixAdminAccess();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
-  // Check admin access when member changes
+  // Check admin access when member changes - only if authenticated and not already verified
   useEffect(() => {
     if (isAuthenticated && member?._id && !isAdmin && !isAdminLoading) {
       checkAdminAccess(member._id);
     }
   }, [isAuthenticated, member?._id, isAdmin, isAdminLoading, checkAdminAccess]);
+
+  // Clear admin state when user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      resetAdminState();
+    }
+  }, [isAuthenticated, resetAdminState]);
 
   // Optimized throttled scroll handler
   useEffect(() => {
@@ -49,26 +57,23 @@ export default function Header() {
     playClickSound();
     if (isAdmin) {
       setIsAdminOpen(true);
-    } else if (isAuthenticated) {
-      // User is logged in but not admin - navigate to admin page which will show permission denied
-      navigate('/admin');
-    } else {
-      // Not logged in - redirect to sign in
-      navigate('/');
     }
-  }, [isAdmin, isAuthenticated, navigate]);
+  }, [isAdmin]);
 
-  const handleAuthClick = useCallback(() => {
+  const handleLoginClick = useCallback(() => {
     playClickSound();
-    if (isAuthenticated) {
-      // Navigate to profile page
-      navigate('/profile');
-    } else {
-      // Trigger login via useMember actions
-      const { actions } = useMember();
-      actions.login();
+    memberActions.login();
+  }, [memberActions]);
+
+  const handleLogoutClick = useCallback(async () => {
+    playClickSound();
+    setIsLoggingOut(true);
+    try {
+      await memberActions.logout();
+    } finally {
+      setIsLoggingOut(false);
     }
-  }, [isAuthenticated, navigate]);
+  }, [memberActions]);
 
   const handleMobileMenuClick = useCallback(() => {
     playClickSound();
@@ -226,45 +231,48 @@ export default function Header() {
 
         {/* Admin & Auth & Mobile Menu - Right aligned */}
         <div className="flex items-center gap-6 ml-auto absolute right-6 md:right-8">
-          {/* Login/Profile icon */}
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleAuthClick}
-            disabled={isMemberLoading}
-            className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
-            aria-label={isAuthenticated ? 'View profile' : 'Sign in'}
-            title={isMemberLoading ? 'Loading…' : isAuthenticated ? 'View profile' : 'Sign in'}
-          >
-            {isAuthenticated ? (
-              <User className="w-4 h-4 text-primary hover:text-primary/80 transition-colors" />
-            ) : (
-              <LogIn className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
-            )}
-          </motion.button>
-
-          {/* Admin gear icon - only show for authenticated members */}
-          {isAuthenticated && (
+          {/* Logged-out state: Show Login icon only */}
+          {!isAuthenticated && !isMemberLoading && (
             <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleAdminClick}
-              disabled={isMemberLoading || isAdminLoading}
-              className={`p-2 transition-colors duration-300 rounded-lg hidden md:block ${
-                isMemberLoading || isAdminLoading
-                  ? 'opacity-50 cursor-wait'
-                  : isAdmin
-                  ? 'hover:bg-primary/10'
-                  : 'hover:bg-white/10'
-              }`}
-              aria-label="Admin panel"
-              title={isMemberLoading || isAdminLoading ? 'Checking permissions…' : isAdmin ? 'Admin Panel' : 'Permission Denied'}
+              onClick={handleLoginClick}
+              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
+              aria-label="Sign in"
+              title="Sign in"
             >
-              <Settings className={`w-4 h-4 transition-colors ${
-                isAdmin
-                  ? 'text-primary hover:text-primary/80'
-                  : 'text-white/40 hover:text-white/60'
-              }`} />
+              <LogIn className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
+            </motion.button>
+          )}
+
+          {/* Logged-in state: Show Logout icon */}
+          {isAuthenticated && !isMemberLoading && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogoutClick}
+              disabled={isLoggingOut}
+              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block disabled:opacity-50"
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
+            </motion.button>
+          )}
+
+          {/* Admin gear icon - only show if confirmed admin via backend */}
+          {isAuthenticated && isAdmin && !isAdminLoading && (
+            <motion.button
+              whileHover={{ scale: 1.1, rotate: 15 }}
+              whileTap={{ scale: 0.95 }}
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 4, repeat: Infinity, repeatType: 'loop' }}
+              onClick={handleAdminClick}
+              className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg hidden md:block"
+              aria-label="Admin panel"
+              title="Admin Panel"
+            >
+              <Settings className="w-4 h-4 text-primary hover:text-primary/80 transition-colors" />
             </motion.button>
           )}
 
@@ -299,27 +307,46 @@ export default function Header() {
           className="md:hidden bg-black/95 border-t border-primary/30 backdrop-blur-md"
         >
           <div className="max-w-[120rem] mx-auto px-8 py-6 flex flex-col gap-6">
-            {/* Mobile Auth Button */}
-            <motion.button
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0 }}
-              onClick={handleAuthClick}
-              disabled={isMemberLoading}
-              className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit"
-            >
-              {isAuthenticated ? (
-                <>
-                  <User className="w-4 h-4" />
-                  Profile
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-4 h-4" />
-                  Sign In
-                </>
-              )}
-            </motion.button>
+            {/* Mobile Auth Buttons */}
+            {!isAuthenticated && !isMemberLoading && (
+              <motion.button
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0 }}
+                onClick={handleLoginClick}
+                className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </motion.button>
+            )}
+
+            {isAuthenticated && !isMemberLoading && (
+              <motion.button
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0 }}
+                onClick={handleLogoutClick}
+                disabled={isLoggingOut}
+                className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit disabled:opacity-50"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </motion.button>
+            )}
+
+            {isAuthenticated && isAdmin && !isAdminLoading && (
+              <motion.button
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.05 }}
+                onClick={handleAdminClick}
+                className="px-4 py-3 text-xs font-mono text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-primary/10 flex items-center gap-2 w-fit"
+              >
+                <Settings className="w-4 h-4" />
+                Admin
+              </motion.button>
+            )}
 
             {[
               { href: '#about', label: 'About', isAnchor: true },

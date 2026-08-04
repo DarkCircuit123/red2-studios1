@@ -142,21 +142,36 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
      */
     logout: useCallback(async () => {
       try {
-        await fetch('/api/auth/logout', {
+        // Call the logout API to clear server-side session
+        const response = await fetch('/api/auth/logout', {
           method: 'POST',
           credentials: 'include',
         });
+        
+        if (!response.ok) {
+          console.warn('Logout API returned non-200 status:', response.status);
+        }
       } catch (error) {
         console.error('Logout error:', error);
       }
 
+      // Clear all local state immediately
       updateState({
         member: null,
         isAuthenticated: false,
         error: null,
       });
 
-      // Redirect to home
+      // Clear localStorage to prevent stale cached state
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem(MEMBER_STORAGE_KEY);
+        } catch (error) {
+          console.error('Error clearing localStorage:', error);
+        }
+      }
+
+      // Redirect to home after state is cleared
       window.location.href = '/';
     }, [updateState]),
 

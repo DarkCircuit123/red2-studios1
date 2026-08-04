@@ -27,31 +27,32 @@ export const useWixAdminAccess = create<AdminAccessState>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await fetch('/api/auth/verify-admin-role', {
+      // Use the admin-check endpoint which verifies via Wix Members
+      const response = await fetch('/api/auth/admin-check', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${memberId}`,
         },
-        body: JSON.stringify({ memberId }),
+        credentials: 'include', // Include cookies for Wix session verification
       });
 
       const data = await response.json();
 
-      if (data.isAdmin) {
+      // Check if the response indicates admin status
+      if (response.ok && data.authenticated) {
         set({
           isAdmin: true,
           isLoading: false,
           memberId,
-          memberEmail: data.memberEmail,
           error: null,
         });
         return true;
       } else {
+        // Not admin or authentication failed
         set({
           isAdmin: false,
           isLoading: false,
-          error: 'You do not have admin permissions',
+          error: data.error || 'You do not have admin permissions',
         });
         return false;
       }
