@@ -19,6 +19,11 @@ export default function Header() {
   const { isAuthenticated, isLoading, logout } = useAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
+  // Diagnostic logging
+  useEffect(() => {
+    console.log('[Header] Auth State:', { isAuthenticated, isLoading });
+  }, [isAuthenticated, isLoading]);
+
   // Close admin panel when user logs out
   useEffect(() => {
     if (!isAuthenticated && isAdminOpen) {
@@ -242,14 +247,14 @@ export default function Header() {
         </div>
 
         {/* Admin & Auth & Mobile Menu - Right aligned */}
-        <div className="flex items-center gap-6 ml-auto absolute right-6 md:right-8">
+        <div className="flex items-center gap-6 ml-auto absolute right-6 md:right-8 z-50">
           {/* STATE 1: Not Authenticated - Show ONLY Login icon */}
           {!isAuthenticated && !isLoading && (
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleLoginClick}
-              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center"
+              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center relative z-50"
               aria-label="Sign in"
               title="Sign in"
             >
@@ -267,7 +272,7 @@ export default function Header() {
                 animate={{ rotate: [0, 5, -5, 0] }}
                 transition={{ duration: 4, repeat: Infinity, repeatType: 'loop' }}
                 onClick={handleAdminClick}
-                className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center"
+                className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center relative z-50"
                 aria-label="Admin panel"
                 title="Admin Panel"
               >
@@ -279,7 +284,7 @@ export default function Header() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleLogoutClick}
-                className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center"
+                className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center relative z-50"
                 aria-label="Sign out"
                 title="Sign out"
               >
@@ -292,7 +297,7 @@ export default function Header() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleMobileMenuClick}
-            className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg"
+            className="md:hidden p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg relative z-50"
             aria-label="Toggle menu"
           >
             {isOpen ? (

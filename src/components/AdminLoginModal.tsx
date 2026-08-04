@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, EyeOff } from 'lucide-react';
-import { useAdminAuth } from '@/lib/adminAuthStore';
+import { useAdminAuth } from '@/components/AdminAuthProvider';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
