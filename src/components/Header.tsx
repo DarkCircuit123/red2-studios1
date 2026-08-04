@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
-import AdminLoginModal from './AdminLoginModal';
-import { useAdminAuth } from '@/lib/adminAuthStore';
+import SimpleAdminLoginModal from './SimpleAdminLoginModal';
+import { useSimpleAdminAuth } from '@/lib/simpleAdminAuth';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
-import { debugLog } from '@/lib/debug-logger';
 
 // Lazy load AdminPanel to prevent loading upload code on every page
 const AdminPanel = lazy(() => import('./AdminPanel'));
@@ -18,28 +17,9 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const adminVerificationInitiatedRef = useRef(false);
   const { member, isAuthenticated, isLoading, actions } = useMember();
-  const { isAdminAuthenticated, isVerifying, logout: adminLogout, verifySession } = useAdminAuth();
+  const { isAdminAuthenticated, isLoading: isAuthLoading, logout: adminLogout } = useSimpleAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
-
-  // Reconcile real auth state from the server on mount only. The
-  // client no longer persists isAdminAuthenticated to localStorage (see
-  // adminAuthStore.ts), so without this call every refresh would show
-  // "logged out" even with a perfectly valid session cookie — this is
-  // what makes a refresh correctly stay logged in.
-  useEffect(() => {
-    // Guard against duplicate verification calls in React Strict Mode
-    if (adminVerificationInitiatedRef.current) {
-      return;
-    }
-    adminVerificationInitiatedRef.current = true;
-
-    verifySession().catch(err => {
-      // Silently handle verification errors - expected for unauthenticated users
-      debugLog('[HEADER] Admin session verification skipped (not authenticated)');
-    });
-  }, [verifySession]);
 
   // Optimized throttled scroll handler
   useEffect(() => {
@@ -230,16 +210,16 @@ export default function Header() {
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleAdminClick}
-            disabled={isVerifying}
+            disabled={isAuthLoading}
             className={`p-2 transition-colors duration-300 rounded-lg ${
-              isVerifying
+              isAuthLoading
                 ? 'opacity-50 cursor-wait'
                 : isAdminAuthenticated
                 ? 'hover:bg-primary/10'
                 : 'hover:bg-white/10'
             }`}
             aria-label="Admin panel"
-            title={isVerifying ? 'Checking session…' : isAdminAuthenticated ? 'Admin Panel' : 'Admin Login'}
+            title={isAuthLoading ? 'Checking session…' : isAdminAuthenticated ? 'Admin Panel' : 'Admin Login'}
           >
             <Settings className={`w-4 h-4 transition-colors ${
               isAdminAuthenticated
@@ -282,7 +262,7 @@ export default function Header() {
         </div>
       </nav>
       {/* Admin Login Modal */}
-      <AdminLoginModal
+      <SimpleAdminLoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={() => setIsAdminOpen(true)}
