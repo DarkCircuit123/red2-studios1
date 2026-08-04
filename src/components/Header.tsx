@@ -225,7 +225,7 @@ export default function Header() {
         </div>
 
         {/* Admin & Auth & Mobile Menu - Right aligned */}
-        <div className="flex items-center gap-4 ml-auto absolute right-6 md:right-8">
+        <div className="flex items-center gap-6 ml-auto absolute right-6 md:right-8">
           {/* Login/Profile icon */}
           <motion.button
             whileHover={{ scale: 1.1 }}
