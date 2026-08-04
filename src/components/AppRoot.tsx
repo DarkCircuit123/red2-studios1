@@ -1,6 +1,7 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
+import SplashScreen from '@/components/SplashScreen';
 
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -29,11 +30,18 @@ class RouterErrorBoundary extends React.Component<
 }
 
 export default function AppRoot() {
+  const [splashComplete, setSplashComplete] = useState(false);
+
   return (
-    <RouterErrorBoundary>
-      <Suspense fallback={<RouterFallback />}>
-        <AppRouter />
-      </Suspense>
-    </RouterErrorBoundary>
+    <>
+      <SplashScreen onComplete={() => setSplashComplete(true)} />
+      {splashComplete && (
+        <RouterErrorBoundary>
+          <Suspense fallback={<RouterFallback />}>
+            <AppRouter />
+          </Suspense>
+        </RouterErrorBoundary>
+      )}
+    </>
   );
 }
