@@ -26,7 +26,8 @@ export default function Header() {
       memberId: member?._id,
       isAdmin,
       isAdminLoading,
-      isMemberLoading
+      isMemberLoading,
+      timestamp: new Date().toISOString()
     });
     
     if (isAuthenticated && member?._id && !isAdmin && !isAdminLoading) {
@@ -298,6 +299,20 @@ export default function Header() {
             </>
           )}
 
+          {/* STATE 3: Authenticated Non-Admin - Show ONLY Logout */}
+          {isAuthenticated && !isAdmin && !isMemberLoading && !isAdminLoading && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogoutClick}
+              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
+            </motion.button>
+          )}
+
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
@@ -368,6 +383,20 @@ export default function Header() {
                   Sign Out
                 </motion.button>
               </>
+            )}
+
+            {/* Mobile Auth Buttons - STATE 3: Authenticated Non-Admin */}
+            {isAuthenticated && !isAdmin && !isMemberLoading && !isAdminLoading && (
+              <motion.button
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0 }}
+                onClick={handleLogoutClick}
+                className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </motion.button>
             )}
 
             {[
