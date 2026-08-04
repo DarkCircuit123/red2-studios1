@@ -1,4 +1,4 @@
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
 import SplashScreen from '@/components/SplashScreen';
@@ -32,9 +32,21 @@ class RouterErrorBoundary extends React.Component<
 export default function AppRoot() {
   const [splashComplete, setSplashComplete] = useState(false);
 
+  // Check if splash was already shown in this session
+  useEffect(() => {
+    const splashShown = sessionStorage.getItem('splashScreenShown') === 'true';
+    if (splashShown) {
+      setSplashComplete(true);
+    }
+  }, []);
+
+  const handleSplashComplete = () => {
+    setSplashComplete(true);
+  };
+
   return (
     <>
-      <SplashScreen onComplete={() => setSplashComplete(true)} />
+      {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
       {splashComplete && (
         <RouterErrorBoundary>
           <Suspense fallback={<RouterFallback />}>
