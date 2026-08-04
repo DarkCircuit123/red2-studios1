@@ -24,36 +24,14 @@ export default function Header() {
 
   // Check admin access when member changes - only if authenticated and not already verified
   useEffect(() => {
-    console.log('[HEADER] Auth state changed:', {
-      isAuthenticated,
-      memberId: member?._id,
-      isAdmin,
-      isAdminLoading,
-      isMemberLoading,
-      timestamp: new Date().toISOString()
-    });
-    
-    // DEBUG: Log what should be rendered
-    if (!isAuthenticated && !isMemberLoading) {
-      console.log('[HEADER] ✅ Should show LOGIN button (not authenticated, not loading)');
-    } else if (isAuthenticated && isAdmin && !isMemberLoading && !isAdminLoading) {
-      console.log('[HEADER] ✅ Should show ADMIN + LOGOUT (authenticated admin)');
-    } else if (isAuthenticated && !isAdmin && !isMemberLoading && !isAdminLoading) {
-      console.log('[HEADER] ✅ Should show LOGOUT (authenticated non-admin)');
-    } else {
-      console.log('[HEADER] ⏳ Loading or indeterminate state - showing nothing');
-    }
-    
     if (isAuthenticated && member?._id && !isAdmin && !isAdminLoading) {
-      console.log('[HEADER] Checking admin access for member:', member._id);
       checkAdminAccess(member._id);
     }
-  }, [isAuthenticated, member?._id, isAdmin, isAdminLoading, checkAdminAccess, isMemberLoading]);
+  }, [isAuthenticated, member?._id, isAdmin, isAdminLoading, checkAdminAccess]);
 
   // Clear admin state and close menus when user logs out - this is critical for immediate UI reset
   useEffect(() => {
     if (!isAuthenticated) {
-      console.log('[HEADER] User logged out, resetting admin state and closing menus');
       resetAdminState();
       // Close any open menus immediately on logout
       setIsOpen(false);
@@ -64,7 +42,6 @@ export default function Header() {
   // Close admin panel when user logs out
   useEffect(() => {
     if (!isAuthenticated && isAdminOpen) {
-      console.log('[HEADER] Closing admin panel due to logout');
       setIsAdminOpen(false);
     }
   }, [isAuthenticated, isAdminOpen]);
@@ -96,25 +73,15 @@ export default function Header() {
   }, [isAdmin]);
 
   const handleLoginClick = useCallback((e: React.MouseEvent) => {
-    console.log('[HEADER] 🔐 Login icon clicked', {
-      timestamp: new Date().toISOString(),
-      currentState: isLoginModalOpen,
-      eventType: e.type,
-      target: e.currentTarget.tagName,
-    });
     e.preventDefault();
     e.stopPropagation();
     playClickSound();
-    console.log('[HEADER] 🔐 Setting isLoginModalOpen to true');
     setIsLoginModalOpen(true);
-    console.log('[HEADER] 🔐 State update queued');
-  }, [isLoginModalOpen]);
+  }, []);
 
   const handleLoginModalSubmit = useCallback(async (username: string, password: string) => {
     setIsAuthenticating(true);
     try {
-      console.log('[HEADER] Attempting login with credentials...');
-      
       // Call the login API with email and password
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -135,7 +102,6 @@ export default function Header() {
       }
 
       const data = await response.json();
-      console.log('[HEADER] Login successful, loading member...');
       
       // Load the current member to update auth state
       await memberActions.loadCurrentMember();
@@ -143,7 +109,6 @@ export default function Header() {
       // Close the modal on successful login
       setIsLoginModalOpen(false);
     } catch (error) {
-      console.error('[HEADER] Login error:', error);
       throw error;
     } finally {
       setIsAuthenticating(false);
@@ -158,13 +123,10 @@ export default function Header() {
 
   const handleLogoutClick = useCallback(async () => {
     playClickSound();
-    console.log('[HEADER] Logout button clicked');
     try {
-      console.log('[HEADER] Calling memberActions.logout()...');
       await memberActions.logout();
-      console.log('[HEADER] Logout completed');
     } catch (error) {
-      console.error('[HEADER] Logout error:', error);
+      // Logout errors are logged but don't prevent UI reset
     }
   }, [memberActions]);
 
@@ -223,18 +185,6 @@ export default function Header() {
 
   return (
     <>
-      {/* DEBUG: Auth State Indicator (visible in console and as data attribute) */}
-      <div 
-        data-auth-state={JSON.stringify({
-          isAuthenticated,
-          isMemberLoading,
-          isAdmin,
-          isAdminLoading,
-          hasMember: !!member,
-        })}
-        style={{ display: 'none' }}
-      />
-      
       {/* Login Modal */}
       <LoginModal
         isOpen={isLoginModalOpen}

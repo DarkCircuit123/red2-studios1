@@ -56,7 +56,6 @@ export const useAdminAuth = create<AdminAuthState>()(
         set({ isLoading: true, error: null });
 
         try {
-          console.log('[ADMIN AUTH] Attempting Wix Members-based admin login...');
           const response = await fetch('/api/auth/admin-check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -64,14 +63,10 @@ export const useAdminAuth = create<AdminAuthState>()(
             body: JSON.stringify({}),
           });
 
-          console.log('[ADMIN AUTH] Response status:', response.status);
-
           let data;
           try {
             data = await safeJson(response);
-            console.log('[ADMIN AUTH] Response data:', data);
           } catch (parseError) {
-            console.error('[ADMIN AUTH] Response parse error:', parseError);
             set({
               isLoading: false,
               error: parseError instanceof Error ? parseError.message : 'Invalid server response'
@@ -90,7 +85,6 @@ export const useAdminAuth = create<AdminAuthState>()(
               error: null,
             });
 
-            console.log('[ADMIN AUTH] Login successful for member:', data.memberId);
             return true;
           }
 
@@ -106,7 +100,6 @@ export const useAdminAuth = create<AdminAuthState>()(
 
           return false;
         } catch (error) {
-          console.error('[ADMIN AUTH] Login error:', error);
           set({
             isLoading: false,
             error: error instanceof Error ? error.message : 'Network error. Please try again.',
@@ -125,7 +118,7 @@ export const useAdminAuth = create<AdminAuthState>()(
             body: JSON.stringify({ action: 'logout' }),
           });
         } catch (error) {
-          console.error('[ADMIN AUTH] Logout error:', error);
+          // Logout errors are silently ignored
         }
 
         set({
@@ -134,7 +127,6 @@ export const useAdminAuth = create<AdminAuthState>()(
           adminToken: null,
           error: null,
         });
-        console.log('[ADMIN AUTH] Logout successful');
       },
 
       resetFailedAttempts: () => {
@@ -171,7 +163,6 @@ export const useAdminAuth = create<AdminAuthState>()(
               return false;
             }
             // Log unexpected errors but don't crash
-            console.warn(`[ADMIN AUTH] Unexpected response status ${response.status}`);
             set({ isAdminAuthenticated: false, isVerifying: false });
             return false;
           }
@@ -190,7 +181,6 @@ export const useAdminAuth = create<AdminAuthState>()(
             return false;
           }
         } catch (error) {
-          console.log('[ADMIN AUTH] Session verification error (expected if not authenticated):', error instanceof Error ? error.message : error);
           set({ isAdminAuthenticated: false, isVerifying: false });
           return false;
         }

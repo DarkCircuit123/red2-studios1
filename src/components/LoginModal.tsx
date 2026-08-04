@@ -20,20 +20,9 @@ export default function LoginModal({ isOpen, onClose, onSubmit, isLoading = fals
   const [passwordError, setPasswordError] = useState('');
   const usernameInputRef = useRef<HTMLInputElement>(null);
 
-  // Debug: Log when isOpen changes
-  useEffect(() => {
-    console.log('[LOGIN_MODAL] 🔐 isOpen changed:', {
-      isOpen,
-      timestamp: new Date().toISOString(),
-      isLoading,
-      isSubmitting,
-    });
-  }, [isOpen, isLoading, isSubmitting]);
-
   // Auto-focus username field when modal opens
   useEffect(() => {
     if (isOpen) {
-      console.log('[LOGIN_MODAL] 🔐 Modal opened, clearing form and focusing username');
       setError('');
       setUsernameError('');
       setPasswordError('');
@@ -110,7 +99,6 @@ export default function LoginModal({ isOpen, onClose, onSubmit, isLoading = fals
     <AnimatePresence>
       {isOpen && (
         <>
-          {console.log('[LOGIN_MODAL] 🔐 Rendering modal DOM')}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -125,7 +113,6 @@ export default function LoginModal({ isOpen, onClose, onSubmit, isLoading = fals
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className="relative w-full max-w-md"
-            onAnimationComplete={() => console.log('[LOGIN_MODAL] 🔐 Modal animation complete')}
           >
             {/* Glassmorphism card */}
             <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
