@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, Music, Calendar, AlertCircle, CheckCircle, Upload, Zap, Database, TestTube } from 'lucide-react';
+import { Settings, X, Edit2, Music, Calendar, AlertCircle, CheckCircle, Upload, Zap, Database, TestTube, LogOut } from 'lucide-react';
 import { useMember } from '@/integrations';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
@@ -31,7 +31,7 @@ interface MusicSettings {
 interface AboutSettings extends AboutSection {}
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
-  const { member } = useMember();
+  const { member, actions: memberActions } = useMember();
   const [activeTab, setActiveTab] = useState('photos');
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
@@ -134,6 +134,18 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     setIsSavingCredentials(false);
   };
 
+  const handleLogout = useCallback(async () => {
+    playClickSound();
+    try {
+      console.log('[ADMIN PANEL] Logout button clicked');
+      await memberActions.logout();
+      console.log('[ADMIN PANEL] Logout completed');
+      onClose();
+    } catch (error) {
+      console.error('[ADMIN PANEL] Logout error:', error);
+    }
+  }, [memberActions, onClose]);
+
   if (!isOpen) {
     return null;
   }
@@ -183,11 +195,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    playClickSound();
-                    logout();
-                    onClose();
-                  }}
+                  onClick={handleLogout}
                   className="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
                   title="Logout"
                 >
