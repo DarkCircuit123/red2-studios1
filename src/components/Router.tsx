@@ -16,6 +16,7 @@ const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage'));
 const ClientRegisterPage = lazy(() => import('./pages/ClientRegisterPage'));
 const WorkPage = lazy(() => import('./pages/WorkPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 const BackgroundMusicPlayer = lazy(() => import('./BackgroundMusicPlayer'));
 // These 10 were built but never wired into the router - every link that
 // pointed at them was a dead 404-to-home redirect until now.
@@ -247,6 +248,16 @@ const router = createBrowserRouter([
           <Suspense fallback={<div />}>
             <UploadTestPage />
           </Suspense>
+        ),
+      },
+      {
+        path: "admin",
+        element: (
+          <MemberProtectedRoute messageToSignIn="Sign in to access the admin panel">
+            <Suspense fallback={<div />}>
+              <AdminPage />
+            </Suspense>
+          </MemberProtectedRoute>
         ),
       },
       {

@@ -277,6 +277,43 @@ export interface HomepageImages {
 
 
 /**
+ * Collection ID: homepagesettings
+ * Interface for HomePageSettings
+ */
+export interface HomePageSettings {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  heroBackgroundImage?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  heroForegroundImages?: string;
+  /** @wixFieldType text */
+  heroTitle?: string;
+  /** @wixFieldType text */
+  heroSubtitle?: string;
+  /** @wixFieldType text */
+  buttonText?: string;
+  /** @wixFieldType text */
+  sectionContent?: string;
+  /** @wixFieldType text */
+  musicTitle?: string;
+  /** @wixFieldType url */
+  backgroundMusicUrl?: string;
+  /** @wixFieldType boolean */
+  musicEnabled?: boolean;
+  /** @wixFieldType boolean */
+  autoplayEnabled?: boolean;
+  /** @wixFieldType boolean */
+  loopMusic?: boolean;
+  /** @wixFieldType number */
+  volume?: number;
+  /** @wixFieldType datetime */
+  updatedDate?: Date | string;
+}
+
+
+/**
  * Collection ID: musicsettings
  * Interface for MusicSettings
  */
