@@ -20,9 +20,20 @@ export default function LoginModal({ isOpen, onClose, onSubmit, isLoading = fals
   const [passwordError, setPasswordError] = useState('');
   const usernameInputRef = useRef<HTMLInputElement>(null);
 
+  // Debug: Log when isOpen changes
+  useEffect(() => {
+    console.log('[LOGIN_MODAL] 🔐 isOpen changed:', {
+      isOpen,
+      timestamp: new Date().toISOString(),
+      isLoading,
+      isSubmitting,
+    });
+  }, [isOpen, isLoading, isSubmitting]);
+
   // Auto-focus username field when modal opens
   useEffect(() => {
     if (isOpen) {
+      console.log('[LOGIN_MODAL] 🔐 Modal opened, clearing form and focusing username');
       setError('');
       setUsernameError('');
       setPasswordError('');
@@ -98,20 +109,23 @@ export default function LoginModal({ isOpen, onClose, onSubmit, isLoading = fals
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onClick={handleBackdropClick}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-        >
+        <>
+          {console.log('[LOGIN_MODAL] 🔐 Rendering modal DOM')}
           <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={handleBackdropClick}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          >
+            <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className="relative w-full max-w-md"
+            onAnimationComplete={() => console.log('[LOGIN_MODAL] 🔐 Modal animation complete')}
           >
             {/* Glassmorphism card */}
             <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
@@ -271,8 +285,9 @@ export default function LoginModal({ isOpen, onClose, onSubmit, isLoading = fals
                 </motion.button>
               </form>
             </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </>
       )}
     </AnimatePresence>
   );

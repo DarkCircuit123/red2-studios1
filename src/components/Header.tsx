@@ -95,10 +95,20 @@ export default function Header() {
     }
   }, [isAdmin]);
 
-  const handleLoginClick = useCallback(() => {
+  const handleLoginClick = useCallback((e: React.MouseEvent) => {
+    console.log('[HEADER] 🔐 Login icon clicked', {
+      timestamp: new Date().toISOString(),
+      currentState: isLoginModalOpen,
+      eventType: e.type,
+      target: e.currentTarget.tagName,
+    });
+    e.preventDefault();
+    e.stopPropagation();
     playClickSound();
+    console.log('[HEADER] 🔐 Setting isLoginModalOpen to true');
     setIsLoginModalOpen(true);
-  }, []);
+    console.log('[HEADER] 🔐 State update queued');
+  }, [isLoginModalOpen]);
 
   const handleLoginModalSubmit = useCallback(async (username: string, password: string) => {
     setIsAuthenticating(true);
