@@ -25,16 +25,29 @@ export default function SplashpageLogo({
   const loadActiveLogo = async () => {
     try {
       setIsLoading(true);
+      setError(false);
+      
+      // Diagnostic: CMS query initiated
       const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+      
+      if (!result.items || result.items.length === 0) {
+        // No items in collection
+        setError(true);
+        return;
+      }
+      
       const activeLogo = result.items.find((item) => item.isActive);
       
       if (activeLogo && activeLogo.logoImage) {
+        // Diagnostic: Active logo found with image
         setLogo(activeLogo);
       } else {
+        // No active logo or no image field
         setError(true);
       }
     } catch (err) {
-      console.error('Error loading splash page logo:', err);
+      // Diagnostic: Log error but don't display to user
+      console.error('[SplashpageLogo] CMS query error:', err);
       setError(true);
     } finally {
       setIsLoading(false);
@@ -59,7 +72,7 @@ export default function SplashpageLogo({
   return (
     <ImageComponent
       src={logo.logoImage}
-      alt={logo.altText || 'Splash page logo'}
+      alt={logo.altText || ''}
       width={width}
       height={height}
       className={`object-contain ${className}`}

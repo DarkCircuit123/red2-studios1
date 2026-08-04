@@ -30,11 +30,18 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
   const loadActiveLogo = async () => {
     try {
       setIsLoading(true);
+      // Diagnostic: CMS query initiated
       const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+      
+      if (!result.items || result.items.length === 0) {
+        setActiveLogo(null);
+        return;
+      }
+      
       const active = result.items.find((item) => item.isActive);
       setActiveLogo(active || null);
     } catch (error) {
-      console.error('Error loading active logo:', error);
+      console.error('[SplashpageManager] Error loading active logo:', error);
       showNotification('error', 'Failed to load splash page logo');
     } finally {
       setIsLoading(false);
@@ -234,7 +241,7 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
             <div className="w-full max-w-xs h-40 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200">
               <ImageComponent
                 src={activeLogo.logoImage}
-                alt={activeLogo.altText || 'Splash page logo'}
+                alt={activeLogo.altText || ''}
                 width={300}
                 height={160}
                 className="object-contain w-full h-full"

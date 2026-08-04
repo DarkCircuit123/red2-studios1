@@ -18,11 +18,21 @@ export function useSplashpageLogo(): UseSplashpageLogoReturn {
     try {
       setIsLoading(true);
       setError(false);
+      
+      // Diagnostic: CMS query initiated
       const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+      
+      if (!result.items || result.items.length === 0) {
+        // No items in collection
+        setLogo(null);
+        return;
+      }
+      
       const activeLogo = result.items.find((item) => item.isActive);
       setLogo(activeLogo || null);
     } catch (err) {
-      console.error('Error loading splash page logo:', err);
+      // Diagnostic: Log error but don't display to user
+      console.error('[useSplashpageLogo] CMS query error:', err);
       setError(true);
       setLogo(null);
     } finally {

@@ -33,14 +33,27 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     const loadActiveLogo = async () => {
       try {
+        // Diagnostic: CMS query initiated
         const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+        
+        // Diagnostic: Query completed, check results
+        if (!result.items || result.items.length === 0) {
+          // No items in collection - this is acceptable, splash will be skipped
+          setIsLoadingLogo(false);
+          return;
+        }
+        
         const activeLogo = result.items.find((item) => item.isActive);
         
         if (activeLogo?.logoImage) {
+          // Diagnostic: Active logo found with image
           setLogoImage(activeLogo.logoImage);
+        } else {
+          // No active logo or no image field - splash will be skipped
         }
       } catch (err) {
-        console.error('Error loading splash page logo:', err);
+        // Diagnostic: Log error but don't display to user
+        console.error('[SplashScreen] CMS query error:', err);
       } finally {
         setIsLoadingLogo(false);
       }
@@ -89,7 +102,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       }}
       style={{ pointerEvents: isFadingOut ? 'none' : 'auto' }}
     >
-      {/* Logo container with subtle fade-in */}
+      {/* Logo container with premium fade-in animation */}
       <motion.div
         className="relative z-10 flex items-center justify-center"
         initial={{ opacity: 0 }}
@@ -102,7 +115,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       >
         <Image
           src={logoImage}
-          alt="Splash page logo"
+          alt=""
           className="w-48 h-auto sm:w-56 md:w-72 lg:w-80"
           width={320}
           priority

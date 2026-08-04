@@ -12,14 +12,24 @@ export default function LogoSplash() {
   useEffect(() => {
     const loadActiveLogo = async () => {
       try {
+        // Diagnostic: CMS query initiated
         const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+        
+        if (!result.items || result.items.length === 0) {
+          // No items in collection
+          setIsLoadingLogo(false);
+          return;
+        }
+        
         const activeLogo = result.items.find((item) => item.isActive);
         
         if (activeLogo?.logoImage) {
+          // Diagnostic: Active logo found with image
           setLogoImage(activeLogo.logoImage);
         }
       } catch (err) {
-        console.error('Error loading splash page logo:', err);
+        // Diagnostic: Log error but don't display to user
+        console.error('[LogoSplash] CMS query error:', err);
       } finally {
         setIsLoadingLogo(false);
       }
@@ -70,7 +80,7 @@ export default function LogoSplash() {
               width: '220px',
               height: 'auto',
             }}
-            alt="Splash page logo"
+            alt=""
           />
         </motion.div>
       )}
