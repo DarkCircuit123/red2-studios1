@@ -14,6 +14,57 @@ interface BehindTheScenesImage {
   focalPointY?: number;
 }
 
+interface BehindTheScenesImageProps {
+  item: BehindTheScenesImage;
+  index: number;
+  dimensions: { width: number; height: number };
+  onImageLoad: (id: string, e: React.SyntheticEvent<HTMLImageElement>) => void;
+}
+
+// Child component to handle useImageFitting hook at component level
+function BehindTheScenesImage({
+  item,
+  index,
+  dimensions,
+  onImageLoad,
+}: BehindTheScenesImageProps) {
+  const { fitting } = useImageFitting({
+    imageWidth: dimensions.width,
+    imageHeight: dimensions.height,
+    containerWidth: 400,
+    containerHeight: 400,
+    focalPoint: {
+      x: item.focalPointX ?? 50,
+      y: item.focalPointY ?? 50,
+    },
+    fitMode: 'cover',
+  });
+
+  return (
+    <motion.div
+      variants={getStaggeredVariant(index, 0.15, 0.12)}
+      className="bg-gray-900 rounded-lg overflow-hidden aspect-square"
+    >
+      {item.behindTheScenesImage ? (
+        <Image
+          src={item.behindTheScenesImage}
+          alt={item.imageName || 'Behind the scenes'}
+          onLoad={(e) => onImageLoad(item._id, e)}
+          className="w-full h-full"
+          style={{
+            objectFit: fitting.objectFit as any,
+            objectPosition: fitting.objectPosition,
+          }}
+          width={400}
+          height={400}
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
+      )}
+    </motion.div>
+  );
+}
+
 export default function BehindTheScenesSection() {
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
   const [images, setImages] = useState<BehindTheScenesImage[]>([]);
@@ -68,41 +119,14 @@ export default function BehindTheScenesSection() {
           >
             {images.map((item, i) => {
               const dims = imageDimensions[item._id] || { width: 1, height: 1 };
-              const { fitting } = useImageFitting({
-                imageWidth: dims.width,
-                imageHeight: dims.height,
-                containerWidth: 400,
-                containerHeight: 400,
-                focalPoint: {
-                  x: item.focalPointX ?? 50,
-                  y: item.focalPointY ?? 50,
-                },
-                fitMode: 'cover',
-              });
-
               return (
-                <motion.div
+                <BehindTheScenesImage
                   key={item._id}
-                  variants={getStaggeredVariant(i, 0.15, 0.12)}
-                  className="bg-gray-900 rounded-lg overflow-hidden aspect-square"
-                >
-                  {item.behindTheScenesImage ? (
-                    <Image
-                      src={item.behindTheScenesImage}
-                      alt={item.imageName || 'Behind the scenes'}
-                      onLoad={(e) => handleImageLoad(item._id, e)}
-                      className="w-full h-full"
-                      style={{
-                        objectFit: fitting.objectFit as any,
-                        objectPosition: fitting.objectPosition,
-                      }}
-                      width={400}
-                      height={400}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
-                  )}
-                </motion.div>
+                  item={item}
+                  index={i}
+                  dimensions={dims}
+                  onImageLoad={handleImageLoad}
+                />
               );
             })}
           </motion.div>
