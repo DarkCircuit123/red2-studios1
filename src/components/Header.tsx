@@ -6,6 +6,7 @@ import { useMember } from '@/integrations';
 import { useWixAdminAccess } from '@/lib/wix-admin-access';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
+import LoginModal from './LoginModal';
 
 // Lazy load AdminPanel to prevent loading upload code on every page
 const AdminPanel = lazy(() => import('./AdminPanel'));
@@ -15,6 +16,8 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const { member, isAuthenticated, isLoading: isMemberLoading, actions: memberActions } = useMember();
   const { isAdmin, isLoading: isAdminLoading, checkAdminAccess, reset: resetAdminState } = useWixAdminAccess();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
@@ -94,8 +97,27 @@ export default function Header() {
 
   const handleLoginClick = useCallback(() => {
     playClickSound();
-    memberActions.login();
+    setIsLoginModalOpen(true);
+  }, []);
+
+  const handleLoginModalSubmit = useCallback(async (username: string, password: string) => {
+    setIsAuthenticating(true);
+    try {
+      // Use the existing Wix login flow
+      // This will redirect to Wix login page
+      memberActions.login();
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsAuthenticating(false);
+    }
   }, [memberActions]);
+
+  const handleLoginModalClose = useCallback(() => {
+    if (!isAuthenticating) {
+      setIsLoginModalOpen(false);
+    }
+  }, [isAuthenticating]);
 
   const handleLogoutClick = useCallback(async () => {
     playClickSound();
@@ -174,6 +196,14 @@ export default function Header() {
           hasMember: !!member,
         })}
         style={{ display: 'none' }}
+      />
+      
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={handleLoginModalClose}
+        onSubmit={handleLoginModalSubmit}
+        isLoading={isAuthenticating}
       />
       
       <header
