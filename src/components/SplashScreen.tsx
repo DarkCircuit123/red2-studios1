@@ -86,8 +86,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   if (!isVisible) return null;
 
-  // Don't render if logo is still loading or not available
-  if (isLoadingLogo || !logoImage) {
+  // Don't render if logo is still loading
+  if (isLoadingLogo) {
+    return null;
+  }
+
+  // If no logo image available, skip splash entirely
+  if (!logoImage) {
+    markSplashAsShown();
+    onComplete?.();
     return null;
   }
 

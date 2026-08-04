@@ -23,7 +23,7 @@ export const GET: APIRoute = async ({ cookies }) => {
     console.error('[ADMIN CHECK] Error:', error);
     return new Response(
       JSON.stringify({ authenticated: false }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };

@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Validate credentials
+    // Validate credentials - exact match required
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       // Create secure session token
       const sessionToken = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       cookies.set('admin_session', sessionToken, {
         path: '/',
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 86400 * 7, // 7 days
       });

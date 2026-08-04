@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings, LogIn, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAdminAuth } from './AdminAuthProvider';
+import { useAdminAuth as useAdminAuthContext } from '@/components/AdminAuthProvider';
+import { useAdminAuth as useAdminAuthStore } from '@/lib/adminAuthStore';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
-import LoginModal from './LoginModal';
+import AdminLoginModal from './AdminLoginModal';
 
 // Lazy load AdminPanel to prevent loading upload code on every page
 const AdminPanel = lazy(() => import('./AdminPanel'));
@@ -16,7 +17,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { isAuthenticated, isLoading, error: authError, login, logout, clearError } = useAdminAuth();
+  const { isAuthenticated, isLoading } = useAdminAuthContext();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
   // Close admin panel when user logs out
@@ -56,39 +57,30 @@ export default function Header() {
     e.preventDefault();
     e.stopPropagation();
     playClickSound();
-    clearError();
     setIsLoginModalOpen(true);
-  }, [clearError]);
-
-  const handleLoginModalSubmit = useCallback(
-    async (username: string, password: string) => {
-      try {
-        await login(username, password);
-        setIsLoginModalOpen(false);
-      } catch (error) {
-        // Error is handled by the auth store and displayed in the modal
-        throw error;
-      }
-    },
-    [login]
-  );
+  }, []);
 
   const handleLoginModalClose = useCallback(() => {
     if (!isLoading) {
       setIsLoginModalOpen(false);
-      clearError();
     }
-  }, [isLoading, clearError]);
+  }, [isLoading]);
+
+  const handleLoginSuccess = useCallback(() => {
+    setIsAdminOpen(true);
+  }, []);
 
   const handleLogoutClick = useCallback(async () => {
     playClickSound();
+    const { logout } = useAdminAuthStore.getState();
     try {
       await logout();
       setIsOpen(false);
+      setIsAdminOpen(false);
     } catch (error) {
       console.error('Logout error:', error);
     }
-  }, [logout]);
+  }, []);
 
   const handleMobileMenuClick = useCallback(() => {
     playClickSound();
@@ -145,13 +137,11 @@ export default function Header() {
 
   return (
     <>
-      {/* Login Modal */}
-      <LoginModal
+      {/* Admin Login Modal */}
+      <AdminLoginModal
         isOpen={isLoginModalOpen}
         onClose={handleLoginModalClose}
-        onSubmit={handleLoginModalSubmit}
-        isLoading={isLoading}
-        error={authError}
+        onLoginSuccess={handleLoginSuccess}
       />
       
       <header
