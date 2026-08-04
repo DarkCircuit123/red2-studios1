@@ -19,7 +19,8 @@ interface CarouselImageCardProps {
 const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
   const [imageDims, setImageDims] = useState({ width: 1920, height: 1080 });
 
-  const { fitting } = useImageFitting({
+  // Memoize the options object to prevent useImageFitting from re-running on every render
+  const fitOptions = useMemo(() => ({
     imageWidth: imageDims.width,
     imageHeight: imageDims.height,
     containerWidth: typeof window !== 'undefined' ? window.innerWidth : 1920,
@@ -28,8 +29,10 @@ const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
       x: image.focalPointX ?? 50,
       y: image.focalPointY ?? 50,
     },
-    fitMode: 'cover',
-  });
+    fitMode: 'cover' as const,
+  }), [imageDims.width, imageDims.height, image.focalPointX, image.focalPointY]);
+
+  const { fitting } = useImageFitting(fitOptions);
 
   const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
