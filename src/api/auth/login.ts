@@ -1,13 +1,19 @@
-import { members } from '@wix/members';
+import type { APIRoute } from 'astro';
 
 // Hardcoded admin credentials
 const ADMIN_EMAIL = 'jordanzuniga@gmail.com';
 const ADMIN_PASSWORD = 'Iloveanna1!';
 
-export async function POST(context: any) {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    const body = await context.request.json().catch(() => ({}));
+    console.log('[LOGIN API] POST request received');
+    console.log('[LOGIN API] Request URL:', request.url);
+    console.log('[LOGIN API] Request method:', request.method);
+    
+    const body = await request.json().catch(() => ({}));
     const { email, password, returnToUrl } = body;
+    
+    console.log('[LOGIN API] Received credentials for email:', email);
     
     // If email and password are provided, use them for authentication
     if (email && password) {
@@ -15,13 +21,23 @@ export async function POST(context: any) {
       
       // Check for hardcoded admin credentials
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        console.log('[LOGIN API] Admin credentials matched - setting admin session');
+        console.log('[LOGIN API] ✓ Admin credentials matched - setting admin session');
         
         // Create admin session token
         const adminSessionToken = `admin_hardcoded_${Date.now()}`;
-        const setCookieHeader = `admin_session=${adminSessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800; Secure`;
         
-        console.log('[LOGIN API] Setting admin session cookie:', setCookieHeader);
+        console.log('[LOGIN API] ✓ Admin session token created:', adminSessionToken);
+        console.log('[LOGIN API] ✓ Setting admin_session cookie');
+        
+        // Set the cookie using Astro's cookies API
+        cookies.set('admin_session', adminSessionToken, {
+          path: '/',
+          httpOnly: true,
+          sameSite: 'lax',
+          maxAge: 1800, // 30 minutes
+        });
+        
+        console.log('[LOGIN API] ✓ Cookie set successfully');
         
         return new Response(JSON.stringify({ 
           success: true,
@@ -32,94 +48,47 @@ export async function POST(context: any) {
           status: 200,
           headers: { 
             'Content-Type': 'application/json',
-            'Set-Cookie': setCookieHeader
           },
         });
       }
       
-      // Get the Wix SDK context from locals (provided by @wix/astro integration)
-      const wixContext = context.locals;
-      const membersClient = members(wixContext);
+      console.log('[LOGIN API] ✗ Credentials do not match admin credentials');
       
-      try {
-        // Attempt to authenticate with email and password
-        const result = await membersClient.authenticate({
-          email,
-          password,
-        });
-        
-        console.log('[LOGIN API] Authentication successful');
-        
-        // Return success response
-        return new Response(JSON.stringify({ 
-          success: true,
-          message: 'Login successful'
-        }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      } catch (authError) {
-        console.error('[LOGIN API] Authentication failed:', authError);
-        
-        // Return authentication error
-        return new Response(JSON.stringify({ 
-          error: 'Invalid email or password. Please try again.'
-        }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
+      // Return authentication error
+      return new Response(JSON.stringify({ 
+        error: 'Invalid email or password. Please try again.'
+      }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     
-    // Otherwise, use the standard Wix login flow (redirect to Wix login page)
-    console.log('[LOGIN API] Using standard Wix login flow...');
-    const wixContext = context.locals;
-    const membersClient = members(wixContext);
+    console.log('[LOGIN API] No credentials provided');
     
-    // Generate login URL - this will redirect to Wix login
-    const loginUrl = await membersClient.generateLoginUrl({
-      redirectUrl: returnToUrl ? decodeURIComponent(returnToUrl) : '/',
-    });
-
-    // Redirect to the login URL
-    return new Response(null, {
-      status: 302,
-      headers: {
-        'Location': loginUrl,
-      },
+    // Return error if no credentials
+    return new Response(JSON.stringify({ 
+      error: 'Email and password are required'
+    }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('[LOGIN API] Error:', error);
+    console.error('[LOGIN API] ✗ Error:', error);
     return new Response(JSON.stringify({ error: 'Login failed' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
+};
 
-export async function GET(context: any) {
-  // GET requests should use the standard Wix login flow
-  const { returnToUrl } = context.url.searchParams;
+export const GET: APIRoute = async ({ url }) => {
+  console.log('[LOGIN API] GET request received');
+  console.log('[LOGIN API] GET is not supported for login - use POST instead');
   
-  try {
-    const wixContext = context.locals;
-    const membersClient = members(wixContext);
-    
-    const loginUrl = await membersClient.generateLoginUrl({
-      redirectUrl: returnToUrl ? decodeURIComponent(returnToUrl) : '/',
-    });
-
-    return new Response(null, {
-      status: 302,
-      headers: {
-        'Location': loginUrl,
-      },
-    });
-  } catch (error) {
-    console.error('[LOGIN API] GET error:', error);
-    return new Response(JSON.stringify({ error: 'Login failed' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
+  return new Response(JSON.stringify({ 
+    error: 'Method not allowed. Use POST to login.'
+  }), {
+    status: 405,
+    headers: { 'Content-Type': 'application/json' },
+  });
+};

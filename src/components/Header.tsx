@@ -82,7 +82,8 @@ export default function Header() {
   const handleLoginModalSubmit = useCallback(async (username: string, password: string) => {
     setIsAuthenticating(true);
     try {
-      console.log('[HEADER] Submitting login with email:', username);
+      console.log('[HEADER] ▶ Submitting login request');
+      console.log('[HEADER] Email:', username);
       
       // Call the login API with email and password
       const response = await fetch('/api/auth/login', {
@@ -98,17 +99,20 @@ export default function Header() {
         }),
       });
 
+      console.log('[HEADER] ▶ Login response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.log('[HEADER] ✗ Login failed:', errorData.error);
         throw new Error(errorData.error || 'Login failed. Please check your credentials.');
       }
 
       const data = await response.json();
-      console.log('[HEADER] Login response:', { success: data.success, isAdmin: data.isAdmin });
+      console.log('[HEADER] ✓ Login response received:', { success: data.success, isAdmin: data.isAdmin });
       
       // If admin login was successful, verify admin access
       if (data.isAdmin) {
-        console.log('[HEADER] Admin credentials detected, verifying admin access...');
+        console.log('[HEADER] ▶ Admin credentials detected, verifying admin session...');
         // Wait a moment for the cookie to be set
         await new Promise(resolve => setTimeout(resolve, 100));
         
@@ -120,28 +124,29 @@ export default function Header() {
           body: JSON.stringify({}),
         });
         
-        console.log('[HEADER] Admin check response status:', adminResponse.status);
+        console.log('[HEADER] ▶ Admin check response status:', adminResponse.status);
         
         if (adminResponse.ok) {
           const adminData = await adminResponse.json();
-          console.log('[HEADER] Admin session established:', adminData);
+          console.log('[HEADER] ✓ Admin session established:', adminData);
           // Trigger admin state check with the hardcoded admin ID
           await checkAdminAccess('admin_hardcoded');
-          console.log('[HEADER] Admin access check triggered');
+          console.log('[HEADER] ✓ Admin access verified, closing modal');
           // Close the modal immediately after successful admin login
           setIsLoginModalOpen(false);
         } else {
-          console.error('[HEADER] Admin check failed:', adminResponse.status);
+          console.error('[HEADER] ✗ Admin check failed:', adminResponse.status);
           throw new Error('Failed to establish admin session');
         }
       } else {
         // Load the current member to update auth state
         await memberActions.loadCurrentMember();
+        console.log('[HEADER] ✓ Member login successful, closing modal');
         // Close the modal on successful member login
         setIsLoginModalOpen(false);
       }
     } catch (error) {
-      console.error('[HEADER] Login error:', error);
+      console.error('[HEADER] ✗ Login error:', error);
       throw error;
     } finally {
       setIsAuthenticating(false);
