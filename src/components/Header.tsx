@@ -22,7 +22,16 @@ export default function Header() {
 
   // Check admin access when member changes - only if authenticated and not already verified
   useEffect(() => {
+    console.log('[HEADER] Auth state changed:', {
+      isAuthenticated,
+      memberId: member?._id,
+      isAdmin,
+      isAdminLoading,
+      isMemberLoading
+    });
+    
     if (isAuthenticated && member?._id && !isAdmin && !isAdminLoading) {
+      console.log('[HEADER] Checking admin access for member:', member._id);
       checkAdminAccess(member._id);
     }
   }, [isAuthenticated, member?._id, isAdmin, isAdminLoading, checkAdminAccess]);
@@ -30,6 +39,7 @@ export default function Header() {
   // Clear admin state when user logs out
   useEffect(() => {
     if (!isAuthenticated) {
+      console.log('[HEADER] User logged out, resetting admin state');
       resetAdminState();
     }
   }, [isAuthenticated, resetAdminState]);
@@ -67,9 +77,14 @@ export default function Header() {
 
   const handleLogoutClick = useCallback(async () => {
     playClickSound();
+    console.log('[HEADER] Logout button clicked');
     setIsLoggingOut(true);
     try {
+      console.log('[HEADER] Calling memberActions.logout()...');
       await memberActions.logout();
+      console.log('[HEADER] Logout completed');
+    } catch (error) {
+      console.error('[HEADER] Logout error:', error);
     } finally {
       setIsLoggingOut(false);
     }

@@ -69,11 +69,13 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
      */
     loadCurrentMember: useCallback(async () => {
       try {
+        console.log('[MEMBER PROVIDER] Loading current member...');
         updateState({ isLoading: true, error: null });
 
         const member = await getCurrentMember();
 
         if (member) {
+          console.log('[MEMBER PROVIDER] Member loaded:', member._id);
           updateState({
             member,
             isAuthenticated: true,
@@ -81,6 +83,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
           });
         } else {
           // No member - this is normal for anonymous/unauthenticated users
+          console.log('[MEMBER PROVIDER] No member found (anonymous user)');
           updateState({
             member: null,
             isAuthenticated: false,
@@ -90,6 +93,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
       } catch (err) {
         // Silently handle errors - getCurrentMember already filters expected errors
         // This catch block should rarely be hit since the service handles errors gracefully
+        console.error('[MEMBER PROVIDER] Unexpected error:', err);
         updateState({
           member: null,
           isAuthenticated: false,
@@ -141,37 +145,44 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
      * Logout
      */
     logout: useCallback(async () => {
-      try {
-        // Call the logout API to clear server-side session
-        const response = await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-        });
-        
-        if (!response.ok) {
-          console.warn('Logout API returned non-200 status:', response.status);
-        }
-      } catch (error) {
-        console.error('Logout error:', error);
-      }
-
-      // Clear all local state immediately
+      console.log('[LOGOUT] Starting logout process...');
+      
+      // Clear all local state FIRST - before any async operations
       updateState({
         member: null,
         isAuthenticated: false,
         error: null,
       });
 
-      // Clear localStorage to prevent stale cached state
+      // Clear localStorage immediately to prevent stale cached state
       if (typeof window !== 'undefined') {
         try {
           localStorage.removeItem(MEMBER_STORAGE_KEY);
+          console.log('[LOGOUT] Cleared localStorage');
         } catch (error) {
-          console.error('Error clearing localStorage:', error);
+          console.error('[LOGOUT] Error clearing localStorage:', error);
         }
       }
 
-      // Redirect to home after state is cleared
+      try {
+        // Call the logout API to clear server-side session
+        console.log('[LOGOUT] Calling logout API...');
+        const response = await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          console.log('[LOGOUT] Logout API succeeded');
+        } else {
+          console.warn('[LOGOUT] Logout API returned non-200 status:', response.status);
+        }
+      } catch (error) {
+        console.error('[LOGOUT] Logout API error:', error);
+      }
+
+      // Redirect to home after state is cleared and API is called
+      console.log('[LOGOUT] Redirecting to home...');
       window.location.href = '/';
     }, [updateState]),
 
