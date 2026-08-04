@@ -15,7 +15,6 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { member, isAuthenticated, isLoading: isMemberLoading, actions: memberActions } = useMember();
   const { isAdmin, isLoading: isAdminLoading, checkAdminAccess, reset: resetAdminState } = useWixAdminAccess();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
@@ -36,11 +35,14 @@ export default function Header() {
     }
   }, [isAuthenticated, member?._id, isAdmin, isAdminLoading, checkAdminAccess]);
 
-  // Clear admin state when user logs out
+  // Clear admin state when user logs out - this is critical for immediate UI reset
   useEffect(() => {
     if (!isAuthenticated) {
-      console.log('[HEADER] User logged out, resetting admin state');
+      console.log('[HEADER] User logged out, resetting admin state and closing menus');
       resetAdminState();
+      // Close any open menus immediately on logout
+      setIsOpen(false);
+      setIsAdminOpen(false);
     }
   }, [isAuthenticated, resetAdminState]);
 
@@ -78,15 +80,12 @@ export default function Header() {
   const handleLogoutClick = useCallback(async () => {
     playClickSound();
     console.log('[HEADER] Logout button clicked');
-    setIsLoggingOut(true);
     try {
       console.log('[HEADER] Calling memberActions.logout()...');
       await memberActions.logout();
       console.log('[HEADER] Logout completed');
     } catch (error) {
       console.error('[HEADER] Logout error:', error);
-    } finally {
-      setIsLoggingOut(false);
     }
   }, [memberActions]);
 
@@ -266,8 +265,7 @@ export default function Header() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleLogoutClick}
-              disabled={isLoggingOut}
-              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block disabled:opacity-50"
+              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
               aria-label="Sign out"
               title="Sign out"
             >
@@ -342,8 +340,7 @@ export default function Header() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0 }}
                 onClick={handleLogoutClick}
-                disabled={isLoggingOut}
-                className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit disabled:opacity-50"
+                className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out
