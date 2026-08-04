@@ -253,11 +253,9 @@ const router = createBrowserRouter([
       {
         path: "admin",
         element: (
-          <MemberProtectedRoute messageToSignIn="Sign in to access the admin panel">
-            <Suspense fallback={<div />}>
-              <AdminPage />
-            </Suspense>
-          </MemberProtectedRoute>
+          <Suspense fallback={<div />}>
+            <AdminPage />
+          </Suspense>
         ),
       },
       {

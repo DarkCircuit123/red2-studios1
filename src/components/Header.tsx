@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Settings, LogOut } from 'lucide-react';
+import { Menu, X, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMember } from '@/integrations';
-import SimpleAdminLoginModal from './SimpleAdminLoginModal';
-import { useSimpleAdminAuth } from '@/lib/simpleAdminAuth';
+import { useWixAdminAccess } from '@/lib/wix-admin-access';
 import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
 
@@ -16,10 +15,16 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { member, isAuthenticated, isLoading, actions } = useMember();
-  const { isAdminAuthenticated, isLoading: isAuthLoading, logout: adminLogout } = useSimpleAdminAuth();
+  const { member, isAuthenticated, isLoading: isMemberLoading } = useMember();
+  const { isAdmin, isLoading: isAdminLoading, checkAdminAccess } = useWixAdminAccess();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
+
+  // Check admin access when member changes
+  useEffect(() => {
+    if (isAuthenticated && member?._id && !isAdmin && !isAdminLoading) {
+      checkAdminAccess(member._id);
+    }
+  }, [isAuthenticated, member?._id, isAdmin, isAdminLoading, checkAdminAccess]);
 
   // Optimized throttled scroll handler
   useEffect(() => {
@@ -42,12 +47,16 @@ export default function Header() {
 
   const handleAdminClick = useCallback(() => {
     playClickSound();
-    if (isAdminAuthenticated) {
+    if (isAdmin) {
       setIsAdminOpen(true);
+    } else if (isAuthenticated) {
+      // User is logged in but not admin - navigate to admin page which will show permission denied
+      navigate('/admin');
     } else {
-      setIsLoginModalOpen(true);
+      // Not logged in - redirect to sign in
+      navigate('/');
     }
-  }, [isAdminAuthenticated]);
+  }, [isAdmin, isAuthenticated, navigate]);
 
   const handleMobileMenuClick = useCallback(() => {
     playClickSound();
@@ -205,44 +214,28 @@ export default function Header() {
 
         {/* Admin & Mobile Menu - Right aligned */}
         <div className="flex items-center gap-6 ml-auto absolute right-6 md:right-8">
-          {/* Admin gear icon - always show, but behavior changes based on auth */}
-          <motion.button
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleAdminClick}
-            disabled={isAuthLoading}
-            className={`p-2 transition-colors duration-300 rounded-lg ${
-              isAuthLoading
-                ? 'opacity-50 cursor-wait'
-                : isAdminAuthenticated
-                ? 'hover:bg-primary/10'
-                : 'hover:bg-white/10'
-            }`}
-            aria-label="Admin panel"
-            title={isAuthLoading ? 'Checking session…' : isAdminAuthenticated ? 'Admin Panel' : 'Admin Login'}
-          >
-            <Settings className={`w-4 h-4 transition-colors ${
-              isAdminAuthenticated
-                ? 'text-primary hover:text-primary/80'
-                : 'text-white/60 hover:text-white'
-            }`} />
-          </motion.button>
-
-          {/* Admin Logout Button - only show when authenticated */}
-          {isAdminAuthenticated && (
+          {/* Admin gear icon - only show for authenticated members */}
+          {isAuthenticated && (
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                playClickSound();
-                adminLogout();
-                setIsAdminOpen(false);
-              }}
-              className="p-2 hover:bg-red-500/10 transition-colors duration-300 rounded-lg"
-              aria-label="Admin logout"
-              title="Logout"
+              onClick={handleAdminClick}
+              disabled={isMemberLoading || isAdminLoading}
+              className={`p-2 transition-colors duration-300 rounded-lg ${
+                isMemberLoading || isAdminLoading
+                  ? 'opacity-50 cursor-wait'
+                  : isAdmin
+                  ? 'hover:bg-primary/10'
+                  : 'hover:bg-white/10'
+              }`}
+              aria-label="Admin panel"
+              title={isMemberLoading || isAdminLoading ? 'Checking permissions…' : isAdmin ? 'Admin Panel' : 'Permission Denied'}
             >
-              <LogOut className="w-4 h-4 text-red-500 hover:text-red-600 transition-colors" />
+              <Settings className={`w-4 h-4 transition-colors ${
+                isAdmin
+                  ? 'text-primary hover:text-primary/80'
+                  : 'text-white/40 hover:text-white/60'
+              }`} />
             </motion.button>
           )}
 
@@ -261,12 +254,6 @@ export default function Header() {
           </motion.button>
         </div>
       </nav>
-      {/* Admin Login Modal */}
-      <SimpleAdminLoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onLoginSuccess={() => setIsAdminOpen(true)}
-      />
       {/* Admin Panel - Lazy loaded to prevent loading upload code on every page */}
       {isAdminOpen && (
         <Suspense fallback={null}>

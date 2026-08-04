@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, LogOut, Music, Calendar, Lock, AlertCircle, CheckCircle, Upload, Zap, Database, TestTube } from 'lucide-react';
-import { useAdminAuth } from '@/lib/adminAuthStore';
+import { Settings, X, Edit2, Music, Calendar, AlertCircle, CheckCircle, Upload, Zap, Database, TestTube } from 'lucide-react';
+import { useMember } from '@/integrations';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import HeroImageUploader from './HeroImageUploader';
@@ -31,7 +31,7 @@ interface MusicSettings {
 interface AboutSettings extends AboutSection {}
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
-  const { isAdminAuthenticated, logout, adminToken } = useAdminAuth();
+  const { member } = useMember();
   const [activeTab, setActiveTab] = useState('photos');
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
@@ -134,7 +134,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     setIsSavingCredentials(false);
   };
 
-  if (!isAdminAuthenticated) {
+  if (!isOpen) {
     return null;
   }
 
@@ -149,7 +149,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     { id: 'data', label: 'Data', icon: Database },
     { id: 'bookings', label: 'Bookings', icon: Calendar },
     { id: 'upload-test', label: 'Test', icon: TestTube },
-    { id: 'credentials', label: 'Creds', icon: Lock },
   ];
 
   return (
