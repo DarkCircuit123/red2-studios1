@@ -1,136 +1,124 @@
-import { motion } from 'framer-motion';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
-import { Image } from '@/components/ui/image';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BaseCrudService } from '@/integrations';
-import { useImageFitting } from '@/hooks/useImageFitting';
+import { Image } from '@/components/ui/image';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { motion } from 'framer-motion';
 
-interface BehindTheScenesImage {
+interface BehindTheScenesItem {
   _id: string;
-  imageName?: string;
-  behindTheScenesImage?: string;
-  focalPointX?: number;
-  focalPointY?: number;
-}
-
-interface BehindTheScenesImageProps {
-  item: BehindTheScenesImage;
-  index: number;
-  dimensions: { width: number; height: number };
-  onImageLoad: (id: string, e: React.SyntheticEvent<HTMLImageElement>) => void;
-}
-
-// Child component to handle useImageFitting hook at component level
-function BehindTheScenesImage({
-  item,
-  index,
-  dimensions,
-  onImageLoad,
-}: BehindTheScenesImageProps) {
-  const { fitting } = useImageFitting({
-    imageWidth: dimensions.width,
-    imageHeight: dimensions.height,
-    containerWidth: 400,
-    containerHeight: 400,
-    focalPoint: {
-      x: item.focalPointX ?? 50,
-      y: item.focalPointY ?? 50,
-    },
-    fitMode: 'cover',
-  });
-
-  return (
-    <motion.div
-      variants={getStaggeredVariant(index, 0.15, 0.12)}
-      className="bg-gray-900 rounded-lg overflow-hidden aspect-square"
-    >
-      {item.behindTheScenesImage ? (
-        <Image
-          src={item.behindTheScenesImage}
-          alt={item.imageName || 'Behind the scenes'}
-          onLoad={(e) => onImageLoad(item._id, e)}
-          className="w-full h-full"
-          style={{
-            objectFit: fitting.objectFit as any,
-            objectPosition: fitting.objectPosition,
-          }}
-          width={400}
-          height={400}
-        />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
-      )}
-    </motion.div>
-  );
+  photo?: string;
+  title?: string;
+  description?: string;
+  order?: number;
+  dateTaken?: string;
 }
 
 export default function BehindTheScenesSection() {
-  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
-  const [images, setImages] = useState<BehindTheScenesImage[]>([]);
+  const [items, setItems] = useState<BehindTheScenesItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [imageDimensions, setImageDimensions] = useState<Record<string, { width: number; height: number }>>({});
 
   useEffect(() => {
-    const loadImages = async () => {
-      try {
-        // For now, create placeholder structure - in production, fetch from CMS
-        // This assumes a future collection or field for behind-the-scenes images
-        setImages([
-          { _id: '1', imageName: 'Scene 1', behindTheScenesImage: '', focalPointX: 50, focalPointY: 50 },
-          { _id: '2', imageName: 'Scene 2', behindTheScenesImage: '', focalPointX: 50, focalPointY: 50 },
-          { _id: '3', imageName: 'Scene 3', behindTheScenesImage: '', focalPointX: 50, focalPointY: 50 },
-        ]);
-      } catch (error) {
-        console.error('[BehindTheScenesSection] Failed to load images:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadImages();
+    loadItems();
   }, []);
 
-  const handleImageLoad = (id: string, e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    setImageDimensions((prev) => ({
-      ...prev,
-      [id]: {
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-      },
-    }));
+  const loadItems = async () => {
+    try {
+      setIsLoading(true);
+      const result = await BaseCrudService.getAll<BehindTheScenesItem>('behindthescenes', [], { limit: 100 });
+      setItems(result.items.sort((a, b) => (a.order || 0) - (b.order || 0)));
+    } catch (error) {
+      console.error('Failed to load behind-the-scenes items:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  if (isLoading) {
+    return (
+      <section className="w-full py-16 md:py-24 bg-white">
+        <div className="max-w-[100rem] mx-auto px-4 md:px-8">
+          <div className="flex justify-center items-center py-12">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (items.length === 0) {
+    return null;
+  }
+
   return (
-    <section ref={sectionRef} className="w-full min-h-screen bg-black text-white py-20 px-4 md:px-8">
-      <div className="max-w-[100rem] mx-auto">
+    <section className="w-full py-16 md:py-24 bg-white">
+      <div className="max-w-[100rem] mx-auto px-4 md:px-8">
+        {/* Section Header */}
         <motion.div
-          initial="hidden"
-          animate={sectionVisible ? "visible" : "hidden"}
-          variants={scrollAnimationVariants.headingSlideUp}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-12 md:mb-16"
         >
-          <h2 className="text-4xl md:text-6xl font-heading font-bold mb-12">Behind The Scenes</h2>
-          <motion.div
-            initial="hidden"
-            animate={sectionVisible ? "visible" : "hidden"}
-            variants={scrollAnimationVariants.containerStagger}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
-          >
-            {images.map((item, i) => {
-              const dims = imageDimensions[item._id] || { width: 1, height: 1 };
-              return (
-                <BehindTheScenesImage
-                  key={item._id}
-                  item={item}
-                  index={i}
-                  dimensions={dims}
-                  onImageLoad={handleImageLoad}
-                />
-              );
-            })}
-          </motion.div>
+          <h2 className="font-heading text-4xl md:text-5xl font-bold mb-4">Behind The Scenes</h2>
+          <p className="font-paragraph text-lg text-gray-600 max-w-2xl mx-auto">
+            Get an exclusive look at our creative process and the moments that make it all happen.
+          </p>
         </motion.div>
+
+        {/* Gallery Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {items.map((item, index) => (
+            <motion.div
+              key={item._id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              viewport={{ once: true }}
+              className="group"
+            >
+              {/* Image Container */}
+              <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-gray-100">
+                {item.photo ? (
+                  <Image
+                    src={item.photo}
+                    alt={item.title || 'Behind the scenes'}
+                    width={400}
+                    height={400}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-400">No image</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div>
+                {item.title && (
+                  <h3 className="font-heading text-lg font-semibold mb-2 line-clamp-2">
+                    {item.title}
+                  </h3>
+                )}
+                {item.description && (
+                  <p className="font-paragraph text-sm text-gray-600 line-clamp-3 mb-3">
+                    {item.description}
+                  </p>
+                )}
+                {item.dateTaken && (
+                  <p className="font-paragraph text-xs text-gray-500">
+                    {new Date(item.dateTaken).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
