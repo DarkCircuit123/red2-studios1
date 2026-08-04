@@ -76,7 +76,7 @@ export default function Header() {
       setIsOpen(false);
       setIsAdminOpen(false);
     } catch (error) {
-      console.error('Logout error:', error);
+      // Silently handle logout errors
     }
   }, [logout]);
 

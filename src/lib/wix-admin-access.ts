@@ -11,12 +11,6 @@ interface AdminAccessState {
   reset: () => void;
 }
 
-/**
- * Admin access verification - Hardcoded credentials
- * Temporary implementation using hardcoded admin credentials.
- * Email: jordanzuniga@gmail.com
- * Password: Iloveanna1!
- */
 export const useWixAdminAccess = create<AdminAccessState>((set) => ({
   isAdmin: false,
   isLoading: false,
@@ -25,12 +19,10 @@ export const useWixAdminAccess = create<AdminAccessState>((set) => ({
   memberEmail: null,
 
   checkAdminAccess: async (memberId: string) => {
-    console.log('[ADMIN-ACCESS] Checking admin access for member:', memberId);
     set({ isLoading: true, error: null });
 
     try {
       // Use the admin-check endpoint which verifies admin session
-      console.log('[ADMIN-ACCESS] Calling /api/auth/admin-check...');
       const response = await fetch('/api/auth/admin-check', {
         method: 'POST',
         headers: {
@@ -40,11 +32,9 @@ export const useWixAdminAccess = create<AdminAccessState>((set) => ({
       });
 
       const data = await response.json();
-      console.log('[ADMIN-ACCESS] Response:', { status: response.status, data });
 
       // Check if the response indicates admin status
       if (response.ok && data.authenticated) {
-        console.log('[ADMIN-ACCESS] Admin access granted for member:', memberId);
         set({
           isAdmin: true,
           isLoading: false,
@@ -54,7 +44,6 @@ export const useWixAdminAccess = create<AdminAccessState>((set) => ({
         return true;
       } else {
         // Not admin or authentication failed
-        console.log('[ADMIN-ACCESS] Admin access denied:', data.error);
         set({
           isAdmin: false,
           isLoading: false,
@@ -64,7 +53,6 @@ export const useWixAdminAccess = create<AdminAccessState>((set) => ({
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to verify admin access';
-      console.error('[ADMIN-ACCESS] Error:', errorMessage);
       set({
         isAdmin: false,
         isLoading: false,

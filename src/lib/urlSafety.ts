@@ -29,19 +29,16 @@ export function sanitizeExternalUrl(url: string): string {
       parsed.protocol === 'data:' ||
       parsed.protocol === 'file:'
     ) {
-      console.warn('[urlSafety] Rejected dangerous protocol:', parsed.protocol);
       return '';
     }
 
     // Only allow http and https
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      console.warn('[urlSafety] Rejected non-http protocol:', parsed.protocol);
       return '';
     }
 
     return parsed.toString();
-  } catch (err) {
-    console.error('[urlSafety] Failed to parse URL:', url, err);
+  } catch {
     return '';
   }
 }
