@@ -35,7 +35,7 @@ export default function Header() {
     }
   }, [isAuthenticated, member?._id, isAdmin, isAdminLoading, checkAdminAccess]);
 
-  // Clear admin state when user logs out - this is critical for immediate UI reset
+  // Clear admin state and close menus when user logs out - this is critical for immediate UI reset
   useEffect(() => {
     if (!isAuthenticated) {
       console.log('[HEADER] User logged out, resetting admin state and closing menus');
@@ -45,6 +45,14 @@ export default function Header() {
       setIsAdminOpen(false);
     }
   }, [isAuthenticated, resetAdminState]);
+
+  // Close admin panel when user logs out
+  useEffect(() => {
+    if (!isAuthenticated && isAdminOpen) {
+      console.log('[HEADER] Closing admin panel due to logout');
+      setIsAdminOpen(false);
+    }
+  }, [isAuthenticated, isAdminOpen]);
 
   // Optimized throttled scroll handler
   useEffect(() => {
@@ -245,7 +253,7 @@ export default function Header() {
 
         {/* Admin & Auth & Mobile Menu - Right aligned */}
         <div className="flex items-center gap-6 ml-auto absolute right-6 md:right-8">
-          {/* Logged-out state: Show Login icon only */}
+          {/* STATE 1: Not Authenticated - Show ONLY Login icon */}
           {!isAuthenticated && !isMemberLoading && (
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -259,34 +267,35 @@ export default function Header() {
             </motion.button>
           )}
 
-          {/* Logged-in state: Show Logout icon */}
-          {isAuthenticated && !isMemberLoading && (
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleLogoutClick}
-              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
-              aria-label="Sign out"
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
-            </motion.button>
-          )}
+          {/* STATE 2: Authenticated Admin - Show Gear and Logout */}
+          {isAuthenticated && isAdmin && !isMemberLoading && !isAdminLoading && (
+            <>
+              {/* Animated Gear icon - opens admin panel */}
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 15 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, repeatType: 'loop' }}
+                onClick={handleAdminClick}
+                className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg hidden md:block"
+                aria-label="Admin panel"
+                title="Admin Panel"
+              >
+                <Settings className="w-4 h-4 text-primary hover:text-primary/80 transition-colors" />
+              </motion.button>
 
-          {/* Admin gear icon - only show if confirmed admin via backend */}
-          {isAuthenticated && isAdmin && !isAdminLoading && (
-            <motion.button
-              whileHover={{ scale: 1.1, rotate: 15 }}
-              whileTap={{ scale: 0.95 }}
-              animate={{ rotate: [0, 5, -5, 0] }}
-              transition={{ duration: 4, repeat: Infinity, repeatType: 'loop' }}
-              onClick={handleAdminClick}
-              className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg hidden md:block"
-              aria-label="Admin panel"
-              title="Admin Panel"
-            >
-              <Settings className="w-4 h-4 text-primary hover:text-primary/80 transition-colors" />
-            </motion.button>
+              {/* Logout icon */}
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogoutClick}
+                className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
+                aria-label="Sign out"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
+              </motion.button>
+            </>
           )}
 
           <motion.button
@@ -320,7 +329,7 @@ export default function Header() {
           className="md:hidden bg-black/95 border-t border-primary/30 backdrop-blur-md"
         >
           <div className="max-w-[120rem] mx-auto px-8 py-6 flex flex-col gap-6">
-            {/* Mobile Auth Buttons */}
+            {/* Mobile Auth Buttons - STATE 1: Not Authenticated */}
             {!isAuthenticated && !isMemberLoading && (
               <motion.button
                 initial={{ opacity: 0, x: -20 }}
@@ -334,30 +343,31 @@ export default function Header() {
               </motion.button>
             )}
 
-            {isAuthenticated && !isMemberLoading && (
-              <motion.button
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0 }}
-                onClick={handleLogoutClick}
-                className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </motion.button>
-            )}
+            {/* Mobile Auth Buttons - STATE 2: Authenticated Admin */}
+            {isAuthenticated && isAdmin && !isMemberLoading && !isAdminLoading && (
+              <>
+                <motion.button
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0 }}
+                  onClick={handleAdminClick}
+                  className="px-4 py-3 text-xs font-mono text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-primary/10 flex items-center gap-2 w-fit"
+                >
+                  <Settings className="w-4 h-4" />
+                  Admin
+                </motion.button>
 
-            {isAuthenticated && isAdmin && !isAdminLoading && (
-              <motion.button
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.05 }}
-                onClick={handleAdminClick}
-                className="px-4 py-3 text-xs font-mono text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-primary/10 flex items-center gap-2 w-fit"
-              >
-                <Settings className="w-4 h-4" />
-                Admin
-              </motion.button>
+                <motion.button
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.05 }}
+                  onClick={handleLogoutClick}
+                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </motion.button>
+              </>
             )}
 
             {[

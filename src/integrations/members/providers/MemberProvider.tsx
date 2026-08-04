@@ -147,22 +147,23 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
     logout: useCallback(async () => {
       console.log('[LOGOUT] Starting logout process...');
       
+      // Clear localStorage IMMEDIATELY - BEFORE any async operations
+      // This ensures that even if the page reloads during logout, we won't restore stale auth state
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem(MEMBER_STORAGE_KEY);
+          console.log('[LOGOUT] Cleared localStorage immediately');
+        } catch (error) {
+          console.error('[LOGOUT] Error clearing localStorage:', error);
+        }
+      }
+
       // Clear all local state FIRST - before any async operations
       updateState({
         member: null,
         isAuthenticated: false,
         error: null,
       });
-
-      // Clear localStorage immediately to prevent stale cached state
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.removeItem(MEMBER_STORAGE_KEY);
-          console.log('[LOGOUT] Cleared localStorage');
-        } catch (error) {
-          console.error('[LOGOUT] Error clearing localStorage:', error);
-        }
-      }
 
       try {
         // Call the logout API to clear server-side session
@@ -182,6 +183,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
       }
 
       // Redirect to home after state is cleared and API is called
+      // The page reload will restore from localStorage (which is now empty)
       console.log('[LOGOUT] Redirecting to home...');
       window.location.href = '/';
     }, [updateState]),
