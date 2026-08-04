@@ -30,11 +30,22 @@ export default function Header() {
       timestamp: new Date().toISOString()
     });
     
+    // DEBUG: Log what should be rendered
+    if (!isAuthenticated && !isMemberLoading) {
+      console.log('[HEADER] ✅ Should show LOGIN button (not authenticated, not loading)');
+    } else if (isAuthenticated && isAdmin && !isMemberLoading && !isAdminLoading) {
+      console.log('[HEADER] ✅ Should show ADMIN + LOGOUT (authenticated admin)');
+    } else if (isAuthenticated && !isAdmin && !isMemberLoading && !isAdminLoading) {
+      console.log('[HEADER] ✅ Should show LOGOUT (authenticated non-admin)');
+    } else {
+      console.log('[HEADER] ⏳ Loading or indeterminate state - showing nothing');
+    }
+    
     if (isAuthenticated && member?._id && !isAdmin && !isAdminLoading) {
       console.log('[HEADER] Checking admin access for member:', member._id);
       checkAdminAccess(member._id);
     }
-  }, [isAuthenticated, member?._id, isAdmin, isAdminLoading, checkAdminAccess]);
+  }, [isAuthenticated, member?._id, isAdmin, isAdminLoading, checkAdminAccess, isMemberLoading]);
 
   // Clear admin state and close menus when user logs out - this is critical for immediate UI reset
   useEffect(() => {
@@ -153,6 +164,18 @@ export default function Header() {
 
   return (
     <>
+      {/* DEBUG: Auth State Indicator (visible in console and as data attribute) */}
+      <div 
+        data-auth-state={JSON.stringify({
+          isAuthenticated,
+          isMemberLoading,
+          isAdmin,
+          isAdminLoading,
+          hasMember: !!member,
+        })}
+        style={{ display: 'none' }}
+      />
+      
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
@@ -260,11 +283,11 @@ export default function Header() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleLoginClick}
-              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
+              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center"
               aria-label="Sign in"
               title="Sign in"
             >
-              <LogIn className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
+              <LogIn className="w-5 h-5 text-white transition-colors hover:text-primary" />
             </motion.button>
           )}
 
@@ -278,11 +301,11 @@ export default function Header() {
                 animate={{ rotate: [0, 5, -5, 0] }}
                 transition={{ duration: 4, repeat: Infinity, repeatType: 'loop' }}
                 onClick={handleAdminClick}
-                className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg hidden md:block"
+                className="p-2 hover:bg-primary/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center"
                 aria-label="Admin panel"
                 title="Admin Panel"
               >
-                <Settings className="w-4 h-4 text-primary hover:text-primary/80 transition-colors" />
+                <Settings className="w-5 h-5 text-primary hover:text-primary/80 transition-colors" />
               </motion.button>
 
               {/* Logout icon */}
@@ -290,11 +313,11 @@ export default function Header() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleLogoutClick}
-                className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
+                className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center"
                 aria-label="Sign out"
                 title="Sign out"
               >
-                <LogOut className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
+                <LogOut className="w-5 h-5 text-white transition-colors hover:text-primary" />
               </motion.button>
             </>
           )}
@@ -305,11 +328,11 @@ export default function Header() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleLogoutClick}
-              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:block"
+              className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center"
               aria-label="Sign out"
               title="Sign out"
             >
-              <LogOut className="w-4 h-4 text-white/60 hover:text-primary transition-colors" />
+              <LogOut className="w-5 h-5 text-white transition-colors hover:text-primary" />
             </motion.button>
           )}
 

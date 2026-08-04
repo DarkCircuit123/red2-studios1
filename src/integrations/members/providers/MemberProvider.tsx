@@ -26,20 +26,32 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
           // Restore both member data and authentication status
           storedMemberData = parsedData.member || null;
           storedIsAuthenticated = parsedData.isAuthenticated || false;
+          console.log('[MEMBER PROVIDER INIT] Restored from localStorage:', {
+            isAuthenticated: storedIsAuthenticated,
+            hasMember: !!storedMemberData,
+          });
         }
       } catch (error) {
         console.error('Error loading member state from localStorage:', error);
       }
     }
 
-    // Start with loading true to verify authentication with server
-    // Use stored authentication status as initial value
-    return {
+    // CRITICAL: Always start with isLoading: true to verify authentication with server
+    // NEVER trust localStorage for authentication state - always verify with server
+    const initialState = {
       member: storedMemberData,
-      isAuthenticated: storedIsAuthenticated,
+      isAuthenticated: false, // ALWAYS start as false - will be verified by loadCurrentMember
       isLoading: true,
       error: null,
     };
+    
+    console.log('[MEMBER PROVIDER INIT] Initial state:', {
+      isAuthenticated: initialState.isAuthenticated,
+      isLoading: initialState.isLoading,
+      hasMember: !!initialState.member,
+    });
+    
+    return initialState;
   });
 
   // Save state to localStorage whenever it changes
