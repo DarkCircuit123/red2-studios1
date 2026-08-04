@@ -1,16 +1,48 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BaseCrudService } from '@/integrations';
+import { Splashpage } from '@/entities';
 
 export default function LogoSplash() {
   const [visible, setVisible] = useState(true);
+  const [logoImage, setLogoImage] = useState<string | null>(null);
+  const [isLoadingLogo, setIsLoadingLogo] = useState(true);
+
+  // Load active logo from Splashpage CMS
+  useEffect(() => {
+    const loadActiveLogo = async () => {
+      try {
+        const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+        const activeLogo = result.items.find((item) => item.isActive);
+        
+        if (activeLogo?.logoImage) {
+          setLogoImage(activeLogo.logoImage);
+        }
+      } catch (err) {
+        console.error('Error loading splash page logo:', err);
+      } finally {
+        setIsLoadingLogo(false);
+      }
+    };
+
+    loadActiveLogo();
+  }, []);
 
   useEffect(() => {
+    // Don't start timer until logo is loaded
+    if (isLoadingLogo) return;
+
     const timer = setTimeout(() => {
       setVisible(false);
     }, 2200);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isLoadingLogo]);
+
+  // Don't render if no logo is available
+  if (!logoImage) {
+    return null;
+  }
 
   return (
     <AnimatePresence>
@@ -30,7 +62,7 @@ export default function LogoSplash() {
           }}
         >
           <motion.img
-            src="/logo.png"
+            src={logoImage}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 1 }}
@@ -38,7 +70,7 @@ export default function LogoSplash() {
               width: '220px',
               height: 'auto',
             }}
-            alt="Logo"
+            alt="Splash page logo"
           />
         </motion.div>
       )}

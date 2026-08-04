@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
+import { BaseCrudService } from '@/integrations';
+import { Splashpage } from '@/entities';
 
 // Check if splash has already been shown in this session
 const hasSplashBeenShown = (): boolean => {
@@ -23,10 +25,29 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(() => !hasSplashBeenShown());
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [logoImage, setLogoImage] = useState<string | null>(null);
+  const [isLoadingLogo, setIsLoadingLogo] = useState(true);
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
-  
-  // RED² Studios logo - existing asset from the site
-  const logoImage = 'https://static.wixstatic.com/media/e9d727_55a39beb1ff1437b905b31783daeb341~mv2.png';
+
+  // Load active logo from Splashpage CMS
+  useEffect(() => {
+    const loadActiveLogo = async () => {
+      try {
+        const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+        const activeLogo = result.items.find((item) => item.isActive);
+        
+        if (activeLogo?.logoImage) {
+          setLogoImage(activeLogo.logoImage);
+        }
+      } catch (err) {
+        console.error('Error loading splash page logo:', err);
+      } finally {
+        setIsLoadingLogo(false);
+      }
+    };
+
+    loadActiveLogo();
+  }, []);
 
   // Handle splash animation and completion
   useEffect(() => {
@@ -52,6 +73,11 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   if (!isVisible) return null;
 
+  // Don't render if logo is still loading or not available
+  if (isLoadingLogo || !logoImage) {
+    return null;
+  }
+
   return (
     <motion.div
       className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
@@ -76,7 +102,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       >
         <Image
           src={logoImage}
-          alt="RED² Studios Logo"
+          alt="Splash page logo"
           className="w-48 h-auto sm:w-56 md:w-72 lg:w-80"
           width={320}
           priority
