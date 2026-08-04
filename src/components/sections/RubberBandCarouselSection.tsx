@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
+import { useImageFitting } from '@/hooks/useImageFitting';
 
 interface CarouselImage {
   id: string;
   url: string;
   alt: string;
+  focalPointX?: number;
+  focalPointY?: number;
 }
 
 const RubberBandCarouselSection: React.FC = () => {
@@ -182,20 +185,55 @@ const RubberBandCarouselSection: React.FC = () => {
           gap: '8px',
         }}
       >
-        {duplicatedImages.map((image, index) => (
-          <div
-            key={`${image.id}-${index}`}
-            className="flex-shrink-0 w-screen h-full"
-          >
-            <Image
-              src={image.url}
-              alt={image.alt}
-              width={1920}
-              height={1080}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ))}
+        {duplicatedImages.map((image, index) => {
+          const CarouselImageCard = () => {
+            const [imageDims, setImageDims] = useState({ width: 1920, height: 1080 });
+
+            const { fitting } = useImageFitting({
+              imageWidth: imageDims.width,
+              imageHeight: imageDims.height,
+              containerWidth: typeof window !== 'undefined' ? window.innerWidth : 1920,
+              containerHeight: Math.round((typeof window !== 'undefined' ? window.innerHeight : 1080) * 0.55),
+              focalPoint: {
+                x: image.focalPointX ?? 50,
+                y: image.focalPointY ?? 50,
+              },
+              fitMode: 'cover',
+            });
+
+            const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+              const img = e.currentTarget;
+              setImageDims({
+                width: img.naturalWidth,
+                height: img.naturalHeight,
+              });
+            };
+
+            return (
+              <Image
+                src={image.url}
+                alt={image.alt}
+                onLoad={handleImageLoad}
+                width={1920}
+                height={1080}
+                className="w-full h-full"
+                style={{
+                  objectFit: fitting.objectFit as any,
+                  objectPosition: fitting.objectPosition,
+                }}
+              />
+            );
+          };
+
+          return (
+            <div
+              key={`${image.id}-${index}`}
+              className="flex-shrink-0 w-screen h-full"
+            >
+              <CarouselImageCard />
+            </div>
+          );
+        })}
       </motion.div>
 
       {/* Bottom divider */}
