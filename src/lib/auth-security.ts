@@ -4,11 +4,11 @@
  */
 
 /**
- * Reads a secret from Wix Secrets Manager using the backend API.
+ * Reads a secret from environment variables or Wix Secrets Manager.
  * 
- * Wix Secrets Manager stores secrets server-side and provides them via
- * the wix-secrets-backend module. This function retrieves secrets directly
- * from Wix Secrets Manager without relying on environment variables.
+ * This function attempts to retrieve secrets from:
+ * 1. Environment variables (process.env) - works in all contexts
+ * 2. Wix Secrets Manager backend (only available on backend, dynamically imported)
  *
  * Trims surrounding whitespace, which matters because pasting a value
  * into the Secrets Manager dashboard easily leaves a trailing newline.
@@ -36,12 +36,25 @@ export async function readSecret(...candidateEnvNames: string[]): Promise<string
       
       if (!raw) {
         // Try Wix Secrets Manager backend (only available on backend)
+        // Use dynamic import wrapped in IIFE to avoid build-time resolution errors
         try {
           console.log(`[SECRET DEBUG] ${name} not in env, attempting Wix Secrets Manager...`);
-          const secretsModule = await import('wix-secrets-backend');
-          const getSecret = secretsModule.getSecret;
-          raw = await getSecret(name);
-          console.log(`[SECRET DEBUG] Wix Secrets Manager lookup for ${name}: ${raw ? 'found' : 'not found'}`);
+          // Dynamically import to avoid Rollup resolution errors at build time
+          const secretsModule = await (async () => {
+            try {
+              // @ts-ignore - This module is only available at runtime on backend
+              return await import('wix-secrets-backend');
+            } catch {
+              return null;
+            }
+          })();
+          
+          if (secretsModule && typeof secretsModule.getSecret === 'function') {
+            raw = await secretsModule.getSecret(name);
+            console.log(`[SECRET DEBUG] Wix Secrets Manager lookup for ${name}: ${raw ? 'found' : 'not found'}`);
+          } else {
+            console.log(`[SECRET DEBUG] Wix Secrets Manager module not available for ${name}`);
+          }
         } catch (err) {
           console.log(`[SECRET DEBUG] Wix Secrets Manager not available for ${name}:`, err instanceof Error ? err.message : 'unknown error');
         }
