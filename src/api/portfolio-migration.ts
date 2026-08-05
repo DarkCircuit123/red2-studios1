@@ -26,7 +26,7 @@ import { readSecret } from '@/lib/auth-security';
 // this server-side Cloudflare Workers runtime and throws immediately.
 import { GET as portfolioScanHandler } from '@/api/portfolio-scan';
 import { POST as portfolioUpdateHandler } from '@/api/portfolio-update';
-import { POST as mediaUploadHandler } from '@/api/media/upload';
+import { POST as mediaUploadHandler } from '@/api/media/upload-hero';
 
 /**
  * Verify admin authentication and migration secret
