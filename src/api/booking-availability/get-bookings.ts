@@ -7,8 +7,8 @@
  * the bookings collection.
  */
 
-// Import Wix backend APIs - these run with elevated permissions
-import wixData from 'wix-data';
+// Import CMS service for backend data access
+import { BaseCrudService } from '@/integrations';
 import { Bookings } from '@/entities/index';
 import { verifyAdminToken, getClientIP } from '@/lib/auth-security';
 
@@ -35,11 +35,8 @@ export async function GET({ request, cookies }: { request: Request; cookies: any
 
     console.log('[Backend] GET /api/booking-availability/get-bookings - Fetching all bookings');
 
-    // Use wixData.query with elevated permissions (backend-only)
-    // This bypasses frontend permission restrictions
-    const results = await wixData.query('bookings')
-      .limit(500)
-      .find({ suppressAuth: true });
+    // Use BaseCrudService to fetch bookings
+    const results = await BaseCrudService.getAll<Bookings>('bookings', {}, { limit: 500 });
 
     console.log('[Backend] Fetched bookings:', results.items?.length || 0);
 
