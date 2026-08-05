@@ -27,35 +27,25 @@
 export async function readSecret(...candidateEnvNames: string[]): Promise<string | undefined> {
   console.log(`[SECRET DEBUG] readSecret() called for: ${candidateEnvNames.join(', ')}`);
   
-  // Import the Wix Secrets Manager backend module
-  let getSecret: any;
-  try {
-    // Try wix-secrets-backend.v2 first (newer API)
-    console.log('[SECRET DEBUG] Attempting to import wix-secrets-backend.v2...');
-    const secretsModule = await import('wix-secrets-backend.v2');
-    getSecret = secretsModule.getSecret;
-    console.log('[SECRET DEBUG] Successfully imported wix-secrets-backend.v2');
-  } catch (err1) {
-    console.log('[SECRET DEBUG] wix-secrets-backend.v2 import failed:', err1 instanceof Error ? err1.message : 'unknown error');
-    try {
-      // Fall back to wix-secrets-backend (older API)
-      console.log('[SECRET DEBUG] Attempting to import wix-secrets-backend...');
-      const secretsModule = await import('wix-secrets-backend');
-      getSecret = secretsModule.getSecret;
-      console.log('[SECRET DEBUG] Successfully imported wix-secrets-backend');
-    } catch (err2) {
-      console.error('[SECRET DEBUG] Both wix-secrets-backend imports failed');
-      console.error('[SECRET DEBUG] wix-secrets-backend error:', err2 instanceof Error ? err2.message : 'unknown error');
-      return undefined;
-    }
-  }
-
   for (const name of candidateEnvNames) {
     try {
       console.log(`[SECRET DEBUG] ${name} lookup started`);
       
-      // Call the Wix Secrets Manager API
-      const raw = await getSecret(name);
+      // First, try environment variables (works in all contexts)
+      let raw = typeof process !== 'undefined' && process.env ? process.env[name] : undefined;
+      
+      if (!raw) {
+        // Try Wix Secrets Manager backend (only available on backend)
+        try {
+          console.log(`[SECRET DEBUG] ${name} not in env, attempting Wix Secrets Manager...`);
+          const secretsModule = await import('wix-secrets-backend');
+          const getSecret = secretsModule.getSecret;
+          raw = await getSecret(name);
+          console.log(`[SECRET DEBUG] Wix Secrets Manager lookup for ${name}: ${raw ? 'found' : 'not found'}`);
+        } catch (err) {
+          console.log(`[SECRET DEBUG] Wix Secrets Manager not available for ${name}:`, err instanceof Error ? err.message : 'unknown error');
+        }
+      }
       
       if (!raw) {
         console.log(`[SECRET DEBUG] ${name} returned: false`);
