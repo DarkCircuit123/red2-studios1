@@ -28,7 +28,7 @@
  */
 
 import { BookingAvailability } from '@/entities/index';
-import wixData from 'wix-data';
+import { BaseCrudService } from '@/integrations';
 import { requireAdmin } from '@/lib/auth-security';
 
 // Validation helpers
@@ -135,7 +135,7 @@ export async function PUT({ request, cookies }: { request: Request; cookies: any
 
     console.log(`[UPDATE:${requestId}] Update data:`, JSON.stringify(updateData, null, 2));
 
-    const result = await wixData.update('bookingavailability', updateData, { suppressAuth: true });
+    const result = await BaseCrudService.update<BookingAvailability>('bookingavailability', updateData);
 
     const duration = new Date().getTime() - startTime.getTime();
     console.log(`[UPDATE:${requestId}] ✓ Successfully updated slot ${body.id} in ${duration}ms`);

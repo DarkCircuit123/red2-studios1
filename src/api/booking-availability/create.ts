@@ -28,7 +28,7 @@
  */
 
 import { BookingAvailability } from '@/entities/index';
-import wixData from 'wix-data';
+import { BaseCrudService } from '@/integrations';
 import { requireAdmin } from '@/lib/auth-security';
 
 // Validation helpers
@@ -50,12 +50,12 @@ function isTimeAfter(startTime: string, endTime: string): boolean {
 
 async function checkDuplicateSlot(bookingDate: string, startTime: string, endTime: string): Promise<boolean> {
   try {
-    const results = await wixData.query('bookingavailability')
-      .eq('bookingDate', bookingDate)
-      .eq('startTime', startTime)
-      .eq('endTime', endTime)
-      .find({ suppressAuth: true });
-    return (results.items?.length || 0) > 0;
+    const { items } = await BaseCrudService.getAll<BookingAvailability>('bookingavailability');
+    return items.some(item => 
+      item.bookingDate === bookingDate && 
+      item.startTime === startTime && 
+      item.endTime === endTime
+    );
   } catch (error) {
     console.error('[Backend] Error checking for duplicate slot:', error);
     throw error;
@@ -168,7 +168,10 @@ export async function POST({ request, cookies }: { request: Request; cookies: an
 
     console.log(`[CREATE:${requestId}] Inserting normalized data:`, JSON.stringify(dataToInsert, null, 2));
 
-    const result = await wixData.insert('bookingavailability', dataToInsert, { suppressAuth: true });
+    const result = await BaseCrudService.create<BookingAvailability>('bookingavailability', {
+      ...dataToInsert,
+      _id: crypto.randomUUID()
+    });
 
     const duration = new Date().getTime() - startTime.getTime();
     console.log(`[CREATE:${requestId}] ✓ Successfully created slot ${result._id} in ${duration}ms`);

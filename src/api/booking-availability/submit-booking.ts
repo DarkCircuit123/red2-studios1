@@ -9,9 +9,7 @@
  */
 
 import { Bookings, BookingAvailability } from '@/entities/index';
-
-// Import Wix backend APIs - these run with elevated permissions
-import wixData from 'wix-data';
+import { BaseCrudService } from '@/integrations';
 
 interface BookingSubmission {
   clientName: string;
@@ -71,11 +69,11 @@ export async function POST({ request }: { request: Request }) {
 
     console.log('[Backend] Creating booking record:', JSON.stringify(booking, null, 2));
 
-    // Save booking to CMS with elevated permissions
-    const bookingResult = await wixData.insert('bookings', booking, { suppressAuth: true });
+    // Save booking to CMS
+    const bookingResult = await BaseCrudService.create<Bookings>('bookings', booking);
     console.log('[Backend] Booking created successfully:', JSON.stringify(bookingResult, null, 2));
 
-    // Mark the availability slot as booked with elevated permissions
+    // Mark the availability slot as booked
     const updateData = {
       _id: body.slotId,
       isAvailable: false
@@ -83,7 +81,7 @@ export async function POST({ request }: { request: Request }) {
 
     console.log('[Backend] Updating availability slot:', JSON.stringify(updateData, null, 2));
 
-    const updateResult = await wixData.update('bookingavailability', updateData, { suppressAuth: true });
+    const updateResult = await BaseCrudService.update<BookingAvailability>('bookingavailability', updateData);
     console.log('[Backend] Availability slot updated successfully:', JSON.stringify(updateResult, null, 2));
 
     return new Response(

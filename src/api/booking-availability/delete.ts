@@ -19,7 +19,7 @@
  * 500: Server error
  */
 
-import wixData from 'wix-data';
+import { BaseCrudService } from '@/integrations';
 import { requireAdmin } from '@/lib/auth-security';
 
 export async function DELETE({ request, cookies }: { request: Request; cookies: any }) {
