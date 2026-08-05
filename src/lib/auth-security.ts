@@ -4,14 +4,13 @@
  */
 
 /**
- * Reads a secret from environment variables or Wix Secrets Manager.
+ * Reads a secret from environment variables.
  * 
- * This function attempts to retrieve secrets from:
- * 1. Environment variables (process.env) - works in all contexts
- * 2. Wix Secrets Manager backend (only available on backend, dynamically imported)
+ * This function retrieves secrets from environment variables (process.env).
+ * Secrets should be configured in your deployment environment or .env file.
  *
  * Trims surrounding whitespace, which matters because pasting a value
- * into the Secrets Manager dashboard easily leaves a trailing newline.
+ * into an environment variable easily leaves a trailing newline.
  *
  * Also tolerates a value accidentally saved in "KEY = value" form (the
  * whole env line pasted into the Value field instead of just the value).
@@ -31,36 +30,11 @@ export async function readSecret(...candidateEnvNames: string[]): Promise<string
     try {
       console.log(`[SECRET DEBUG] ${name} lookup started`);
       
-      // First, try environment variables (works in all contexts)
-      let raw = typeof process !== 'undefined' && process.env ? process.env[name] : undefined;
+      // Try environment variables (works in all contexts)
+      const raw = typeof process !== 'undefined' && process.env ? process.env[name] : undefined;
       
       if (!raw) {
-        // Try Wix Secrets Manager backend (only available on backend)
-        // Use dynamic import wrapped in IIFE to avoid build-time resolution errors
-        try {
-          console.log(`[SECRET DEBUG] ${name} not in env, attempting Wix Secrets Manager...`);
-          // Dynamically import to avoid Rollup resolution errors at build time
-          const secretsModule = await (async () => {
-            try {
-              // @ts-ignore - This module is only available at runtime on backend
-              return await import('wix-secrets-backend');
-            } catch {
-              return null;
-            }
-          })();
-          
-          if (secretsModule && typeof secretsModule.getSecret === 'function') {
-            raw = await secretsModule.getSecret(name);
-            console.log(`[SECRET DEBUG] Wix Secrets Manager lookup for ${name}: ${raw ? 'found' : 'not found'}`);
-          } else {
-            console.log(`[SECRET DEBUG] Wix Secrets Manager module not available for ${name}`);
-          }
-        } catch (err) {
-          console.log(`[SECRET DEBUG] Wix Secrets Manager not available for ${name}:`, err instanceof Error ? err.message : 'unknown error');
-        }
-      }
-      
-      if (!raw) {
+        console.log(`[SECRET DEBUG] ${name} not found in environment variables`);
         console.log(`[SECRET DEBUG] ${name} returned: false`);
         continue;
       }
@@ -74,7 +48,6 @@ export async function readSecret(...candidateEnvNames: string[]): Promise<string
       }
 
       // Only strip a prefix that is exactly this key's own name.
-      // Properly escape the regex: single backslash for \s and \S
       const selfPrefix = new RegExp(`^${name}\\s*=\\s*([\\s\\S]*)$`);
       const match = trimmed.match(selfPrefix);
       const value = match ? match[1].trim() : trimmed;
@@ -247,9 +220,9 @@ async function getSigningKey(): Promise<CryptoKey> {
   
   // Fallback to a default secret if not configured
   // This is a temporary measure for development/testing. In production,
-  // SESSION_SECRET MUST be set in Secrets Manager.
+  // SESSION_SECRET MUST be set in environment variables.
   if (!secret) {
-    console.warn('[SECURITY] SESSION_SECRET not found in Secrets Manager, using fallback secret');
+    console.warn('[SECURITY] SESSION_SECRET not found, using fallback secret');
     secret = 'dev-session-secret-change-in-production-12345678901234567890';
   }
   
