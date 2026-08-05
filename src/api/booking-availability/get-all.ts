@@ -23,7 +23,7 @@
  * }
  */
 
-import wixData from 'wix-data';
+import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
 
 export async function GET({ request }: { request: Request }) {
@@ -41,10 +41,7 @@ export async function GET({ request }: { request: Request }) {
     console.log(`[GET_ALL:${requestId}] Query params: limit=${limit}, skip=${skip}`);
 
     // Query with elevated permissions
-    const results = await wixData.query('bookingavailability')
-      .limit(limit)
-      .skip(skip)
-      .find({ suppressAuth: true });
+    const results = await BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { limit, skip });
 
     const duration = new Date().getTime() - startTime.getTime();
     console.log(`[GET_ALL:${requestId}] ✓ Fetched ${results.items?.length || 0} slots (total: ${results.totalCount}) in ${duration}ms`);
