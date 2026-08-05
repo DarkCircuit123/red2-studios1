@@ -1,5 +1,4 @@
-import React from 'react';
-import { Helmet } from 'react-helmet-async';
+import React, { useEffect } from 'react';
 
 interface SEOHeadProps {
   title: string;
@@ -30,31 +29,84 @@ export default function SEOHead({
   if (noindex) robotsContent += 'noindex';
   if (nofollow) robotsContent += (robotsContent ? ', ' : '') + 'nofollow';
 
-  return (
-    <Helmet>
-      {/* Basic Meta Tags */}
-      <title>{title}</title>
-      <meta name="description" content={description || ''} />
-      {robotsContent && <meta name="robots" content={robotsContent} />}
-      {canonical && <link rel="canonical" href={canonical} />}
+  useEffect(() => {
+    // Update document title
+    document.title = title;
 
-      {/* Open Graph */}
-      <meta property="og:title" content={title} />
-      <meta property="og:type" content={type} />
-      {description && <meta property="og:description" content={description} />}
-      {image && <meta property="og:image" content={image} />}
-      {siteUrl && <meta property="og:url" content={siteUrl} />}
+    // Helper function to set or update meta tag
+    const setMetaTag = (name: string, content: string, isProperty = false) => {
+      let element = document.querySelector(
+        isProperty ? `meta[property="${name}"]` : `meta[name="${name}"]`
+      ) as HTMLMetaElement;
+      
+      if (!element) {
+        element = document.createElement('meta');
+        if (isProperty) {
+          element.setAttribute('property', name);
+        } else {
+          element.setAttribute('name', name);
+        }
+        document.head.appendChild(element);
+      }
+      element.content = content;
+    };
 
-      {/* Twitter Card */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
-      {description && <meta name="twitter:description" content={description} />}
-      {image && <meta name="twitter:image" content={image} />}
+    // Helper function to set or update link tag
+    const setLinkTag = (rel: string, href: string) => {
+      let element = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement;
+      
+      if (!element) {
+        element = document.createElement('link');
+        element.setAttribute('rel', rel);
+        document.head.appendChild(element);
+      }
+      element.href = href;
+    };
 
-      {/* JSON-LD Schema */}
-      {schema && (
-        <script type="application/ld+json">{JSON.stringify(schema)}</script>
-      )}
-    </Helmet>
-  );
+    // Set basic meta tags
+    setMetaTag('description', description || '');
+    if (robotsContent) {
+      setMetaTag('robots', robotsContent);
+    }
+    if (canonical) {
+      setLinkTag('canonical', canonical);
+    }
+
+    // Set Open Graph tags
+    setMetaTag('og:title', title, true);
+    setMetaTag('og:type', type, true);
+    if (description) {
+      setMetaTag('og:description', description, true);
+    }
+    if (image) {
+      setMetaTag('og:image', image, true);
+    }
+    if (siteUrl) {
+      setMetaTag('og:url', siteUrl, true);
+    }
+
+    // Set Twitter Card tags
+    setMetaTag('twitter:card', 'summary_large_image');
+    setMetaTag('twitter:title', title);
+    if (description) {
+      setMetaTag('twitter:description', description);
+    }
+    if (image) {
+      setMetaTag('twitter:image', image);
+    }
+
+    // Set JSON-LD Schema
+    if (schema) {
+      let scriptElement = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement;
+      if (!scriptElement) {
+        scriptElement = document.createElement('script');
+        scriptElement.type = 'application/ld+json';
+        document.head.appendChild(scriptElement);
+      }
+      scriptElement.textContent = JSON.stringify(schema);
+    }
+  }, [title, description, image, url, type, noindex, nofollow, schema, canonical, siteUrl, robotsContent]);
+
+  // This component doesn't render anything visible
+  return null;
 }
