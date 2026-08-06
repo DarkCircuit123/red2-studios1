@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
+import { auth } from '@wix/essentials';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -15,12 +16,15 @@ export const POST: APIRoute = async ({ request }) => {
     console.log('[GENERATE_UPLOAD_URL] Generating signed URL:', { fileName, mimeType, kind });
 
     // Use Wix Media SDK to generate a real signed upload URL
-    const filesClient = files();
+    // files is a namespace object, not a factory function
+    const generateUrl = auth.elevate(files.generateFileUploadUrl);
     
     let uploadUrlResponse;
     try {
-      uploadUrlResponse = await filesClient.generateFileUploadUrl(mimeType, {
+      uploadUrlResponse = await generateUrl(mimeType, {
         fileName: fileName,
+        parentFolderId: 'media-root',
+        private: false,
       });
     } catch (apiError) {
       console.error('[GENERATE_UPLOAD_URL] Failed to generate upload URL:', {

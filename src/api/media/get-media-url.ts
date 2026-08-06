@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
+import { auth } from '@wix/essentials';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -15,12 +16,13 @@ export const POST: APIRoute = async ({ request }) => {
     console.log('[GET_MEDIA_URL] Retrieving media URL for:', fileName);
 
     // Use Wix Media SDK to get the file URL
-    const filesClient = files();
+    // files is a namespace object, not a factory function
+    const listFiles = auth.elevate(files.listFiles);
     
     let fileInfo;
     try {
       // Query files by name to get the file info
-      fileInfo = await filesClient.listFiles({
+      fileInfo = await listFiles({
         sort: 'dateUpdated',
         order: 'DESC',
         limit: 100,

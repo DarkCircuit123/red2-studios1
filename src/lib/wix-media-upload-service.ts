@@ -81,6 +81,13 @@ async function generateUploadUrl(
 
 /**
  * Upload file directly to Wix Media Manager using signed URL
+ * 
+ * Requirements:
+ * - HTTP method: PUT (not POST)
+ * - Header: Content-Type set to the real MIME type
+ * - Query param: ?filename=<name with extension>
+ * - Body: raw binary stream (NOT FormData, NOT base64)
+ * - 200 response means accepted, check operationStatus before displaying
  */
 function uploadToWix(
   file: File,
@@ -92,7 +99,8 @@ function uploadToWix(
     
     xhr.addEventListener('load', () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        console.log('[WIX_MEDIA] File uploaded successfully');
+        console.log('[WIX_MEDIA] File uploaded successfully, status:', xhr.status);
+        // 200 means accepted, not ready. Check operationStatus before displaying
         resolve();
       } else {
         console.error(`[WIX_MEDIA] Upload failed with status ${xhr.status}`);
@@ -130,6 +138,11 @@ function uploadToWix(
 
     xhr.timeout = 300000; // 5 minutes
     xhr.open('PUT', uploadUrl);
+    
+    // Set Content-Type header to the real MIME type
+    xhr.setRequestHeader('Content-Type', file.type);
+    
+    // Send raw binary stream (NOT FormData, NOT base64)
     xhr.send(file);
   });
 }
