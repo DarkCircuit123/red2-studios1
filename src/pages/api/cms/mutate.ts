@@ -2,11 +2,10 @@ import type { APIRoute } from 'astro';
 import { mutate } from '@/api/cms/mutate';
 
 interface MutationRequest {
-  action: 'create' | 'update' | 'delete' | 'addReferences' | 'removeReferences';
+  action: 'create' | 'update' | 'delete';
   collectionId: string;
   itemData?: Record<string, any>;
   itemId?: string;
-  multiRefs?: Record<string, string[]>;
 }
 
 export const POST: APIRoute = async ({ request }) => {
