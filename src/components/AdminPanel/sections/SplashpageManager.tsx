@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Image as ImageComponent } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Splashpage } from '@/entities';
+import { uploadMedia } from '@/lib/wix-media-upload-service';
+import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 
 interface SplashpageManagerProps {
   onSave?: () => void;
@@ -92,37 +94,8 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
       setIsUploading(true);
       setIsSaving(true);
 
-      // Upload file to Wix media
-      const uploadResponse = await fetch('/api/media/upload-hero', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName: selectedFile.name,
-          fileSize: selectedFile.size,
-          mimeType: selectedFile.type,
-        }),
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to get upload URL');
-      }
-
-      const { uploadUrl, fileId } = await uploadResponse.json();
-
-      // Upload file to the provided URL
-      const uploadFileResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': selectedFile.type,
-        },
-        body: selectedFile,
-      });
-
-      if (!uploadFileResponse.ok) {
-        throw new Error('Failed to upload file');
-      }
+      // Use shared uploadMedia service
+      const result = await uploadMedia(selectedFile, 'image', IMAGE_UPLOAD_CONFIG);
 
       setIsUploading(false);
 
@@ -137,7 +110,7 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
       // Create new logo entry
       const newLogo: Splashpage = {
         _id: crypto.randomUUID(),
-        logoImage: fileId,
+        logoImage: result.mediaUrl,
         logoName: selectedFile.name.replace(/\.[^/.]+$/, ''),
         altText: `Splash page logo - ${new Date().toLocaleDateString()}`,
         updatedDate: new Date(),
@@ -156,7 +129,10 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
       }
     } catch (error) {
       console.error('Error uploading logo:', error);
-      showNotification('error', 'Failed to upload and save logo');
+      const errorMessage = error && typeof error === 'object' && 'message' in error 
+        ? (error as any).message 
+        : 'Failed to upload and save logo';
+      showNotification('error', errorMessage);
     } finally {
       setIsUploading(false);
       setIsSaving(false);

@@ -4,9 +4,9 @@
  * This service handles:
  * 1. Requesting signed upload URLs from the backend (server-only SDK logic)
  * 2. Uploading files directly from the browser to Wix Media Manager
- * 3. Returning media URLs
+ * 3. Returning media URLs from the upload response
  * 
- * Server-side SDK logic (getSecureContext, media client) is confined to backend endpoints.
+ * Server-side SDK logic (auth.elevate, media client) is confined to backend endpoints.
  * No file bytes pass through our backend - only metadata for URL generation.
  */
 
@@ -50,7 +50,7 @@ async function generateUploadUrl(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         fileName: file.name,
-        mimeType: file.type,
+        fileType: file.type,
         kind
       })
     });
@@ -81,19 +81,30 @@ async function generateUploadUrl(
 
 /**
  * Upload file directly to Wix Media Manager using signed URL
+ * Returns the media URL from the upload response
  */
 function uploadToWix(
   file: File,
   uploadUrl: string,
   onProgress?: (progress: UploadProgress) => void
-): Promise<void> {
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     
     xhr.addEventListener('load', () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         console.log('[WIX_MEDIA] File uploaded successfully');
-        resolve();
+        try {
+          const response = JSON.parse(xhr.responseText);
+          const mediaUrl = response?.file?.url;
+          if (mediaUrl) {
+            resolve(mediaUrl);
+          } else {
+            reject(new Error('Upload response missing media URL'));
+          }
+        } catch (e) {
+          reject(new Error(`Failed to parse upload response: ${e instanceof Error ? e.message : String(e)}`));
+        }
       } else {
         console.error(`[WIX_MEDIA] Upload failed with status ${xhr.status}`);
         reject(new Error(`Upload failed with status ${xhr.status}`));
@@ -130,47 +141,9 @@ function uploadToWix(
 
     xhr.timeout = 300000; // 5 minutes
     xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type);
     xhr.send(file);
   });
-}
-
-/**
- * Get media URL from backend after upload
- * The backend uses server-only Wix SDK to retrieve the URL
- */
-async function getMediaUrl(fileName: string): Promise<string> {
-  console.log('[WIX_MEDIA] Retrieving media URL for:', fileName);
-  
-  try {
-    // Call backend endpoint to get media URL (server-only SDK logic)
-    const response = await fetch('/api/media/get-media-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileName })
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `Failed to get media URL: HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (!data.mediaUrl) {
-      throw new Error(`Could not find uploaded file: ${fileName}`);
-    }
-    
-    console.log('[WIX_MEDIA] Retrieved media URL:', data.mediaUrl);
-    return data.mediaUrl;
-  } catch (error) {
-    console.error('[WIX_MEDIA] Failed to get media URL:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw {
-      code: 'GET_MEDIA_URL_FAILED',
-      message: `Failed to get media URL: ${errorMessage}`,
-      details: 'Check server logs for more information'
-    } as UploadError;
-  }
 }
 
 /**
@@ -198,11 +171,8 @@ export async function uploadMedia(
     // Step 1: Request signed upload URL from backend
     const { uploadUrl, fileName } = await generateUploadUrl(file, kind);
 
-    // Step 2: Upload file directly to Wix
-    await uploadToWix(file, uploadUrl, onProgress);
-
-    // Step 3: Get the media URL from backend
-    const mediaUrl = await getMediaUrl(fileName);
+    // Step 2: Upload file directly to Wix and get media URL from response
+    const mediaUrl = await uploadToWix(file, uploadUrl, onProgress);
 
     console.log(`[WIX_MEDIA] ${kind} upload complete:`, { mediaUrl, fileName });
 

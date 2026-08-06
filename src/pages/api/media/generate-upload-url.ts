@@ -89,7 +89,8 @@ export const POST: APIRoute = async ({ request }) => {
       // Use auth.elevate to get elevated permissions for file operations
       const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
       uploadUrlResponse = await elevatedGenerateUrl(fileType, {
-        fileName
+        fileName,
+        mimeType: fileType
       });
     } catch (apiError) {
       console.error(`[GENERATE_URL] Request ${requestId} generateFileUploadUrl failed`, {
@@ -130,8 +131,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     return new Response(
       JSON.stringify({
-        uploadUrl: uploadUrlResponse.uploadUrl,
-        fileId: uploadUrlResponse.fileId || crypto.randomUUID()
+        uploadUrl: uploadUrlResponse.uploadUrl
       }),
       { 
         status: 200, 

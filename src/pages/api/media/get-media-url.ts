@@ -25,9 +25,9 @@ export const GET: APIRoute = async ({ url }) => {
 
     console.log(`[GET_MEDIA_URL] Request ${requestId} fetching file`, { fileId });
 
-    // Use auth.elevate to get the file with elevated permissions
-    const elevatedGetFile = auth.elevate(files.getFile);
-    const fileData = await elevatedGetFile(fileId);
+    // Use auth.elevate to get the file descriptor with elevated permissions
+    const elevatedGetDescriptor = auth.elevate(files.getFileDescriptor);
+    const fileData = await elevatedGetDescriptor(fileId);
 
     if (!fileData?.url) {
       console.error(`[GET_MEDIA_URL] Request ${requestId} no URL in file data`, {
@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ url }) => {
     return new Response(
       JSON.stringify({
         mediaUrl: fileData.url,
-        fileId: fileData.id,
+        fileId: fileData._id,
         displayName: fileData.displayName
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }

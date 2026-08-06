@@ -39,7 +39,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     // Transform response to only include what UI needs
     const items = (result.files || []).map((file: any) => ({
-      id: file.id,
+      _id: file._id,
       displayName: file.displayName,
       url: file.url,
       thumbnailUrl: file.thumbnailUrl || file.url,

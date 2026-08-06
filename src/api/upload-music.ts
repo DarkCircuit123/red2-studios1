@@ -56,7 +56,7 @@ export const POST: APIRoute = async (context) => {
     console.log('[MUSIC_UPLOAD] Requesting Wix Media Manager upload URL...');
     let uploadUrl: string;
     try {
-      const filesClient = files();
+      const filesClient = files;
       const uploadUrlResponse = await filesClient.generateFileUploadUrl(file.type, {
         fileName: file.name,
       });
