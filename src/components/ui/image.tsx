@@ -125,8 +125,11 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
   });
   const finalSrc = resolved.url;
 
+  // Destructure priority out of props before spreading to avoid passing boolean to DOM
+  const { priority, ...restProps } = props;
+
   const imageProps = {
-    ...props,
+    ...restProps,
     onError: () => {
       // On error, fall back to the fallback image
       setImgSrc(FALLBACK_IMAGE_URL);
