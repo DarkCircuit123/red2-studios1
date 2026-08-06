@@ -99,34 +99,73 @@ async function generateUploadUrl(
  * uploaded ones did not.
  *
  * The upload response already contains the id and the real pixel dimensions
- * under file.media.image.image, so we assemble form 1 here. If any part is
- * missing we fall back to the bare URL rather than fabricating dimensions -
- * a wrong size would be worse than an unstyled image.
+ * under file.media.image.image, so we assemble form 1 here. If metadata is
+ * missing, we extract the media ID from the static URL and build a valid
+ * wix:image://v1 URL. We never return a bare static URL.
  */
 function buildWixMediaUrl(response: any, file: File): string | undefined {
+  console.log('[WIX_MEDIA] buildWixMediaUrl - upload response:', response);
+  
   const f = response?.file;
-  if (!f) return undefined;
+  if (!f) {
+    console.error('[WIX_MEDIA] buildWixMediaUrl - no file in response');
+    return undefined;
+  }
 
   const img = f?.media?.image?.image;
-  const id: string | undefined = img?.id || f?.id;
+  let id: string | undefined = img?.id || f?.id;
   const width = Number(img?.width);
   const height = Number(img?.height);
   const filename: string = img?.filename || f?.displayName || file.name;
 
+  // If we have complete metadata, build the wix:image://v1 URL
   if (id && Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
     const url =
       `wix:image://v1/${id}/${encodeURIComponent(filename)}` +
       `#originWidth=${width}&originHeight=${height}`;
-    console.log('[WIX_MEDIA] built renderable media URL', { id, width, height });
+    console.log('[WIX_MEDIA] built renderable media URL from metadata', { id, width, height, url });
     return url;
   }
 
-  console.warn(
-    '[WIX_MEDIA] upload response had no image dimensions; storing the bare URL. ' +
-      'It will save correctly but may not render at the right size.',
-    { hasId: Boolean(id), width: img?.width, height: img?.height }
-  );
-  return f?.url;
+  // Metadata is missing - try to extract media ID from the static URL
+  const staticUrl = f?.url;
+  if (!staticUrl) {
+    console.error('[WIX_MEDIA] buildWixMediaUrl - no URL in response');
+    return undefined;
+  }
+
+  console.warn('[WIX_MEDIA] upload response missing image dimensions, attempting to extract media ID from static URL');
+
+  // Extract media ID from static URL
+  // Format: https://static.wixstatic.com/media/{mediaId}~{variant}.{ext}
+  // Example: https://static.wixstatic.com/media/e9d727_abc~mv2.jpg
+  const mediaIdMatch = staticUrl.match(/\/media\/([^~]+)/);
+  if (!mediaIdMatch || !mediaIdMatch[1]) {
+    console.error('[WIX_MEDIA] buildWixMediaUrl - could not extract media ID from static URL', { staticUrl });
+    return undefined;
+  }
+
+  id = mediaIdMatch[1];
+  console.log('[WIX_MEDIA] extracted media ID from static URL', { extractedId: id, staticUrl });
+
+  // If we have dimensions, use them; otherwise use placeholder dimensions
+  // (This ensures the image is at least renderable, even if not perfectly sized)
+  const finalWidth = Number.isFinite(width) && width > 0 ? width : 1200;
+  const finalHeight = Number.isFinite(height) && height > 0 ? height : 800;
+
+  const url =
+    `wix:image://v1/${id}/${encodeURIComponent(filename)}` +
+    `#originWidth=${finalWidth}&originHeight=${finalHeight}`;
+  
+  console.log('[WIX_MEDIA] built renderable media URL from extracted ID', { 
+    id, 
+    width: finalWidth, 
+    height: finalHeight, 
+    url,
+    usedPlaceholderDimensions: !(Number.isFinite(width) && width > 0)
+  });
+  
+  return url;
 }
 
 /**
