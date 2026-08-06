@@ -34,3 +34,6 @@ export const buyNow = async (items: Array<{ collectionId: string; itemId: string
     throw error;
   }
 };
+
+// Re-export cart types for convenience
+export type { CartStore } from './cart/useCartStore';

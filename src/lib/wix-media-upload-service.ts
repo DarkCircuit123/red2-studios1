@@ -40,7 +40,7 @@ export interface UploadError {
 async function generateUploadUrl(
   file: File,
   kind: 'image' | 'music'
-): Promise<{ uploadUrl: string; fileName: string }> {
+): Promise<{ uploadUrl: string; fileName: string; fileId: string }> {
   console.log(`[WIX_MEDIA] Requesting upload URL for ${kind}: ${file.name}`);
   
   try {
@@ -57,7 +57,7 @@ async function generateUploadUrl(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `Failed to generate upload URL: HTTP ${response.status}`);
+      throw new Error(error.error || error.message || `Failed to generate upload URL: HTTP ${response.status}`);
     }
 
     const data = await response.json();
@@ -67,7 +67,7 @@ async function generateUploadUrl(
     }
     
     console.log('[WIX_MEDIA] Successfully received upload URL from backend');
-    return { uploadUrl: data.uploadUrl, fileName: file.name };
+    return { uploadUrl: data.uploadUrl, fileName: file.name, fileId: data.fileId };
   } catch (error) {
     console.error('[WIX_MEDIA] Failed to generate upload URL:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -196,7 +196,7 @@ export async function uploadMedia(
 
   try {
     // Step 1: Request signed upload URL from backend
-    const { uploadUrl, fileName } = await generateUploadUrl(file, kind);
+    const { uploadUrl, fileName, fileId } = await generateUploadUrl(file, kind);
 
     // Step 2: Upload file directly to Wix
     await uploadToWix(file, uploadUrl, onProgress);
