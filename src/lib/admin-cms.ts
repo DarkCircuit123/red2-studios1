@@ -4,11 +4,10 @@
  */
 
 interface MutationRequest {
-  action: 'create' | 'update' | 'delete' | 'addReferences' | 'removeReferences';
+  action: 'create' | 'update' | 'delete';
   collectionId: string;
   itemData?: Record<string, any>;
   itemId?: string;
-  multiRefs?: Record<string, string[]>;
 }
 
 interface MutationResponse {
@@ -24,6 +23,7 @@ async function callMutateAPI(request: MutationRequest): Promise<MutationResponse
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(request),
     });
 
@@ -61,32 +61,6 @@ export const adminCms = {
       action: 'delete',
       collectionId,
       itemId,
-    });
-  },
-
-  async addReferences(
-    collectionId: string,
-    itemId: string,
-    multiRefs: Record<string, string[]>
-  ) {
-    return callMutateAPI({
-      action: 'addReferences',
-      collectionId,
-      itemId,
-      multiRefs,
-    });
-  },
-
-  async removeReferences(
-    collectionId: string,
-    itemId: string,
-    multiRefs: Record<string, string[]>
-  ) {
-    return callMutateAPI({
-      action: 'removeReferences',
-      collectionId,
-      itemId,
-      multiRefs,
     });
   },
 };

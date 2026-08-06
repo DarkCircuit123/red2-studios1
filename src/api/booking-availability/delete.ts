@@ -19,12 +19,13 @@
  * 500: Server error
  */
 
-import { BaseCrudService } from '@/integrations';
+import { auth } from '@wix/essentials';
+import { items } from '@wix/data';
 import { requireAdmin } from '@/lib/auth-security';
 
 export async function DELETE({ request, cookies }: { request: Request; cookies: any }) {
   // ADMIN GATE: this route mutates the availability calendar with
-  // suppressAuth: true, bypassing collection permissions entirely.
+  // elevated permissions, bypassing collection permissions entirely.
   // It previously had no auth at all - anyone who knew the URL could
   // add, alter or wipe the entire booking calendar.
   const denied = await requireAdmin(cookies, request, 'delete booking availability');
@@ -48,7 +49,9 @@ export async function DELETE({ request, cookies }: { request: Request; cookies: 
       );
     }
 
-    await wixData.remove('bookingavailability', body.id, { suppressAuth: true });
+    // Use elevated permissions to delete the booking availability
+    const elevatedRemove = auth.elevate(items.remove);
+    await elevatedRemove('bookingavailability', body.id);
 
     const duration = new Date().getTime() - startTime.getTime();
     console.log(`[DELETE:${requestId}] ✓ Successfully deleted slot ${body.id} in ${duration}ms`);

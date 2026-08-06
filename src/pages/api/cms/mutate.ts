@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { mutate } from '@/api/cms/mutate';
+import { verifyAdminToken } from '@/lib/auth-security';
 
 interface MutationRequest {
   action: 'create' | 'update' | 'delete';
@@ -8,13 +9,25 @@ interface MutationRequest {
   itemId?: string;
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     if (request.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
         headers: { 'Content-Type': 'application/json' },
       });
+    }
+
+    // ADMIN GATE: Verify admin token before allowing mutations
+    const adminToken = cookies.get('adminToken')?.value;
+    if (!adminToken || !verifyAdminToken(adminToken)) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Admin token required' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     const body: MutationRequest = await request.json();

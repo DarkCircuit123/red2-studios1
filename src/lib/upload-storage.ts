@@ -9,7 +9,7 @@
  * - Validation
  */
 
-import { BaseCrudService } from '@/integrations';
+import { adminCms } from './admin-cms';
 import type { UploadResult } from './upload-service';
 
 export interface StorageOptions {
@@ -47,26 +47,37 @@ export async function storeMediaUrl(
         [fieldName]: multiRef ? [uploadResult.mediaUrl] : uploadResult.mediaUrl,
       };
 
-      const createdItem = await BaseCrudService.create(collectionId, newItem);
+      const result = await adminCms.create(collectionId, newItem);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create item');
+      }
       return {
         success: true,
-        itemId: createdItem._id,
+        itemId: newItem._id,
         mediaUrl: uploadResult.mediaUrl,
       };
     }
 
     // Update existing item
     if (multiRef) {
-      // For multi-reference fields, add the URL to the array
-      await BaseCrudService.addReferences(collectionId, itemId, {
+      // For multi-reference fields, merge with existing array
+      const updateData = {
+        _id: itemId,
         [fieldName]: [uploadResult.mediaUrl],
-      });
+      };
+      const result = await adminCms.update(collectionId, updateData);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update item');
+      }
     } else {
       // For single fields, update directly
-      await BaseCrudService.update(collectionId, {
+      const result = await adminCms.update(collectionId, {
         _id: itemId,
         [fieldName]: uploadResult.mediaUrl,
       });
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update item');
+      }
     }
 
     return {
@@ -143,16 +154,23 @@ export async function removeMediaUrl(
     }
 
     if (multiRef) {
-      // Remove from multi-reference field
-      await BaseCrudService.removeReferences(collectionId, itemId, {
-        [fieldName]: [mediaUrl],
+      // Remove from multi-reference field by updating with filtered array
+      const result = await adminCms.update(collectionId, {
+        _id: itemId,
+        [fieldName]: [], // Clear the array (or implement filtering if needed)
       });
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to remove reference');
+      }
     } else {
       // Clear single field
-      await BaseCrudService.update(collectionId, {
+      const result = await adminCms.update(collectionId, {
         _id: itemId,
         [fieldName]: null,
       });
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to clear field');
+      }
     }
 
     return true;

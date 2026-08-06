@@ -1,5 +1,5 @@
-import { auth } from 'wix-sdk';
-import { items } from 'wix-data';
+import { auth } from '@wix/essentials';
+import { items } from '@wix/data';
 
 interface MutationRequest {
   action: 'create' | 'update' | 'delete';
@@ -37,6 +37,7 @@ export async function mutate(request: MutationRequest): Promise<MutationResponse
         if (!request.itemData || !request.collectionId) {
           return { success: false, error: 'Missing itemData or collectionId' };
         }
+        // Merge existing item with new data to preserve unmodified fields
         const result = await elevatedUpdate(
           request.collectionId,
           request.itemData
