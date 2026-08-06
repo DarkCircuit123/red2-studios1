@@ -37,11 +37,24 @@ export async function mutate(request: MutationRequest): Promise<MutationResponse
         if (!request.itemData || !request.collectionId) {
           return { success: false, error: 'Missing itemData or collectionId' };
         }
-        // Merge existing item with new data to preserve unmodified fields
-        const result = await elevatedUpdate(
-          request.collectionId,
-          request.itemData
-        );
+
+        const itemId = request.itemId ?? request.itemData._id;
+        if (!itemId) {
+          return { success: false, error: 'Missing itemId' };
+        }
+
+        // items.update REPLACES the item. Passing a partial payload straight
+        // through blanks every field the caller did not send - updating a
+        // sponsor's logo would wipe its name. Read the current item and merge,
+        // which is what BaseCrudService.update did client side.
+        const elevatedGet = auth.elevate(items.get);
+        const current = await elevatedGet(request.collectionId, itemId);
+        if (!current) {
+          return { success: false, error: 'Item not found' };
+        }
+
+        const merged = { ...current, ...request.itemData, _id: itemId };
+        const result = await elevatedUpdate(request.collectionId, merged);
         return { success: true, data: result };
       }
 

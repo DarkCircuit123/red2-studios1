@@ -16,27 +16,34 @@ interface MutationResponse {
   error?: string;
 }
 
-async function callMutateAPI(request: MutationRequest): Promise<MutationResponse> {
-  try {
-    const response = await fetch('/api/cms/mutate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(request),
-    });
+/**
+ * These calls THROW on failure, matching BaseCrudService's contract.
+ *
+ * The previous version caught its own throw and returned {success:false}.
+ * Callers do `await adminCms.update(...)` inside a try/catch and treat a
+ * non-throwing return as success, so every failed write was reported to the
+ * user as "upload complete" while nothing was saved.
+ */
+async function callMutateAPI(request: MutationRequest): Promise<any> {
+  const response = await fetch('/api/cms/mutate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    // The admin_session cookie must ride along or the endpoint returns 401.
+    credentials: 'include',
+    body: JSON.stringify(request),
+  });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
+  const result = (await response.json().catch(() => ({}))) as MutationResponse;
 
-    return await response.json();
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return { success: false, error: errorMessage };
+  if (!response.ok || !result.success) {
+    throw new Error(
+      result.error || `CMS ${request.action} failed: HTTP ${response.status}`
+    );
   }
+
+  return result.data;
 }
 
 export const adminCms = {
@@ -49,9 +56,13 @@ export const adminCms = {
   },
 
   async update(collectionId: string, itemData: Record<string, any>) {
+    if (!itemData?._id) {
+      throw new Error(`${collectionId} _id is required for update`);
+    }
     return callMutateAPI({
       action: 'update',
       collectionId,
+      itemId: itemData._id,
       itemData,
     });
   },
