@@ -15,22 +15,27 @@ export const POST: APIRoute = async ({ request }) => {
 
     console.log('[GENERATE_UPLOAD_URL] Generating signed URL:', { fileName, mimeType, kind });
 
-    // Use Wix Media SDK to generate a real signed upload URL
-    // files is a namespace object, not a factory function
-    const generateUrl = auth.elevate(files.generateFileUploadUrl);
-    
     let uploadUrlResponse;
     try {
-      uploadUrlResponse = await generateUrl(mimeType, {
+      // Use auth.elevate to call generateFileUploadUrl with elevated permissions
+      const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
+      
+      uploadUrlResponse = await elevatedGenerateUrl(mimeType, {
         fileName: fileName,
         parentFolderId: 'media-root',
         private: false,
+      });
+      
+      console.log('[GENERATE_UPLOAD_URL] Generated upload URL successfully:', { 
+        fileName, 
+        fileId: uploadUrlResponse.fileId 
       });
     } catch (apiError) {
       console.error('[GENERATE_UPLOAD_URL] Failed to generate upload URL:', {
         fileName,
         mimeType,
         error: apiError instanceof Error ? apiError.message : String(apiError),
+        stack: apiError instanceof Error ? apiError.stack : undefined,
       });
       return new Response(
         JSON.stringify({ 
@@ -40,18 +45,13 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    if (!uploadUrlResponse.uploadUrl) {
+    if (!uploadUrlResponse || !uploadUrlResponse.uploadUrl) {
       console.error('[GENERATE_UPLOAD_URL] No uploadUrl in response:', uploadUrlResponse);
       return new Response(
         JSON.stringify({ error: 'Failed to generate upload URL from Wix Media Manager' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log('[GENERATE_UPLOAD_URL] Successfully generated signed URL:', { 
-      fileName, 
-      fileId: uploadUrlResponse.fileId 
-    });
 
     return new Response(
       JSON.stringify({
@@ -61,7 +61,10 @@ export const POST: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[GENERATE_UPLOAD_URL] Error:', error);
+    console.error('[GENERATE_UPLOAD_URL] Unexpected error:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Failed to generate upload URL' 
