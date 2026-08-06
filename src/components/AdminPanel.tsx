@@ -10,7 +10,8 @@ import BookingManagerPro from './BookingManagerPro';
 import MediaHealthTab from './AdminPanel/MediaHealthTab';
 import DataManagementTab from './AdminPanel/DataManagementTab';
 import UploadProductionTest from './UploadProductionTest';
-import { BaseCrudService, adminCms } from '@/integrations';
+import { BaseCrudService } from '@/integrations';
+import { adminCms } from '@/lib/admin-cms';
 import { Services, HomepageImages, Portfolio, ClientsPress, AboutSection } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
 

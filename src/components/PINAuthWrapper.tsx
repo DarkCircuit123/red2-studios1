@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, AlertCircle } from 'lucide-react';
-import { BaseCrudService, adminCms } from '@/integrations';
+import { BaseCrudService } from '@/integrations';
+import { adminCms } from '@/lib/admin-cms';
 
 interface PINAuthWrapperProps {
   galleryId: string;

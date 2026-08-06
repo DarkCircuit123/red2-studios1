@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BaseCrudService, adminCms } from '@/integrations';
+import { BaseCrudService } from '@/integrations';
+import { adminCms } from '@/lib/admin-cms';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

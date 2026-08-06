@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Type, Save, X } from 'lucide-react';
-import { BaseCrudService, adminCms } from '@/integrations';
+import { BaseCrudService } from '@/integrations';
+import { adminCms } from '@/lib/admin-cms';
 import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 

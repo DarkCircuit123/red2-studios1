@@ -2,11 +2,10 @@ import { auth } from 'wix-sdk';
 import { items } from 'wix-data';
 
 interface MutationRequest {
-  action: 'create' | 'update' | 'delete' | 'addReferences' | 'removeReferences';
+  action: 'create' | 'update' | 'delete';
   collectionId: string;
   itemData?: Record<string, any>;
   itemId?: string;
-  multiRefs?: Record<string, string[]>;
 }
 
 interface MutationResponse {
@@ -18,17 +17,18 @@ interface MutationResponse {
 export async function mutate(request: MutationRequest): Promise<MutationResponse> {
   try {
     // Elevate to admin context for server-side mutations
-    const elevatedAuth = auth.elevate();
+    const elevatedInsert = auth.elevate(items.insert);
+    const elevatedUpdate = auth.elevate(items.update);
+    const elevatedRemove = auth.elevate(items.remove);
 
     switch (request.action) {
       case 'create': {
         if (!request.itemData || !request.collectionId) {
           return { success: false, error: 'Missing itemData or collectionId' };
         }
-        const result = await items.insertItem(
+        const result = await elevatedInsert(
           request.collectionId,
-          request.itemData,
-          { suppressAuth: false }
+          request.itemData
         );
         return { success: true, data: result };
       }
@@ -37,10 +37,9 @@ export async function mutate(request: MutationRequest): Promise<MutationResponse
         if (!request.itemData || !request.collectionId) {
           return { success: false, error: 'Missing itemData or collectionId' };
         }
-        const result = await items.updateItem(
+        const result = await elevatedUpdate(
           request.collectionId,
-          request.itemData,
-          { suppressAuth: false }
+          request.itemData
         );
         return { success: true, data: result };
       }
@@ -49,44 +48,9 @@ export async function mutate(request: MutationRequest): Promise<MutationResponse
         if (!request.itemId || !request.collectionId) {
           return { success: false, error: 'Missing itemId or collectionId' };
         }
-        const result = await items.removeItem(
+        const result = await elevatedRemove(
           request.collectionId,
-          request.itemId,
-          { suppressAuth: false }
-        );
-        return { success: true, data: result };
-      }
-
-      case 'addReferences': {
-        if (!request.itemId || !request.collectionId || !request.multiRefs) {
-          return { success: false, error: 'Missing itemId, collectionId, or multiRefs' };
-        }
-        // Add references by updating the item with the multi-ref fields
-        const updateData: Record<string, any> = { _id: request.itemId };
-        Object.entries(request.multiRefs).forEach(([field, refs]) => {
-          updateData[field] = refs;
-        });
-        const result = await items.updateItem(
-          request.collectionId,
-          updateData,
-          { suppressAuth: false }
-        );
-        return { success: true, data: result };
-      }
-
-      case 'removeReferences': {
-        if (!request.itemId || !request.collectionId || !request.multiRefs) {
-          return { success: false, error: 'Missing itemId, collectionId, or multiRefs' };
-        }
-        // Remove references by updating the item with empty arrays
-        const updateData: Record<string, any> = { _id: request.itemId };
-        Object.entries(request.multiRefs).forEach(([field]) => {
-          updateData[field] = [];
-        });
-        const result = await items.updateItem(
-          request.collectionId,
-          updateData,
-          { suppressAuth: false }
+          request.itemId
         );
         return { success: true, data: result };
       }

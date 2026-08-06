@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Mail, Phone, User, Trash2, Check } from 'lucide-react';
-import { BaseCrudService, adminCms } from '@/integrations';
+import { BaseCrudService } from '@/integrations';
+import { adminCms } from '@/lib/admin-cms';
 
 interface Booking {
   _id: string;

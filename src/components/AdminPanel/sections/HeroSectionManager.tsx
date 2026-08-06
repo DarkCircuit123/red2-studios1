@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image as ImageIcon, Upload, Trash2, Eye } from 'lucide-react';
-import { BaseCrudService, adminCms } from '@/integrations';
+import { BaseCrudService } from '@/integrations';
+import { adminCms } from '@/lib/admin-cms';
 import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
@@ -40,7 +41,7 @@ export default function HeroSectionManager() {
           loopMusic: true,
           volume: 50,
         };
-        await BaseCrudService.create('homepagesettings', newSettings);
+        await adminCms.create('homepagesettings', newSettings);
         setSettings(newSettings);
       }
     } catch (error) {
@@ -67,7 +68,7 @@ export default function HeroSectionManager() {
 
       // Update settings with new image URL
       const updated = { ...settings, heroBackgroundImage: result.mediaUrl };
-      await BaseCrudService.update('homepagesettings', updated);
+      await adminCms.update('homepagesettings', updated);
       setSettings(updated);
       setPreviewUrl(result.mediaUrl);
 
@@ -93,7 +94,7 @@ export default function HeroSectionManager() {
     try {
       setIsSaving(true);
       const updated = { ...settings, heroBackgroundImage: undefined };
-      await BaseCrudService.update('homepagesettings', updated);
+      await adminCms.update('homepagesettings', updated);
       setSettings(updated);
       setPreviewUrl(null);
 

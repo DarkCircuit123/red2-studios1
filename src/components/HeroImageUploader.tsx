@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3, Loader } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
-import { BaseCrudService, adminCms } from '@/integrations';
+import { BaseCrudService } from '@/integrations';
+import { adminCms } from '@/lib/admin-cms';
 
 interface HeroImageUploaderProps {
   currentImage?: string;
