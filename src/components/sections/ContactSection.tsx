@@ -21,6 +21,8 @@ export default function ContactSection() {
   const formRef = useRef<HTMLFormElement>(null);
   const statusTimeoutRef = useRef<NodeJS.Timeout>();
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef(0);
+  const maxRetriesRef = useRef(3);
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
 
   const loadContactBackground = async () => {
@@ -32,20 +34,31 @@ export default function ContactSection() {
           setContactBackgroundImage(images.contactBackgroundImage);
         }
       }
+      // Reset retry count on success
+      retryCountRef.current = 0;
     } catch (error) {
       console.error('[ContactSection] Failed to load contact background:', error);
+      retryCountRef.current++;
     }
   };
 
   useEffect(() => {
     loadContactBackground();
     
-    // Poll for updates every 2 seconds to catch admin panel changes
-    refreshIntervalRef.current = setInterval(loadContactBackground, 2000);
+    // Only poll if retries haven't been exhausted
+    // Use exponential backoff: 30s, 60s, 120s
+    const scheduleNextPoll = () => {
+      if (retryCountRef.current < maxRetriesRef.current) {
+        const delayMs = Math.min(30000 * Math.pow(2, retryCountRef.current), 120000);
+        refreshIntervalRef.current = setTimeout(loadContactBackground, delayMs);
+      }
+    };
+    
+    scheduleNextPoll();
     
     return () => {
       if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
+        clearTimeout(refreshIntervalRef.current);
       }
     };
   }, []);

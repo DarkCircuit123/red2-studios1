@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         path: '/',
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: 86400 * 7, // 7 days
       });
 

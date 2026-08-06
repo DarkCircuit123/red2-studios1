@@ -16,6 +16,8 @@ export default function HeroSection() {
   const [imageDimensions, setImageDimensions] = useState({ width: 1920, height: 1080 });
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const retryCountRef = useRef(0);
+  const maxRetriesRef = useRef(3);
 
   const { fitting } = useImageFitting({
     imageWidth: imageDimensions.width,
@@ -46,9 +48,12 @@ export default function HeroSection() {
       } else {
         setHeroImage(null);
       }
+      // Reset retry count on success
+      retryCountRef.current = 0;
     } catch (error) {
       console.error('[HeroSection] Failed to load hero image:', error);
       setHeroImage(null);
+      retryCountRef.current++;
     } finally {
       setIsLoading(false);
     }
@@ -57,12 +62,20 @@ export default function HeroSection() {
   useEffect(() => {
     loadHeroImage();
     
-    // Poll for image updates every 2 seconds to catch admin panel changes
-    refreshIntervalRef.current = setInterval(loadHeroImage, 2000);
+    // Only poll if retries haven't been exhausted
+    // Use exponential backoff: 30s, 60s, 120s
+    const scheduleNextPoll = () => {
+      if (retryCountRef.current < maxRetriesRef.current) {
+        const delayMs = Math.min(30000 * Math.pow(2, retryCountRef.current), 120000);
+        refreshIntervalRef.current = setTimeout(loadHeroImage, delayMs);
+      }
+    };
+    
+    scheduleNextPoll();
     
     return () => {
       if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
+        clearTimeout(refreshIntervalRef.current);
       }
     };
   }, []);

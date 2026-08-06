@@ -14,6 +14,8 @@ export default function AboutSection() {
   const [fontFamily, setFontFamily] = useState('font-cormorant-garamond-v2');
   const [isLoading, setIsLoading] = useState(true);
   const fetchedRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const maxRetriesRef = useRef(3);
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
 
   const loadAboutData = async () => {
@@ -42,8 +44,11 @@ export default function AboutSection() {
       } catch (error) {
         console.error('[AboutSection] Error loading about settings:', error);
       }
+      // Reset retry count on success
+      retryCountRef.current = 0;
     } catch (error) {
       console.error('[AboutSection] Error loading about data:', error);
+      retryCountRef.current++;
     } finally {
       setIsLoading(false);
     }
@@ -56,10 +61,18 @@ export default function AboutSection() {
 
     loadAboutData();
     
-    // Poll for updates every 2 seconds to catch admin panel changes
-    const refreshInterval = setInterval(loadAboutData, 2000);
+    // Only poll if retries haven't been exhausted
+    // Use exponential backoff: 30s, 60s, 120s
+    const scheduleNextPoll = () => {
+      if (retryCountRef.current < maxRetriesRef.current) {
+        const delayMs = Math.min(30000 * Math.pow(2, retryCountRef.current), 120000);
+        const refreshInterval = setTimeout(loadAboutData, delayMs);
+        return () => clearTimeout(refreshInterval);
+      }
+      return () => {};
+    };
     
-    return () => clearInterval(refreshInterval);
+    return scheduleNextPoll();
   }, []);
 
   const statVariants = {

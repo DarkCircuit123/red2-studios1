@@ -110,7 +110,7 @@ export const POST: APIRoute = async (context) => {
     console.log(`[UPLOAD_HERO] Request ${requestId} getting Wix context`, {
       timestamp: new Date().toISOString(),
     });
-    const filesClient = files();
+    const filesClient = files;
 
     // Generate upload URL
     console.log(`[UPLOAD_HERO] Request ${requestId} calling generateFileUploadUrl`, {

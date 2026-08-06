@@ -197,7 +197,7 @@ export const POST: APIRoute = async (context) => {
 
     let importResult;
     try {
-      const filesClient = files();
+      const filesClient = files;
       importResult = await filesClient.importFile(parsed.toString(), {
         mimeType: detectedType,
         displayName: fileName,
