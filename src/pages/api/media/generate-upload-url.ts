@@ -1,33 +1,159 @@
 import type { APIRoute } from 'astro';
+import { files } from '@wix/media';
+import { auth } from '@wix/essentials';
+
+/**
+ * Generate Upload URL - Server-side endpoint
+ * 
+ * This endpoint:
+ * 1. Validates the request (file type, size)
+ * 2. Uses auth.elevate() to get elevated permissions
+ * 3. Calls files.generateFileUploadUrl() to get a signed upload URL
+ * 4. Returns the URL to the client for direct upload
+ * 
+ * The client then uploads directly to the signed URL with a PUT request
+ */
+
+const ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'audio/mpeg',
+  'audio/wav',
+  'audio/ogg',
+  'audio/mp3',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime'
+];
 
 export const POST: APIRoute = async ({ request }) => {
-  try {
-    const { fileName, fileType } = await request.json();
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
 
+  try {
+    console.log(`[GENERATE_URL] Request ${requestId} started`, {
+      timestamp: new Date().toISOString()
+    });
+
+    // Parse request body
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      console.warn(`[GENERATE_URL] Request ${requestId} invalid JSON`, { error: e });
+      return new Response(
+        JSON.stringify({ error: 'Invalid request body' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { fileName, fileType } = body;
+
+    // Validate inputs
     if (!fileName || !fileType) {
+      console.warn(`[GENERATE_URL] Request ${requestId} missing parameters`, {
+        hasFileName: !!fileName,
+        hasFileType: !!fileType
+      });
       return new Response(
         JSON.stringify({ error: 'Missing fileName or fileType' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Generate a unique file ID
-    const fileId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Validate file type
+    if (!ALLOWED_TYPES.includes(fileType)) {
+      console.warn(`[GENERATE_URL] Request ${requestId} invalid file type`, {
+        fileType,
+        allowedTypes: ALLOWED_TYPES
+      });
+      return new Response(
+        JSON.stringify({ 
+          error: `File type not supported. Allowed: ${ALLOWED_TYPES.join(', ')}` 
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Create a mock upload URL (in production, this would use Wix Media Manager API)
-    const uploadUrl = `https://www.wixapis.com/v1/media/upload?fileId=${fileId}`;
+    console.log(`[GENERATE_URL] Request ${requestId} validated`, {
+      fileName,
+      fileType
+    });
+
+    // Get elevated permissions and generate upload URL
+    console.log(`[GENERATE_URL] Request ${requestId} calling generateFileUploadUrl`);
+    
+    let uploadUrlResponse;
+    try {
+      // Use auth.elevate to get elevated permissions for file operations
+      const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
+      uploadUrlResponse = await elevatedGenerateUrl(fileType, {
+        fileName
+      });
+    } catch (apiError) {
+      console.error(`[GENERATE_URL] Request ${requestId} generateFileUploadUrl failed`, {
+        error: apiError instanceof Error ? apiError.message : String(apiError),
+        stack: apiError instanceof Error ? apiError.stack : undefined,
+        fileName,
+        fileType
+      });
+      
+      // Return 403 if permission denied, 500 for other errors
+      const status = apiError instanceof Error && apiError.message.includes('403') ? 403 : 500;
+      return new Response(
+        JSON.stringify({ 
+          error: `Failed to generate upload URL: ${apiError instanceof Error ? apiError.message : String(apiError)}` 
+        }),
+        { status, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!uploadUrlResponse?.uploadUrl) {
+      console.error(`[GENERATE_URL] Request ${requestId} no uploadUrl in response`, {
+        response: uploadUrlResponse
+      });
+      return new Response(
+        JSON.stringify({ error: 'No upload URL returned from Wix' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(`[GENERATE_URL] Request ${requestId} success`, {
+      fileName,
+      fileType,
+      uploadUrlDomain: new URL(uploadUrlResponse.uploadUrl).hostname,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString()
+    });
 
     return new Response(
       JSON.stringify({
-        uploadUrl,
-        fileId,
+        uploadUrl: uploadUrlResponse.uploadUrl,
+        fileId: uploadUrlResponse.fileId || crypto.randomUUID()
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { 
+        status: 200, 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        } 
+      }
     );
   } catch (error) {
-    console.error('Error generating upload URL:', error);
+    const duration = Date.now() - startTime;
+    console.error(`[GENERATE_URL] Request ${requestId} error`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString()
+    });
+
     return new Response(
-      JSON.stringify({ error: 'Failed to generate upload URL' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Failed to generate upload URL' 
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

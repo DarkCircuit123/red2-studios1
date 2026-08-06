@@ -7,6 +7,7 @@ import { Music, Upload, Trash2, Play, Pause, Volume2, RotateCw, Zap } from 'luci
 import { BaseCrudService } from '@/integrations';
 import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
+import { uploadAudio } from '@/lib/media-upload-service';
 
 export default function BackgroundMusicManager() {
   const { toast } = useToast();
@@ -44,47 +45,20 @@ export default function BackgroundMusicManager() {
     const file = e.target.files?.[0];
     if (!file || !settings) return;
 
-    // Validate file type
-    if (!file.type.startsWith('audio/')) {
-      toast({
-        title: 'Error',
-        description: 'Please upload an audio file (MP3, WAV, etc.)',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     try {
       setIsUploading(true);
 
-      // Generate upload URL
-      const uploadResponse = await fetch('/api/media/generate-upload-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileName: file.name, fileType: file.type }),
-      });
+      // Use unified upload service
+      const result = await uploadAudio(file);
 
-      if (!uploadResponse.ok) throw new Error('Failed to get upload URL');
-      const { uploadUrl, fileId } = await uploadResponse.json();
-
-      // Upload file
-      const uploadResult = await fetch(uploadUrl, {
-        method: 'POST',
-        body: file,
-        headers: { 'Content-Type': file.type },
-      });
-
-      if (!uploadResult.ok) throw new Error('Upload failed');
-
-      // Get media URL
-      const mediaResponse = await fetch(`/api/media/get-media-url?fileId=${fileId}`);
-      if (!mediaResponse.ok) throw new Error('Failed to get media URL');
-      const { mediaUrl } = await mediaResponse.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
 
       // Update settings
       const updated = {
         ...settings,
-        backgroundMusicUrl: mediaUrl,
+        backgroundMusicUrl: result.mediaUrl,
         musicTitle: file.name.replace(/\.[^/.]+$/, ''),
       };
       await BaseCrudService.update('homepagesettings', updated);

@@ -6,6 +6,7 @@ import { Image as ImageIcon, Upload, Trash2, Eye } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
+import { uploadImage } from '@/lib/media-upload-service';
 
 export default function HeroSectionManager() {
   const { toast } = useToast();
@@ -60,35 +61,18 @@ export default function HeroSectionManager() {
     try {
       setUploadingBg(true);
 
-      // Generate upload URL from Wix Media Manager
-      const uploadResponse = await fetch('/api/media/generate-upload-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileName: file.name, fileType: file.type }),
-      });
+      // Use unified upload service
+      const result = await uploadImage(file);
 
-      if (!uploadResponse.ok) throw new Error('Failed to get upload URL');
-      const { uploadUrl, fileId } = await uploadResponse.json();
-
-      // Upload file to Wix Media Manager
-      const uploadResult = await fetch(uploadUrl, {
-        method: 'POST',
-        body: file,
-        headers: { 'Content-Type': file.type },
-      });
-
-      if (!uploadResult.ok) throw new Error('Upload failed');
-
-      // Get the media URL
-      const mediaResponse = await fetch(`/api/media/get-media-url?fileId=${fileId}`);
-      if (!mediaResponse.ok) throw new Error('Failed to get media URL');
-      const { mediaUrl } = await mediaResponse.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
 
       // Update settings with new image URL
-      const updated = { ...settings, heroBackgroundImage: mediaUrl };
+      const updated = { ...settings, heroBackgroundImage: result.mediaUrl };
       await BaseCrudService.update('homepagesettings', updated);
       setSettings(updated);
-      setPreviewUrl(mediaUrl);
+      setPreviewUrl(result.mediaUrl);
 
       toast({
         title: 'Success',

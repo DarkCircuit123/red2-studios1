@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 import { Trash2, Plus, Edit2, X } from 'lucide-react';
+import { uploadImage } from '@/lib/media-upload-service';
+import { useToast } from '@/hooks/use-toast';
 
 interface BehindTheScenesItem {
   _id: string;
@@ -19,10 +21,12 @@ interface BehindTheScenesItem {
 }
 
 export default function BehindTheScenesManager() {
+  const { toast } = useToast();
   const [items, setItems] = useState<BehindTheScenesItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     photo: '',
     title: '',
@@ -43,6 +47,11 @@ export default function BehindTheScenesManager() {
       setItems(result.items.sort((a, b) => (a.order || 0) - (b.order || 0)));
     } catch (error) {
       console.error('Failed to load behind-the-scenes items:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load items',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +94,11 @@ export default function BehindTheScenesManager() {
   const handleSave = async () => {
     try {
       if (!formData.title.trim()) {
-        alert('Please enter a title');
+        toast({
+          title: 'Error',
+          description: 'Please enter a title',
+          variant: 'destructive',
+        });
         return;
       }
 
@@ -111,11 +124,20 @@ export default function BehindTheScenesManager() {
         });
       }
 
+      toast({
+        title: 'Success',
+        description: editingId ? 'Item updated' : 'Item created',
+      });
+
       handleCancel();
       await loadItems();
     } catch (error) {
       console.error('Failed to save item:', error);
-      alert('Failed to save item');
+      toast({
+        title: 'Error',
+        description: 'Failed to save item',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -125,9 +147,17 @@ export default function BehindTheScenesManager() {
     try {
       await BaseCrudService.delete('behindthescenes', id);
       await loadItems();
+      toast({
+        title: 'Success',
+        description: 'Item deleted',
+      });
     } catch (error) {
       console.error('Failed to delete item:', error);
-      alert('Failed to delete item');
+      toast({
+        title: 'Error',
+        description: 'Failed to delete item',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -136,18 +166,31 @@ export default function BehindTheScenesManager() {
     if (!file) return;
 
     try {
-      // For now, we'll use a placeholder. In production, you'd upload to Wix media
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setFormData(prev => ({
-          ...prev,
-          photo: event.target?.result as string,
-        }));
-      };
-      reader.readAsDataURL(file);
+      setIsUploadingImage(true);
+      const result = await uploadImage(file);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        photo: result.mediaUrl || '',
+      }));
+
+      toast({
+        title: 'Success',
+        description: 'Image uploaded successfully',
+      });
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to upload image');
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to upload image',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
