@@ -2,11 +2,11 @@ import type { APIRoute } from 'astro';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { fileName, fileType } = await request.json();
+    const { fileName, mimeType, kind } = await request.json();
 
-    if (!fileName || !fileType) {
+    if (!fileName || !mimeType) {
       return new Response(
-        JSON.stringify({ error: 'Missing fileName or fileType' }),
+        JSON.stringify({ error: 'Missing fileName or mimeType' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -16,6 +16,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Create a mock upload URL (in production, this would use Wix Media Manager API)
     const uploadUrl = `https://www.wixapis.com/v1/media/upload?fileId=${fileId}`;
+
+    console.log('[API] Generated upload URL:', { fileName, mimeType, kind, fileId });
 
     return new Response(
       JSON.stringify({
