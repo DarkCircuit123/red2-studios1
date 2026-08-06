@@ -80,6 +80,56 @@ async function generateUploadUrl(
 }
 
 /**
+ * Turn the upload response into a URL the site can actually RENDER.
+ *
+ * This is the difference between "saved" and "visible".
+ *
+ * The bare `file.url` that Wix returns looks like:
+ *   https://static.wixstatic.com/media/e9d727_abc~mv2.jpg
+ *
+ * The site's <Image> component (src/components/ui/image.tsx, getImageData)
+ * only understands two shapes:
+ *   1. wix:image://v1/<id>/<filename>#originWidth=W&originHeight=H
+ *   2. a static.wixstatic.com URL that ALREADY carries ?originWidth=&originHeight=
+ *
+ * A bare static URL matches neither, so getImageData returns undefined, Wix's
+ * image SDK cannot compute a scaled src, and the image does not render - even
+ * though the value is correctly stored in the CMS. Every image on this site
+ * that works is in form 1; that is why the pre-existing ones render and freshly
+ * uploaded ones did not.
+ *
+ * The upload response already contains the id and the real pixel dimensions
+ * under file.media.image.image, so we assemble form 1 here. If any part is
+ * missing we fall back to the bare URL rather than fabricating dimensions -
+ * a wrong size would be worse than an unstyled image.
+ */
+function buildWixMediaUrl(response: any, file: File): string | undefined {
+  const f = response?.file;
+  if (!f) return undefined;
+
+  const img = f?.media?.image?.image;
+  const id: string | undefined = img?.id || f?.id;
+  const width = Number(img?.width);
+  const height = Number(img?.height);
+  const filename: string = img?.filename || f?.displayName || file.name;
+
+  if (id && Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+    const url =
+      `wix:image://v1/${id}/${encodeURIComponent(filename)}` +
+      `#originWidth=${width}&originHeight=${height}`;
+    console.log('[WIX_MEDIA] built renderable media URL', { id, width, height });
+    return url;
+  }
+
+  console.warn(
+    '[WIX_MEDIA] upload response had no image dimensions; storing the bare URL. ' +
+      'It will save correctly but may not render at the right size.',
+    { hasId: Boolean(id), width: img?.width, height: img?.height }
+  );
+  return f?.url;
+}
+
+/**
  * Upload file directly to Wix Media Manager using signed URL
  * Returns the media URL from the upload response
  */
@@ -96,7 +146,7 @@ function uploadToWix(
         console.log('[WIX_MEDIA] File uploaded successfully');
         try {
           const response = JSON.parse(xhr.responseText);
-          const mediaUrl = response?.file?.url;
+          const mediaUrl = buildWixMediaUrl(response, file);
           if (mediaUrl) {
             resolve(mediaUrl);
           } else {
