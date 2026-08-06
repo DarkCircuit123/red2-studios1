@@ -4,7 +4,6 @@ import RouterFallback from '@/components/RouterFallback';
 import SplashScreen from '@/components/SplashScreen';
 import LogoSplash from '@/components/LogoSplash';
 import { AdminAuthProvider } from '@/components/AdminAuthProvider';
-import { MemberProvider } from '@/integrations/members/providers';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 
 class RouterErrorBoundary extends React.Component<
@@ -54,17 +53,15 @@ export default function AppRoot() {
 
   return (
     <AdminAuthProvider>
-      <MemberProvider>
-        <LogoSplash />
-        {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
-        {splashComplete && (
-          <RouterErrorBoundary>
-            <Suspense fallback={<RouterFallback />}>
-              <AppRouter />
-            </Suspense>
-          </RouterErrorBoundary>
-        )}
-      </MemberProvider>
+      <LogoSplash />
+      {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
+      {splashComplete && (
+        <RouterErrorBoundary>
+          <Suspense fallback={<RouterFallback />}>
+            <AppRouter />
+          </Suspense>
+        </RouterErrorBoundary>
+      )}
     </AdminAuthProvider>
   );
 }
