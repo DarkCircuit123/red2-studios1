@@ -10,7 +10,7 @@ import BookingManagerPro from './BookingManagerPro';
 import MediaHealthTab from './AdminPanel/MediaHealthTab';
 import DataManagementTab from './AdminPanel/DataManagementTab';
 import UploadProductionTest from './UploadProductionTest';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 import { Services, HomepageImages, Portfolio, ClientsPress, AboutSection } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
 
@@ -482,7 +482,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 value={sponsor.clientName || ''}
                                 onSave={async (newName) => {
                                   try {
-                                    await BaseCrudService.update('clientspress', {
+                                    await adminCms.update('clientspress', {
                                       _id: sponsor._id,
                                       clientName: newName
                                     });
@@ -567,7 +567,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             onClick={async () => {
                               try {
                                 const newState = !musicSettings.isEnabled;
-                                await BaseCrudService.update('musicsettings', {
+                                await adminCms.update('musicsettings', {
                                   _id: musicSettings._id,
                                   isEnabled: newState
                                 });
@@ -594,7 +594,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             onClick={async () => {
                               try {
                                 const newState = !musicSettings.loopMusic;
-                                await BaseCrudService.update('musicsettings', {
+                                await adminCms.update('musicsettings', {
                                   _id: musicSettings._id,
                                   loopMusic: newState
                                 });
@@ -622,7 +622,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                           value={musicSettings.musicTitle || ''}
                           onSave={async (newTitle) => {
                             try {
-                              await BaseCrudService.update('musicsettings', {
+                              await adminCms.update('musicsettings', {
                                 _id: musicSettings._id,
                                 musicTitle: newTitle
                               });
@@ -648,7 +648,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             const newVolume = parseInt(e.target.value);
                             setMusicSettings({ ...musicSettings, volume: newVolume });
                             try {
-                              await BaseCrudService.update('musicsettings', {
+                              await adminCms.update('musicsettings', {
                                 _id: musicSettings._id,
                                 volume: newVolume
                               });
@@ -727,7 +727,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         onClick={async () => {
                           setIsSavingAbout(true);
                           try {
-                            await BaseCrudService.update('about', {
+                            await adminCms.update('about', {
                               _id: aboutSettings._id,
                               aboutText: aboutSettings.aboutText,
                               fontFamily: aboutSettings.fontFamily

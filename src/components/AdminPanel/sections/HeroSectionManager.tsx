@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image as ImageIcon, Upload, Trash2, Eye } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';

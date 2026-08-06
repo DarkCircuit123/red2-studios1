@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3, Loader } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 
 interface HeroImageUploaderProps {
   currentImage?: string;
@@ -133,7 +133,7 @@ export default function HeroImageUploader({
       const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
       if (homepageImages?.items && homepageImages.items.length > 0) {
         const item = homepageImages.items[0] as any;
-        await BaseCrudService.update('homepageimages', {
+        await adminCms.update('homepageimages', {
           _id: item._id,
           heroImage: result.mediaUrl,
         });
@@ -159,7 +159,7 @@ export default function HeroImageUploader({
       const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
       if (homepageImages?.items && homepageImages.items.length > 0) {
         const item = homepageImages.items[0] as any;
-        await BaseCrudService.update('homepageimages', {
+        await adminCms.update('homepageimages', {
           _id: item._id,
           heroImage: null,
         });

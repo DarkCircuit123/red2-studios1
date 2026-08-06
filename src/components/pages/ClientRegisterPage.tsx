@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, Mail, User, AlertCircle, CheckCircle } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 import { useAuthStore } from '@/lib/clientAuthStore';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -84,7 +84,7 @@ export default function ClientRegisterPage() {
       const newAccountId = crypto.randomUUID();
       const passwordHash = hashPassword(password);
 
-      await BaseCrudService.create('clientaccounts', {
+      await adminCms.create('clientaccounts', {
         _id: newAccountId,
         clientName: clientName.trim(),
         email: email.toLowerCase(),

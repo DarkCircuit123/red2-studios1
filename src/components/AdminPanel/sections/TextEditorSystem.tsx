@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Type, Save, X } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 
@@ -93,7 +93,7 @@ export default function TextEditorSystem() {
     try {
       setIsSaving(true);
       const updated = { ...settings, ...editedSettings };
-      await BaseCrudService.update('homepagesettings', updated);
+      await adminCms.update('homepagesettings', updated);
       setSettings(updated);
       setEditedSettings({});
       setHasChanges(false);

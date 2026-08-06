@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Music, Upload, Trash2, Play, Pause, Volume2, RotateCw, Zap } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
@@ -58,7 +58,7 @@ export default function BackgroundMusicManager() {
         backgroundMusicUrl: result.mediaUrl,
         musicTitle: file.name.replace(/\.[^/.]+$/, ''),
       };
-      await BaseCrudService.update('homepagesettings', updated);
+      await adminCms.update('homepagesettings', updated);
       setSettings(updated);
 
       toast({
@@ -87,7 +87,7 @@ export default function BackgroundMusicManager() {
         backgroundMusicUrl: undefined,
         musicTitle: undefined,
       };
-      await BaseCrudService.update('homepagesettings', updated);
+      await adminCms.update('homepagesettings', updated);
       setSettings(updated);
       setIsPlaying(false);
 
@@ -113,7 +113,7 @@ export default function BackgroundMusicManager() {
     try {
       setIsSaving(true);
       const updated = { ...settings, musicEnabled: !settings.musicEnabled };
-      await BaseCrudService.update('homepagesettings', updated);
+      await adminCms.update('homepagesettings', updated);
       setSettings(updated);
 
       toast({
@@ -138,7 +138,7 @@ export default function BackgroundMusicManager() {
     try {
       setIsSaving(true);
       const updated = { ...settings, autoplayEnabled: !settings.autoplayEnabled };
-      await BaseCrudService.update('homepagesettings', updated);
+      await adminCms.update('homepagesettings', updated);
       setSettings(updated);
 
       toast({
@@ -163,7 +163,7 @@ export default function BackgroundMusicManager() {
     try {
       setIsSaving(true);
       const updated = { ...settings, loopMusic: !settings.loopMusic };
-      await BaseCrudService.update('homepagesettings', updated);
+      await adminCms.update('homepagesettings', updated);
       setSettings(updated);
 
       toast({
@@ -187,7 +187,7 @@ export default function BackgroundMusicManager() {
 
     try {
       const updated = { ...settings, volume: newVolume };
-      await BaseCrudService.update('homepagesettings', updated);
+      await adminCms.update('homepagesettings', updated);
       setSettings(updated);
 
       if (audioRef) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -105,7 +105,7 @@ export default function BehindTheScenesManager() {
 
       if (editingId) {
         // Update existing
-        await BaseCrudService.update('behindthescenes', {
+        await adminCms.update('behindthescenes', {
           _id: editingId,
           photo: formData.photo,
           title: formData.title,
@@ -115,7 +115,7 @@ export default function BehindTheScenesManager() {
         });
       } else {
         // Create new
-        await BaseCrudService.create('behindthescenes', {
+        await adminCms.create('behindthescenes', {
           _id: crypto.randomUUID(),
           photo: formData.photo,
           title: formData.title,
@@ -146,7 +146,7 @@ export default function BehindTheScenesManager() {
     if (!confirm('Are you sure you want to delete this item?')) return;
 
     try {
-      await BaseCrudService.delete('behindthescenes', id);
+      await adminCms.delete('behindthescenes', id);
       await loadItems();
       toast({
         title: 'Success',

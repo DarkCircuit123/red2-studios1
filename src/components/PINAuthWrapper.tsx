@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, AlertCircle } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 
 interface PINAuthWrapperProps {
   galleryId: string;
@@ -62,7 +62,7 @@ export default function PINAuthWrapper({ galleryId, children }: PINAuthWrapperPr
       }
 
       // Log successful PIN entry
-      await BaseCrudService.create('pinaccesslog', {
+      await adminCms.create('pinaccesslog', {
         _id: crypto.randomUUID(),
         galleryId,
         memberEmail: 'anonymous', // Will be updated when member context is available
@@ -86,7 +86,7 @@ export default function PINAuthWrapper({ galleryId, children }: PINAuthWrapperPr
       
       // Log failed attempt
       try {
-        await BaseCrudService.create('pinaccesslog', {
+        await adminCms.create('pinaccesslog', {
           _id: crypto.randomUUID(),
           galleryId,
           memberEmail: 'anonymous',

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Upload, Trash2, Check, AlertCircle, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Image as ImageComponent } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 import { Splashpage } from '@/entities';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
@@ -101,7 +101,7 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
 
       // Deactivate previous active logo
       if (activeLogo) {
-        await BaseCrudService.update<Splashpage>('splashpage', {
+        await adminCms.update<Splashpage>('splashpage', {
           _id: activeLogo._id,
           isActive: false,
         });
@@ -117,7 +117,7 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
         isActive: true,
       };
 
-      await BaseCrudService.create<Splashpage>('splashpage', newLogo);
+      await adminCms.create<Splashpage>('splashpage', newLogo);
 
       setActiveLogo(newLogo);
       setSelectedFile(null);
@@ -148,7 +148,7 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
 
     try {
       setIsSaving(true);
-      await BaseCrudService.delete<Splashpage>('splashpage', activeLogo._id);
+      await adminCms.delete<Splashpage>('splashpage', activeLogo._id);
       setActiveLogo(null);
       showNotification('success', 'Logo deleted successfully');
 

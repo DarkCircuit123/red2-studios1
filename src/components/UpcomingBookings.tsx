@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Mail, Phone, User, Trash2, Check } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
+import { BaseCrudService, adminCms } from '@/integrations';
 
 interface Booking {
   _id: string;
@@ -50,7 +50,7 @@ export default function UpcomingBookings() {
     if (!confirm('Are you sure you want to delete this booking?')) return;
 
     try {
-      await BaseCrudService.delete('bookings', id);
+      await adminCms.delete('bookings', id);
       setBookings(bookings.filter(b => b._id !== id));
     } catch (error) {
       console.error('Error deleting booking:', error);
@@ -60,7 +60,7 @@ export default function UpcomingBookings() {
 
   const updateStatus = async (id: string, newStatus: string) => {
     try {
-      await BaseCrudService.update('bookings', {
+      await adminCms.update('bookings', {
         _id: id,
         bookingStatus: newStatus
       });
