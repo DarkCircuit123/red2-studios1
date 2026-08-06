@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, Music, Loader, FileAudio, Link2, CheckCircle2 } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
+import { uploadMedia, importMediaFromUrl } from '@/lib/wix-media-upload-service';
 import { MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
 interface MusicManagerProps {
@@ -78,21 +79,13 @@ export default function MusicManager({
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload-music', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
-      }
-
-      const result = await response.json();
-      const musicUrl = result.url;
+      // Shared upload engine: uploads directly from the browser to Wix
+      // Media Manager (our backend only issues a signed URL, never
+      // touches the file bytes), with an automatic fallback to the old
+      // proxy-through-backend route if the direct path is ever blocked
+      // See src/lib/wix-media-upload-service.ts.
+      const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
+      const musicUrl = result.mediaUrl;
 
       if (itemId) {
         await BaseCrudService.update(collectionId, {
@@ -133,10 +126,12 @@ export default function MusicManager({
     setLinkMessage('Testing link...');
 
     try {
-      // For now, we'll just accept the URL directly since the import-from-url
-      // endpoint is not available. In a production environment, you would
-      // validate the link server-side.
-      const musicUrl = url;
+      // Server-side: checks the link is reachable, confirms the real
+      // content-type and size, THEN imports it into Wix Media Manager.
+      // Every way this can fail returns its own specific message - see
+      // src/api/media/import-from-url.ts.
+      const result = await importMediaFromUrl(url, 'music');
+      const musicUrl = result.mediaUrl;
 
       if (itemId) {
         await BaseCrudService.update(collectionId, {
@@ -147,7 +142,7 @@ export default function MusicManager({
 
       onMusicUpload(musicUrl);
       setLinkStatus('success');
-      setLinkMessage('Link added successfully.');
+      setLinkMessage(`Link verified (${result.mimeType || 'audio'}${result.fileSize ? `, ${(result.fileSize / 1024 / 1024).toFixed(2)}MB` : ''}) and added.`);
       setLinkValue('');
       setTimeout(() => {
         setLinkStatus('idle');

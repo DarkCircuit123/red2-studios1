@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { CartItem, CartState } from '../ecom-service';
 
-export interface CartStore extends CartState {
+interface CartStore extends CartState {
   actions: {
     addToCart: (item: Omit<CartItem, 'id'> & { quantity?: number }) => Promise<void>;
     removeFromCart: (item: CartItem) => void;
