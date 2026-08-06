@@ -37,6 +37,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           success: true,
           admin: true,
           username: ADMIN_USERNAME,
+          token: sessionToken,
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );

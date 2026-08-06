@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
 import { auth } from '@wix/essentials';
-import { readSecret, constantTimeEqual } from '@/lib/auth-security';
+import { requireAdmin } from '@/lib/auth-security';
 
 /**
  * Generate Upload URL - Server-side endpoint
@@ -50,22 +50,14 @@ function requireAdmin(request: Request): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
 
   try {
     // Verify admin authentication
-    const authCheck = requireAdmin(request);
-    if (!authCheck.valid) {
-      console.warn(`[GENERATE_URL] Request ${requestId} unauthorized`, {
-        timestamp: new Date().toISOString()
-      });
-      return new Response(
-        JSON.stringify({ error: authCheck.error || 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    const denied = await requireAdmin(cookies, request, 'generate-upload-url');
+    if (denied) return denied;
 
     console.log(`[GENERATE_URL] Request ${requestId} started`, {
       timestamp: new Date().toISOString()

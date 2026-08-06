@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { mutate } from '@/api/cms/mutate';
-import { verifyAdminToken } from '@/lib/auth-security';
+import { readAdminToken, verifyAdminToken } from '@/lib/auth-security';
 
 interface MutationRequest {
   action: 'create' | 'update' | 'delete';
@@ -19,16 +19,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // ADMIN GATE: Verify admin session before allowing mutations.
-    //
-    // The cookie is named 'admin_session' - that is what admin-login.ts sets
-    // and what every other auth route reads. Reading 'adminToken' returned
-    // undefined on every request, so this endpoint 401'd for everyone,
-    // including signed-in admins. That is why saves silently never persisted.
-    //
-    // verifyAdminToken is async. Without await, `!verifyAdminToken(...)` is
-    // `!Promise`, which is always false - the token would never actually be
-    // validated and any non-empty cookie value would pass.
-    const sessionToken = cookies.get('admin_session')?.value;
+    // Try cookie, header, or Authorization bearer in that order
+    const sessionToken = readAdminToken(cookies, request);
     const validation = sessionToken ? await verifyAdminToken(sessionToken) : null;
 
     if (!validation?.valid) {

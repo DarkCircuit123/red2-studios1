@@ -52,6 +52,11 @@ export const POST: APIRoute = async (context) => {
 
   try {
     const request = context.request;
+    
+    // Check admin authorization first
+    const denied = await requireAdmin(context.cookies, request, 'import-from-url');
+    if (denied) return denied;
+    
     const body = await request.json().catch(() => null);
     const rawUrl: string | undefined = body?.url;
     const kind: 'image' | 'music' = body?.kind === 'music' ? 'music' : 'image';

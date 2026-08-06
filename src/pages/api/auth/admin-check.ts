@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
-import { readSecret, constantTimeEqual } from '@/lib/auth-security';
+import { readAdminToken, verifyAdminToken } from '@/lib/auth-security';
 
-export const GET: APIRoute = async ({ cookies }) => {
+export const GET: APIRoute = async ({ cookies, request }) => {
   try {
-    const sessionToken = cookies.get('admin_session')?.value;
+    const sessionToken = readAdminToken(cookies, request);
 
     if (!sessionToken) {
       return new Response(
@@ -12,19 +12,9 @@ export const GET: APIRoute = async ({ cookies }) => {
       );
     }
 
-    // Verify the token against the stored secret
-    const expectedToken = readSecret('ADMIN_SESSION_TOKEN');
-    if (!expectedToken) {
-      console.error('[ADMIN CHECK] ADMIN_SESSION_TOKEN not configured');
-      return new Response(
-        JSON.stringify({ authenticated: false }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Use constant-time comparison to prevent timing attacks
-    const isValid = constantTimeEqual(sessionToken, expectedToken);
-    if (!isValid) {
+    // Verify the signed token
+    const validation = await verifyAdminToken(sessionToken);
+    if (!validation.valid) {
       console.warn('[SECURITY] Invalid admin session token');
       return new Response(
         JSON.stringify({ authenticated: false }),
@@ -36,7 +26,7 @@ export const GET: APIRoute = async ({ cookies }) => {
     return new Response(
       JSON.stringify({
         authenticated: true,
-        username: 'Jordan310',
+        username: validation.username,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );

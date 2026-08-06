@@ -67,6 +67,37 @@ export async function readSecret(...candidateEnvNames: string[]): Promise<string
 }
 
 /**
+ * Read admin token from cookie, header, or Authorization bearer
+ * Returns the token string or null if not found
+ */
+export function readAdminToken(cookies: { get?: (name: string) => { value?: string } | undefined } | undefined, request: Request): string | null {
+  // Try cookie first
+  const cookieToken = cookies?.get?.('admin_session')?.value;
+  if (cookieToken) {
+    console.log('[TOKEN-SOURCE] Admin token from cookie');
+    return cookieToken;
+  }
+  
+  // Try x-admin-session header
+  const headerToken = request.headers.get('x-admin-session');
+  if (headerToken) {
+    console.log('[TOKEN-SOURCE] Admin token from x-admin-session header');
+    return headerToken;
+  }
+  
+  // Try Authorization: Bearer
+  const authHeader = request.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    console.log('[TOKEN-SOURCE] Admin token from Authorization Bearer');
+    return token;
+  }
+  
+  console.log('[TOKEN-SOURCE] No admin token found in any source');
+  return null;
+}
+
+/**
  * Admin gate for API routes.
  *
  * Returns null when the caller holds a valid admin session, or a ready-to-
@@ -85,7 +116,7 @@ export async function requireAdmin(
   request: Request,
   label = 'admin-only endpoint'
 ): Promise<Response | null> {
-  const sessionToken = cookies?.get?.('admin_session')?.value;
+  const sessionToken = readAdminToken(cookies, request);
   const validation = sessionToken
     ? await verifyAdminToken(sessionToken)
     : { valid: false as const };

@@ -71,6 +71,20 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const data = await response.json();
+      
+      // Store the token from response for header-based fallback
+      if (data.token) {
+        try {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('admin_session_token', data.token);
+          }
+        } catch (e) {
+          // sessionStorage may be blocked
+        }
+        // Also store in memory
+        (window as any).__adminToken = data.token;
+      }
+      
       setIsAuthenticated(true);
       setAdminUsername(data.username);
     } catch (err) {
@@ -96,6 +110,16 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('[AdminAuthProvider] Logout error:', err);
     } finally {
+      // Clear stored token
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem('admin_session_token');
+        }
+      } catch (e) {
+        // sessionStorage may be blocked
+      }
+      delete (window as any).__adminToken;
+      
       setIsAuthenticated(false);
       setAdminUsername(null);
       setError(null);

@@ -190,7 +190,6 @@ export default function BehindTheScenesManager() {
     } finally {
       setIsUploadingImage(false);
     }
-    }
   };
 
   if (isLoading && items.length === 0) {

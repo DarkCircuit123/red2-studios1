@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
 import { auth } from '@wix/essentials';
-import { readSecret, constantTimeEqual } from '@/lib/auth-security';
+import { requireAdmin } from '@/lib/auth-security';
 
 /**
  * Hero Image Upload API - Clean, reliable upload flow
@@ -34,38 +34,9 @@ export const POST: APIRoute = async (context) => {
   const startTime = Date.now();
 
   try {
-    // Check admin authentication via header
-    const authHeader = context.request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.warn(`[UPLOAD_HERO] Request ${requestId} unauthorized`, {
-        timestamp: new Date().toISOString(),
-      });
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' } as ErrorResponse),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verify the token
-    const token = authHeader.substring(7);
-    const expectedToken = readSecret('ADMIN_SESSION_TOKEN');
-    if (!expectedToken) {
-      console.error('[UPLOAD_HERO] ADMIN_SESSION_TOKEN not configured');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Server configuration error' } as ErrorResponse),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!constantTimeEqual(token, expectedToken)) {
-      console.warn(`[UPLOAD_HERO] Request ${requestId} invalid token`, {
-        timestamp: new Date().toISOString(),
-      });
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' } as ErrorResponse),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    // Check admin authentication
+    const denied = await requireAdmin(context.cookies, context.request, 'upload-hero');
+    if (denied) return denied;
 
     // Structured logging: request started
     console.log(`[UPLOAD_HERO] Request ${requestId} started`, {
