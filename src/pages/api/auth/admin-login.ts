@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Validate credentials - exact match required
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       // Create signed session token
-      const sessionToken = await signAdminToken(username);
+      const sessionToken = await signAdminToken(username, 86400 * 7 * 1000);
 
       // Set secure httpOnly cookie with SameSite=None for cross-site iframe compatibility
       cookies.set('admin_session', sessionToken, {
