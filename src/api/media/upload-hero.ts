@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { files } from '@wix/media';
+import { wixClient } from '@wix/sdk';
 
 /**
  * Hero Image Upload API - Clean, reliable upload flow
@@ -110,7 +110,8 @@ export const POST: APIRoute = async (context) => {
     console.log(`[UPLOAD_HERO] Request ${requestId} getting Wix context`, {
       timestamp: new Date().toISOString(),
     });
-    const filesClient = files();
+    const client = wixClient();
+    const filesClient = client.media.files;
 
     // Generate upload URL
     console.log(`[UPLOAD_HERO] Request ${requestId} calling generateFileUploadUrl`, {

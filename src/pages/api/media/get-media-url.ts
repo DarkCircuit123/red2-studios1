@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { files } from '@wix/media';
+import { wixClient } from '@wix/sdk';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -14,8 +14,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     console.log('[GET_MEDIA_URL] Retrieving media URL for:', fileName);
 
-    // Use Wix Media SDK to get the file URL
-    const filesClient = files();
+    // Use Wix SDK to get the file URL
+    const client = wixClient();
+    const filesClient = client.media.files;
     
     let fileInfo;
     try {
