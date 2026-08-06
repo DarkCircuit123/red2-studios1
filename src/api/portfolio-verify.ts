@@ -27,10 +27,10 @@ interface VerificationResult {
 /**
  * Verify admin authentication and migration secret
  */
-function verifyAdminAccess(request: Request): { valid: boolean; error?: string; status?: number } {
+async function verifyAdminAccess(request: Request): Promise<{ valid: boolean; error?: string; status?: number }> {
   // Check for migration secret key
   const migrationSecret = request.headers.get('x-migration-secret');
-  const expectedSecret = readSecret('PORTFOLIO_MIGRATION_SECRET');
+  const expectedSecret = await readSecret('PORTFOLIO_MIGRATION_SECRET');
 
   if (!expectedSecret) {
     console.error('[PORTFOLIO_VERIFY] PORTFOLIO_MIGRATION_SECRET not configured');
@@ -52,7 +52,7 @@ function verifyAdminAccess(request: Request): { valid: boolean; error?: string; 
 export const GET: APIRoute = async ({ request }) => {
   try {
     // Verify admin access
-    const authCheck = verifyAdminAccess(request);
+    const authCheck = await verifyAdminAccess(request);
     if (!authCheck.valid) {
       console.warn('[PORTFOLIO_VERIFY] Unauthorized access attempt');
       return new Response(

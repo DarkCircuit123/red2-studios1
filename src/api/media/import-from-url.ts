@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
 import { auth } from '@wix/essentials';
 import { IMAGE_UPLOAD_CONFIG, MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
+import { isSafeExternalUrl } from '@/lib/safe-external-url';
 
 /**
  * Import from URL API - Lets the admin paste a link to an image or audio file
@@ -93,6 +94,18 @@ export const POST: APIRoute = async (context) => {
       });
       return new Response(
         JSON.stringify({ error: 'Link must start with http:// or https://' } as ErrorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // --- Verify URL is safe (SSRF protection) ---
+    if (!isSafeExternalUrl(parsed.toString())) {
+      console.warn(`[IMPORT_FROM_URL] Request ${requestId} unsafe URL (SSRF attempt)`, {
+        url: parsed.toString().substring(0, 100),
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({ error: 'That link points to a private or reserved address and cannot be imported.' } as ErrorResponse),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }

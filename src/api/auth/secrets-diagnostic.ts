@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ request }) => {
     for (const secretName of secretNames) {
       try {
         console.log(`[SECRETS-DIAGNOSTIC] Checking secret: ${secretName}`);
-        const value = readSecret(secretName);
+        const value = await readSecret(secretName);
         
         if (value) {
           diagnostics.secretsManager.secrets[secretName as keyof typeof diagnostics.secretsManager.secrets] = {

@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
 import { auth } from '@wix/essentials';
+import { readSecret, constantTimeEqual } from '@/lib/auth-security';
 
 /**
  * Get Media URL - Retrieve the URL of an uploaded file
@@ -9,10 +10,40 @@ import { auth } from '@wix/essentials';
  * The fileId is returned from the upload response.
  */
 
-export const GET: APIRoute = async ({ url }) => {
+function requireAdmin(request: Request): { valid: boolean; error?: string } {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { valid: false, error: 'Missing or invalid Authorization header' };
+  }
+
+  const token = authHeader.substring(7);
+  const expectedToken = readSecret('ADMIN_SESSION_TOKEN');
+  if (!expectedToken) {
+    console.error('[GET_MEDIA_URL] ADMIN_SESSION_TOKEN not configured');
+    return { valid: false, error: 'Server configuration error' };
+  }
+
+  if (!constantTimeEqual(token, expectedToken)) {
+    console.warn('[SECURITY] Invalid admin token for get-media-url');
+    return { valid: false, error: 'Unauthorized' };
+  }
+
+  return { valid: true };
+}
+
+export const GET: APIRoute = async ({ request, url }) => {
   const requestId = crypto.randomUUID();
 
   try {
+    // Verify admin authentication
+    const authCheck = requireAdmin(request);
+    if (!authCheck.valid) {
+      console.warn(`[GET_MEDIA_URL] Request ${requestId} unauthorized`);
+      return new Response(
+        JSON.stringify({ error: authCheck.error || 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
     const fileId = url.searchParams.get('fileId');
 
     if (!fileId) {

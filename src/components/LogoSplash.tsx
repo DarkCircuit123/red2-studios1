@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Splashpage } from '@/entities';
 

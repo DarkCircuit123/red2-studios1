@@ -31,10 +31,10 @@ import { POST as mediaUploadHandler } from '@/api/media/upload-hero';
 /**
  * Verify admin authentication and migration secret
  */
-function verifyAdminAccess(request: Request): { valid: boolean; error?: string; status?: number } {
+async function verifyAdminAccess(request: Request): Promise<{ valid: boolean; error?: string; status?: number }> {
   // Check for migration secret key
   const migrationSecret = request.headers.get('x-migration-secret');
-  const expectedSecret = readSecret('PORTFOLIO_MIGRATION_SECRET');
+  const expectedSecret = await readSecret('PORTFOLIO_MIGRATION_SECRET');
 
   if (!expectedSecret) {
     console.error('[MIGRATION] PORTFOLIO_MIGRATION_SECRET not configured');
@@ -313,7 +313,7 @@ Migration Complete:
 export const POST: APIRoute = async ({ request }) => {
   try {
     // Verify admin access
-    const authCheck = verifyAdminAccess(request);
+    const authCheck = await verifyAdminAccess(request);
     if (!authCheck.valid) {
       console.warn('[MIGRATION] Unauthorized access attempt');
       return new Response(
@@ -330,7 +330,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // verifyAdminAccess() above already confirmed this is set (it fails
     // closed with a 500 "Server configuration error" otherwise).
-    const migrationSecret = readSecret('PORTFOLIO_MIGRATION_SECRET')!;
+    const migrationSecret = await readSecret('PORTFOLIO_MIGRATION_SECRET');
 
     const result = await migratePortfolioImages(migrationSecret);
 

@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { isSafeExternalUrl } from '@/lib/safe-external-url';
 
 // Fallback stories to show when RSS feeds fail
 const FALLBACK_STORIES = [
@@ -79,6 +80,21 @@ export const GET: APIRoute = async ({ url }) => {
       JSON.stringify({
         items: FALLBACK_STORIES,
         error: 'No URL provided, returning fallback stories',
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+
+  // Verify URL is safe (SSRF protection)
+  if (!isSafeExternalUrl(feedUrl)) {
+    console.warn('[RSS] Unsafe URL blocked (SSRF attempt)', { url: feedUrl.substring(0, 100) });
+    return new Response(
+      JSON.stringify({
+        items: FALLBACK_STORIES,
+        error: 'Invalid feed URL',
       }),
       {
         status: 200,

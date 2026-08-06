@@ -1,15 +1,17 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
 import { auth } from '@wix/essentials';
+import { readSecret, constantTimeEqual } from '@/lib/auth-security';
 
 /**
  * Generate Upload URL - Server-side endpoint
  * 
  * This endpoint:
- * 1. Validates the request (file type, size)
- * 2. Uses auth.elevate() to get elevated permissions
- * 3. Calls files.generateFileUploadUrl() to get a signed upload URL
- * 4. Returns the URL to the client for direct upload
+ * 1. Validates admin authentication
+ * 2. Validates the request (file type, size)
+ * 3. Uses auth.elevate() to get elevated permissions
+ * 4. Calls files.generateFileUploadUrl() to get a signed upload URL
+ * 5. Returns the URL to the client for direct upload
  * 
  * The client then uploads directly to the signed URL with a PUT request
  */
@@ -27,11 +29,44 @@ const ALLOWED_TYPES = [
   'video/quicktime'
 ];
 
+function requireAdmin(request: Request): { valid: boolean; error?: string } {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { valid: false, error: 'Missing or invalid Authorization header' };
+  }
+
+  const token = authHeader.substring(7);
+  const expectedToken = readSecret('ADMIN_SESSION_TOKEN');
+  if (!expectedToken) {
+    console.error('[GENERATE_URL] ADMIN_SESSION_TOKEN not configured');
+    return { valid: false, error: 'Server configuration error' };
+  }
+
+  if (!constantTimeEqual(token, expectedToken)) {
+    console.warn('[SECURITY] Invalid admin token for generate-upload-url');
+    return { valid: false, error: 'Unauthorized' };
+  }
+
+  return { valid: true };
+}
+
 export const POST: APIRoute = async ({ request }) => {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
 
   try {
+    // Verify admin authentication
+    const authCheck = requireAdmin(request);
+    if (!authCheck.valid) {
+      console.warn(`[GENERATE_URL] Request ${requestId} unauthorized`, {
+        timestamp: new Date().toISOString()
+      });
+      return new Response(
+        JSON.stringify({ error: authCheck.error || 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log(`[GENERATE_URL] Request ${requestId} started`, {
       timestamp: new Date().toISOString()
     });

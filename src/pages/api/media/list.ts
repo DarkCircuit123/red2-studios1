@@ -1,9 +1,40 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
 import { auth } from '@wix/essentials';
+import { readSecret, constantTimeEqual } from '@/lib/auth-security';
 
-export const GET: APIRoute = async ({ url }) => {
+function requireAdmin(request: Request): { valid: boolean; error?: string } {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { valid: false, error: 'Missing or invalid Authorization header' };
+  }
+
+  const token = authHeader.substring(7);
+  const expectedToken = readSecret('ADMIN_SESSION_TOKEN');
+  if (!expectedToken) {
+    console.error('[MEDIA_LIST] ADMIN_SESSION_TOKEN not configured');
+    return { valid: false, error: 'Server configuration error' };
+  }
+
+  if (!constantTimeEqual(token, expectedToken)) {
+    console.warn('[SECURITY] Invalid admin token for media list');
+    return { valid: false, error: 'Unauthorized' };
+  }
+
+  return { valid: true };
+}
+
+export const GET: APIRoute = async ({ request, url }) => {
   try {
+    // Verify admin authentication
+    const authCheck = requireAdmin(request);
+    if (!authCheck.valid) {
+      console.warn('[MEDIA_LIST] Unauthorized access attempt');
+      return new Response(
+        JSON.stringify({ error: authCheck.error || 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
     const cursor = url.searchParams.get('cursor') || undefined;
     const query = url.searchParams.get('query') || '';
 

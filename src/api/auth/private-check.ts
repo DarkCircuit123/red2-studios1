@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Get password from environment variables (NEVER hardcode).
     // readSecret() also tolerates a "KEY = value" string pasted into the
     // secret's value field, same as the admin login secrets.
-    const privatePagePassword = readSecret('PRIVATE_PAGE_PASSWORD');
+    const privatePagePassword = await readSecret('PRIVATE_PAGE_PASSWORD');
 
     if (!privatePagePassword) {
       // Distinguish "nothing is configured" from "wrong password" - this
