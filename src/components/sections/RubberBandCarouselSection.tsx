@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState, useCallback, useMemo, memo, useLayo
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
+import { BaseCrudService } from '@/integrations';
+import { Portfolio } from '@/entities';
 
 interface CarouselImage {
   id: string;
@@ -80,8 +82,54 @@ const RubberBandCarouselSection: React.FC = () => {
   const isHoveringRef = useRef(false);
   const snapBackAnimationRef = useRef<number>();
 
-  // Memoize images array so it doesn't change every render
-  const images: CarouselImage[] = useMemo(() => [
+  // Images uploaded through Admin -> Portfolio. This section used to render a
+  // hardcoded list, which is why nothing you uploaded ever appeared here: the
+  // upload, the save and the URL format were all correct, but this carousel
+  // was never reading the CMS at all.
+  const [cmsImages, setCmsImages] = useState<CarouselImage[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 100 });
+        const collected: CarouselImage[] = [];
+
+        data.items?.forEach((project) => {
+          (['mainImage', 'galleryImage1', 'galleryImage2', 'galleryImage3'] as const).forEach(
+            (field, idx) => {
+              const url = project[field] as string | undefined;
+              if (url) {
+                collected.push({
+                  id: `${project._id}-${idx}`,
+                  url,
+                  alt: project.projectName || 'Portfolio work',
+                });
+              }
+            }
+          );
+        });
+
+        if (!cancelled) {
+          // Only take over when there is something to show, so an empty or
+          // failed read leaves the existing visuals in place rather than
+          // blanking the section.
+          setCmsImages(collected.length > 0 ? collected : null);
+        }
+      } catch (error) {
+        console.error('[RubberBandCarousel] Failed to load portfolio images:', error);
+        if (!cancelled) setCmsImages(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Fallback used only until the CMS responds, or if it has no images yet.
+  const fallbackImages: CarouselImage[] = useMemo(() => [
     {
       id: '1',
       url: 'https://static.wixstatic.com/media/e9d727_dc338c865879444cab6ecb545a8e8d0b~mv2.png?originWidth=1920&originHeight=1024',
@@ -113,6 +161,9 @@ const RubberBandCarouselSection: React.FC = () => {
       alt: 'Portfolio work 6',
     },
   ], []);
+
+  // CMS wins whenever it has images; the hardcoded set is only a placeholder.
+  const images: CarouselImage[] = cmsImages ?? fallbackImages;
 
   // Memoize duplicated images and total width to prevent effect re-runs
   const { duplicatedImages, totalWidth } = useMemo(() => {
