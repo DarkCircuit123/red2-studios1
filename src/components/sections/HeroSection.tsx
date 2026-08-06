@@ -54,6 +54,10 @@ export default function HeroSection() {
       console.error('[HeroSection] Failed to load hero image:', error);
       setHeroImage(null);
       retryCountRef.current++;
+      // Don't retry indefinitely - set to max retries to stop polling
+      if (retryCountRef.current >= 3) {
+        retryCountRef.current = 999;
+      }
     } finally {
       setIsLoading(false);
     }

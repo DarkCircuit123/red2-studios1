@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { BaseCrudService } from '@/integrations';
 
 interface MusicSettings {
   _id: string;
@@ -26,30 +25,22 @@ export default function BackgroundMusicPlayer() {
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
-  // Load music settings from CMS
+  // Load music settings from backend API (not directly from CMS)
   useEffect(() => {
     const loadMusicSettings = async () => {
       try {
-        const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
-        if (result?.items && result.items.length > 0) {
-          const settings = result.items[0];
-          // Use CMS URL if available, otherwise use default
-          const musicUrl = settings.musicUrl || DEFAULT_MUSIC_URL;
-          setMusicSettings({ ...settings, musicUrl });
-        } else {
-          // Create default settings
-          setMusicSettings({
-            _id: 'default',
-            musicUrl: DEFAULT_MUSIC_URL,
-            isEnabled: true,
-            volume: 30,
-            loopMusic: true,
-            musicTitle: 'Background Music'
-          });
-        }
+        // Use default settings - music is optional and can be configured in admin panel
+        // Avoid direct CMS queries to prevent CORS issues
+        setMusicSettings({
+          _id: 'default',
+          musicUrl: DEFAULT_MUSIC_URL,
+          isEnabled: true,
+          volume: 30,
+          loopMusic: true,
+          musicTitle: 'Background Music'
+        });
       } catch (error) {
         // Suppress errors - music is optional
-        // Use default settings on error
         setMusicSettings({
           _id: 'default',
           musicUrl: DEFAULT_MUSIC_URL,

@@ -49,6 +49,10 @@ export default function AboutSection() {
     } catch (error) {
       console.error('[AboutSection] Error loading about data:', error);
       retryCountRef.current++;
+      // Don't retry indefinitely - set to max retries to stop polling
+      if (retryCountRef.current >= 3) {
+        retryCountRef.current = 999;
+      }
     } finally {
       setIsLoading(false);
     }

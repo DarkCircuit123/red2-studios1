@@ -39,6 +39,10 @@ export default function ContactSection() {
     } catch (error) {
       console.error('[ContactSection] Failed to load contact background:', error);
       retryCountRef.current++;
+      // Don't retry indefinitely - set to max retries to stop polling
+      if (retryCountRef.current >= 3) {
+        retryCountRef.current = 999;
+      }
     }
   };
 

@@ -55,6 +55,8 @@ export default function MusicManager({
       }
     } catch (err) {
       console.error('Failed to load stored music:', err);
+      // Silently fail - music library is optional
+      setStoredMusic([]);
     } finally {
       setIsLoadingLibrary(false);
     }

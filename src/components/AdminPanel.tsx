@@ -92,6 +92,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             setMusicSettings(musicResult.items[0]);
           }
         } catch (error) {
+          console.error('Failed to load music settings:', error);
           setMusicSettings(null);
         }
 

@@ -5,31 +5,32 @@ import { lazy, Suspense } from 'react';
 import { AdminAuthProvider } from '@/components/AdminAuthProvider';
 
 // Lazy load all pages to prevent circular dependencies
-const HomePage = lazy(() => import('./pages/HomePage'));
-const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
-const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage'));
-const BookingPage = lazy(() => import('./pages/BookingPage'));
-const ProfilePage = lazy(() => import('./pages/ProfilePage'));
-const PrivatePage = lazy(() => import('./pages/PrivatePage'));
-const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage'));
-const ClientRegisterPage = lazy(() => import('./pages/ClientRegisterPage'));
-const WorkPage = lazy(() => import('./pages/WorkPage'));
-const ContactPage = lazy(() => import('./pages/ContactPage'));
-const AdminPage = lazy(() => import('./pages/AdminPage'));
-const BackgroundMusicPlayer = lazy(() => import('./BackgroundMusicPlayer'));
+// Use dynamic imports with error handling
+const HomePage = lazy(() => import('./pages/HomePage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const BookingPage = lazy(() => import('./pages/BookingPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const PrivatePage = lazy(() => import('./pages/PrivatePage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ClientRegisterPage = lazy(() => import('./pages/ClientRegisterPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const WorkPage = lazy(() => import('./pages/WorkPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ContactPage = lazy(() => import('./pages/ContactPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const AdminPage = lazy(() => import('./pages/AdminPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const BackgroundMusicPlayer = lazy(() => import('./BackgroundMusicPlayer').catch(() => ({ default: () => null })));
 // These 10 were built but never wired into the router - every link that
 // pointed at them was a dead 404-to-home redirect until now.
-const BlogPage = lazy(() => import('./pages/BlogPage'));
-const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage'));
-const StoriesIndexPage = lazy(() => import('./pages/StoriesIndexPage'));
-const StoriesDetailPage = lazy(() => import('./pages/StoriesDetailPage'));
-const WatchPage = lazy(() => import('./pages/WatchPage'));
-const ChatPage = lazy(() => import('./pages/ChatPage'));
-const DataExportPage = lazy(() => import('./pages/DataExportPage'));
-const Red2TerminalPage = lazy(() => import('./pages/Red2TerminalPage'));
-const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage'));
-const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage'));
-const UploadTestPage = lazy(() => import('./pages/UploadTestPage'));
+const BlogPage = lazy(() => import('./pages/BlogPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const StoriesIndexPage = lazy(() => import('./pages/StoriesIndexPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const StoriesDetailPage = lazy(() => import('./pages/StoriesDetailPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const WatchPage = lazy(() => import('./pages/WatchPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ChatPage = lazy(() => import('./pages/ChatPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const DataExportPage = lazy(() => import('./pages/DataExportPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const Red2TerminalPage = lazy(() => import('./pages/Red2TerminalPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const UploadTestPage = lazy(() => import('./pages/UploadTestPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
