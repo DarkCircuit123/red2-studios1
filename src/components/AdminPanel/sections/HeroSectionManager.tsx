@@ -6,7 +6,7 @@ import { Image as ImageIcon, Upload, Trash2, Eye } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
-import { uploadImage } from '@/lib/media-upload-service';
+import { uploadMedia } from '@/lib/wix-media-upload-service';
 
 export default function HeroSectionManager() {
   const { toast } = useToast();
@@ -61,12 +61,8 @@ export default function HeroSectionManager() {
     try {
       setUploadingBg(true);
 
-      // Use unified upload service
-      const result = await uploadImage(file);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
-      }
+      // Use unified upload service with wix-media-upload-service
+      const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
       // Update settings with new image URL
       const updated = { ...settings, heroBackgroundImage: result.mediaUrl };
@@ -82,7 +78,7 @@ export default function HeroSectionManager() {
       console.error('Upload error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to upload image',
+        description: error instanceof Error ? error.message : 'Failed to upload image',
         variant: 'destructive',
       });
     } finally {

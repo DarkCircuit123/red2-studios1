@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 import { Trash2, Plus, Edit2, X } from 'lucide-react';
-import { uploadImage } from '@/lib/media-upload-service';
+import { uploadMedia } from '@/lib/wix-media-upload-service';
+import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import { useToast } from '@/hooks/use-toast';
 
 interface BehindTheScenesItem {
@@ -167,11 +168,7 @@ export default function BehindTheScenesManager() {
 
     try {
       setIsUploadingImage(true);
-      const result = await uploadImage(file);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
-      }
+      const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
       setFormData(prev => ({
         ...prev,
@@ -191,6 +188,7 @@ export default function BehindTheScenesManager() {
       });
     } finally {
       setIsUploadingImage(false);
+    }
     }
   };
 

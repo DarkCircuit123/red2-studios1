@@ -21,12 +21,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       // Create secure session token
       const sessionToken = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Set secure httpOnly cookie
+      // Set secure httpOnly cookie with SameSite=None for cross-site compatibility
       cookies.set('admin_session', sessionToken, {
         path: '/',
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true, // Always secure for SameSite=None
+        sameSite: 'none',
         maxAge: 86400 * 7, // 7 days
       });
 

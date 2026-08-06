@@ -7,7 +7,8 @@ import { Music, Upload, Trash2, Play, Pause, Volume2, RotateCw, Zap } from 'luci
 import { BaseCrudService } from '@/integrations';
 import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
-import { uploadAudio } from '@/lib/media-upload-service';
+import { uploadMedia } from '@/lib/wix-media-upload-service';
+import { MUSIC_UPLOAD_CONFIG } from '@/lib/upload-config';
 
 export default function BackgroundMusicManager() {
   const { toast } = useToast();
@@ -48,12 +49,8 @@ export default function BackgroundMusicManager() {
     try {
       setIsUploading(true);
 
-      // Use unified upload service
-      const result = await uploadAudio(file);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
-      }
+      // Use unified upload service with wix-media-upload-service
+      const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
 
       // Update settings
       const updated = {
@@ -72,7 +69,7 @@ export default function BackgroundMusicManager() {
       console.error('Upload error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to upload music file',
+        description: error instanceof Error ? error.message : 'Failed to upload music file',
         variant: 'destructive',
       });
     } finally {
