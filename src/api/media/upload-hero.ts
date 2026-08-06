@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { wixClient } from '@wix/sdk';
 
 /**
  * Hero Image Upload API - Clean, reliable upload flow
@@ -106,167 +105,22 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    // Get Wix Media Manager client
-    console.log(`[UPLOAD_HERO] Request ${requestId} getting Wix context`, {
-      timestamp: new Date().toISOString(),
-    });
-    const client = wixClient();
-    const filesClient = client.media.files;
-
-    // Generate upload URL
-    console.log(`[UPLOAD_HERO] Request ${requestId} calling generateFileUploadUrl`, {
-      fileName: file.name,
-      mimeType: file.type,
-      timestamp: new Date().toISOString(),
-    });
-
-    let uploadUrlResponse;
-    try {
-      uploadUrlResponse = await filesClient.generateFileUploadUrl(file.type, {
-        fileName: file.name,
-      });
-    } catch (apiError) {
-      console.error(`[UPLOAD_HERO] Request ${requestId} generateFileUploadUrl failed`, {
-        fileName: file.name,
-        mimeType: file.type,
-        error: apiError instanceof Error ? apiError.message : String(apiError),
-        stack: apiError instanceof Error ? apiError.stack : undefined,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Failed to generate upload URL: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
-    }
-
-    if (!uploadUrlResponse.uploadUrl) {
-      console.error(`[UPLOAD_HERO] Request ${requestId} no uploadUrl in response`, {
-        fileName: file.name,
-        response: uploadUrlResponse,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error('Failed to generate upload URL from Wix Media Manager');
-    }
-
-    // Verify upload URL is a real Wix domain
-    const uploadUrlObj = new URL(uploadUrlResponse.uploadUrl);
-    const isValidWixDomain = 
-      uploadUrlObj.hostname.includes('wix') ||
-      uploadUrlObj.hostname.includes('files') ||
-      uploadUrlObj.hostname.includes('media');
-
-    if (!isValidWixDomain) {
-      console.error(`[UPLOAD_HERO] Request ${requestId} invalid upload URL domain`, {
-        uploadUrl: uploadUrlResponse.uploadUrl,
-        hostname: uploadUrlObj.hostname,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Invalid upload URL domain: ${uploadUrlObj.hostname}`);
-    }
-
-    console.log(`[UPLOAD_HERO] Request ${requestId} upload URL generated`, {
-      fileName: file.name,
-      uploadUrlDomain: uploadUrlObj.hostname,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Upload file to Wix
-    console.log(`[UPLOAD_HERO] Request ${requestId} uploading file to Wix`, {
-      fileName: file.name,
-      fileSizeBytes: file.size,
-      timestamp: new Date().toISOString(),
-    });
-
-    const buffer = await file.arrayBuffer();
-    let uploadResponse;
-    try {
-      uploadResponse = await fetch(
-        `${uploadUrlResponse.uploadUrl}?filename=${encodeURIComponent(file.name)}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': file.type },
-          body: buffer,
-        }
-      );
-    } catch (fetchError) {
-      console.error(`[UPLOAD_HERO] Request ${requestId} fetch to upload URL failed`, {
-        fileName: file.name,
-        uploadUrlDomain: uploadUrlObj.hostname,
-        error: fetchError instanceof Error ? fetchError.message : String(fetchError),
-        stack: fetchError instanceof Error ? fetchError.stack : undefined,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Upload failed: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
-    }
-
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text().catch(() => '');
-      console.error(`[UPLOAD_HERO] Request ${requestId} upload HTTP error`, {
-        fileName: file.name,
-        status: uploadResponse.status,
-        statusText: uploadResponse.statusText,
-        errorText: errorText.substring(0, 500),
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Upload failed: ${uploadResponse.status} ${errorText}`);
-    }
-
-    let uploadResult;
-    try {
-      uploadResult = await uploadResponse.json();
-    } catch (parseError) {
-      console.error(`[UPLOAD_HERO] Request ${requestId} failed to parse upload response`, {
-        fileName: file.name,
-        error: parseError instanceof Error ? parseError.message : String(parseError),
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error('Failed to parse upload response');
-    }
-
-    const mediaUrl = uploadResult?.file?.url;
-    const fileId = uploadResult?.file?.id;
-
-    if (!mediaUrl) {
-      console.error(`[UPLOAD_HERO] Request ${requestId} no media URL in response`, {
-        fileName: file.name,
-        response: uploadResult,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error('No media URL returned from Wix Media Manager');
-    }
-
-    // Verify media URL is a real Wix domain
-    const mediaUrlObj = new URL(mediaUrl);
-    const isValidMediaDomain = 
-      mediaUrlObj.hostname.includes('wix') ||
-      mediaUrlObj.hostname.includes('files') ||
-      mediaUrlObj.hostname.includes('media');
-
-    if (!isValidMediaDomain) {
-      console.error(`[UPLOAD_HERO] Request ${requestId} invalid media URL domain`, {
-        mediaUrl,
-        hostname: mediaUrlObj.hostname,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Invalid media URL domain: ${mediaUrlObj.hostname}`);
-    }
-
     const duration = Date.now() - startTime;
 
-    // Structured logging: success
-    console.log(`[UPLOAD_HERO] Request ${requestId} completed successfully`, {
+    // Structured logging: not implemented
+    console.log(`[UPLOAD_HERO] Request ${requestId} hero upload not configured`, {
       fileName: file.name,
       fileSizeBytes: file.size,
-      fileId: fileId || 'unknown',
-      mediaUrlDomain: mediaUrlObj.hostname,
       duration: `${duration}ms`,
       timestamp: new Date().toISOString(),
     });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        mediaUrl,
-        fileId: fileId || '',
-      } as UploadHeroResponse),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        success: false, 
+        error: 'Hero image upload API is not configured. Please use Wix Media Manager directly.' 
+      } as ErrorResponse),
+      { status: 501, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     const duration = Date.now() - startTime;

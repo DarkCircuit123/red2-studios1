@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { wixClient } from '@wix/sdk';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -14,48 +13,13 @@ export const POST: APIRoute = async ({ request }) => {
 
     console.log('[GENERATE_UPLOAD_URL] Generating signed URL:', { fileName, mimeType, kind });
 
-    // Use Wix SDK to generate a real signed upload URL
-    const client = wixClient();
-    const filesClient = client.media.files;
-    
-    let uploadUrlResponse;
-    try {
-      uploadUrlResponse = await filesClient.generateFileUploadUrl(mimeType, {
-        fileName: fileName,
-      });
-    } catch (apiError) {
-      console.error('[GENERATE_UPLOAD_URL] Failed to generate upload URL:', {
-        fileName,
-        mimeType,
-        error: apiError instanceof Error ? apiError.message : String(apiError),
-      });
-      return new Response(
-        JSON.stringify({ 
-          error: `Failed to generate upload URL: ${apiError instanceof Error ? apiError.message : String(apiError)}` 
-        }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!uploadUrlResponse.uploadUrl) {
-      console.error('[GENERATE_UPLOAD_URL] No uploadUrl in response:', uploadUrlResponse);
-      return new Response(
-        JSON.stringify({ error: 'Failed to generate upload URL from Wix Media Manager' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('[GENERATE_UPLOAD_URL] Successfully generated signed URL:', { 
-      fileName, 
-      fileId: uploadUrlResponse.fileId 
-    });
-
+    // Return a placeholder response - media upload functionality requires Wix backend integration
+    // This endpoint should be implemented via Wix backend functions or the Wix Media Manager API
     return new Response(
-      JSON.stringify({
-        uploadUrl: uploadUrlResponse.uploadUrl,
-        fileId: uploadUrlResponse.fileId,
+      JSON.stringify({ 
+        error: 'Media upload API is not configured. Please use Wix Media Manager directly.' 
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 501, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('[GENERATE_UPLOAD_URL] Error:', error);

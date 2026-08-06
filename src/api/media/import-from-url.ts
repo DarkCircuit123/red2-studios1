@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { wixClient } from '@wix/sdk';
 import { IMAGE_UPLOAD_CONFIG, MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
 /**
@@ -195,29 +194,19 @@ export const POST: APIRoute = async (context) => {
       timestamp: new Date().toISOString(),
     });
 
-    let importResult;
-    try {
-      const client = wixClient();
-      const filesClient = client.media.files;
-      importResult = await filesClient.importFile(parsed.toString(), {
-        mimeType: detectedType,
-        displayName: fileName,
-        mediaType: kind === 'music' ? 'AUDIO' : 'IMAGE',
-      });
-      console.log(`[IMPORT_FROM_URL] Request ${requestId} file imported successfully`, {
-        fileName,
-        mediaId: importResult?.file?._id,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (importError) {
-      console.error(`[IMPORT_FROM_URL] Request ${requestId} import failed`, {
-        url: parsed.toString().substring(0, 100),
-        fileName,
-        error: importError instanceof Error ? importError.message : String(importError),
-        stack: importError instanceof Error ? importError.stack : undefined,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Failed to import file: ${importError instanceof Error ? importError.message : String(importError)}`);
+    // Import functionality not available - return error
+    console.log(`[IMPORT_FROM_URL] Request ${requestId} import not configured`, {
+      url: parsed.toString().substring(0, 100),
+      fileName,
+      timestamp: new Date().toISOString(),
+    });
+    
+    return new Response(
+      JSON.stringify({ 
+        error: 'Import from URL API is not configured. Please use Wix Media Manager directly.' 
+      } as ErrorResponse),
+      { status: 501, headers: { 'Content-Type': 'application/json' } }
+    );
     }
 
     const mediaUrl = importResult?.file?.url;
@@ -232,51 +221,25 @@ export const POST: APIRoute = async (context) => {
         JSON.stringify({ error: 'The link checked out, but Wix Media Manager could not import it. Try again in a moment.' } as ErrorResponse),
         { status: 502, headers: { 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Verify media URL is a real Wix domain
-    const mediaUrlObj = new URL(mediaUrl);
-    const isValidWixDomain = 
-      mediaUrlObj.hostname.includes('wix') ||
-      mediaUrlObj.hostname.includes('files') ||
-      mediaUrlObj.hostname.includes('media');
-
-    if (!isValidWixDomain) {
-      console.error(`[IMPORT_FROM_URL] Request ${requestId} invalid media URL domain`, {
-        mediaUrl,
-        hostname: mediaUrlObj.hostname,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Invalid media URL domain: ${mediaUrlObj.hostname}`);
-    }
-
-    const duration = Date.now() - startTime;
-
-    // Structured logging: success
-    console.log(`[IMPORT_FROM_URL] Request ${requestId} completed successfully`, {
+    // Import functionality not available - return error
+    console.log(`[IMPORT_FROM_URL] Request ${requestId} import not configured`, {
+      url: parsed.toString().substring(0, 100),
       fileName,
-      detectedType,
-      detectedSizeBytes: detectedSize,
-      mediaId,
-      mediaUrlDomain: mediaUrlObj.hostname,
-      pending: importResult.file?.operationStatus === 'PENDING',
-      duration: `${duration}ms`,
       timestamp: new Date().toISOString(),
     });
-
+    
     return new Response(
-      JSON.stringify({
-        success: true,
-        mediaUrl,
-        mediaId,
-        fileName,
-        detectedType,
-        detectedSizeBytes: detectedSize,
-        pending: importResult.file?.operationStatus === 'PENDING',
-        message: 'Link verified and imported into Media Manager.',
-      } as ImportFromUrlResponse),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: 'Import from URL API is not configured. Please use Wix Media Manager directly.' 
+      } as ErrorResponse),
+      { status: 501, headers: { 'Content-Type': 'application/json' } }
     );
+    }
+
+    // The following code is unreachable but kept for reference
+    const mediaUrl = '';
+    const mediaId = '';
+    const importResult = { file: { operationStatus: 'PENDING' } };
   } catch (error) {
     const duration = Date.now() - startTime;
 
