@@ -215,7 +215,7 @@ export default function ImageUploadManager({
       if (collectionId && itemId && fieldName) {
         const updatePayload = { _id: itemId, [fieldName]: result.mediaUrl };
         validateCMSUpdatePayload(collectionId, updatePayload);
-        await BaseCrudService.update(collectionId, updatePayload);
+        await adminCms.update(collectionId, updatePayload);
       }
 
       onImageUpload(result.mediaUrl);
@@ -273,7 +273,7 @@ export default function ImageUploadManager({
     try {
       // If collection info provided, delete from CMS
       if (collectionId && itemId && fieldName) {
-        await BaseCrudService.update(collectionId, {
+        await adminCms.update(collectionId, {
           _id: itemId,
           [fieldName]: null
         });
