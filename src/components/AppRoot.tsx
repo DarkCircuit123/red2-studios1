@@ -7,6 +7,17 @@ import { AdminAuthProvider } from '@/components/AdminAuthProvider';
 import { MemberProvider } from '@/integrations/members/providers';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 
+// DEV ONLY. Lets Vite's dependency scanner find every third-party package in
+// its initial crawl so it pre-bundles them in one pass. Without this, packages
+// are discovered lazily, each discovery re-optimizes and rewrites the dep
+// chunks with a new hash, and the already-loaded page 404s on the old chunk
+// URLs - the "Loading failed for the module .../deps/xxx.js?v=<hash>" errors
+// and astro-island hydration failures. Tree-shaken out of production builds.
+// See src/lib/vite-dep-preload.ts.
+if (import.meta.env.DEV) {
+  import('@/lib/vite-dep-preload');
+}
+
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean }
