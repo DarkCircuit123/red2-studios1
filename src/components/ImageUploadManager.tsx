@@ -3,11 +3,11 @@ import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3, Link2, Loader } fro
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
-import { adminCms } from '@/lib/admin-cms';
+import { saveImageToCms } from '@/lib/cms-image-save';
 import { uploadMedia, importMediaFromUrl, createPreviewUrl, revokePreviewUrl, isDataUrl, type UploadProgress } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import WDE0009FixValidator from '@/lib/wde0009-fix-validation';
-import { validateImageStorage, validateCMSUpdatePayload } from '@/lib/image-storage-validator';
+import { validateImageStorage } from '@/lib/image-storage-validator';
 import WixImageResolver from '@/lib/wix-image-resolver';
 
 interface ImageUploadManagerProps {
@@ -154,34 +154,24 @@ export default function ImageUploadManager({
         throw new Error('Image upload failed: this file could not be stored. Please retry the upload.');
       }
 
-      // Save media URL (not base64) to CMS if collection info provided
-      if (collectionId && itemId && fieldName) {
-        try {
-          // FINAL HARDENING: Validate entire CMS payload before update
-          const updatePayload = {
-            _id: itemId,
-            [fieldName]: result.mediaUrl
-          };
-          console.log('[ImageUploadManager] Validating CMS payload...');
-          validateCMSUpdatePayload(collectionId, updatePayload);
-
-          console.log('[ImageUploadManager] Updating CMS with media URL...');
-          await adminCms.update(collectionId, updatePayload);
-          console.log('[ImageUploadManager] CMS update successful');
-          onImageUpload(result.mediaUrl);
-          setUploadStatus('success');
-          setTimeout(() => setUploadStatus('idle'), 3000);
-        } catch (cmsError) {
-          console.error('[ImageUploadManager] CMS update failed:', cmsError);
-          setErrorMessage('Image upload failed: could not save to database. Please retry the upload.');
-          setUploadStatus('error');
-        }
-      } else {
-        // No CMS info, just update locally with media URL
-        console.log('[ImageUploadManager] No CMS info provided, updating locally');
+      // Save to the CMS through the shared path, which verifies the write
+      // actually landed. There is deliberately NO "no CMS info, update
+      // locally" branch any more: that branch showed a success message for an
+      // image that was never stored, so it looked saved until you refreshed.
+      try {
+        await saveImageToCms({ collectionId, itemId, fieldName }, result.mediaUrl);
+        console.log('[ImageUploadManager] CMS update verified');
         onImageUpload(result.mediaUrl);
         setUploadStatus('success');
         setTimeout(() => setUploadStatus('idle'), 3000);
+      } catch (cmsError) {
+        console.error('[ImageUploadManager] CMS save failed:', cmsError);
+        setErrorMessage(
+          cmsError instanceof Error
+            ? cmsError.message
+            : 'Image upload failed: could not save to database. Please retry.'
+        );
+        setUploadStatus('error');
       }
     } catch (error) {
       console.error('[ImageUploadManager] Error uploading image:', error);
@@ -212,11 +202,10 @@ export default function ImageUploadManager({
       // src/api/media/import-from-url.ts.
       const result = await importMediaFromUrl(url, 'image');
 
-      if (collectionId && itemId && fieldName) {
-        const updatePayload = { _id: itemId, [fieldName]: result.mediaUrl };
-        validateCMSUpdatePayload(collectionId, updatePayload);
-        await adminCms.update(collectionId, updatePayload);
-      }
+      // Same verified path as the file upload. Previously this silently
+      // skipped the CMS write when the target was incomplete and still
+      // reported "Link verified ... and added."
+      await saveImageToCms({ collectionId, itemId, fieldName }, result.mediaUrl);
 
       onImageUpload(result.mediaUrl);
       setLinkStatus('success');
@@ -271,13 +260,9 @@ export default function ImageUploadManager({
     
     setIsDeleting(true);
     try {
-      // If collection info provided, delete from CMS
-      if (collectionId && itemId && fieldName) {
-        await adminCms.update(collectionId, {
-          _id: itemId,
-          [fieldName]: null
-        });
-      }
+      // Same verified path. A delete that silently did nothing used to look
+      // identical to one that worked, until the image reappeared on refresh.
+      await saveImageToCms({ collectionId, itemId, fieldName }, null);
       
       // Call the callback to update parent state
       if (onImageDelete) {
