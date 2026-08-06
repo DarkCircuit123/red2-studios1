@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Upload, X, Music, Loader, FileAudio, Link2, CheckCircle2 } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
+import { adminCms } from '@/lib/admin-cms';
 import { uploadMedia, importMediaFromUrl } from '@/lib/wix-media-upload-service';
 import { MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
@@ -88,7 +89,7 @@ export default function MusicManager({
       const musicUrl = result.mediaUrl;
 
       if (itemId) {
-        await BaseCrudService.update(collectionId, {
+        await adminCms.update(collectionId, {
           _id: itemId,
           [fieldName]: musicUrl,
         });
@@ -134,7 +135,7 @@ export default function MusicManager({
       const musicUrl = result.mediaUrl;
 
       if (itemId) {
-        await BaseCrudService.update(collectionId, {
+        await adminCms.update(collectionId, {
           _id: itemId,
           [fieldName]: musicUrl,
         });
@@ -166,7 +167,7 @@ export default function MusicManager({
     if (!itemId) return;
 
     try {
-      await BaseCrudService.update(collectionId, {
+      await adminCms.update(collectionId, {
         _id: itemId,
         [fieldName]: musicUrl,
       });
@@ -184,7 +185,7 @@ export default function MusicManager({
     if (!itemId) return;
 
     try {
-      await BaseCrudService.update(collectionId, {
+      await adminCms.update(collectionId, {
         _id: itemId,
         [fieldName]: undefined,
       });

@@ -3,6 +3,7 @@ import { Upload, X, AlertCircle, CheckCircle, Trash2, Edit3, Link2, Loader } fro
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
+import { adminCms } from '@/lib/admin-cms';
 import { uploadMedia, importMediaFromUrl, createPreviewUrl, revokePreviewUrl, isDataUrl, type UploadProgress } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import WDE0009FixValidator from '@/lib/wde0009-fix-validation';
@@ -165,7 +166,7 @@ export default function ImageUploadManager({
           validateCMSUpdatePayload(collectionId, updatePayload);
 
           console.log('[ImageUploadManager] Updating CMS with media URL...');
-          await BaseCrudService.update(collectionId, updatePayload);
+          await adminCms.update(collectionId, updatePayload);
           console.log('[ImageUploadManager] CMS update successful');
           onImageUpload(result.mediaUrl);
           setUploadStatus('success');
