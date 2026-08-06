@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
+import { auth } from '@wix/essentials';
 import { IMAGE_UPLOAD_CONFIG, MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
 /**
@@ -197,8 +198,9 @@ export const POST: APIRoute = async (context) => {
 
     let importResult;
     try {
-      const filesClient = files;
-      importResult = await filesClient.importFile(parsed.toString(), {
+      // Use auth.elevate to get elevated permissions for file operations
+      const elevatedImportFile = auth.elevate(files.importFile);
+      importResult = await elevatedImportFile(parsed.toString(), {
         mimeType: detectedType,
         displayName: fileName,
         mediaType: kind === 'music' ? 'AUDIO' : 'IMAGE',
