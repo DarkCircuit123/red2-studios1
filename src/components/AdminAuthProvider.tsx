@@ -22,20 +22,28 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const response = await fetch('/api/auth/admin-check', {
-          method: 'GET',
+        const response = await fetch('/api/auth/admin-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
+          body: JSON.stringify({ action: 'verify' }),
         });
 
         if (response.ok) {
           const data = await response.json();
-          setIsAuthenticated(true);
-          setAdminUsername(data.username);
+          if (data.valid) {
+            setIsAuthenticated(true);
+            setAdminUsername(data.username || 'Admin');
+          } else {
+            setIsAuthenticated(false);
+            setAdminUsername(null);
+          }
         } else {
           setIsAuthenticated(false);
           setAdminUsername(null);
         }
       } catch (err) {
+        console.error('[AdminAuthProvider] Session check error:', err);
         setIsAuthenticated(false);
         setAdminUsername(null);
       } finally {
@@ -79,10 +87,14 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      await fetch('/api/auth/admin-logout', {
+      await fetch('/api/auth/admin-verify', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        body: JSON.stringify({ action: 'logout' }),
       });
+    } catch (err) {
+      console.error('[AdminAuthProvider] Logout error:', err);
     } finally {
       setIsAuthenticated(false);
       setAdminUsername(null);

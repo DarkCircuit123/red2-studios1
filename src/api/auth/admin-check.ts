@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { verifyAdminToken } from '@/lib/auth-security';
 
 export const GET: APIRoute = async ({ cookies }) => {
   try {
@@ -11,11 +12,21 @@ export const GET: APIRoute = async ({ cookies }) => {
       );
     }
 
-    // Session token exists and is valid
+    // Verify the signed token
+    const validation = await verifyAdminToken(sessionToken);
+    
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ authenticated: false }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Session token is valid
     return new Response(
       JSON.stringify({
         authenticated: true,
-        username: 'Jordan310',
+        username: validation.username,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
