@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { signAdminToken } from '@/lib/auth-security';
 
 // Hardcoded admin credentials
 const ADMIN_EMAIL = 'jordanzuniga@gmail.com';
@@ -23,17 +24,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
         console.log('[LOGIN API] ✓ Admin credentials matched - setting admin session');
         
-        // Create admin session token
-        const adminSessionToken = `admin_hardcoded_${Date.now()}`;
+        // Create signed admin session token
+        const adminSessionToken = await signAdminToken('admin');
         
-        console.log('[LOGIN API] ✓ Admin session token created:', adminSessionToken);
+        console.log('[LOGIN API] ✓ Admin session token created (signed)');
         console.log('[LOGIN API] ✓ Setting admin_session cookie');
         
-        // Set the cookie using Astro's cookies API
+        // Set the cookie using Astro's cookies API with secure attributes
         cookies.set('admin_session', adminSessionToken, {
           path: '/',
           httpOnly: true,
-          sameSite: 'lax',
+          secure: true,
+          sameSite: 'none',
+          partitioned: true,
           maxAge: 1800, // 30 minutes
         });
         
@@ -43,7 +46,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           success: true,
           message: 'Admin login successful',
           isAdmin: true,
-          adminSessionToken: adminSessionToken
         }), {
           status: 200,
           headers: { 

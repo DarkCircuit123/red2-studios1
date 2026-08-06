@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { signAdminToken } from '@/lib/auth-security';
 
 // Hardcoded admin credentials
 const ADMIN_USERNAME = 'Jordan310';
@@ -18,8 +19,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Validate credentials - exact match required
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      // Create secure session token
-      const sessionToken = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Create signed session token
+      const sessionToken = await signAdminToken(username);
 
       // Set secure httpOnly cookie with SameSite=None for cross-site iframe compatibility
       cookies.set('admin_session', sessionToken, {

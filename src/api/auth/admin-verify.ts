@@ -33,14 +33,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     if (body?.action === 'logout') {
       console.log('[ADMIN-VERIFY] Logout action triggered');
       console.log('[ADMIN-VERIFY] Clearing admin_session cookie');
-      console.log('[ADMIN-VERIFY] Set-Cookie header: admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+      console.log('[ADMIN-VERIFY] Set-Cookie header: admin_session=; Path=/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=0');
       return new Response(
         JSON.stringify({ valid: false, loggedOut: true }),
         {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
-            'Set-Cookie': 'admin_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0',
+            'Set-Cookie': 'admin_session=; Path=/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=0',
           },
         }
       );
@@ -69,19 +69,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const clientIP = getClientIP(request.headers);
     console.log('[ADMIN-VERIFY] Verifying token from IP:', clientIP);
-    
-    // Check if this is a hardcoded admin session token
-    if (sessionToken.startsWith('admin_hardcoded_')) {
-      console.log('[ADMIN-VERIFY] Hardcoded admin session token detected');
-      return new Response(
-        JSON.stringify({
-          valid: true,
-          memberId: 'admin_hardcoded',
-          message: 'Session is valid'
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
     
     // First try verifying as admin token (for backward compatibility)
     let validation = await verifyAdminToken(sessionToken);
