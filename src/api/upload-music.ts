@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
+import { auth } from '@wix/essentials';
 import { MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 
 export const POST: APIRoute = async (context) => {
@@ -53,11 +54,12 @@ export const POST: APIRoute = async (context) => {
     // Data rejects a multi-megabyte data: string outright, which is the
     // "string did not match the expected pattern" error. Storing a real,
     // tiny Wix media URL avoids both problems.
-    console.log('[MUSIC_UPLOAD] Requesting Wix Media Manager upload URL...');
+    console.log('[MUSIC_UPLOAD] Requesting Wix Media Manager upload URL with auth.elevate()...');
     let uploadUrl: string;
     try {
-      const filesClient = files;
-      const uploadUrlResponse = await filesClient.generateFileUploadUrl(file.type, {
+      // Use auth.elevate to get elevated permissions for file operations
+      const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
+      const uploadUrlResponse = await elevatedGenerateUrl(file.type, {
         fileName: file.name,
       });
       uploadUrl = uploadUrlResponse.uploadUrl;

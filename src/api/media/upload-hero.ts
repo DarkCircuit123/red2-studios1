@@ -1,12 +1,13 @@
 import type { APIRoute } from 'astro';
 import { files } from '@wix/media';
+import { auth } from '@wix/essentials';
 
 /**
  * Hero Image Upload API - Clean, reliable upload flow
  * 
  * This endpoint:
  * 1. Validates the file (JPEG, PNG, WebP only; max 10MB)
- * 2. Generates a signed upload URL from Wix Media Manager
+ * 2. Generates a signed upload URL from Wix Media Manager with auth.elevate()
  * 3. Receives the file bytes and uploads to Wix
  * 4. Returns { success, mediaUrl, fileId, error }
  * 5. Enforces admin authentication
@@ -106,14 +107,8 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    // Get Wix Media Manager client
-    console.log(`[UPLOAD_HERO] Request ${requestId} getting Wix context`, {
-      timestamp: new Date().toISOString(),
-    });
-    const filesClient = files;
-
-    // Generate upload URL
-    console.log(`[UPLOAD_HERO] Request ${requestId} calling generateFileUploadUrl`, {
+    // Generate upload URL with elevated permissions
+    console.log(`[UPLOAD_HERO] Request ${requestId} calling generateFileUploadUrl with auth.elevate()`, {
       fileName: file.name,
       mimeType: file.type,
       timestamp: new Date().toISOString(),
@@ -121,7 +116,9 @@ export const POST: APIRoute = async (context) => {
 
     let uploadUrlResponse;
     try {
-      uploadUrlResponse = await filesClient.generateFileUploadUrl(file.type, {
+      // Use auth.elevate to get elevated permissions for file operations
+      const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
+      uploadUrlResponse = await elevatedGenerateUrl(file.type, {
         fileName: file.name,
       });
     } catch (apiError) {
