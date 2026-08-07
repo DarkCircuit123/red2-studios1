@@ -163,7 +163,7 @@ export default function PortfolioDetailPage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="mb-20 w-full bg-black/50 cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
+          className="mb-20 w-full cursor-pointer overflow-hidden"
           onClick={() => project.mainImage && setSelectedImage(project.mainImage)}
         >
           <Image
@@ -234,7 +234,7 @@ export default function PortfolioDetailPage() {
           </motion.div>
         </div>
 
-        {/* Gallery - Photography-First with Mixed Aspect Ratios */}
+        {/* Gallery - Pure Photos Only */}
         {galleryImages.length > 1 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -249,7 +249,7 @@ export default function PortfolioDetailPage() {
               {galleryImages.map((image, index) => (
                 <div
                   key={index}
-                  className="overflow-hidden bg-black/50 cursor-pointer hover:opacity-90 transition-opacity"
+                  className="overflow-hidden cursor-pointer"
                   onClick={() => setSelectedImage(image)}
                 >
                   <Image

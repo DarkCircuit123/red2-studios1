@@ -12,7 +12,6 @@ import { ScrollReveal } from '@/components/ScrollReveal';
 export default function PortfolioPage() {
   const [allImages, setAllImages] = useState<PortfolioImages[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
@@ -123,7 +122,7 @@ export default function PortfolioPage() {
           </p>
         </ScrollReveal>
 
-        {/* Images Grid - Larger placeholders with 2 columns */}
+        {/* Images Grid - Pure Photos Only */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 auto-rows-max">
             {Array(16)
@@ -146,50 +145,20 @@ export default function PortfolioPage() {
               <motion.div
                 key={image._id}
                 variants={itemVariants}
-                onMouseEnter={() => setHoveredId(image._id)}
-                onMouseLeave={() => setHoveredId(null)}
-                className="group relative overflow-hidden bg-white/5 cursor-pointer"
+                className="relative overflow-hidden cursor-pointer"
                 onClick={() => {
                   playClickSound();
                   setSelectedImage(image.imageUrl || '');
                 }}
               >
-                {/* Photography-First Container - Preserves Aspect Ratio */}
-                <div className="relative w-full bg-black/30 overflow-hidden min-h-[500px] md:min-h-[600px]">
-                  {/* Image */}
-                  <Image
-                    src={image.imageUrl || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
-                    alt={image.caption || image.altText || 'Portfolio image'}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    data-field-name="imageUrl"
-                    data-record-id={image._id}
-                  />
-
-                  {/* Subtle grain overlay */}
-                  <div className="absolute inset-0 bg-grain opacity-5" />
-
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300" />
-
-                  {/* Content - appears on hover */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={hoveredId === image._id ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute inset-0 flex flex-col items-end justify-end p-8"
-                  >
-                    <div className="text-right">
-                      {image.caption && (
-                        <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
-                          {image.caption}
-                        </h3>
-                      )}
-                      <div className="flex items-center gap-2 text-white hover:gap-3 transition-all">
-                        <span className="text-sm font-paragraph">View</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
+                {/* Pure Image - No Overlays, No Text */}
+                <Image
+                  src={image.imageUrl || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
+                  alt={image.altText || 'Portfolio image'}
+                  className="w-full h-auto object-cover"
+                  data-field-name="imageUrl"
+                  data-record-id={image._id}
+                />
               </motion.div>
             ))}
           </motion.div>
