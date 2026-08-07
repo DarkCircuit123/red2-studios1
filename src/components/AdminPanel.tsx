@@ -154,6 +154,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
 
   const tabs = [
     { id: 'photos', label: 'Photos', icon: Upload },
+    { id: 'work', label: 'Work', icon: Upload },
     { id: 'portfolio', label: 'Portfolio', icon: Upload },
     { id: 'sponsors', label: 'Sponsors', icon: Upload },
     { id: 'music', label: 'Music', icon: Music },
@@ -314,6 +315,38 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               {activeTab === 'bookings' && (
                 <div className="bg-gradient-to-b from-black to-black/95 border border-white/10 rounded-lg p-6">
                   <BookingManagerPro />
+                </div>
+              )}
+
+              {/* Work Tab - Direct Portfolio Images Upload */}
+              {activeTab === 'work' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
+                      Work Gallery
+                    </h3>
+                    <p className="text-xs text-black/60">Upload images directly to the Work section</p>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <p className="text-xs text-blue-700">
+                      Images uploaded here will appear in the Work page gallery. Upload high-quality photos for the best visual impact.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
+                      Upload Work Photos
+                    </label>
+                    <ImageUploadManager
+                      label="Upload Work Image"
+                      collectionId="portfolioimages"
+                      fieldName="imageUrl"
+                      onImageUpload={(url) => {
+                        console.log('Work image uploaded:', url);
+                      }}
+                    />
+                  </div>
                 </div>
               )}
 

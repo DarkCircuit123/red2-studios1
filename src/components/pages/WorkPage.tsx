@@ -1,23 +1,73 @@
-import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { usePortfolio } from '@/hooks/usePortfolio';
-import { PortfolioWithImages } from '@/lib/portfolio-service';
+import { useState, useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
+import { X } from 'lucide-react';
+import { BaseCrudService } from '@/integrations';
+import { PortfolioImages } from '@/entities';
+import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Image } from '@/components/ui/image';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X } from 'lucide-react';
+import { playClickSound } from '@/lib/click-sound';
 
-interface PortfolioGroup {
-  category: string;
-  projects: PortfolioWithImages[];
+interface ImageWithLayout extends PortfolioImages {
+  layoutSize: 'small' | 'medium' | 'large';
+  layoutOrientation: 'portrait' | 'landscape' | 'square';
 }
 
 export default function WorkPage() {
-  const { portfolios, isLoading } = usePortfolio();
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [allImages, setAllImages] = useState<ImageWithLayout[]>([])
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollY } = useScroll();
+
+  // Fetch all images from portfolioimages collection
+  useEffect(() => {
+    const fetchAllImages = async () => {
+      setIsLoading(true);
+      try {
+        const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
+        const images = result.items || [];
+        
+        // Assign artful layout sizes and orientations
+        const layoutImages: ImageWithLayout[] = images.map((img, index) => {
+          const layoutPattern = index % 12;
+          let layoutSize: 'small' | 'medium' | 'large' = 'medium';
+          let layoutOrientation: 'portrait' | 'landscape' | 'square' = 'square';
+
+          // Create an artful pattern
+          if (layoutPattern === 0 || layoutPattern === 7) {
+            layoutSize = 'large';
+            layoutOrientation = layoutPattern === 0 ? 'landscape' : 'portrait';
+          } else if (layoutPattern === 3 || layoutPattern === 9) {
+            layoutSize = 'large';
+            layoutOrientation = layoutPattern === 3 ? 'portrait' : 'landscape';
+          } else if (layoutPattern % 2 === 0) {
+            layoutSize = 'medium';
+            layoutOrientation = 'square';
+          } else {
+            layoutSize = 'small';
+            layoutOrientation = layoutPattern % 3 === 1 ? 'portrait' : 'landscape';
+          }
+
+          return {
+            ...img,
+            layoutSize,
+            layoutOrientation,
+          };
+        });
+
+        setAllImages(layoutImages);
+      } catch (error) {
+        console.error('Failed to fetch portfolio images:', error);
+        setAllImages([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllImages();
+  }, []);
 
   // Load image dimensions when selected image changes
   useEffect(() => {
@@ -33,44 +83,28 @@ export default function WorkPage() {
     img.src = selectedImage;
   }, [selectedImage]);
 
-  // Group portfolios by category
-  const groupedPortfolios = useMemo(() => {
-    const groups: { [key: string]: PortfolioGroup } = {};
-
-    portfolios.forEach((portfolio) => {
-      const category = portfolio.category || 'Uncategorized';
-
-      if (!groups[category]) {
-        groups[category] = {
-          category,
-          projects: [],
-        };
-      }
-
-      groups[category].projects.push(portfolio);
-    });
-
-    return groups;
-  }, [portfolios]);
-
-  // Get categories
-  const categories = useMemo(() => Object.keys(groupedPortfolios).sort(), [groupedPortfolios]);
-
-  // Set initial category
-  useEffect(() => {
-    if (categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0]);
+  const getGridClasses = (image: ImageWithLayout) => {
+    const baseClasses = 'relative overflow-hidden group cursor-pointer';
+    
+    if (image.layoutSize === 'large') {
+      return `${baseClasses} md:col-span-2 md:row-span-2`;
+    } else if (image.layoutSize === 'medium') {
+      return `${baseClasses} md:col-span-2 md:row-span-1`;
     }
-  }, [categories, selectedCategory]);
+    return baseClasses;
+  };
 
-  // Get projects for the selected category
-  const filteredProjects = useMemo(() => {
-    if (!selectedCategory) return [];
-    return groupedPortfolios[selectedCategory]?.projects || [];
-  }, [selectedCategory, groupedPortfolios]);
+  const getAspectRatioClasses = (image: ImageWithLayout) => {
+    if (image.layoutSize === 'large') {
+      return image.layoutOrientation === 'portrait' ? 'aspect-[3/4]' : 'aspect-[16/9]';
+    } else if (image.layoutSize === 'medium') {
+      return image.layoutOrientation === 'portrait' ? 'aspect-[3/4]' : 'aspect-[4/3]';
+    }
+    return 'aspect-square';
+  };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black overflow-hidden">
       <Header />
 
       {/* Lightbox Modal */}
@@ -89,13 +123,13 @@ export default function WorkPage() {
           >
             <X className="w-6 h-6" />
           </button>
-          
+
           {/* Dynamic container that scales to image aspect ratio */}
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 30 }}
             className="flex items-center justify-center"
             style={{
               maxWidth: '95vw',
@@ -113,178 +147,111 @@ export default function WorkPage() {
         </motion.div>
       )}
 
-      <main className="w-full max-w-[100rem] mx-auto px-6 md:px-8 py-20">
-        {/* Page Title */}
+      <main ref={containerRef} className="max-w-[120rem] mx-auto px-4 md:px-8 py-24 md:py-32">
+        {/* Page Header - Minimal */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="mb-20"
+          className="mb-24"
         >
-          <h1 className="text-6xl md:text-7xl font-heading font-bold text-white tracking-tight mb-6">
-            Our Work
+          <h1 className="text-5xl md:text-7xl font-heading font-bold text-white tracking-tighter">
+            Work
           </h1>
-          <p className="text-lg font-paragraph text-white/60 max-w-2xl">
-            A collection of our creative photography and visual projects
-          </p>
         </motion.div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="w-full h-96 bg-black flex items-center justify-center">
-            <motion.div
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="text-white/50 text-sm tracking-widest uppercase"
-            >
-              Loading gallery...
-            </motion.div>
+        {/* Masonry Grid - Pure Photos */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-max">
+            {Array(16)
+              .fill(null)
+              .map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0.5 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.6, delay: i * 0.05 }}
+                  className="bg-white/5 animate-pulse min-h-[300px] md:min-h-[400px]"
+                />
+              ))}
           </div>
-        )}
-
-        {/* Gallery Navigation and Content */}
-        {!isLoading && portfolios.length > 0 && (
+        ) : allImages.length > 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.6 }}
+            className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-max"
           >
-            {/* Category Tabs */}
-            <div className="mb-12">
-              {categories.length > 0 && (
-                <div>
-                  <p className="text-sm font-paragraph text-white/40 uppercase tracking-widest mb-4">
-                    Category
-                  </p>
-                  <Tabs
-                    value={selectedCategory}
-                    onValueChange={setSelectedCategory}
-                    className="w-full"
+            {allImages.map((image, index) => {
+              const yOffset = useTransform(scrollY, [0, 1000], [0, index % 2 === 0 ? 30 : -30]);
+
+              return (
+                <motion.div
+                  key={image._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.6,
+                    delay: (index % 12) * 0.05,
+                    type: 'spring',
+                    stiffness: 100,
+                    damping: 15,
+                  }}
+                  style={{ y: yOffset }}
+                  className={getGridClasses(image)}
+                  onClick={() => {
+                    playClickSound();
+                    setSelectedImage(image.imageUrl || '');
+                  }}
+                >
+                  {/* Image Container with Parallax */}
+                  <motion.div
+                    className={`relative w-full h-full overflow-hidden bg-black/30 ${getAspectRatioClasses(image)}`}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.4, type: 'spring', stiffness: 200 }}
                   >
-                    <TabsList className="bg-white/5 border border-white/10 rounded-lg p-1 flex flex-wrap gap-1 h-auto">
-                      {categories.map((category) => (
-                        <TabsTrigger
-                          key={category}
-                          value={category}
-                          className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white transition-colors"
-                        >
-                          {category}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                  </Tabs>
-                </div>
-              )}
-            </div>
+                    {/* Image */}
+                    <Image
+                      src={image.imageUrl || 'https://static.wixstatic.com/media/e9d727_9c9c4486a82b496ca6c48026f5bbed4d~mv2.png?originWidth=576&originHeight=384'}
+                      alt={image.altText || 'Portfolio image'}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      data-field-name="imageUrl"
+                      data-record-id={image._id}
+                    />
 
-            {/* Project Count */}
-            <div className="mb-8">
-              <p className="text-sm font-paragraph text-white/40">
-                {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''} in this category
-              </p>
-            </div>
+                    {/* Subtle grain overlay */}
+                    <div className="absolute inset-0 bg-grain opacity-5 pointer-events-none" />
 
-            {/* Project Gallery - Grid Layout with Multiple Images */}
-            {filteredProjects.length > 0 ? (
-              <div className="space-y-16">
-                {filteredProjects.map((project, projectIndex) => {
-                  // Get all images for this project
-                  const allImages = [
-                    ...(project.mainImage ? [project.mainImage] : []),
-                    ...(project.images?.map((img) => img.imageUrl) || []),
-                  ].filter(Boolean);
-
-                  return (
+                    {/* Hover overlay - minimal */}
                     <motion.div
-                      key={project._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: projectIndex * 0.1 }}
-                      className="space-y-4"
+                      initial={{ opacity: 0 }}
+                      whileHover={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute inset-0 bg-black/40 flex items-center justify-center"
                     >
-                      {/* Project Header */}
-                      <div className="mb-6">
-                        <h2 className="text-2xl md:text-3xl font-heading font-bold text-white mb-2">
-                          {project.projectName}
-                        </h2>
-                        <div className="flex items-center gap-4">
-                          {project.category && (
-                            <span className="px-3 py-1 bg-white/10 text-white/70 text-xs font-mono uppercase tracking-widest rounded">
-                              {project.category}
-                            </span>
-                          )}
-                          <p className="text-sm font-paragraph text-white/50">
-                            {allImages.length} image{allImages.length !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                        {project.shortDescription && (
-                          <p className="text-base font-paragraph text-white/60 mt-3">
-                            {project.shortDescription}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Images Grid */}
-                      {allImages.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {allImages.map((imageUrl, imageIndex) => (
-                            <motion.div
-                              key={imageIndex}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.5, delay: imageIndex * 0.05 }}
-                              className="group cursor-pointer overflow-hidden bg-white/5 hover:bg-white/10 transition-colors rounded-lg"
-                              onClick={() => setSelectedImage(imageUrl)}
-                            >
-                              <div className="relative aspect-square overflow-hidden">
-                                <Image
-                                  src={imageUrl}
-                                  alt={`${project.projectName} - Image ${imageIndex + 1}`}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  width={500}
-                                  height={500}
-                                />
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="w-full h-64 bg-white/5 rounded-lg flex items-center justify-center">
-                          <p className="text-white/40 text-sm">No images available</p>
-                        </div>
-                      )}
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        whileHover={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-white text-sm font-paragraph tracking-widest uppercase"
+                      >
+                        View
+                      </motion.div>
                     </motion.div>
-                  );
-                })}
-              </div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full h-96 flex items-center justify-center"
-              >
-                <div className="text-center">
-                  <p className="text-base font-paragraph text-white/50">
-                    No projects in this category yet
-                  </p>
-                </div>
-              </motion.div>
-            )}
+                  </motion.div>
+                </motion.div>
+              );
+            })}
           </motion.div>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && portfolios.length === 0 && (
+        ) : (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full h-96 flex items-center justify-center"
+            className="text-center py-24"
           >
-            <div className="text-center">
-              <p className="text-base font-paragraph text-white/50">
-                No projects available yet. Start creating from the Admin Panel!
-              </p>
-            </div>
+            <p className="text-base font-paragraph text-white/50">
+              No images found yet
+            </p>
           </motion.div>
         )}
       </main>
