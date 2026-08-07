@@ -81,18 +81,21 @@ export default function PortfolioPage() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05,
-        delayChildren: 0.1,
+        staggerChildren: 0.08,
+        delayChildren: 0.15,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 40 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6 },
+      transition: { 
+        duration: 0.7,
+        ease: [0.34, 1.56, 0.64, 1],
+      },
     },
   };
 
@@ -151,48 +154,51 @@ export default function PortfolioPage() {
           </p>
         </ScrollReveal>
 
-        {/* Images Grid - True Masonry Layout with Mixed Orientations */}
+        {/* Images Grid - 2-Column Layout with Mixed Orientations */}
         {isLoading ? (
-          <div className="columns-1 md:columns-3 lg:columns-4 gap-6 md:gap-8 space-y-6 md:space-y-8">
-            {Array(16)
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10">
+            {Array(12)
               .fill(null)
-              .map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-white/5 animate-pulse break-inside-avoid rounded-lg"
-                  style={{ height: Math.random() * 300 + 200 }}
-                />
-              ))}
+              .map((_, i) => {
+                const isPortrait = i % 3 === 0;
+                return (
+                  <div
+                    key={i}
+                    className="bg-white/5 animate-pulse rounded-xl overflow-hidden"
+                    style={{ aspectRatio: isPortrait ? '3/4' : '4/3' }}
+                  />
+                );
+              })}
           </div>
         ) : (
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="columns-1 md:columns-3 lg:columns-4 gap-6 md:gap-8 space-y-6 md:space-y-8"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10"
           >
             {allImages.map((image) => {
               return (
                 <motion.div
                   key={image._id}
                   variants={itemVariants}
-                  className="relative overflow-hidden cursor-pointer group break-inside-avoid rounded-lg"
+                  className="relative overflow-hidden cursor-pointer group rounded-xl"
                   onClick={() => {
                     playClickSound();
                     setSelectedImage(image.imageUrl || '');
                   }}
                 >
                   {/* Image with hover effect */}
-                  <div className="relative w-full overflow-hidden bg-black/20 rounded-lg">
+                  <div className="relative w-full h-full overflow-hidden bg-black/20 rounded-xl">
                     <Image
                       src={image.imageUrl || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
                       alt={image.altText || 'Portfolio image'}
-                      className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       data-field-name="imageUrl"
                       data-record-id={image._id}
                     />
                     {/* Subtle overlay on hover */}
-                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300 rounded-lg" />
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/15 transition-colors duration-300 rounded-xl" />
                   </div>
                 </motion.div>
               );
