@@ -1,20 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-interface MusicSettings {
-  _id: string;
-  musicUrl?: string;
-  isEnabled?: boolean;
-  volume?: number;
-  loopMusic?: boolean;
-  musicTitle?: string;
-}
-
-// Default music URL - direct audio file (not a webpage)
-// Use a direct MP3 URL from Wix Media Manager or a CDN that supports CORS
-// Empty string means no default music - user must upload one in admin panel
-const DEFAULT_MUSIC_URL = '';
+import { BaseCrudService } from '@/integrations';
+import { MusicSettings } from '@/entities/index';
 
 export default function BackgroundMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -22,51 +10,45 @@ export default function BackgroundMusicPlayer() {
   const [isMuted, setIsMuted] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [audioError, setAudioError] = useState(false);
-  const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
+  const [musicTracks, setMusicTracks] = useState<MusicSettings[]>([]);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [volume, setVolume] = useState(30);
 
-  // Load music settings from backend API (not directly from CMS)
+  // Load all music tracks from CMS
   useEffect(() => {
-    const loadMusicSettings = async () => {
+    const loadMusicTracks = async () => {
       try {
-        // Use default settings - music is optional and can be configured in admin panel
-        // Avoid direct CMS queries to prevent CORS issues
-        setMusicSettings({
-          _id: 'default',
-          musicUrl: DEFAULT_MUSIC_URL,
-          isEnabled: true,
-          volume: 30,
-          loopMusic: true,
-          musicTitle: 'Background Music'
-        });
+        const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 100 });
+        const enabledTracks = result.items?.filter(track => track.isEnabled && track.musicUrl) || [];
+        
+        if (enabledTracks.length > 0) {
+          setMusicTracks(enabledTracks);
+          // Get volume from first track if available
+          if (enabledTracks[0]?.volume) {
+            setVolume(enabledTracks[0].volume);
+          }
+        }
       } catch (error) {
-        // Suppress errors - music is optional
-        setMusicSettings({
-          _id: 'default',
-          musicUrl: DEFAULT_MUSIC_URL,
-          isEnabled: true,
-          volume: 30,
-          loopMusic: true,
-          musicTitle: 'Background Music'
-        });
+        // Silently fail - music is optional
       } finally {
         setIsLoadingSettings(false);
       }
     };
 
-    loadMusicSettings();
+    loadMusicTracks();
   }, []);
 
-  // Set audio volume when settings change
+  // Set audio volume when it changes
   useEffect(() => {
-    if (audioRef.current && musicSettings?.volume) {
-      audioRef.current.volume = Math.min(1, musicSettings.volume / 100);
+    if (audioRef.current) {
+      audioRef.current.volume = Math.min(1, volume / 100);
     }
-  }, [musicSettings?.volume]);
+  }, [volume]);
 
   // Attempt to autoplay music on site load
   useEffect(() => {
-    if (isLoadingSettings || !musicSettings?.isEnabled || !audioRef.current) return;
+    if (isLoadingSettings || musicTracks.length === 0 || !audioRef.current) return;
 
     const attemptAutoplay = async () => {
       try {
@@ -123,7 +105,7 @@ export default function BackgroundMusicPlayer() {
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [isLoadingSettings, musicSettings?.isEnabled, isPlaying, hasInteracted]);
+  }, [isLoadingSettings, musicTracks.length, isPlaying, hasInteracted]);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -132,7 +114,7 @@ export default function BackgroundMusicPlayer() {
       setIsMuted(newMutedState);
       
       // If unmuting and not playing, try to play
-      if (!newMutedState && !isPlaying) {
+      if (!newMutedState && !isPlaying && musicTracks.length > 0) {
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           playPromise
@@ -161,12 +143,15 @@ export default function BackgroundMusicPlayer() {
   };
 
   // Don't render if music is disabled or settings not loaded
-  if (isLoadingSettings || !musicSettings?.isEnabled) {
+  if (isLoadingSettings || musicTracks.length === 0) {
     return null;
   }
 
+  // Get current track
+  const currentTrack = musicTracks[currentTrackIndex];
+
   // Validate music URL is available
-  if (!musicSettings?.musicUrl) {
+  if (!currentTrack?.musicUrl) {
     return null;
   }
 
@@ -177,7 +162,7 @@ export default function BackgroundMusicPlayer() {
         ref={audioRef}
         title="Background Music Player"
         autoPlay
-        loop={musicSettings?.loopMusic !== false}
+        loop={currentTrack?.loopMusic !== false}
         preload="auto"
         crossOrigin="anonymous"
         onPlay={handleAudioPlay}
@@ -186,17 +171,17 @@ export default function BackgroundMusicPlayer() {
         style={{ display: 'none' }}
       >
         <source 
-          src={musicSettings.musicUrl} 
+          src={currentTrack.musicUrl} 
           type="audio/mpeg"
         />
         {/* Fallback for other audio formats */}
         <source 
-          src={musicSettings.musicUrl} 
+          src={currentTrack.musicUrl} 
           type="audio/wav"
         />
         {/* Fallback for OGG */}
         <source 
-          src={musicSettings.musicUrl} 
+          src={currentTrack.musicUrl} 
           type="audio/ogg"
         />
       </audio>
