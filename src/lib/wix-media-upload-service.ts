@@ -137,9 +137,24 @@ function buildWixMediaUrl(response: any, file: File): string | undefined {
   console.warn('[WIX_MEDIA] upload response missing image dimensions, attempting to extract media ID from static URL');
 
   // Extract media ID from static URL
-  // Format: https://static.wixstatic.com/media/{mediaId}~{variant}.{ext}
-  // Example: https://static.wixstatic.com/media/e9d727_abc~mv2.jpg
-  const mediaIdMatch = staticUrl.match(/\/media\/([^~]+)/);
+  // Formats:
+  //   Images: https://static.wixstatic.com/media/{mediaId}~{variant}.{ext}
+  //   Music:  https://music.wixstatic.com/mp3/{mediaId}.mp3
+  // Examples:
+  //   https://static.wixstatic.com/media/e9d727_abc~mv2.jpg
+  //   https://music.wixstatic.com/mp3/e9d727_948e0828bec8409fa0e9ff724b1806ae.mp3
+  
+  // Try image format first (with ~ separator)
+  let mediaIdMatch = staticUrl.match(/\/media\/([^~]+)/);
+  
+  // If not found, try music format (direct filename without ~)
+  if (!mediaIdMatch || !mediaIdMatch[1]) {
+    mediaIdMatch = staticUrl.match(/\/(media|mp3)\/([^.]+)/);
+    if (mediaIdMatch && mediaIdMatch[2]) {
+      mediaIdMatch = [mediaIdMatch[0], mediaIdMatch[2]]; // Normalize to [fullMatch, id]
+    }
+  }
+  
   if (!mediaIdMatch || !mediaIdMatch[1]) {
     console.error('[WIX_MEDIA] buildWixMediaUrl - could not extract media ID from static URL', { staticUrl });
     return undefined;
