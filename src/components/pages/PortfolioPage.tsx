@@ -1,47 +1,30 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
-import { Portfolio } from '@/entities/index';
+import { usePortfolio } from '@/hooks/usePortfolio';
+import { PortfolioWithImages } from '@/lib/portfolio-service';
 import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import PortfolioCard from '@/components/PortfolioCard';
 
 export default function PortfolioPage() {
-  const [projects, setProjects] = useState<Portfolio[]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<Portfolio[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { portfolios, isLoading } = usePortfolio();
+  const [filteredProjects, setFilteredProjects] = useState<PortfolioWithImages[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
-        const projects = data.items || [];
-        setProjects(projects);
-        setFilteredProjects(projects);
-        
-        // Preload first 3 images for faster initial display
-        projects.slice(0, 3).forEach((project) => {
-          if (project.mainImage) {
-            const img = new window.Image();
-            img.src = project.mainImage;
-          }
-        });
-      } catch (error) {
-        // Silently fail
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadProjects();
-  }, []);
+    if (selectedCategory) {
+      setFilteredProjects(portfolios.filter((p) => p.category === selectedCategory));
+    } else {
+      setFilteredProjects(portfolios);
+    }
+  }, [portfolios, selectedCategory]);
 
   // Load image dimensions when selected image changes
   useEffect(() => {
@@ -227,7 +210,7 @@ export default function PortfolioPage() {
               No projects found in this category
             </p>
             <button
-              onClick={() => handleCategoryFilter(null)}
+              onClick={() => setSelectedCategory(null)}
               className="inline-flex items-center gap-3 px-8 py-3.5 bg-white text-black font-heading font-semibold text-sm tracking-wide rounded-lg hover:bg-white/95 hover:shadow-lg hover:shadow-white/20 transition-all duration-300"
             >
               View All Photos

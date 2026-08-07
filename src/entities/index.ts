@@ -539,6 +539,27 @@ export interface PortfolioImageBackups {
 
 
 /**
+ * Collection ID: portfolioimages
+ * Interface for PortfolioImages
+ */
+export interface PortfolioImages {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  portfolioItemId?: string;
+  /** @wixFieldType url */
+  imageUrl?: string;
+  /** @wixFieldType number */
+  displayOrder?: number;
+  /** @wixFieldType text */
+  caption?: string;
+  /** @wixFieldType text */
+  altText?: string;
+}
+
+
+/**
  * Collection ID: prints
  * Interface for Prints
  */

@@ -1,134 +1,56 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BaseCrudService } from '@/integrations';
+import { usePortfolio } from '@/hooks/usePortfolio';
+import { PortfolioWithImages } from '@/lib/portfolio-service';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Image } from '@/components/ui/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-interface GalleryPhoto {
-  _id: string;
-  gallerySlug?: string;
-  category?: string;
-  subCategory?: string;
-  title?: string;
-  image?: string;
-  thumbnail?: string;
-  description?: string;
-  displayOrder?: number;
-  featured?: boolean;
-  _createdDate?: Date;
-}
-
-interface GalleryGroup {
+interface PortfolioGroup {
   category: string;
-  subCategories: {
-    [key: string]: GalleryPhoto[];
-  };
+  projects: PortfolioWithImages[];
 }
 
 export default function WorkPage() {
-  const [allPhotos, setAllPhotos] = useState<GalleryPhoto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { portfolios, isLoading } = usePortfolio();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
 
-  // Fetch all gallery photos
-  useEffect(() => {
-    const loadPhotos = async () => {
-      try {
-        setIsLoading(true);
-        // Fetch all photos with no limit - get everything
-        const result = await BaseCrudService.getAll<GalleryPhoto>(
-          'galleryphotos',
-          {},
-          { limit: 1000 } // High limit to ensure we get all photos
-        );
+  // Group portfolios by category
+  const groupedPortfolios = useMemo(() => {
+    const groups: { [key: string]: PortfolioGroup } = {};
 
-        if (result.items && result.items.length > 0) {
-          // Sort by displayOrder first, then by creation date
-          const sorted = result.items.sort((a, b) => {
-            const orderA = a.displayOrder ?? Number.MAX_VALUE;
-            const orderB = b.displayOrder ?? Number.MAX_VALUE;
-            if (orderA !== orderB) return orderA - orderB;
-            
-            const dateA = a._createdDate ? new Date(a._createdDate).getTime() : 0;
-            const dateB = b._createdDate ? new Date(b._createdDate).getTime() : 0;
-            return dateA - dateB;
-          });
-
-          setAllPhotos(sorted);
-
-          // Set initial category and subcategory
-          if (sorted.length > 0) {
-            const firstCategory = sorted[0].category || 'All';
-            setSelectedCategory(firstCategory);
-            const firstSubCategory = sorted[0].subCategory || 'All';
-            setSelectedSubCategory(firstSubCategory);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading gallery photos:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPhotos();
-  }, []);
-
-  // Group photos by category and subcategory
-  const groupedPhotos = useMemo(() => {
-    const groups: { [key: string]: GalleryGroup } = {};
-
-    allPhotos.forEach((photo) => {
-      const category = photo.category || 'Uncategorized';
-      const subCategory = photo.subCategory || 'All';
+    portfolios.forEach((portfolio) => {
+      const category = portfolio.category || 'Uncategorized';
 
       if (!groups[category]) {
         groups[category] = {
           category,
-          subCategories: {},
+          projects: [],
         };
       }
 
-      if (!groups[category].subCategories[subCategory]) {
-        groups[category].subCategories[subCategory] = [];
-      }
-
-      groups[category].subCategories[subCategory].push(photo);
+      groups[category].projects.push(portfolio);
     });
 
     return groups;
-  }, [allPhotos]);
+  }, [portfolios]);
 
-  // Get categories and subcategories for the selected category
-  const categories = Object.keys(groupedPhotos).sort();
-  const subCategories = selectedCategory
-    ? Object.keys(groupedPhotos[selectedCategory]?.subCategories || {}).sort()
-    : [];
+  // Get categories
+  const categories = useMemo(() => Object.keys(groupedPortfolios).sort(), [groupedPortfolios]);
 
-  // Get photos for the selected category and subcategory
-  const filteredPhotos = useMemo(() => {
-    if (!selectedCategory || !selectedSubCategory) return [];
-    return groupedPhotos[selectedCategory]?.subCategories[selectedSubCategory] || [];
-  }, [selectedCategory, selectedSubCategory, groupedPhotos]);
-
-  // Handle category change
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-    const newSubCategories = Object.keys(
-      groupedPhotos[category]?.subCategories || {}
-    ).sort();
-    if (newSubCategories.length > 0) {
-      setSelectedSubCategory(newSubCategories[0]);
+  // Set initial category
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0]);
     }
-  };
+  }, [categories, selectedCategory]);
 
-  // Handle subcategory change
-  const handleSubCategoryChange = (subCategory: string) => {
-    setSelectedSubCategory(subCategory);
-  };
+  // Get projects for the selected category
+  const filteredProjects = useMemo(() => {
+    if (!selectedCategory) return [];
+    return groupedPortfolios[selectedCategory]?.projects || [];
+  }, [selectedCategory, groupedPortfolios]);
 
   return (
     <div className="min-h-screen bg-black">
@@ -164,15 +86,14 @@ export default function WorkPage() {
         )}
 
         {/* Gallery Navigation and Content */}
-        {!isLoading && allPhotos.length > 0 && (
+        {!isLoading && portfolios.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            {/* Category and Subcategory Tabs */}
-            <div className="mb-12 space-y-6">
-              {/* Categories */}
+            {/* Category Tabs */}
+            <div className="mb-12">
               {categories.length > 0 && (
                 <div>
                   <p className="text-sm font-paragraph text-white/40 uppercase tracking-widest mb-4">
@@ -180,7 +101,7 @@ export default function WorkPage() {
                   </p>
                   <Tabs
                     value={selectedCategory}
-                    onValueChange={handleCategoryChange}
+                    onValueChange={setSelectedCategory}
                     className="w-full"
                   >
                     <TabsList className="bg-white/5 border border-white/10 rounded-lg p-1 flex flex-wrap gap-1 h-auto">
@@ -197,72 +118,50 @@ export default function WorkPage() {
                   </Tabs>
                 </div>
               )}
-
-              {/* Subcategories */}
-              {subCategories.length > 0 && (
-                <div>
-                  <p className="text-sm font-paragraph text-white/40 uppercase tracking-widest mb-4">
-                    Project
-                  </p>
-                  <Tabs
-                    value={selectedSubCategory}
-                    onValueChange={handleSubCategoryChange}
-                    className="w-full"
-                  >
-                    <TabsList className="bg-white/5 border border-white/10 rounded-lg p-1 flex flex-wrap gap-1 h-auto">
-                      {subCategories.map((subCategory) => (
-                        <TabsTrigger
-                          key={subCategory}
-                          value={subCategory}
-                          className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white transition-colors"
-                        >
-                          {subCategory}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                  </Tabs>
-                </div>
-              )}
             </div>
 
-            {/* Photo Count */}
+            {/* Project Count */}
             <div className="mb-8">
               <p className="text-sm font-paragraph text-white/40">
-                {filteredPhotos.length} photo{filteredPhotos.length !== 1 ? 's' : ''} in this collection
+                {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''} in this category
               </p>
             </div>
 
-            {/* Photo Gallery - Masonry Layout */}
-            {filteredPhotos.length > 0 ? (
-              <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-                {filteredPhotos.map((photo, index) => (
+            {/* Project Gallery - Grid Layout */}
+            {filteredProjects.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProjects.map((project, index) => (
                   <motion.div
-                    key={photo._id}
+                    key={project._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.05 }}
-                    className="break-inside-avoid group cursor-pointer overflow-hidden bg-white/5 hover:bg-white/10 transition-colors"
+                    className="group cursor-pointer overflow-hidden bg-white/5 hover:bg-white/10 transition-colors rounded-lg"
                   >
                     <div className="relative aspect-square overflow-hidden">
                       <Image
-                        src={photo.image || photo.thumbnail || ''}
-                        alt={photo.title || 'Gallery photo'}
+                        src={project.mainImage || (project.images?.[0]?.imageUrl) || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
+                        alt={project.projectName || 'Portfolio project'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         width={400}
+                        height={400}
                       />
                     </div>
-                    {photo.title && (
-                      <div className="p-4 bg-black/50">
-                        <p className="text-sm font-paragraph text-white/80 truncate">
-                          {photo.title}
+                    <div className="p-4 bg-black/50">
+                      <p className="text-sm font-heading font-bold text-white/80 truncate">
+                        {project.projectName}
+                      </p>
+                      {project.shortDescription && (
+                        <p className="text-xs font-paragraph text-white/50 truncate mt-1">
+                          {project.shortDescription}
                         </p>
-                        {photo.description && (
-                          <p className="text-xs font-paragraph text-white/50 truncate mt-1">
-                            {photo.description}
-                          </p>
-                        )}
-                      </div>
-                    )}
+                      )}
+                      {project.images && project.images.length > 0 && (
+                        <p className="text-xs font-paragraph text-white/40 mt-2">
+                          {project.images.length} image{project.images.length !== 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -274,7 +173,7 @@ export default function WorkPage() {
               >
                 <div className="text-center">
                   <p className="text-base font-paragraph text-white/50">
-                    No photos in this collection yet
+                    No projects in this category yet
                   </p>
                 </div>
               </motion.div>
@@ -283,7 +182,7 @@ export default function WorkPage() {
         )}
 
         {/* Empty State */}
-        {!isLoading && allPhotos.length === 0 && (
+        {!isLoading && portfolios.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -291,7 +190,7 @@ export default function WorkPage() {
           >
             <div className="text-center">
               <p className="text-base font-paragraph text-white/50">
-                No photos available yet. Start uploading from the Admin Panel!
+                No projects available yet. Start creating from the Admin Panel!
               </p>
             </div>
           </motion.div>

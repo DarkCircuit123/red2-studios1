@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, X } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
-import { Portfolio } from '@/entities/index';
+import { usePortfolio } from '@/hooks/usePortfolio';
+import { PortfolioWithImages } from '@/lib/portfolio-service';
 import { Image } from '@/components/ui/image';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Header from '@/components/Header';
@@ -14,43 +14,19 @@ import { ScrollReveal } from '@/components/ScrollReveal';
 export default function PortfolioDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [project, setProject] = useState<Portfolio | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [allProjects, setAllProjects] = useState<Portfolio[]>([]);
+  const { portfolios, isLoading, loadPortfolioById } = usePortfolio();
+  const [project, setProject] = useState<PortfolioWithImages | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      try {
-        if (!id) return;
-
-        // Load all projects for navigation
-        const allData = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
-        setAllProjects(allData.items || []);
-
-        // Load specific project
-        const projectData = await BaseCrudService.getById<Portfolio>('portfolio', id);
-        setProject(projectData);
-        
-        // Preload gallery images
-        if (projectData?.mainImage) {
-          const img = new window.Image();
-          img.src = projectData.mainImage;
-        }
-        if (projectData?.galleryImage1) {
-          const img = new window.Image();
-          img.src = projectData.galleryImage1;
-        }
-      } catch (error) {
-        // Silently fail
-      } finally {
-        setIsLoading(false);
-      }
+      if (!id) return;
+      const projectData = await loadPortfolioById(id);
+      setProject(projectData);
     };
-
     loadData();
-  }, [id]);
+  }, [id, loadPortfolioById]);
 
   // Load image dimensions when selected image changes
   useEffect(() => {
@@ -96,15 +72,13 @@ export default function PortfolioDetailPage() {
     );
   }
 
-  const currentIndex = allProjects.findIndex((p) => p._id === id);
-  const prevProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
-  const nextProject = currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
+  const currentIndex = portfolios.findIndex((p) => p._id === id);
+  const prevProject = currentIndex > 0 ? portfolios[currentIndex - 1] : null;
+  const nextProject = currentIndex < portfolios.length - 1 ? portfolios[currentIndex + 1] : null;
 
   const galleryImages = [
     project.mainImage,
-    project.galleryImage1,
-    project.galleryImage2,
-    project.galleryImage3,
+    ...(project.images?.map((img) => img.imageUrl) || []),
   ].filter(Boolean);
 
   return (
