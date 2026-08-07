@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
+import { usePortfolio } from '@/hooks/usePortfolio';
 import { PortfolioImages } from '@/entities';
 import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
@@ -14,21 +14,28 @@ interface ImageWithAspectRatio extends PortfolioImages {
 }
 
 export default function PortfolioPage() {
+  const { portfolios, isLoading: portfoliosLoading } = usePortfolio();
   const [allImages, setAllImages] = useState<ImageWithAspectRatio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
-  // Fetch all images from portfolioimages collection
+  // Fetch all images from portfolios
   useEffect(() => {
     const fetchAllImages = async () => {
       setIsLoading(true);
       try {
-        const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
+        // Collect all images from all portfolios
+        const allPortfolioImages: PortfolioImages[] = [];
+        portfolios.forEach((portfolio) => {
+          if (portfolio.images && portfolio.images.length > 0) {
+            allPortfolioImages.push(...portfolio.images);
+          }
+        });
         
         // Load image dimensions and determine aspect ratios
         const imagesWithDimensions = await Promise.all(
-          (result.items || []).map(
+          allPortfolioImages.map(
             (image) =>
               new Promise<ImageWithAspectRatio>((resolve) => {
                 const img = new window.Image();
@@ -60,7 +67,7 @@ export default function PortfolioPage() {
     };
 
     fetchAllImages();
-  }, []);
+  }, [portfolios]);
 
   // Load image dimensions when selected image changes
   useEffect(() => {
@@ -147,10 +154,10 @@ export default function PortfolioPage() {
         {/* Page Header */}
         <ScrollReveal direction="up" duration={800} className="mb-20">
           <h1 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
-            All Photos
+            Portfolio
           </h1>
           <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
-            A comprehensive collection of {allImages.length} photography work showcasing precision and creative excellence.
+            A comprehensive collection of {allImages.length} photography work showcasing precision and creative excellence across {portfolios.length} projects.
           </p>
         </ScrollReveal>
 
@@ -178,20 +185,30 @@ export default function PortfolioPage() {
             className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10"
           >
             {allImages.map((image) => {
+              // Determine if image is portrait or landscape
+              const isPortrait = (image.aspectRatio || 1) < 1;
+              
               return (
                 <motion.div
                   key={image._id}
                   variants={itemVariants}
-                  className="relative overflow-hidden cursor-pointer group rounded-xl"
+                  className={`relative overflow-hidden cursor-pointer group rounded-xl ${
+                    isPortrait ? 'lg:col-span-1' : 'lg:col-span-1'
+                  }`}
                   onClick={() => {
                     playClickSound();
                     setSelectedImage(image.imageUrl || '');
                   }}
                 >
                   {/* Image with hover effect */}
-                  <div className="relative w-full h-full overflow-hidden bg-black/20 rounded-xl">
+                  <div 
+                    className="relative w-full overflow-hidden bg-black/20 rounded-xl"
+                    style={{
+                      aspectRatio: image.aspectRatio || 'auto',
+                    }}
+                  >
                     <Image
-                      src={image.imageUrl || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
+                      src={image.imageUrl || ''}
                       alt={image.altText || 'Portfolio image'}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       data-field-name="imageUrl"
@@ -214,7 +231,7 @@ export default function PortfolioPage() {
             className="text-center py-24"
           >
             <p className="text-base font-paragraph text-white/50 mb-8">
-              No images found yet
+              No portfolio projects with images yet. Create projects and add images in the admin panel.
             </p>
           </motion.div>
         )}
