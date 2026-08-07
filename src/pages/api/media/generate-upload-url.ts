@@ -29,27 +29,6 @@ const ALLOWED_TYPES = [
   'video/quicktime'
 ];
 
-function requireAdmin(request: Request): { valid: boolean; error?: string } {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { valid: false, error: 'Missing or invalid Authorization header' };
-  }
-
-  const token = authHeader.substring(7);
-  const expectedToken = readSecret('ADMIN_SESSION_TOKEN');
-  if (!expectedToken) {
-    console.error('[GENERATE_URL] ADMIN_SESSION_TOKEN not configured');
-    return { valid: false, error: 'Server configuration error' };
-  }
-
-  if (!constantTimeEqual(token, expectedToken)) {
-    console.warn('[SECURITY] Invalid admin token for generate-upload-url');
-    return { valid: false, error: 'Unauthorized' };
-  }
-
-  return { valid: true };
-}
-
 export const POST: APIRoute = async ({ request, cookies }) => {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
