@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import HomePageTab from './tabs/HomePageTab';
 import SplashpageTab from './tabs/SplashpageTab';
+import GalleryPhotoManager from './sections/GalleryPhotoManager';
 import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -11,6 +12,7 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'home', label: 'Home Page', icon: Home, enabled: true },
     { id: 'splashpage', label: 'Splash Page', icon: Image, enabled: true },
+    { id: 'gallery', label: 'Work Gallery', icon: Briefcase, enabled: true },
     { id: 'about', label: 'About Page', icon: FileText, enabled: false },
     { id: 'portfolio', label: 'Portfolio', icon: Briefcase, enabled: false },
     { id: 'services', label: 'Services', icon: Settings, enabled: false },
@@ -76,6 +78,10 @@ export default function AdminDashboard() {
 
               <TabsContent value="splashpage" className="m-0">
                 <SplashpageTab />
+              </TabsContent>
+
+              <TabsContent value="gallery" className="m-0">
+                <GalleryPhotoManager />
               </TabsContent>
 
               {/* Disabled tabs placeholder */}
