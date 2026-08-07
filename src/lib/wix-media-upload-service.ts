@@ -302,6 +302,32 @@ export async function uploadMedia(
 }
 
 /**
+ * Simple upload function for direct use in components
+ * Returns just the media URL string
+ */
+export async function uploadToWixMedia(
+  file: File,
+  kind: 'image' | 'music'
+): Promise<string> {
+  console.log(`[WIX_MEDIA] uploadToWixMedia - Starting ${kind} upload: ${file.name}`);
+
+  try {
+    // Request signed upload URL from backend
+    const { uploadUrl } = await generateUploadUrl(file, kind);
+    
+    // Upload file directly to Wix and get media URL
+    const mediaUrl = await uploadToWix(file, uploadUrl);
+    
+    console.log(`[WIX_MEDIA] uploadToWixMedia - Upload successful, returning URL: ${mediaUrl}`);
+    return mediaUrl;
+  } catch (error) {
+    console.error(`[WIX_MEDIA] uploadToWixMedia - Upload failed:`, error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to upload ${kind}: ${errorMsg}`);
+  }
+}
+
+/**
  * Import media from external URL
  */
 export async function importMediaFromUrl(

@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
-import { Trash2, Plus, GripVertical, Upload } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Upload, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { uploadToWixMedia } from '@/lib/wix-media-upload-service';
 
 interface ProjectFormData {
   projectName: string;
@@ -46,6 +47,8 @@ export default function PortfolioManager() {
     seoDescription: '',
   });
   const [draggedImage, setDraggedImage] = useState<string | null>(null);
+  const [uploadingImageIds, setUploadingImageIds] = useState<Set<string>>(new Set());
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreateProject = async () => {
@@ -122,6 +125,39 @@ export default function PortfolioManager() {
       });
     } catch (err) {
       console.error('Failed to add image:', err);
+      setUploadError(err instanceof Error ? err.message : 'Failed to add image');
+    }
+  };
+
+  const handleUploadImages = async (files: FileList | null) => {
+    if (!files || !selectedPortfolio) return;
+
+    setUploadError(null);
+    const uploadingIds = new Set<string>();
+
+    for (const file of Array.from(files)) {
+      const tempId = `temp-${Date.now()}-${Math.random()}`;
+      uploadingIds.add(tempId);
+      setUploadingImageIds((prev) => new Set([...prev, tempId]));
+
+      try {
+        console.log(`[Portfolio Manager] Uploading image: ${file.name}`);
+        const mediaUrl = await uploadToWixMedia(file, 'image');
+        console.log(`[Portfolio Manager] Upload successful, media URL: ${mediaUrl}`);
+        
+        await handleAddImage(mediaUrl);
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Upload failed';
+        console.error(`[Portfolio Manager] Upload failed for ${file.name}:`, err);
+        setUploadError(`Failed to upload ${file.name}: ${errorMsg}`);
+      } finally {
+        uploadingIds.delete(tempId);
+        setUploadingImageIds((prev) => {
+          const next = new Set(prev);
+          next.delete(tempId);
+          return next;
+        });
+      }
     }
   };
 
@@ -362,15 +398,30 @@ export default function PortfolioManager() {
           {/* Image Management */}
           {selectedPortfolio && (
             <div className="space-y-4 border-t pt-6">
+              {uploadError && (
+                <div className="rounded-lg bg-red-50 p-4 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-paragraph text-sm font-medium text-red-900">{uploadError}</p>
+                    <button
+                      onClick={() => setUploadError(null)}
+                      className="font-paragraph text-xs text-red-700 hover:text-red-900 mt-1"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <h4 className="font-heading font-bold">Project Images</h4>
                 <Button
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImageIds.size > 0}
                   className="flex items-center gap-2"
                 >
                   <Upload size={16} />
-                  Add Image
+                  {uploadingImageIds.size > 0 ? `Uploading (${uploadingImageIds.size})...` : 'Add Images'}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -379,17 +430,9 @@ export default function PortfolioManager() {
                   multiple
                   hidden
                   onChange={(e) => {
-                    // In a real implementation, upload to Wix Media and get URL
-                    // For now, just show placeholder
-                    Array.from(e.target.files || []).forEach((file) => {
-                      const reader = new FileReader();
-                      reader.onload = (event) => {
-                        if (event.target?.result) {
-                          handleAddImage(event.target.result as string);
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    });
+                    handleUploadImages(e.target.files);
+                    // Reset input so same file can be selected again
+                    e.target.value = '';
                   }}
                 />
               </div>
