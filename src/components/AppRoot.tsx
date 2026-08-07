@@ -53,6 +53,7 @@ export default function AppRoot() {
     const splashShown = sessionStorage.getItem('splashScreenShown') === 'true';
     if (splashShown) {
       setSplashComplete(true);
+      return;
     }
     
     // Check admin session on app load

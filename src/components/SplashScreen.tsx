@@ -64,7 +64,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   // Handle splash animation and completion
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible) {
+      return;
+    }
 
     // Hold splash for 1.5-2 seconds, then fade out
     const fadeOutTimer = setTimeout(() => {
@@ -84,7 +86,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     };
   }, [isVisible, onComplete]);
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   // Don't render if logo is still loading
   if (isLoadingLogo) {

@@ -41,7 +41,9 @@ export default function LogoSplash() {
 
   useEffect(() => {
     // Don't start timer until logo is loaded
-    if (isLoadingLogo) return;
+    if (isLoadingLogo) {
+      return;
+    }
 
     const timer = setTimeout(() => {
       setVisible(false);
