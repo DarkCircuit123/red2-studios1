@@ -12,7 +12,6 @@ import { ScrollReveal } from '@/components/ScrollReveal';
 export default function PortfolioPage() {
   const [allImages, setAllImages] = useState<PortfolioImages[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
@@ -34,14 +33,6 @@ export default function PortfolioPage() {
 
     fetchAllImages();
   }, []);
-
-  // Filter images by category
-  const filteredImages = selectedCategory
-    ? allImages.filter((img) => (img as any).category === selectedCategory)
-    : allImages;
-
-  // Get unique categories
-  const categories = Array.from(new Set(allImages.map((img) => (img as any).category).filter(Boolean)));
 
   // Load image dimensions when selected image changes
   useEffect(() => {
@@ -128,48 +119,19 @@ export default function PortfolioPage() {
             All Photos
           </h1>
           <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
-            A comprehensive collection of {filteredImages.length} photography work across various categories and styles. Each image represents precision and creative excellence.
+            A comprehensive collection of {allImages.length} photography work showcasing precision and creative excellence.
           </p>
         </ScrollReveal>
 
-        {/* Category Filter */}
-        {categories.length > 0 && (
-          <ScrollReveal direction="up" duration={800} className="mb-12 flex flex-wrap gap-3">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`px-6 py-2 rounded-lg font-paragraph text-sm transition-all ${
-                selectedCategory === null
-                  ? 'bg-white text-black'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              All ({allImages.length})
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-2 rounded-lg font-paragraph text-sm transition-all ${
-                  selectedCategory === category
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                {category} ({allImages.filter((img) => (img as any).category === category).length})
-              </button>
-            ))}
-          </ScrollReveal>
-        )}
-
-        {/* Images Grid - Photography-First with Mixed Aspect Ratios */}
+        {/* Images Grid - Larger placeholders with 2 columns */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max">
-            {Array(12)
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 auto-rows-max">
+            {Array(16)
               .fill(null)
               .map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white/5 animate-pulse min-h-[300px]"
+                  className="bg-white/5 animate-pulse min-h-[500px] md:min-h-[600px]"
                 />
               ))}
           </div>
@@ -178,24 +140,22 @@ export default function PortfolioPage() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max"
+            className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 auto-rows-max"
           >
-            {filteredImages.map((image, index) => (
+            {allImages.map((image) => (
               <motion.div
                 key={image._id}
                 variants={itemVariants}
                 onMouseEnter={() => setHoveredId(image._id)}
                 onMouseLeave={() => setHoveredId(null)}
-                className={`group relative overflow-hidden bg-white/5 cursor-pointer ${
-                  index === 0 ? 'md:col-span-2 md:row-span-2' : ''
-                }`}
+                className="group relative overflow-hidden bg-white/5 cursor-pointer"
                 onClick={() => {
                   playClickSound();
                   setSelectedImage(image.imageUrl || '');
                 }}
               >
                 {/* Photography-First Container - Preserves Aspect Ratio */}
-                <div className="relative w-full bg-black/30 overflow-hidden h-full">
+                <div className="relative w-full bg-black/30 overflow-hidden min-h-[500px] md:min-h-[600px]">
                   {/* Image */}
                   <Image
                     src={image.imageUrl || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
@@ -219,11 +179,6 @@ export default function PortfolioPage() {
                     className="absolute inset-0 flex flex-col items-end justify-end p-8"
                   >
                     <div className="text-right">
-                      {(image as any).category && (
-                        <p className="text-xs font-mono text-white/60 mb-3 uppercase tracking-widest">
-                          {(image as any).category}
-                        </p>
-                      )}
                       {image.caption && (
                         <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-4 tracking-tight">
                           {image.caption}
@@ -241,21 +196,15 @@ export default function PortfolioPage() {
         )}
 
         {/* Empty State */}
-        {!isLoading && filteredImages.length === 0 && (
+        {!isLoading && allImages.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-24"
           >
             <p className="text-base font-paragraph text-white/50 mb-8">
-              No images found in this category
+              No images found yet
             </p>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="inline-flex items-center gap-3 px-8 py-3.5 bg-white text-black font-heading font-semibold text-sm tracking-wide rounded-lg hover:bg-white/95 hover:shadow-lg hover:shadow-white/20 transition-all duration-300"
-            >
-              View All Photos
-            </button>
           </motion.div>
         )}
       </main>
