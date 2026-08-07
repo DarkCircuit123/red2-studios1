@@ -11,7 +11,6 @@ import { ScrollReveal } from '@/components/ScrollReveal';
 
 interface ImageWithAspectRatio extends PortfolioImages {
   aspectRatio?: number;
-  gridSpan?: 'vertical' | 'horizontal' | 'square';
 }
 
 export default function PortfolioPage() {
@@ -20,13 +19,6 @@ export default function PortfolioPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
-  // Determine grid span based on aspect ratio
-  const getGridSpan = (aspectRatio: number): 'vertical' | 'horizontal' | 'square' => {
-    if (aspectRatio < 0.8) return 'vertical'; // Portrait: taller than wide
-    if (aspectRatio > 1.3) return 'horizontal'; // Landscape: wider than tall
-    return 'square'; // Near square
-  };
-
   // Fetch all images from portfolioimages collection
   useEffect(() => {
     const fetchAllImages = async () => {
@@ -34,7 +26,7 @@ export default function PortfolioPage() {
       try {
         const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
         
-        // Load image dimensions and determine grid spans
+        // Load image dimensions and determine aspect ratios
         const imagesWithDimensions = await Promise.all(
           (result.items || []).map(
             (image) =>
@@ -45,14 +37,12 @@ export default function PortfolioPage() {
                   resolve({
                     ...image,
                     aspectRatio,
-                    gridSpan: getGridSpan(aspectRatio),
                   });
                 };
                 img.onerror = () => {
                   resolve({
                     ...image,
                     aspectRatio: 1,
-                    gridSpan: 'square',
                   });
                 };
                 img.src = image.imageUrl || '';
@@ -161,15 +151,16 @@ export default function PortfolioPage() {
           </p>
         </ScrollReveal>
 
-        {/* Images Grid - Masonry Layout with Vertical/Horizontal Mix */}
+        {/* Images Grid - True Masonry Layout with Mixed Orientations */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 auto-rows-max">
+          <div className="columns-1 md:columns-3 lg:columns-4 gap-6 md:gap-8 space-y-6 md:space-y-8">
             {Array(16)
               .fill(null)
               .map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white/5 animate-pulse min-h-[400px]"
+                  className="bg-white/5 animate-pulse break-inside-avoid rounded-lg"
+                  style={{ height: Math.random() * 300 + 200 }}
                 />
               ))}
           </div>
@@ -178,38 +169,30 @@ export default function PortfolioPage() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 auto-rows-max"
+            className="columns-1 md:columns-3 lg:columns-4 gap-6 md:gap-8 space-y-6 md:space-y-8"
           >
             {allImages.map((image) => {
-              // Determine column and row span based on aspect ratio
-              const isVertical = image.gridSpan === 'vertical';
-              const isHorizontal = image.gridSpan === 'horizontal';
-              
               return (
                 <motion.div
                   key={image._id}
                   variants={itemVariants}
-                  className={`relative overflow-hidden cursor-pointer group ${
-                    isVertical ? 'md:col-span-1 md:row-span-2' : isHorizontal ? 'md:col-span-2 md:row-span-1' : 'md:col-span-1'
-                  }`}
+                  className="relative overflow-hidden cursor-pointer group break-inside-avoid rounded-lg"
                   onClick={() => {
                     playClickSound();
                     setSelectedImage(image.imageUrl || '');
                   }}
                 >
                   {/* Image with hover effect */}
-                  <div className="relative w-full h-full overflow-hidden bg-black/20">
+                  <div className="relative w-full overflow-hidden bg-black/20 rounded-lg">
                     <Image
                       src={image.imageUrl || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
                       alt={image.altText || 'Portfolio image'}
-                      className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                        isVertical ? 'aspect-[3/4]' : isHorizontal ? 'aspect-[16/9]' : 'aspect-square'
-                      }`}
+                      className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
                       data-field-name="imageUrl"
                       data-record-id={image._id}
                     />
                     {/* Subtle overlay on hover */}
-                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300 rounded-lg" />
                   </div>
                 </motion.div>
               );
