@@ -4,7 +4,11 @@
  */
 
 // Re-export from editorial-motion-system for backward compatibility
-export { editorialMotionVariants } from './editorial-motion-system';
+export { 
+  editorialMotionVariants,
+  getEditorialVariant,
+  getStaggeredVariant,
+} from './editorial-motion-system';
 
 export const scrollAnimationVariants = {
   // Text elements: slide up with fade

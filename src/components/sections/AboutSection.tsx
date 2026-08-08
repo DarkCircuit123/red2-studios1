@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import FashionTicker from '@/components/FashionTicker';
 import { useEditorialMotion } from '@/hooks/useEditorialMotion';
 import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
-import { scrollAnimationVariants } from '@/lib/scroll-animation-variants';
+import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function AboutSection() {

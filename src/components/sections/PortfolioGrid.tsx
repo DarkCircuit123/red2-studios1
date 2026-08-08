@@ -7,6 +7,7 @@ import { Image } from '@/components/ui/image';
 import { playClickSound } from '@/lib/click-sound';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
+import { scrollAnimationVariants } from '@/lib/scroll-animation-variants';
 
 interface PortfolioGridProps {
   items: Portfolio[];

@@ -287,3 +287,36 @@ export const getMobileEditorialConfig = (config: any) => {
     detailsOffset: Math.ceil(config.detailsOffset * 0.75),
   };
 };
+
+/**
+ * Get editorial variant for a specific element type
+ * @param type - Type of element: 'image', 'heading', 'details', 'container', 'pageTransition', 'hoverLift'
+ */
+export const getEditorialVariant = (type: keyof typeof editorialMotionVariants) => {
+  return editorialMotionVariants[type] || editorialMotionVariants.container;
+};
+
+/**
+ * Get staggered variant for list items
+ * @param index - Index of the item
+ * @param baseDelay - Base delay in seconds (default: 0.1)
+ * @param staggerDelay - Delay between each item in seconds (default: 0.12)
+ */
+export const getStaggeredVariant = (
+  index: number,
+  baseDelay = 0.1,
+  staggerDelay = 0.12
+) => {
+  return {
+    hidden: { opacity: 0, y: 40 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.7,
+        delay: baseDelay + index * staggerDelay,
+        ease: editorialEasing.imageSettle,
+      },
+    },
+  };
+};
