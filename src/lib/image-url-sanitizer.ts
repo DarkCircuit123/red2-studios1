@@ -40,6 +40,17 @@ export function isBrokenUrl(url: string | null | undefined): boolean {
   
   const lowerUrl = url.toLowerCase().trim();
   
+  // CRITICAL: Accept wix:image:// URLs - they are valid Wix Media Manager references
+  // These will be resolved to static.wixstatic.com URLs by WixImageResolver
+  if (lowerUrl.startsWith('wix:image://v1/')) {
+    return false;
+  }
+  
+  // CRITICAL: Accept static.wixstatic.com URLs - these are valid Wix CDN URLs
+  if (lowerUrl.startsWith('https://static.wixstatic.com/')) {
+    return false;
+  }
+  
   // Check for known broken patterns (example.com is the primary trigger)
   if (BROKEN_URL_PATTERNS.some(pattern => lowerUrl.includes(pattern))) {
     return true;
@@ -73,6 +84,7 @@ export function hasValidImageExtension(url: string | null | undefined): boolean 
  * Sanitize a single image URL
  * Returns the URL if valid, null if broken
  * Allows external URLs for specific collections (e.g., storiesinsights)
+ * CRITICAL: Preserves wix:image:// URLs for resolution by WixImageResolver
  */
 export function sanitizeImageUrl(url: string | null | undefined, collectionId?: string): string | null {
   if (!url) return null;
@@ -88,10 +100,12 @@ export function sanitizeImageUrl(url: string | null | undefined, collectionId?: 
   }
   
   // For other collections, validate Wix format or allow external URLs
-  const isWixUrl = url.includes('wixstatic.com') || url.includes('wix:image://');
+  // CRITICAL: Include both wix:image:// and static.wixstatic.com URLs - these are valid Wix Media Manager references
+  const isWixImageUrl = url.includes('wix:image://v1/');
+  const isWixStaticUrl = url.includes('static.wixstatic.com');
   const isExternalUrl = url.startsWith('http://') || url.startsWith('https://');
   
-  if (isWixUrl || isExternalUrl) {
+  if (isWixImageUrl || isWixStaticUrl || isExternalUrl) {
     return url;
   }
   
