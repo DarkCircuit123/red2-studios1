@@ -32,6 +32,7 @@ const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage').catch(() =>
 const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const UploadTestPage = lazy(() => import('./pages/UploadTestPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const AuditPlaceholderDataPage = lazy(() => import('./pages/AuditPlaceholderDataPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const DataCleanupVerificationPage = lazy(() => import('./pages/DataCleanupVerificationPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
@@ -262,6 +263,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<div />}>
             <AuditPlaceholderDataPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "data-cleanup-verification",
+        element: (
+          <Suspense fallback={<div />}>
+            <DataCleanupVerificationPage />
           </Suspense>
         ),
       },
