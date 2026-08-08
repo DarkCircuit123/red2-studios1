@@ -88,10 +88,10 @@ class WixImageResolver {
         }
         
         // Build static.wixstatic.com URL
-        // Format: https://static.wixstatic.com/media/{mediaId}~mv2/{filename}#{params}
+        // Format: https://static.wixstatic.com/media/{mediaId}~mv2/{filename}?{params}
         let staticUrl = `https://static.wixstatic.com/media/${mediaId}~mv2/${filename}`;
         if (hashPart) {
-          staticUrl += `#${hashPart}`;
+          staticUrl += `?${hashPart}`;
         }
         
         if (IS_DEVELOPMENT) {
