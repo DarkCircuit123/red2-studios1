@@ -18,7 +18,7 @@ export const CSP_HEADERS = {
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com",
     "script-src-elem 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com",
-    "img-src 'self' data: https: blob: wix:image:// https://static.parastorage.com https://*.parastorage.com",
+    "img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com",
     "font-src 'self' https://fonts.gstatic.com data: https://static.parastorage.com https://*.parastorage.com",
     "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com ws: wss:",
     "frame-ancestors 'none'",

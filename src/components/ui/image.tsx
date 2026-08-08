@@ -49,7 +49,26 @@ const getImageData = (url: string): ImageData | undefined => {
 
   const normalizedUrl = resolved.url;
 
-  // wix:image://v1/${uri}/${filename}#originWidth=${width}&originHeight=${height}
+  // Check for static.wixstatic.com format (converted from wix:image:// or native)
+  if (normalizedUrl.startsWith('https://static.wixstatic.com/')) {
+    try {
+      const urlObj = new URL(normalizedUrl)
+      if (urlObj.searchParams.get('originWidth') && urlObj.searchParams.get('originHeight')) {
+        const uri = urlObj.pathname.split('/').slice(2).join('/')
+        const width = parseInt(urlObj.searchParams.get('originWidth') || '0', 10)
+        const height = parseInt(urlObj.searchParams.get('originHeight') || '0', 10)
+        if (width > 0 && height > 0) {
+          return { id: uri, width, height }
+        }
+      }
+    } catch (error) {
+      console.error('[Image] Failed to parse static.wixstatic.com URL:', error);
+      return undefined;
+    }
+  }
+  
+  // Legacy: wix:image://v1/${uri}/${filename}#originWidth=${width}&originHeight=${height}
+  // (should not reach here due to WixImageResolver conversion, but kept for safety)
   const wixImagePrefix = 'wix:image://v1/'
   if (normalizedUrl.startsWith(wixImagePrefix)) {
     const uri = normalizedUrl.replace(wixImagePrefix, '').split('#')[0].split('/')[0]
