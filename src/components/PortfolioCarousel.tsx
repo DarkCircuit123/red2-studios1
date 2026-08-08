@@ -256,10 +256,17 @@ export default function PortfolioCarousel({ images, isLoading = false }: Portfol
         </motion.div>
       </div>
 
-      {/* Collage Grid Layout - Dynamic based on image count */}
+      {/* Collage Grid Layout - Masonry with explicit vertical/horizontal crops */}
       <div className="mt-12 w-full">
         <h3 className="text-lg font-heading font-semibold text-white mb-6">Gallery Collage</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-max">
+        <div 
+          className="grid gap-4 md:gap-6 w-full"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridAutoRows: '280px',
+            gridAutoFlow: 'dense',
+          }}
+        >
           {images.map((image, index) => {
             const isVertical = image.gridSpan === 'vertical';
             const isHorizontal = image.gridSpan === 'horizontal';
@@ -270,28 +277,34 @@ export default function PortfolioCarousel({ images, isLoading = false }: Portfol
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.05 }}
-                className={`relative overflow-hidden cursor-pointer group rounded-lg ${
-                  isVertical ? 'md:col-span-1 md:row-span-2' : isHorizontal ? 'md:col-span-2 md:row-span-1' : 'md:col-span-1'
+                className={`relative overflow-hidden cursor-pointer group rounded-lg bg-black/20 ${
+                  isVertical ? 'md:col-span-1 md:row-span-2' : isHorizontal ? 'md:col-span-2 md:row-span-1' : 'md:col-span-1 md:row-span-1'
                 }`}
                 onClick={() => {
                   playClickSound();
                   setSelectedImage(image.image || '');
                 }}
               >
-                {/* Image with hover effect */}
-                <div className="relative w-full h-full overflow-hidden bg-black/20">
-                  <Image
-                    src={image.image || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
-                    alt={image.altText || 'Portfolio image'}
-                    className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                      isVertical ? 'aspect-[3/4]' : isHorizontal ? 'aspect-[16/9]' : 'aspect-square'
-                    }`}
-                    data-field-name="image"
-                    data-record-id={image._id}
-                  />
-                  {/* Subtle overlay on hover */}
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
-                </div>
+                {/* Image with cover fit to maintain crop orientation */}
+                <Image
+                  src={image.image || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
+                  alt={image.altText || 'Portfolio image'}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  style={{
+                    objectPosition: 'center',
+                  }}
+                  data-field-name="image"
+                  data-record-id={image._id}
+                />
+                {/* Gradient overlay on hover */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-br from-white/0 via-transparent to-black/40"
+                  initial={{ opacity: 0 }}
+                  whileHover={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+                {/* Subtle overlay on hover */}
+                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
               </motion.div>
             );
           })}
