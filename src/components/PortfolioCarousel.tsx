@@ -173,8 +173,8 @@ export default function PortfolioCarousel({ images, isLoading = false }: Portfol
                 transition={{ duration: 0.5, delay: index * 0.05 }}
                 className="flex-shrink-0 cursor-pointer group relative overflow-hidden rounded-lg"
                 style={{
-                  width: isHorizontal ? '500px' : isVertical ? '280px' : '350px',
-                  height: isVertical ? '420px' : isHorizontal ? '280px' : '350px',
+                  width: isHorizontal ? '800px' : isVertical ? '420px' : '550px',
+                  height: isVertical ? '700px' : isHorizontal ? '420px' : '550px',
                 }}
                 onClick={() => {
                   playClickSound();
