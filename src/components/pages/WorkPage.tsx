@@ -7,6 +7,7 @@ import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
+import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
 
 interface ImageWithLayout extends PortfolioImages {
   layoutSize: 'small' | 'medium' | 'large';
@@ -29,15 +30,33 @@ export default function WorkPage() {
         const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
         const allImages = result.items || [];
         
-        // Filter out items with broken/placeholder URLs
-        const validImages = allImages.filter(image => {
-          // Skip items with example.com or other placeholder URLs
-          if (image.imageUrl?.includes('example.com')) {
-            console.warn('Skipping image with broken placeholder URL:', image.imageUrl);
-            return false;
-          }
-          return !!image.imageUrl;
-        });
+        // Filter out items with broken/placeholder URLs using sanitizer
+        const validImages = filterValidImages(allImages, 'imageUrl');
+        
+        // Generate and log sanitization report
+        const report = generateSanitizationReport(
+          allImages.length,
+          validImages.length,
+          allImages
+            .filter(img => !validImages.find(v => v._id === img._id))
+            .map(img => img.imageUrl || 'unknown')
+        );
+        
+        if (report.removed > 0) {
+          console.info(
+            `[WorkPage] Image Sanitization Report:\n` +
+            `  Original: ${report.originalCount}\n` +
+            `  Valid: ${report.sanitizedCount}\n` +
+            `  Removed: ${report.removed} (${report.percentageRemoved.toFixed(1)}%)`
+          );
+          // Store report for display in status component
+          sessionStorage.setItem('imageSanitizationReport', JSON.stringify({
+            originalCount: report.originalCount,
+            sanitizedCount: report.sanitizedCount,
+            removed: report.removed,
+            percentageRemoved: report.percentageRemoved,
+          }));
+        }
         
         // Assign artful layout sizes and orientations
         const layoutImages: ImageWithLayout[] = validImages.map((img, index) => {
