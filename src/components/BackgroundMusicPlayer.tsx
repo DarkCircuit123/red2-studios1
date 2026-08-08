@@ -51,9 +51,18 @@ export default function BackgroundMusicPlayer() {
     if (!audioRef.current || musicTracks.length === 0) return;
 
     const currentTrack = musicTracks[currentTrackIndex];
-    if (!currentTrack?.musicUrl) return;
+    if (!currentTrack?.musicUrl) {
+      console.warn('[BackgroundMusicPlayer] Track URL missing for index', currentTrackIndex);
+      return;
+    }
 
-    // Always call load() when the source changes, regardless of readyState
+    console.log('[BackgroundMusicPlayer] Track URL:', currentTrack.musicUrl);
+    
+    // Update the audio src attribute
+    audioRef.current.src = currentTrack.musicUrl;
+    console.log('[BackgroundMusicPlayer] Audio src set to:', audioRef.current.src);
+    
+    // Always call load() when the source changes
     // This ensures the audio element reloads the source correctly
     audioRef.current.load();
 
@@ -61,10 +70,14 @@ export default function BackgroundMusicPlayer() {
     if (isPlaying) {
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // Playback failed, set error state
-          setAudioError(true);
-        });
+        playPromise
+          .then(() => {
+            console.log('[BackgroundMusicPlayer] Play resumed after track change');
+          })
+          .catch((error) => {
+            console.warn('[BackgroundMusicPlayer] Play failed after track change:', error);
+            setAudioError(true);
+          });
       }
     }
   }, [currentTrackIndex, musicTracks]);
@@ -73,43 +86,47 @@ export default function BackgroundMusicPlayer() {
   useEffect(() => {
     if (isLoadingSettings || musicTracks.length === 0 || !audioRef.current) return;
 
-    const attemptAutoplay = async () => {
-      try {
-        // Always load the audio element to ensure it's ready
-        audioRef.current!.load();
-        
-        // Attempt to play immediately
-        const playPromise = audioRef.current!.play();
-        if (playPromise !== undefined) {
-          await playPromise;
+    const currentTrack = musicTracks[currentTrackIndex];
+    if (!currentTrack?.musicUrl) return;
+
+    // Set the audio source
+    audioRef.current.src = currentTrack.musicUrl;
+    audioRef.current.load();
+
+    // Attempt to play immediately
+    const playPromise = audioRef.current.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log('[BackgroundMusicPlayer] Autoplay succeeded');
           setIsPlaying(true);
           setAudioError(false);
           setHasInteracted(true);
-        }
-      } catch (err) {
-        // Autoplay was blocked, will retry on first user interaction
-        // Silently fail - don't log errors
-      }
-    };
-
-    // Try autoplay immediately
-    attemptAutoplay();
+        })
+        .catch((err) => {
+          // Autoplay was blocked by browser policy - expected behavior
+          console.log('[BackgroundMusicPlayer] Autoplay blocked by browser (expected)');
+          setHasInteracted(false);
+        });
+    }
 
     // Fallback: Listen for user interaction to retry playback if autoplay failed
-    const handleUserInteraction = async () => {
+    const handleUserInteraction = () => {
       if (!hasInteracted && audioRef.current && !isPlaying) {
         setHasInteracted(true);
         
-        try {
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            await playPromise;
-            setIsPlaying(true);
-            setAudioError(false);
-          }
-        } catch (err) {
-          // Silently fail - don't log errors
-          setAudioError(true);
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('[BackgroundMusicPlayer] Play succeeded after user interaction');
+              setIsPlaying(true);
+              setAudioError(false);
+            })
+            .catch((err) => {
+              console.warn('[BackgroundMusicPlayer] Play failed after user interaction:', err);
+              setAudioError(true);
+            });
         }
       }
     };
@@ -126,7 +143,7 @@ export default function BackgroundMusicPlayer() {
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [isLoadingSettings, musicTracks.length, isPlaying, hasInteracted]);
+  }, [isLoadingSettings, musicTracks.length, currentTrackIndex, isPlaying, hasInteracted]);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -136,13 +153,20 @@ export default function BackgroundMusicPlayer() {
       
       // If unmuting and not playing, try to play
       if (!newMutedState && !isPlaying && musicTracks.length > 0) {
-        // Call play() directly in synchronous execution path
+        // Call play() directly in synchronous execution path from the click event
         const playPromise = audioRef.current.play();
-        // Handle the returned promise only for error catching
-        playPromise?.catch((error) => {
-          console.warn('[BackgroundMusicPlayer] Playback failed:', error);
-          setAudioError(true);
-        });
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('[BackgroundMusicPlayer] Play succeeded from mute toggle');
+              setIsPlaying(true);
+              setAudioError(false);
+            })
+            .catch((error) => {
+              console.warn('[BackgroundMusicPlayer] Play failed from mute toggle:', error);
+              setAudioError(true);
+            });
+        }
       }
     }
   };
@@ -159,8 +183,13 @@ export default function BackgroundMusicPlayer() {
   const handleAudioError = (event: Event) => {
     const audio = event.target as HTMLAudioElement;
     const errorCode = audio.error?.code;
+    const errorMessage = audio.error?.message || 'Unknown error';
     
-    // Silently fail - don't log errors for audio playback
+    console.warn('[BackgroundMusicPlayer] Audio error:', {
+      code: errorCode,
+      message: errorMessage,
+      src: audio.src
+    });
     setAudioError(true);
   };
 
