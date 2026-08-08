@@ -10,15 +10,17 @@
 // - Allows wixapis.com and wix.com for Wix API calls
 // - Allows unsafe-eval for dynamic script evaluation
 // - Includes script-src-elem for explicit script element loading
+// - Removed Google Maps (not used in project)
+// - Removed FullStory (not used in project)
 export const CSP_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://maps.googleapis.com https://maps.gstatic.com https://*.wixapis.com https://*.wix.com",
-    "script-src-elem 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://maps.googleapis.com https://maps.gstatic.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com",
+    "script-src-elem 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com",
-    "img-src 'self' data: https: blob: wix:image https://static.parastorage.com https://*.parastorage.com",
+    "img-src 'self' data: https: blob: wix:image:// https://static.parastorage.com https://*.parastorage.com",
     "font-src 'self' https://fonts.gstatic.com data: https://static.parastorage.com https://*.parastorage.com",
-    "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com https://maps.googleapis.com ws: wss:",
+    "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com ws: wss:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
