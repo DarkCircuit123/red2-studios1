@@ -46,16 +46,37 @@ export default function BackgroundMusicPlayer() {
     }
   }, [volume]);
 
+  // Handle track changes - reload audio source whenever currentTrack.musicUrl changes
+  useEffect(() => {
+    if (!audioRef.current || musicTracks.length === 0) return;
+
+    const currentTrack = musicTracks[currentTrackIndex];
+    if (!currentTrack?.musicUrl) return;
+
+    // Always call load() when the source changes, regardless of readyState
+    // This ensures the audio element reloads the source correctly
+    audioRef.current.load();
+
+    // If already playing, attempt to resume playback with new track
+    if (isPlaying) {
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Playback failed, set error state
+          setAudioError(true);
+        });
+      }
+    }
+  }, [currentTrackIndex, musicTracks]);
+
   // Attempt to autoplay music on site load
   useEffect(() => {
     if (isLoadingSettings || musicTracks.length === 0 || !audioRef.current) return;
 
     const attemptAutoplay = async () => {
       try {
-        // Ensure audio element is ready
-        if (audioRef.current!.readyState === 0) {
-          audioRef.current!.load();
-        }
+        // Always load the audio element to ensure it's ready
+        audioRef.current!.load();
         
         // Attempt to play immediately
         const playPromise = audioRef.current!.play();
