@@ -48,7 +48,7 @@ export const getCurrentMember = async (): Promise<Member | null> => {
     if (isExpectedAuthError(error)) {
       // Expected - no member logged in, return null silently
       // This is normal for anonymous/unauthenticated visitors
-      console.log('[MEMBER SERVICE] Expected auth error (no session)');
+      // Suppress the console.log to reduce noise during initial auth check
       return null;
     }
 
