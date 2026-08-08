@@ -3,6 +3,9 @@
  * Designed for luxury editorial aesthetic with smooth, intentional motion
  */
 
+// Re-export from editorial-motion-system for backward compatibility
+export { editorialMotionVariants } from './editorial-motion-system';
+
 export const scrollAnimationVariants = {
   // Text elements: slide up with fade
   textSlideUp: {

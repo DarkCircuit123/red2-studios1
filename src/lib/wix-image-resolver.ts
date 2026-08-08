@@ -74,14 +74,28 @@ class WixImageResolver {
         // Extract the media ID and filename from wix:image://v1/{id}/{filename}#{params}
         const urlWithoutProtocol = trimmedUrl.replace('wix:image://v1/', '');
         const [pathPart, hashPart] = urlWithoutProtocol.split('#');
-        const [mediaId, ...filenameParts] = pathPart.split('/');
-        const filename = filenameParts.join('/');
+        
+        // Handle both formats:
+        // 1. {mediaId}/{filename} - standard format
+        // 2. {mediaId}~mv2/{filename} - already has ~mv2
+        const parts = pathPart.split('/');
+        let mediaId = parts[0];
+        let filename = parts.slice(1).join('/');
+        
+        // If mediaId already contains ~mv2, extract just the ID
+        if (mediaId.includes('~mv2')) {
+          mediaId = mediaId.replace('~mv2', '');
+        }
         
         // Build static.wixstatic.com URL
         // Format: https://static.wixstatic.com/media/{mediaId}~mv2/{filename}#{params}
         let staticUrl = `https://static.wixstatic.com/media/${mediaId}~mv2/${filename}`;
         if (hashPart) {
           staticUrl += `#${hashPart}`;
+        }
+        
+        if (IS_DEVELOPMENT) {
+          console.debug(`[WixImageResolver] Converted wix:image:// URL: ${trimmedUrl} -> ${staticUrl}`);
         }
         
         return {
