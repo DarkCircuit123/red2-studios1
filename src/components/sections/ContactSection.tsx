@@ -2,8 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
+import { useEditorialMotion } from '@/hooks/useEditorialMotion';
+import { editorialMotionVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { BaseCrudService } from '@/integrations';
 

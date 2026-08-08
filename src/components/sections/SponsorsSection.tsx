@@ -3,13 +3,13 @@ import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 import { ClientsPress } from '@/entities/index';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
+import { useEditorialMotion } from '@/hooks/useEditorialMotion';
+import { editorialMotionVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 
 export default function SponsorsSection() {
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
+  const { ref: sectionRef, isVisible: sectionVisible } = useEditorialMotion({ triggerOnce: true });
 
   useEffect(() => {
     const loadSponsors = async () => {
@@ -38,7 +38,7 @@ export default function SponsorsSection() {
         <motion.div
           initial="hidden"
           animate={sectionVisible ? "visible" : "hidden"}
-          variants={scrollAnimationVariants.headingSlideUp}
+          variants={editorialMotionVariants.headingSlideUp}
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-heading font-bold text-white mb-6 tracking-tight">
@@ -47,7 +47,7 @@ export default function SponsorsSection() {
           <motion.p
             initial="hidden"
             animate={sectionVisible ? "visible" : "hidden"}
-            variants={scrollAnimationVariants.textSlideUp}
+            variants={editorialMotionVariants.textSlideUp}
             transition={{ delay: 0.15 }}
             className="text-sm md:text-base text-white/60 max-w-2xl mx-auto font-mono"
           >
@@ -59,7 +59,7 @@ export default function SponsorsSection() {
         <motion.div
           initial="hidden"
           animate={sectionVisible ? "visible" : "hidden"}
-          variants={scrollAnimationVariants.containerStagger}
+          variants={editorialMotionVariants.container}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
         >
           {isLoading ? (

@@ -4,6 +4,8 @@ import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities';
+import { useEditorialMotion } from '@/hooks/useEditorialMotion';
+import { editorialMotionVariants } from '@/lib/editorial-motion-system';
 
 interface CarouselImage {
   id: string;
@@ -297,21 +299,26 @@ const RubberBandCarouselSection: React.FC = () => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Carousel container */}
+      {/* Carousel container with editorial motion */}
       <motion.div
         className="flex h-full"
         style={{
           x: -scrollPosition,
           gap: '8px',
         }}
+        initial="hidden"
+        whileInView="visible"
+        variants={editorialMotionVariants.container}
+        viewport={{ once: true, margin: '-50px' }}
       >
         {duplicatedImages.map((image, index) => (
-          <div
+          <motion.div
             key={`${image.id}-${index}`}
             className="flex-shrink-0 w-screen h-full"
+            variants={editorialMotionVariants.image}
           >
             <CarouselImageCard image={image} />
-          </div>
+          </motion.div>
         ))}
       </motion.div>
 
