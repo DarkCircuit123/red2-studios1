@@ -4,7 +4,6 @@ import { Card } from '@/components/ui/card';
 import HomePageTab from './tabs/HomePageTab';
 import SplashpageTab from './tabs/SplashpageTab';
 import GalleryPhotoManager from './sections/GalleryPhotoManager';
-import PortfolioManager from './sections/PortfolioManager';
 import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -14,8 +13,8 @@ export default function AdminDashboard() {
     { id: 'home', label: 'Home Page', icon: Home, enabled: true },
     { id: 'splashpage', label: 'Splash Page', icon: Image, enabled: true },
     { id: 'gallery', label: 'Work Gallery', icon: Briefcase, enabled: true },
-    { id: 'portfolio', label: 'Portfolio Projects', icon: Briefcase, enabled: true },
     { id: 'about', label: 'About Page', icon: FileText, enabled: false },
+    { id: 'portfolio', label: 'Portfolio', icon: Briefcase, enabled: false },
     { id: 'services', label: 'Services', icon: Settings, enabled: false },
     { id: 'booking', label: 'Booking', icon: Calendar, enabled: false },
     { id: 'contact', label: 'Contact', icon: Mail, enabled: false },
@@ -85,12 +84,8 @@ export default function AdminDashboard() {
                 <GalleryPhotoManager />
               </TabsContent>
 
-              <TabsContent value="portfolio" className="m-0">
-                <PortfolioManager />
-              </TabsContent>
-
               {/* Disabled tabs placeholder */}
-              {['about', 'services', 'booking', 'contact', 'settings'].map((tabId) => (
+              {['about', 'portfolio', 'services', 'booking', 'contact', 'settings'].map((tabId) => (
                 <TabsContent key={tabId} value={tabId} className="m-0">
                   <div className="text-center py-12">
                     <p className="text-slate-500">This tab is coming soon.</p>
