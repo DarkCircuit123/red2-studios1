@@ -75,11 +75,12 @@ export default function PortfolioPage() {
           )
         );
         
-        // Filter out images that failed to load (fallback images)
-        const validImages = imagesWithDimensions.filter(img => !img.image.includes('12d367_4f26ccd17f8f4e3a8958306ea08c2332'));
+        // Use all images - do NOT filter out valid images
+        // WixImageResolver handles all URL resolution and validation
+        const validImages = imagesWithDimensions;
         
         console.info(
-          `[PortfolioPage] Successfully loaded ${validImages.length} of ${allItems.length} portfolio images`
+          `[PortfolioPage] Successfully loaded ${validImages.length} portfolio images`
         );
         
         setAllImages(validImages);
