@@ -9,8 +9,8 @@ export const Head = () => {
       <meta name="referrer" content="strict-origin-when-cross-origin" />
       <meta httpEquiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
       
-      {/* Content Security Policy - Allows fonts from parastorage, images from wix:image protocol */}
-      <meta httpEquiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: wix:image; font-src 'self' https://fonts.gstatic.com https://static.parastorage.com; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" />
+      {/* Content Security Policy - Comprehensive policy for Wix platform integration */}
+      <meta httpEquiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://maps.googleapis.com https://maps.gstatic.com https://*.wixapis.com https://*.wix.com; script-src-elem 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://maps.googleapis.com https://maps.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com; img-src 'self' data: https: blob: wix:image https://static.parastorage.com https://*.parastorage.com; font-src 'self' https://fonts.gstatic.com data: https://static.parastorage.com https://*.parastorage.com; connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com https://maps.googleapis.com ws: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" />
       
       {/* Preconnect to external resources */}
       <link rel="preconnect" href="https://static.parastorage.com" />

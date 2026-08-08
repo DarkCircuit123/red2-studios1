@@ -1,24 +1,27 @@
 /**
- * CSP Configuration Fix for Google Maps and External APIs
+ * CSP Configuration Fix for Wix Platform Integration
  * This file provides the corrected Content Security Policy settings
  * 
  * CRITICAL FIXES:
- * - Added 'wix:image://' to img-src to allow Wix Media Manager image rendering
- * - Added 'https://static.parastorage.com' to script-src for framewire script injection
+ * - Added 'wix:image' to img-src to allow Wix Media Manager image rendering
+ * - Added 'https://static.parastorage.com' and '*.parastorage.com' to script-src for framewire script injection
  * - Added 'blob:' to img-src for blob URL support
  * - Added 'script-src-elem' for explicit script element loading
  * - Added 'unsafe-eval' for dynamic script evaluation
  * - Added 'wss:' for WebSocket connections
+ * - Added 'https://*.wixapis.com' and 'https://*.wix.com' for Wix API calls
+ * - Added 'https://maps.gstatic.com' for Google Maps static resources
+ * - Added 'https://*.wix-code.com' for Wix Code integration
  */
 
 export const CSP_DIRECTIVES = {
   'default-src': ["'self'"],
-  'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://static.parastorage.com', 'https://static.wixstatic.com'],
-  'script-src-elem': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://static.parastorage.com', 'https://static.wixstatic.com'],
-  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://static.parastorage.com'],
-  'img-src': ["'self'", 'data:', 'https:', 'blob:', 'wix:image://', 'https://static.parastorage.com'],
-  'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:', 'https://static.parastorage.com'],
-  'connect-src': ["'self'", 'https:', 'wss:', 'https://maps.googleapis.com'],
+  'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://static.parastorage.com', 'https://*.parastorage.com', 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://*.wixapis.com', 'https://*.wix.com'],
+  'script-src-elem': ["'self'", "'unsafe-inline'", 'https://static.parastorage.com', 'https://*.parastorage.com', 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://maps.gstatic.com'],
+  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://static.parastorage.com', 'https://*.parastorage.com'],
+  'img-src': ["'self'", 'data:', 'https:', 'blob:', 'wix:image', 'https://static.parastorage.com', 'https://*.parastorage.com'],
+  'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:', 'https://static.parastorage.com', 'https://*.parastorage.com'],
+  'connect-src': ["'self'", 'https://*.wixapis.com', 'https://*.wix.com', 'https://*.parastorage.com', 'https://*.wix-code.com', 'https://maps.googleapis.com', 'ws:', 'wss:'],
   'frame-ancestors': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"],

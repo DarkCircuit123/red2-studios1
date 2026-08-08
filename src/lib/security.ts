@@ -4,17 +4,21 @@
  */
 
 // Content Security Policy helper
-// CRITICAL: Allows wix:image:// protocol for Wix Media Manager images
-// and https://static.parastorage.com for framewire script injection
+// CRITICAL: Comprehensive policy for Wix platform integration
+// - Allows wix:image:// protocol for Wix Media Manager images
+// - Allows https://static.parastorage.com and *.parastorage.com for framewire script injection
+// - Allows wixapis.com and wix.com for Wix API calls
+// - Allows unsafe-eval for dynamic script evaluation
+// - Includes script-src-elem for explicit script element loading
 export const CSP_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.wixstatic.com https://static.parastorage.com https://maps.googleapis.com",
-    "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.wixstatic.com https://static.parastorage.com https://maps.googleapis.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com",
-    "img-src 'self' data: https: blob: wix:image:// https://static.parastorage.com",
-    "font-src 'self' https://fonts.gstatic.com data: https://static.parastorage.com",
-    "connect-src 'self' https: wss:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://maps.googleapis.com https://maps.gstatic.com https://*.wixapis.com https://*.wix.com",
+    "script-src-elem 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://maps.googleapis.com https://maps.gstatic.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com",
+    "img-src 'self' data: https: blob: wix:image https://static.parastorage.com https://*.parastorage.com",
+    "font-src 'self' https://fonts.gstatic.com data: https://static.parastorage.com https://*.parastorage.com",
+    "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com https://maps.googleapis.com ws: wss:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
