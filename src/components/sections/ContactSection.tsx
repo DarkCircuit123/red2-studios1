@@ -23,7 +23,7 @@ export default function ContactSection() {
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
   const maxRetriesRef = useRef(3);
-  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
+  const { ref: sectionRef, isVisible: sectionVisible } = useEditorialMotion({ triggerOnce: true });
 
   const loadContactBackground = async () => {
     try {

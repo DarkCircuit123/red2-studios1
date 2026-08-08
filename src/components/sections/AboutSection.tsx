@@ -4,8 +4,9 @@ import { AboutSection as AboutSectionType } from '@/entities/index';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import FashionTicker from '@/components/FashionTicker';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { useEditorialMotion } from '@/hooks/useEditorialMotion';
 import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
+import { scrollAnimationVariants } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function AboutSection() {
@@ -16,7 +17,7 @@ export default function AboutSection() {
   const fetchedRef = useRef(false);
   const retryCountRef = useRef(0);
   const maxRetriesRef = useRef(3);
-  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
+  const { ref: sectionRef, isVisible: sectionVisible } = useEditorialMotion({ triggerOnce: true });
 
   const loadAboutData = async () => {
     try {
