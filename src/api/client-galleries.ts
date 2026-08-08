@@ -4,6 +4,10 @@ import { BaseCrudService } from '@/integrations';
  * Server-side gallery filtering endpoint
  * SECURITY: Filters galleries by client email on the server
  * This prevents exposing all galleries to the client
+ * 
+ * NOTE: If you encounter WDE0027 (permission denied), ensure the clientgalleries
+ * collection has read permissions enabled in the Wix Dashboard, or use a backend
+ * function with auth.elevate() for elevated permissions.
  */
 export async function getClientGalleries(clientEmail: string, limit: number = 12, skip: number = 0) {
   try {

@@ -548,14 +548,14 @@ export interface PortfolioImages {
   _updatedDate?: Date;
   /** @wixFieldType text */
   portfolioItemId?: string;
-  /** @wixFieldType url */
-  imageUrl?: string;
   /** @wixFieldType number */
   displayOrder?: number;
   /** @wixFieldType text */
   caption?: string;
   /** @wixFieldType text */
   altText?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  image?: string;
 }
 
 
