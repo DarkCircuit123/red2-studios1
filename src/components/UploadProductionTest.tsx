@@ -133,7 +133,7 @@ export default function UploadProductionTest() {
       const startGenerate = Date.now();
       addLog('info', 'Sending request to /api/media/generate-upload-url', {
         fileName: testFile.name,
-        mimeType: testFile.type
+        fileType: testFile.type
       });
 
       const generateResponse = await fetch('/api/media/generate-upload-url', {
@@ -141,7 +141,7 @@ export default function UploadProductionTest() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fileName: testFile.name,
-          mimeType: testFile.type,
+          fileType: testFile.type,
           kind: 'image'
         })
       });

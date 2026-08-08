@@ -114,7 +114,7 @@ export async function runUploadTest(): Promise<UploadTestResult> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         fileName: testFile.fileName,
-        mimeType: testFile.mimeType,
+        fileType: testFile.mimeType,
         kind: 'image'
       })
     });
