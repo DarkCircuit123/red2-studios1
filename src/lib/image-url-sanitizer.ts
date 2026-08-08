@@ -4,7 +4,7 @@
  */
 
 const BROKEN_URL_PATTERNS = [
-  'example.com',
+  'example.com', // Primary trigger for deletion
   'placeholder',
   'localhost',
   '127.0.0.1',
@@ -18,6 +18,21 @@ const BROKEN_URL_PATTERNS = [
 const VALID_WIX_PLACEHOLDER = 'https://static.wixstatic.com/media/12d367_71ebdd7141d041e4be3d91d80d4578dd~mv2.png';
 
 /**
+ * Extract file extension from URL, ignoring query parameters
+ */
+function getFileExtension(url: string): string {
+  try {
+    // Remove query parameters first
+    const urlWithoutQuery = url.split('?')[0];
+    const lastDot = urlWithoutQuery.lastIndexOf('.');
+    if (lastDot === -1) return '';
+    return urlWithoutQuery.substring(lastDot).toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Check if a URL is broken or a placeholder
  */
 export function isBrokenUrl(url: string | null | undefined): boolean {
@@ -25,7 +40,7 @@ export function isBrokenUrl(url: string | null | undefined): boolean {
   
   const lowerUrl = url.toLowerCase().trim();
   
-  // Check for known broken patterns
+  // Check for known broken patterns (example.com is the primary trigger)
   if (BROKEN_URL_PATTERNS.some(pattern => lowerUrl.includes(pattern))) {
     return true;
   }
@@ -43,10 +58,23 @@ export function isBrokenUrl(url: string | null | undefined): boolean {
 }
 
 /**
+ * Check if URL has a valid image extension (ignoring query parameters)
+ */
+export function hasValidImageExtension(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  
+  const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff'];
+  const extension = getFileExtension(url);
+  
+  return validExtensions.includes(extension);
+}
+
+/**
  * Sanitize a single image URL
  * Returns the URL if valid, null if broken
+ * Allows external URLs for specific collections (e.g., storiesinsights)
  */
-export function sanitizeImageUrl(url: string | null | undefined): string | null {
+export function sanitizeImageUrl(url: string | null | undefined, collectionId?: string): string | null {
   if (!url) return null;
   
   if (isBrokenUrl(url)) {
@@ -54,7 +82,20 @@ export function sanitizeImageUrl(url: string | null | undefined): string | null 
     return null;
   }
   
-  return url;
+  // Allow external URLs for storiesinsights collection (legitimate external news links)
+  if (collectionId === 'storiesinsights') {
+    return url;
+  }
+  
+  // For other collections, validate Wix format or allow external URLs
+  const isWixUrl = url.includes('wixstatic.com') || url.includes('wix:image://');
+  const isExternalUrl = url.startsWith('http://') || url.startsWith('https://');
+  
+  if (isWixUrl || isExternalUrl) {
+    return url;
+  }
+  
+  return null;
 }
 
 /**
@@ -67,10 +108,12 @@ export function getImagePlaceholder(): string {
 /**
  * Sanitize an object with image fields
  * Replaces broken URLs with null
+ * Allows external URLs for specific collections
  */
 export function sanitizeImageFields<T extends Record<string, any>>(
   obj: T,
-  imageFields: (keyof T)[]
+  imageFields: (keyof T)[],
+  collectionId?: string
 ): T {
   const sanitized = { ...obj };
   
@@ -80,6 +123,12 @@ export function sanitizeImageFields<T extends Record<string, any>>(
       if (isBrokenUrl(value)) {
         sanitized[field] = null as any;
         console.warn(`[ImageSanitizer] Sanitized field "${String(field)}": removed broken URL`);
+      } else if (collectionId !== 'storiesinsights') {
+        // For non-storiesinsights collections, validate URL format
+        const sanitized_url = sanitizeImageUrl(value, collectionId);
+        if (!sanitized_url) {
+          sanitized[field] = null as any;
+        }
       }
     }
   }
@@ -106,9 +155,10 @@ export function filterValidImages<T extends Record<string, any>>(
  */
 export function sanitizeBatch<T extends Record<string, any>>(
   items: T[],
-  imageFields: (keyof T)[]
+  imageFields: (keyof T)[],
+  collectionId?: string
 ): T[] {
-  return items.map(item => sanitizeImageFields(item, imageFields));
+  return items.map(item => sanitizeImageFields(item, imageFields, collectionId));
 }
 
 /**
