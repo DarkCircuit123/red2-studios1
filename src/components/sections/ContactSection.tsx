@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { playClickSound } from '@/lib/click-sound';
 import { useEditorialMotion } from '@/hooks/useEditorialMotion';
-import { editorialMotionVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
+import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { BaseCrudService } from '@/integrations';
 
@@ -153,9 +153,13 @@ export default function ContactSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
           {/* Contact Info */}
           <motion.div
-            initial="hidden"
-            animate={sectionVisible ? "visible" : "hidden"}
-            variants={scrollAnimationVariants.slideInHorizontal}
+            initial={{ opacity: 0, y: editorialDistance.headingOffset.large }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: editorialTiming.headingDuration / 1000,
+              ease: editorialEasing.typographySettle,
+            }}
+            viewport={{ once: true, margin: '-100px' }}
           >
             <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-heading font-black text-white mb-6 md:mb-8 tracking-tighter leading-none">
               Get in
@@ -170,22 +174,21 @@ export default function ContactSection() {
             </h2>
 
             <motion.p
-              initial="hidden"
-              animate={sectionVisible ? "visible" : "hidden"}
-              variants={scrollAnimationVariants.textSlideUp}
-              transition={{ delay: 0.1 }}
+              initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: editorialTiming.detailsDuration / 1000,
+                delay: editorialTiming.detailsDelay / 1000,
+                ease: editorialEasing.detailsSettle,
+              }}
+              viewport={{ once: true, margin: '-100px' }}
               className="text-sm md:text-base font-paragraph text-white/70 mb-8 md:mb-10 leading-relaxed"
             >
               Ready to collaborate on your next project? I'd love to hear about your vision and discuss how we can bring it to life.
             </motion.p>
 
-            {/* Contact Methods - Enhanced with animations */}
-            <motion.div
-              initial="hidden"
-              animate={sectionVisible ? "visible" : "hidden"}
-              variants={scrollAnimationVariants.containerStagger}
-              className="space-y-6 md:space-y-8"
-            >
+            {/* Contact Methods - Editorial Motion */}
+            <div className="space-y-6 md:space-y-8">
               {[
                 { icon: Mail, label: 'Email', value: 'hello@red2studios.com', href: 'mailto:hello@red2studios.com' },
                 { icon: Phone, label: 'Phone', value: '+1 (310) 386-0405', href: 'tel:+13103860405' },
@@ -195,7 +198,14 @@ export default function ContactSection() {
                 return (
                   <motion.div
                     key={i}
-                    variants={getStaggeredVariant(i, 0.15, 0.1)}
+                    initial={{ opacity: 0, y: editorialDistance.detailsOffset.small }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: editorialTiming.detailsDuration / 1000,
+                      delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay + i * editorialTiming.hoverDuration) / 1000,
+                      ease: editorialEasing.detailsSettle,
+                    }}
+                    viewport={{ once: true, margin: '-100px' }}
                     className="flex gap-6 group"
                   >
                     <motion.div
@@ -219,14 +229,18 @@ export default function ContactSection() {
                   </motion.div>
                 );
               })}
-            </motion.div>
+            </div>
 
             {/* Social Links */}
             <motion.div
-              initial="hidden"
-              animate={sectionVisible ? "visible" : "hidden"}
-              variants={scrollAnimationVariants.fadeIn}
-              transition={{ delay: 0.5 }}
+              initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: editorialTiming.detailsDuration / 1000,
+                delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay * 2) / 1000,
+                ease: editorialEasing.detailsSettle,
+              }}
+              viewport={{ once: true, margin: '-100px' }}
               className="mt-12 pt-8 border-t border-primary/30"
             >
               <p className="text-xs font-mono uppercase tracking-widest text-white/40 mb-6">
@@ -250,19 +264,19 @@ export default function ContactSection() {
             </motion.div>
           </motion.div>
 
-          {/* Contact Form - Enhanced */}
+          {/* Contact Form - Editorial Motion */}
           <motion.div
-            initial="hidden"
-            animate={sectionVisible ? "visible" : "hidden"}
-            variants={scrollAnimationVariants.slideInHorizontal}
-            transition={{ delay: 0.1 }}
+            initial={{ opacity: 0, y: editorialDistance.imageOffset.medium }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: editorialTiming.imageEnter / 1000,
+              ease: editorialEasing.imageSettle,
+            }}
+            viewport={{ once: true, margin: '-100px' }}
           >
             <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
-              <motion.div
-                initial="hidden"
-                animate={sectionVisible ? "visible" : "hidden"}
-                variants={scrollAnimationVariants.containerStagger}
-              >
+              {/* Form Fields */}
+              <div className="space-y-6">
                 {[
                   { id: 'name', label: 'Full Name', placeholder: 'Your name', type: 'text' },
                   { id: 'email', label: 'Email Address', placeholder: 'your@email.com', type: 'email' },
@@ -270,7 +284,14 @@ export default function ContactSection() {
                 ].map((field, i) => (
                   <motion.div
                     key={field.id}
-                    variants={getStaggeredVariant(i, 0.15, 0.1)}
+                    initial={{ opacity: 0, y: editorialDistance.detailsOffset.small }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: editorialTiming.detailsDuration / 1000,
+                      delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay + i * editorialTiming.hoverDuration) / 1000,
+                      ease: editorialEasing.detailsSettle,
+                    }}
+                    viewport={{ once: true, margin: '-100px' }}
                   >
                     <label htmlFor={field.id} className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3 group-hover:text-primary transition-colors">
                       {field.label} *
@@ -287,13 +308,18 @@ export default function ContactSection() {
                     />
                   </motion.div>
                 ))}
-              </motion.div>
+              </div>
 
+              {/* Message Field */}
               <motion.div
-                initial="hidden"
-                animate={sectionVisible ? "visible" : "hidden"}
-                variants={scrollAnimationVariants.textSlideUp}
-                transition={{ delay: 0.45 }}
+                initial={{ opacity: 0, y: editorialDistance.detailsOffset.small }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: editorialTiming.detailsDuration / 1000,
+                  delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay * 2) / 1000,
+                  ease: editorialEasing.detailsSettle,
+                }}
+                viewport={{ once: true, margin: '-100px' }}
               >
                 <label htmlFor="message" className="block text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
                   Message *
@@ -310,7 +336,7 @@ export default function ContactSection() {
                 />
               </motion.div>
 
-              {/* Status Messages - Enhanced */}
+              {/* Status Messages */}
               {submitStatus === 'success' && (
                 <motion.div
                   initial={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -335,13 +361,18 @@ export default function ContactSection() {
                 </motion.div>
               )}
 
+              {/* Submit Button */}
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                initial="hidden"
-                animate={sectionVisible ? "visible" : "hidden"}
-                variants={scrollAnimationVariants.buttonSlideUp}
-                transition={{ delay: 0.55 }}
+                initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: editorialTiming.detailsDuration / 1000,
+                  delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay * 3) / 1000,
+                  ease: editorialEasing.detailsSettle,
+                }}
+                viewport={{ once: true, margin: '-100px' }}
                 whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(73, 7, 8, 0.4)' }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full px-8 py-4 bg-primary text-white font-heading font-bold text-sm tracking-widest uppercase hover:bg-primary/90 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group"

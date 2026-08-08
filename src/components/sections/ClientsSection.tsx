@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
+import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
 
 interface ClientsSectionProps {
   clients: any[];
@@ -10,57 +11,51 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
   // Use actual clients or create placeholder items
   const displayClients = clients.length > 0 ? clients : Array(8).fill(null);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 0.5 },
-    },
-  };
-
   return (
     <section id="clients" className="relative w-full py-24 md:py-32 bg-black">
       <div className="max-w-[120rem] mx-auto px-8">
-        {/* Section Header */}
+        {/* Section Header - Editorial Motion */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: editorialDistance.headingOffset.large }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          transition={{
+            duration: editorialTiming.headingDuration / 1000,
+            ease: editorialEasing.typographySettle,
+          }}
+          viewport={{ once: true, margin: '-100px' }}
           className="mb-20"
         >
           <h2 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
             Featured In
           </h2>
-          <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
+          <motion.p
+            initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: editorialTiming.detailsDuration / 1000,
+              delay: editorialTiming.detailsDelay / 1000,
+              ease: editorialEasing.detailsSettle,
+            }}
+            viewport={{ once: true, margin: '-100px' }}
+            className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed"
+          >
             Trusted by leading brands and publications worldwide. A testament to precision and creative excellence.
-          </p>
+          </motion.p>
         </motion.div>
 
         {/* Clients Grid - Minimal aesthetic */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8"
-        >
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {displayClients.map((client, index) => (
             <motion.div
               key={client?._id || index}
-              variants={itemVariants}
+              initial={{ opacity: 0, y: editorialDistance.imageOffset.medium }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: editorialTiming.imageEnter / 1000,
+                delay: (index * editorialTiming.hoverDuration) / 1000,
+                ease: editorialEasing.imageSettle,
+              }}
+              viewport={{ once: true, margin: '-100px' }}
               className="group relative aspect-square overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center p-6 hover:border-white/30 transition-all duration-300"
             >
               {client?.clientLogo ? (
@@ -108,14 +103,18 @@ export default function ClientsSection({ clients, isLoading }: ClientsSectionPro
               )}
             </motion.div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Stats - Ultra-minimal */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          viewport={{ once: true }}
+          transition={{
+            duration: editorialTiming.detailsDuration / 1000,
+            delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay) / 1000,
+            ease: editorialEasing.detailsSettle,
+          }}
+          viewport={{ once: true, margin: '-100px' }}
           className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-12 pt-12 border-t border-white/10"
         >
           <div>

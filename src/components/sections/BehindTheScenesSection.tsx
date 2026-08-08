@@ -4,7 +4,7 @@ import { Image } from '@/components/ui/image';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import { useEditorialMotion } from '@/hooks/useEditorialMotion';
-import { editorialMotionVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
+import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
 
 interface BehindTheScenesItem {
   _id: string;
@@ -56,18 +56,27 @@ export default function BehindTheScenesSection() {
   return (
     <section ref={sectionRef} className="w-full py-16 md:py-24 bg-white">
       <div className="max-w-[100rem] mx-auto px-4 md:px-8">
-        {/* Section Header */}
+        {/* Section Header - Editorial Motion */}
         <motion.div
-          initial="hidden"
-          animate={sectionVisible ? "visible" : "hidden"}
-          variants={editorialMotionVariants.headingSlideUp}
+          initial={{ opacity: 0, y: editorialDistance.headingOffset.large }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: editorialTiming.headingDuration / 1000,
+            ease: editorialEasing.typographySettle,
+          }}
+          viewport={{ once: true, margin: '-100px' }}
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="font-heading text-5xl md:text-6xl font-bold mb-4 text-black">Behind The Scenes</h2>
           <motion.p
-            initial="hidden"
-            animate={sectionVisible ? "visible" : "hidden"}
-            variants={getStaggeredVariant(1, 0.2, 0.1)}
+            initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: editorialTiming.detailsDuration / 1000,
+              delay: editorialTiming.detailsDelay / 1000,
+              ease: editorialEasing.detailsSettle,
+            }}
+            viewport={{ once: true, margin: '-100px' }}
             className="font-paragraph text-lg text-gray-600 max-w-2xl mx-auto"
           >
             Get an exclusive look at our creative process and the moments that make it all happen.
@@ -75,23 +84,22 @@ export default function BehindTheScenesSection() {
         </motion.div>
 
         {/* Gallery Grid */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
-          initial="hidden"
-          animate={sectionVisible ? "visible" : "hidden"}
-          variants={editorialMotionVariants.container}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {items.map((item, index) => (
             <motion.div
               key={item._id}
-              variants={getStaggeredVariant(index, 0.1, 0.12)}
               className="group"
             >
-              {/* Image Container */}
+              {/* Image Container - Arrives First */}
               <motion.div
+                initial={{ opacity: 0, y: editorialDistance.imageOffset.medium }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: editorialTiming.imageEnter / 1000,
+                  ease: editorialEasing.imageSettle,
+                }}
+                viewport={{ once: true, margin: '-100px' }}
                 className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-gray-100"
-                whileHover={{ y: -4 }}
-                transition={{ duration: 0.3 }}
               >
                 {item.photo ? (
                   <Image
@@ -108,17 +116,34 @@ export default function BehindTheScenesSection() {
                 )}
               </motion.div>
 
-              {/* Content */}
+              {/* Heading - Arrives Second */}
+              {item.title && (
+                <motion.h3
+                  initial={{ opacity: 0, y: editorialDistance.headingOffset.small }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: editorialTiming.headingDuration / 1000,
+                    delay: (editorialTiming.imageEnter + editorialTiming.headingDelay) / 1000,
+                    ease: editorialEasing.typographySettle,
+                  }}
+                  viewport={{ once: true, margin: '-100px' }}
+                  className="font-heading text-lg font-semibold mb-2 line-clamp-2"
+                >
+                  {item.title}
+                </motion.h3>
+              )}
+
+              {/* Details - Arrives Last */}
               <motion.div
-                initial="hidden"
-                animate={sectionVisible ? "visible" : "hidden"}
-                variants={getStaggeredVariant(index + 1, 0.3, 0.12)}
+                initial={{ opacity: 0, y: editorialDistance.detailsOffset.small }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: editorialTiming.detailsDuration / 1000,
+                  delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay) / 1000,
+                  ease: editorialEasing.detailsSettle,
+                }}
+                viewport={{ once: true, margin: '-100px' }}
               >
-                {item.title && (
-                  <h3 className="font-heading text-lg font-semibold mb-2 line-clamp-2">
-                    {item.title}
-                  </h3>
-                )}
                 {item.description && (
                   <p className="font-paragraph text-sm text-gray-600 line-clamp-3 mb-3">
                     {item.description}
@@ -136,7 +161,7 @@ export default function BehindTheScenesSection() {
               </motion.div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

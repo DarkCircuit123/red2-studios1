@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import FashionTicker from '@/components/FashionTicker';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
+import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
 import { ScrollReveal } from '@/components/ScrollReveal';
 
 export default function AboutSection() {
@@ -114,11 +114,15 @@ export default function AboutSection() {
         <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
           {/* Premium magazine layout with floated image */}
           <div className="space-y-4 md:space-y-6">
-            {/* Header section */}
+            {/* Header section - Editorial Motion */}
             <motion.div
-              initial="hidden"
-              animate={sectionVisible ? "visible" : "hidden"}
-              variants={scrollAnimationVariants.headingSlideUp}
+              initial={{ opacity: 0, y: editorialDistance.headingOffset.large }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: editorialTiming.headingDuration / 1000,
+                ease: editorialEasing.typographySettle,
+              }}
+              viewport={{ once: true, margin: '-100px' }}
               className="space-y-3 md:space-y-4"
             >
               <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-black text-white leading-tight tracking-tighter">
@@ -132,28 +136,41 @@ export default function AboutSection() {
               </h2>
               <motion.div
                 initial={{ width: 0 }}
-                animate={sectionVisible ? { width: 80 } : { width: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
+                whileInView={{ width: 80 }}
+                transition={{
+                  duration: editorialTiming.headingDuration / 1000,
+                  delay: editorialTiming.headingDelay / 1000,
+                  ease: editorialEasing.typographySettle,
+                }}
+                viewport={{ once: true, margin: '-100px' }}
                 className="h-1 bg-gradient-to-r from-primary to-primary/40"
               />
             </motion.div>
 
             {/* Magazine-style content with floated image */}
             <motion.div
-              initial="hidden"
-              animate={sectionVisible ? "visible" : "hidden"}
-              variants={scrollAnimationVariants.textSlideUp}
-              transition={{ delay: 0.2 }}
+              initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: editorialTiming.detailsDuration / 1000,
+                delay: editorialTiming.detailsDelay / 1000,
+                ease: editorialEasing.detailsSettle,
+              }}
+              viewport={{ once: true, margin: '-100px' }}
               className="relative"
             >
               {/* Floated image container - desktop/tablet */}
               <div className="hidden sm:block float-right ml-6 md:ml-8 mb-4 md:mb-6 w-64 md:w-80 lg:w-96 flex-shrink-0">
                 <motion.div
-                  initial="hidden"
-                  animate={sectionVisible ? "visible" : "hidden"}
-                  variants={scrollAnimationVariants.imageSlideInRight}
+                  initial={{ opacity: 0, y: editorialDistance.imageOffset.medium }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: editorialTiming.imageEnter / 1000,
+                    delay: (editorialTiming.imageEnter + editorialTiming.headingDelay) / 1000,
+                    ease: editorialEasing.imageSettle,
+                  }}
+                  viewport={{ once: true, margin: '-100px' }}
                   whileHover={{ y: -8 }}
-                  transition={{ duration: 0.3 }}
                   className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative"
                 >
                   {!isLoading && (

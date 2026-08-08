@@ -6,7 +6,7 @@ import { Portfolio } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import { playClickSound } from '@/lib/click-sound';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
+import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
 
 interface PortfolioGridProps {
   items: Portfolio[];
@@ -59,11 +59,15 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
       </div>
 
       <div className="max-w-[120rem] mx-auto px-8 relative z-10">
-        {/* Section Header with enhanced typography */}
+        {/* Section Header - Editorial Motion */}
         <motion.div
-          initial="hidden"
-          animate={sectionVisible ? "visible" : "hidden"}
-          variants={scrollAnimationVariants.headingSlideUp}
+          initial={{ opacity: 0, y: editorialDistance.headingOffset.large }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: editorialTiming.headingDuration / 1000,
+            ease: editorialEasing.typographySettle,
+          }}
+          viewport={{ once: true, margin: '-100px' }}
           className="mb-24 md:mb-32"
         >
           <h2 className="text-7xl md:text-8xl lg:text-9xl font-heading font-black text-white mb-8 tracking-tighter leading-none">
@@ -79,10 +83,14 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
           </h2>
           <div className="w-20 h-1 bg-gradient-to-r from-primary to-primary/40 mb-8" />
           <motion.p
-            initial="hidden"
-            animate={sectionVisible ? "visible" : "hidden"}
-            variants={scrollAnimationVariants.textSlideUp}
-            transition={{ delay: 0.2 }}
+            initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: editorialTiming.detailsDuration / 1000,
+              delay: editorialTiming.detailsDelay / 1000,
+              ease: editorialEasing.detailsSettle,
+            }}
+            viewport={{ once: true, margin: '-100px' }}
             className="text-base md:text-lg font-paragraph text-white/70 max-w-2xl leading-relaxed"
           >
             A selection of recent projects showcasing diverse aesthetics and creative directions. Each work represents precision and luxury restraint.
@@ -90,13 +98,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
         </motion.div>
 
         {/* Grid - Photography-First with Mixed Aspect Ratios */}
-        <motion.div
-          ref={sectionRef}
-          variants={containerVariants}
-          initial="hidden"
-          animate={sectionVisible ? "visible" : "hidden"}
-          className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 auto-rows-max"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 auto-rows-max">
           {displayItems.map((item, index) => {
             // Varied grid positioning for dynamic layout
             let colSpan = 'md:col-span-1';
@@ -114,7 +116,14 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
             return (
               <motion.div
                 key={item?._id || index}
-                variants={itemVariants}
+                initial={{ opacity: 0, y: editorialDistance.imageOffset.medium }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: editorialTiming.imageEnter / 1000,
+                  delay: (index * editorialTiming.hoverDuration) / 1000,
+                  ease: editorialEasing.imageSettle,
+                }}
+                viewport={{ once: true, margin: '-100px' }}
                 onMouseEnter={() => item && setHoveredId(item._id)}
                 onMouseLeave={() => setHoveredId(null)}
                 whileHover={{ y: -8 }}
