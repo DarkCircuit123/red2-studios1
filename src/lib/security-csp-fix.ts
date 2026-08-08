@@ -6,18 +6,22 @@
  * - Added 'wix:image://' to img-src to allow Wix Media Manager image rendering
  * - Added 'https://static.parastorage.com' to script-src for framewire script injection
  * - Added 'blob:' to img-src for blob URL support
+ * - Added 'script-src-elem' for explicit script element loading
+ * - Added 'unsafe-eval' for dynamic script evaluation
+ * - Added 'wss:' for WebSocket connections
  */
 
 export const CSP_DIRECTIVES = {
-  'default-src': [\"'self'\"],
-  'script-src': [\"'self'\", \"'unsafe-inline'\", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://static.parastorage.com'],
-  'style-src': [\"'self'\", \"'unsafe-inline'\", 'https://fonts.googleapis.com'],
-  'img-src': [\"'self'\", 'data:', 'https:', 'blob:', 'wix:image://'],
-  'font-src': [\"'self'\", 'https://fonts.gstatic.com'],
-  'connect-src': [\"'self'\", 'https:', 'https://maps.googleapis.com'],
-  'frame-ancestors': [\"'none'\"],
-  'base-uri': [\"'self'\"],
-  'form-action': [\"'self'\"],
+  'default-src': ["'self'"],
+  'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://static.parastorage.com', 'https://static.wixstatic.com'],
+  'script-src-elem': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://static.parastorage.com', 'https://static.wixstatic.com'],
+  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://static.parastorage.com'],
+  'img-src': ["'self'", 'data:', 'https:', 'blob:', 'wix:image://', 'https://static.parastorage.com'],
+  'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:', 'https://static.parastorage.com'],
+  'connect-src': ["'self'", 'https:', 'wss:', 'https://maps.googleapis.com'],
+  'frame-ancestors': ["'none'"],
+  'base-uri': ["'self'"],
+  'form-action': ["'self'"],
 } as const;
 
 /**
