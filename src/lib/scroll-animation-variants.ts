@@ -142,28 +142,3 @@ export const scrollAnimationVariants = {
     },
   },
 };
-
-/**
- * Get staggered animation for multiple children
- * @param index - Index of the child element
- * @param baseDelay - Base delay in seconds
- * @param staggerDelay - Delay between each child in seconds
- */
-export function getStaggeredVariant(
-  index: number,
-  baseDelay = 0.1,
-  staggerDelay = 0.12
-) {
-  return {
-    hidden: { opacity: 0, y: 40 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.7,
-        delay: baseDelay + index * staggerDelay,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      },
-    },
-  };
-}
