@@ -48,8 +48,17 @@ export default function LogoSplash() {
     const timer = setTimeout(() => {
       setVisible(false);
     }, 2200);
-
-    return () => clearTimeout(timer);
+    
+    // CRITICAL: Fallback timeout to prevent infinite loading
+    // If logo splash doesn't complete within 4 seconds, force it to hide
+    const fallbackTimer = setTimeout(() => {
+      setVisible(false);
+    }, 4000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(fallbackTimer);
+    };
   }, [isLoadingLogo]);
 
   // Don't render if no logo is available

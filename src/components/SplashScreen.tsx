@@ -79,10 +79,19 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       markSplashAsShown();
       onComplete?.();
     }, 2200); // 1.7s + 0.5s fade duration
+    
+    // CRITICAL: Fallback timeout to prevent infinite loading
+    // If splash doesn't complete within 4 seconds, force completion
+    const fallbackTimer = setTimeout(() => {
+      setIsVisible(false);
+      markSplashAsShown();
+      onComplete?.();
+    }, 4000);
 
     return () => {
       clearTimeout(fadeOutTimer);
       clearTimeout(completeTimer);
+      clearTimeout(fallbackTimer);
     };
   }, [isVisible, onComplete]);
 
