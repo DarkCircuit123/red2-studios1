@@ -2,6 +2,8 @@
  * Data Cleanup Executor
  * Identifies and deletes placeholder items from CMS collections
  * Verifies deletion counts and reports final status
+ * 
+ * RESTRICTED: Only matches example.com in image fields to avoid false positives
  */
 
 import { BaseCrudService } from '@/integrations';
@@ -17,26 +19,45 @@ interface CleanupReport {
   error?: string;
 }
 
-// Placeholder patterns to identify
-const PLACEHOLDER_PATTERNS = [
-  'example.com',
-  'placeholder',
-  'test@example.com',
-  'sample',
-  'demo',
-  'https://example.com',
-  'http://example.com',
-  'example',
-  'test-',
-  'temp-',
-  'tmp-',
+// Image field names to check for placeholders
+const IMAGE_FIELDS = [
+  'imageUrl',
+  'image',
+  'photo',
+  'mainImage',
+  'heroImage',
+  'aboutSectionImage',
+  'contactBackgroundImage',
+  'galleryImage1',
+  'galleryImage2',
+  'galleryImage3',
+  'thumbnail',
+  'thumbnailImage',
+  'galleryCoverImage',
+  'clientLogo',
+  'headshot',
+  'watermarkImage',
+  'logoImage',
+  'featuredImage',
+  'infographic',
+  'arPreviewModelUrl',
 ];
+
+// Only match example.com exactly in image URLs
+const EXAMPLE_COM_PATTERN = /example\.com/i;
 
 function isPlaceholder(item: any): boolean {
   if (!item) return false;
 
-  const itemStr = JSON.stringify(item).toLowerCase();
-  return PLACEHOLDER_PATTERNS.some(pattern => itemStr.includes(pattern.toLowerCase()));
+  // Check only image fields for example.com pattern
+  for (const field of IMAGE_FIELDS) {
+    const value = item[field];
+    if (value && typeof value === 'string' && EXAMPLE_COM_PATTERN.test(value)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 async function cleanupCollection(

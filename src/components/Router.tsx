@@ -3,6 +3,7 @@ import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { lazy, Suspense } from 'react';
 import { AdminAuthProvider } from '@/components/AdminAuthProvider';
+import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 
 // Lazy load all pages to prevent circular dependencies
 // Use dynamic imports with error handling
@@ -261,17 +262,21 @@ const router = createBrowserRouter([
       {
         path: "audit-placeholder-data",
         element: (
-          <Suspense fallback={<div />}>
-            <AuditPlaceholderDataPage />
-          </Suspense>
+          <MemberProtectedRoute messageToSignIn="Sign in to access the placeholder data audit">
+            <Suspense fallback={<div />}>
+              <AuditPlaceholderDataPage />
+            </Suspense>
+          </MemberProtectedRoute>
         ),
       },
       {
         path: "data-cleanup-verification",
         element: (
-          <Suspense fallback={<div />}>
-            <DataCleanupVerificationPage />
-          </Suspense>
+          <MemberProtectedRoute messageToSignIn="Sign in to access the data cleanup verification">
+            <Suspense fallback={<div />}>
+              <DataCleanupVerificationPage />
+            </Suspense>
+          </MemberProtectedRoute>
         ),
       },
       {
