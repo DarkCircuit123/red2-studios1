@@ -1,18 +1,23 @@
 /**
  * CSP Configuration Fix for Google Maps and External APIs
  * This file provides the corrected Content Security Policy settings
+ * 
+ * CRITICAL FIXES:
+ * - Added 'wix:image://' to img-src to allow Wix Media Manager image rendering
+ * - Added 'https://static.parastorage.com' to script-src for framewire script injection
+ * - Added 'blob:' to img-src for blob URL support
  */
 
 export const CSP_DIRECTIVES = {
-  'default-src': ["'self'"],
-  'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com'],
-  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-  'img-src': ["'self'", 'data:', 'https:'],
-  'font-src': ["'self'", 'https://fonts.gstatic.com'],
-  'connect-src': ["'self'", 'https:', 'https://maps.googleapis.com'],
-  'frame-ancestors': ["'none'"],
-  'base-uri': ["'self'"],
-  'form-action': ["'self'"],
+  'default-src': [\"'self'\"],
+  'script-src': [\"'self'\", \"'unsafe-inline'\", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://static.parastorage.com'],
+  'style-src': [\"'self'\", \"'unsafe-inline'\", 'https://fonts.googleapis.com'],
+  'img-src': [\"'self'\", 'data:', 'https:', 'blob:', 'wix:image://'],
+  'font-src': [\"'self'\", 'https://fonts.gstatic.com'],
+  'connect-src': [\"'self'\", 'https:', 'https://maps.googleapis.com'],
+  'frame-ancestors': [\"'none'\"],
+  'base-uri': [\"'self'\"],
+  'form-action': [\"'self'\"],
 } as const;
 
 /**

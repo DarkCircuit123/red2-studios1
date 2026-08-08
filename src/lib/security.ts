@@ -4,12 +4,14 @@
  */
 
 // Content Security Policy helper
+// CRITICAL: Allows wix:image:// protocol for Wix Media Manager images
+// and https://static.parastorage.com for framewire script injection
 export const CSP_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.wixstatic.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.wixstatic.com https://static.parastorage.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: https: blob:",
+    "img-src 'self' data: https: blob: wix:image://",
     "font-src 'self' https://fonts.gstatic.com data:",
     "connect-src 'self' https:",
     "frame-ancestors 'none'",
