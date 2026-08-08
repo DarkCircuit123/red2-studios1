@@ -31,6 +31,7 @@ const Red2TerminalPage = lazy(() => import('./pages/Red2TerminalPage').catch(() 
 const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const UploadTestPage = lazy(() => import('./pages/UploadTestPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const AuditPlaceholderDataPage = lazy(() => import('./pages/AuditPlaceholderDataPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
@@ -253,6 +254,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<div />}>
             <AdminPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "audit-placeholder-data",
+        element: (
+          <Suspense fallback={<div />}>
+            <AuditPlaceholderDataPage />
           </Suspense>
         ),
       },
