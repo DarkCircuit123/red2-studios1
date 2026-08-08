@@ -58,7 +58,11 @@ const getImageData = (url: string): ImageData | undefined => {
     const width = parseInt(params.get('originWidth') || '0', 10)
     const height = parseInt(params.get('originHeight') || '0', 10)
 
-    return { id: uri, width, height }
+    // Only return image data if we have valid dimensions
+    if (width > 0 && height > 0) {
+      return { id: uri, width, height }
+    }
+    return undefined;
   } else if (normalizedUrl.startsWith(STATIC_MEDIA_URL)) {
     const urlObj = new URL(normalizedUrl)
     if (urlObj.searchParams.get('originWidth') && urlObj.searchParams.get('originHeight')) {
