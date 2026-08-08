@@ -49,26 +49,7 @@ const getImageData = (url: string): ImageData | undefined => {
 
   const normalizedUrl = resolved.url;
 
-  // Check for static.wixstatic.com format (converted from wix:image:// or native)
-  if (normalizedUrl.startsWith('https://static.wixstatic.com/')) {
-    try {
-      const urlObj = new URL(normalizedUrl)
-      if (urlObj.searchParams.get('originWidth') && urlObj.searchParams.get('originHeight')) {
-        const uri = urlObj.pathname.split('/').slice(2).join('/')
-        const width = parseInt(urlObj.searchParams.get('originWidth') || '0', 10)
-        const height = parseInt(urlObj.searchParams.get('originHeight') || '0', 10)
-        if (width > 0 && height > 0) {
-          return { id: uri, width, height }
-        }
-      }
-    } catch (error) {
-      console.error('[Image] Failed to parse static.wixstatic.com URL:', error);
-      return undefined;
-    }
-  }
-  
-  // Legacy: wix:image://v1/${uri}/${filename}#originWidth=${width}&originHeight=${height}
-  // (should not reach here due to WixImageResolver conversion, but kept for safety)
+  // wix:image://v1/${uri}/${filename}#originWidth=${width}&originHeight=${height}
   const wixImagePrefix = 'wix:image://v1/'
   if (normalizedUrl.startsWith(wixImagePrefix)) {
     const uri = normalizedUrl.replace(wixImagePrefix, '').split('#')[0].split('/')[0]
@@ -77,11 +58,7 @@ const getImageData = (url: string): ImageData | undefined => {
     const width = parseInt(params.get('originWidth') || '0', 10)
     const height = parseInt(params.get('originHeight') || '0', 10)
 
-    // Only return image data if we have valid dimensions
-    if (width > 0 && height > 0) {
-      return { id: uri, width, height }
-    }
-    return undefined;
+    return { id: uri, width, height }
   } else if (normalizedUrl.startsWith(STATIC_MEDIA_URL)) {
     const urlObj = new URL(normalizedUrl)
     if (urlObj.searchParams.get('originWidth') && urlObj.searchParams.get('originHeight')) {
@@ -109,7 +86,7 @@ const WixImage = forwardRef<HTMLImageElement, WixImageProps>(
     if (!size) {
       const { uri, ...placeholder } = getPlaceholder(fittingType ?? 'fit', data, { htmlTag: 'img' })
       // @ts-expect-error placeholder.css.img properties are not typed correctly.
-      return <img ref={ref} src={`${STATIC_MEDIA_URL}${uri}`} style={placeholder.css.img} {...placeholder.attr} crossOrigin="anonymous" {...imgProps} />
+      return <img ref={ref} src={`${STATIC_MEDIA_URL}${uri}`} style={placeholder.css.img} {...placeholder.attr}  {...imgProps} />
     }
 
     const scale = fittingType === 'fit' ? sdk.getScaleToFitImageURL : sdk.getScaleToFillImageURL
@@ -117,7 +94,7 @@ const WixImage = forwardRef<HTMLImageElement, WixImageProps>(
     const width = size.width || data.width * (size.height / data.height) || data.width
     const src = scale(data.id, data.width, data.height, width, height)
 
-    return <img ref={ref} {...imgProps} src={src} crossOrigin="anonymous" />
+    return <img ref={ref} {...imgProps} src={src} />
   }
 )
 WixImage.displayName = 'WixImage'
@@ -163,7 +140,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
 
   if (!imageData) {
     // If we can't parse as Wix image data, render as regular img
-    return <img data-error-image={finalSrc === FALLBACK_IMAGE_URL} ref={ref} src={finalSrc} crossOrigin="anonymous" {...imageProps} />
+    return <img data-error-image={finalSrc === FALLBACK_IMAGE_URL} ref={ref} src={finalSrc} {...imageProps} />
   }
 
   return <WixImage ref={ref} data={imageData} {...imageProps} />

@@ -7,105 +7,33 @@ import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 
 // Lazy load all pages to prevent circular dependencies
 // Use dynamic imports with error handling
-const HomePage = lazy(() => import('./pages/HomePage').catch((err) => {
-  console.error('[Router] Failed to load HomePage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const PortfolioPage = lazy(() => import('./pages/PortfolioPage').catch((err) => {
-  console.error('[Router] Failed to load PortfolioPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage').catch((err) => {
-  console.error('[Router] Failed to load PortfolioDetailPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const BookingPage = lazy(() => import('./pages/BookingPage').catch((err) => {
-  console.error('[Router] Failed to load BookingPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const ProfilePage = lazy(() => import('./pages/ProfilePage').catch((err) => {
-  console.error('[Router] Failed to load ProfilePage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const PrivatePage = lazy(() => import('./pages/PrivatePage').catch((err) => {
-  console.error('[Router] Failed to load PrivatePage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage').catch((err) => {
-  console.error('[Router] Failed to load HangmanGamePage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const ClientRegisterPage = lazy(() => import('./pages/ClientRegisterPage').catch((err) => {
-  console.error('[Router] Failed to load ClientRegisterPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const WorkPage = lazy(() => import('./pages/WorkPage').catch((err) => {
-  console.error('[Router] Failed to load WorkPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const ContactPage = lazy(() => import('./pages/ContactPage').catch((err) => {
-  console.error('[Router] Failed to load ContactPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const AdminPage = lazy(() => import('./pages/AdminPage').catch((err) => {
-  console.error('[Router] Failed to load AdminPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
+const HomePage = lazy(() => import('./pages/HomePage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const BookingPage = lazy(() => import('./pages/BookingPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const PrivatePage = lazy(() => import('./pages/PrivatePage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ClientRegisterPage = lazy(() => import('./pages/ClientRegisterPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const WorkPage = lazy(() => import('./pages/WorkPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ContactPage = lazy(() => import('./pages/ContactPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const AdminPage = lazy(() => import('./pages/AdminPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const BackgroundMusicPlayer = lazy(() => import('./BackgroundMusicPlayer').catch(() => ({ default: () => null })));
 // These 10 were built but never wired into the router - every link that
 // pointed at them was a dead 404-to-home redirect until now.
-const BlogPage = lazy(() => import('./pages/BlogPage').catch((err) => {
-  console.error('[Router] Failed to load BlogPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage').catch((err) => {
-  console.error('[Router] Failed to load BlogDetailPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const StoriesIndexPage = lazy(() => import('./pages/StoriesIndexPage').catch((err) => {
-  console.error('[Router] Failed to load StoriesIndexPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const StoriesDetailPage = lazy(() => import('./pages/StoriesDetailPage').catch((err) => {
-  console.error('[Router] Failed to load StoriesDetailPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const WatchPage = lazy(() => import('./pages/WatchPage').catch((err) => {
-  console.error('[Router] Failed to load WatchPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const ChatPage = lazy(() => import('./pages/ChatPage').catch((err) => {
-  console.error('[Router] Failed to load ChatPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const DataExportPage = lazy(() => import('./pages/DataExportPage').catch((err) => {
-  console.error('[Router] Failed to load DataExportPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const Red2TerminalPage = lazy(() => import('./pages/Red2TerminalPage').catch((err) => {
-  console.error('[Router] Failed to load Red2TerminalPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage').catch((err) => {
-  console.error('[Router] Failed to load ClientLoginPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage').catch((err) => {
-  console.error('[Router] Failed to load ClientGalleryDashboardPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const UploadTestPage = lazy(() => import('./pages/UploadTestPage').catch((err) => {
-  console.error('[Router] Failed to load UploadTestPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const AuditPlaceholderDataPage = lazy(() => import('./pages/AuditPlaceholderDataPage').catch((err) => {
-  console.error('[Router] Failed to load AuditPlaceholderDataPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
-const DataCleanupVerificationPage = lazy(() => import('./pages/DataCleanupVerificationPage').catch((err) => {
-  console.error('[Router] Failed to load DataCleanupVerificationPage:', err);
-  return { default: () => <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Error loading page. Please refresh.</div> };
-}));
+const BlogPage = lazy(() => import('./pages/BlogPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const StoriesIndexPage = lazy(() => import('./pages/StoriesIndexPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const StoriesDetailPage = lazy(() => import('./pages/StoriesDetailPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const WatchPage = lazy(() => import('./pages/WatchPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ChatPage = lazy(() => import('./pages/ChatPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const DataExportPage = lazy(() => import('./pages/DataExportPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const Red2TerminalPage = lazy(() => import('./pages/Red2TerminalPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const UploadTestPage = lazy(() => import('./pages/UploadTestPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const AuditPlaceholderDataPage = lazy(() => import('./pages/AuditPlaceholderDataPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const DataCleanupVerificationPage = lazy(() => import('./pages/DataCleanupVerificationPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {

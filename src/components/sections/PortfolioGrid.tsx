@@ -6,8 +6,7 @@ import { Portfolio } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import { playClickSound } from '@/lib/click-sound';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
-import { scrollAnimationVariants } from '@/lib/scroll-animation-variants';
+import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 
 interface PortfolioGridProps {
   items: Portfolio[];
@@ -60,15 +59,11 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
       </div>
 
       <div className="max-w-[120rem] mx-auto px-8 relative z-10">
-        {/* Section Header - Editorial Motion */}
+        {/* Section Header with enhanced typography */}
         <motion.div
-          initial={{ opacity: 0, y: editorialDistance.headingOffset.large }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: editorialTiming.headingDuration / 1000,
-            ease: editorialEasing.typographySettle,
-          }}
-          viewport={{ once: true, margin: '-100px' }}
+          initial="hidden"
+          animate={sectionVisible ? "visible" : "hidden"}
+          variants={scrollAnimationVariants.headingSlideUp}
           className="mb-24 md:mb-32"
         >
           <h2 className="text-7xl md:text-8xl lg:text-9xl font-heading font-black text-white mb-8 tracking-tighter leading-none">
@@ -84,14 +79,10 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
           </h2>
           <div className="w-20 h-1 bg-gradient-to-r from-primary to-primary/40 mb-8" />
           <motion.p
-            initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: editorialTiming.detailsDuration / 1000,
-              delay: editorialTiming.detailsDelay / 1000,
-              ease: editorialEasing.detailsSettle,
-            }}
-            viewport={{ once: true, margin: '-100px' }}
+            initial="hidden"
+            animate={sectionVisible ? "visible" : "hidden"}
+            variants={scrollAnimationVariants.textSlideUp}
+            transition={{ delay: 0.2 }}
             className="text-base md:text-lg font-paragraph text-white/70 max-w-2xl leading-relaxed"
           >
             A selection of recent projects showcasing diverse aesthetics and creative directions. Each work represents precision and luxury restraint.
@@ -99,7 +90,13 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
         </motion.div>
 
         {/* Grid - Photography-First with Mixed Aspect Ratios */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 auto-rows-max">
+        <motion.div
+          ref={sectionRef}
+          variants={containerVariants}
+          initial="hidden"
+          animate={sectionVisible ? "visible" : "hidden"}
+          className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 auto-rows-max"
+        >
           {displayItems.map((item, index) => {
             // Varied grid positioning for dynamic layout
             let colSpan = 'md:col-span-1';
@@ -117,14 +114,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
             return (
               <motion.div
                 key={item?._id || index}
-                initial={{ opacity: 0, y: editorialDistance.imageOffset.medium }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: editorialTiming.imageEnter / 1000,
-                  delay: (index * editorialTiming.hoverDuration) / 1000,
-                  ease: editorialEasing.imageSettle,
-                }}
-                viewport={{ once: true, margin: '-100px' }}
+                variants={itemVariants}
                 onMouseEnter={() => item && setHoveredId(item._id)}
                 onMouseLeave={() => setHoveredId(null)}
                 whileHover={{ y: -8 }}

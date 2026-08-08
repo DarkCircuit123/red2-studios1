@@ -68,55 +68,13 @@ class WixImageResolver {
     const trimmedUrl = url.trim();
 
     // Check for wix:image://v1/ format (Wix Media Manager native)
-    // Convert to static.wixstatic.com URL for CSP compliance
     if (trimmedUrl.startsWith('wix:image://v1/')) {
-      try {
-        // Extract the media ID and filename from wix:image://v1/{id}/{filename}#{params}
-        const urlWithoutProtocol = trimmedUrl.replace('wix:image://v1/', '');
-        const [pathPart, hashPart] = urlWithoutProtocol.split('#');
-        
-        // Handle both formats:
-        // 1. {mediaId}/{filename} - standard format
-        // 2. {mediaId}~mv2/{filename} - already has ~mv2
-        const parts = pathPart.split('/');
-        let mediaId = parts[0];
-        let filename = parts.slice(1).join('/');
-        
-        // If mediaId already contains ~mv2, extract just the ID
-        if (mediaId.includes('~mv2')) {
-          mediaId = mediaId.replace('~mv2', '');
-        }
-        
-        // Build static.wixstatic.com URL
-        // Format: https://static.wixstatic.com/media/{mediaId}~mv2/{filename}?{params}
-        let staticUrl = `https://static.wixstatic.com/media/${mediaId}~mv2/${filename}`;
-        if (hashPart) {
-          staticUrl += `?${hashPart}`;
-        }
-        
-        if (IS_DEVELOPMENT) {
-          console.debug(`[WixImageResolver] Converted wix:image:// URL: ${trimmedUrl} -> ${staticUrl}`);
-        }
-        
-        return {
-          url: staticUrl,
-          isValid: true,
-          format: 'static-wixstatic',
-          isFallback: false
-        };
-      } catch (error) {
-        // If conversion fails, return fallback
-        if (IS_DEVELOPMENT) {
-          console.warn(`[WixImageResolver] Failed to convert wix:image:// URL: ${trimmedUrl}`, error);
-        }
-        return {
-          url: FALLBACK_IMAGE_URL,
-          isValid: false,
-          format: 'wix-image',
-          isFallback: true,
-          error: 'Failed to convert wix:image:// URL'
-        };
-      }
+      return {
+        url: trimmedUrl,
+        isValid: true,
+        format: 'wix-image',
+        isFallback: false
+      };
     }
 
     // Check for static.wixstatic.com format (Wix CDN)

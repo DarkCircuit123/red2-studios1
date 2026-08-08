@@ -5,7 +5,7 @@ import { PortfolioImages } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ScrollReveal } from '@/components/ScrollReveal';
-import WixImageResolver from '@/lib/wix-image-resolver';
+import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
 import PortfolioCarousel from '@/components/PortfolioCarousel';
 
 interface ImageWithAspectRatio extends PortfolioImages {
@@ -31,32 +31,45 @@ export default function PortfolioPage() {
       try {
         const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
         
-        // Get all items - no filtering, we'll resolve URLs through WixImageResolver
+        // Filter out items with broken/placeholder URLs using sanitizer
         const allItems = result.items || [];
+        const validImages = filterValidImages(allItems, 'image');
         
-        console.info(
-          `[PortfolioPage] Fetched ${allItems.length} portfolio images for processing`
+        // Generate and log sanitization report
+        const report = generateSanitizationReport(
+          allItems.length,
+          validImages.length,
+          allItems
+            .filter(img => !validImages.find(v => v._id === img._id))
+            .map(img => img.image || 'unknown')
         );
+        
+        if (report.removed > 0) {
+          console.info(
+            `[PortfolioPage] Image Sanitization Report:\n` +
+            `  Original: ${report.originalCount}\n` +
+            `  Valid: ${report.sanitizedCount}\n` +
+            `  Removed: ${report.removed} (${report.percentageRemoved.toFixed(1)}%)`
+          );
+          // Store report for display in status component
+          sessionStorage.setItem('imageSanitizationReport', JSON.stringify({
+            originalCount: report.originalCount,
+            sanitizedCount: report.sanitizedCount,
+            removed: report.removed,
+            percentageRemoved: report.percentageRemoved,
+          }));
+        }
 
         // Load image dimensions and determine grid spans
-        // CRITICAL: Resolve wix:image:// URLs through WixImageResolver before loading dimensions
         const imagesWithDimensions = await Promise.all(
-          allItems.map(
+          validImages.map(
             (image) =>
               new Promise<ImageWithAspectRatio>((resolve) => {
-                // Resolve the image URL through WixImageResolver
-                const resolved = WixImageResolver.resolve(image.image, {
-                  recordId: image._id,
-                  fieldName: 'image'
-                });
-                const imageUrl = resolved.url;
-                
                 const img = new window.Image();
                 img.onload = () => {
                   const aspectRatio = img.naturalWidth / img.naturalHeight;
                   resolve({
                     ...image,
-                    image: imageUrl, // Store the resolved URL
                     aspectRatio,
                     gridSpan: getGridSpan(aspectRatio),
                   });
@@ -65,25 +78,16 @@ export default function PortfolioPage() {
                   console.warn('Failed to load image:', image.image);
                   resolve({
                     ...image,
-                    image: imageUrl, // Still store the resolved URL even on error
                     aspectRatio: 1,
                     gridSpan: 'square',
                   });
                 };
-                img.src = imageUrl;
+                img.src = image.image || '';
               })
           )
         );
         
-        // Use all images - do NOT filter out valid images
-        // WixImageResolver handles all URL resolution and validation
-        const validImages = imagesWithDimensions;
-        
-        console.info(
-          `[PortfolioPage] Successfully loaded ${validImages.length} portfolio images`
-        );
-        
-        setAllImages(validImages);
+        setAllImages(imagesWithDimensions);
       } catch (error) {
         console.error('Failed to fetch portfolio images:', error);
         setAllImages([]);

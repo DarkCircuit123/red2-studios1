@@ -2,8 +2,6 @@ import { Image } from '@/components/ui/image';
 import { useState, useEffect, useRef } from 'react';
 import { BaseCrudService } from '@/integrations';
 import { useImageFitting } from '@/hooks/useImageFitting';
-import { motion } from 'framer-motion';
-import { editorialMotionVariants, shouldReduceMotion } from '@/lib/editorial-motion-system';
 
 interface HomepageImage {
   heroImage?: string;
@@ -94,20 +92,13 @@ export default function HeroSection() {
     });
   };
 
-  const prefersReducedMotion = shouldReduceMotion();
-
   return (
     <section
       ref={containerRef}
       className="relative w-full h-screen flex items-center justify-center overflow-hidden bg-black"
     >
       {heroImage && (
-        <motion.div
-          className="absolute inset-0 w-full h-full"
-          initial={prefersReducedMotion ? { opacity: 1, scale: 1 } : "hidden"}
-          animate={prefersReducedMotion ? { opacity: 1, scale: 1 } : "visible"}
-          variants={prefersReducedMotion ? {} : editorialMotionVariants.image}
-        >
+        <div className="absolute inset-0 w-full h-full">
           <Image
             src={heroImage}
             alt="Hero background"
@@ -120,7 +111,7 @@ export default function HeroSection() {
             width={1920}
             height={1080}
           />
-        </motion.div>
+        </div>
       )}
       {!heroImage && !isLoading && (
         <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-slate-900 to-black" />

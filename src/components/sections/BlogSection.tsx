@@ -6,7 +6,6 @@ import { BlogPosts } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
-import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
 
 export default function BlogSection() {
   const [posts, setPosts] = useState<BlogPosts[]>([]);
@@ -32,33 +31,20 @@ export default function BlogSection() {
   return (
     <section id="blog" className="relative w-full py-24 md:py-32 bg-black">
       <div className="max-w-[120rem] mx-auto px-8">
-        {/* Section Header - Editorial Motion */}
+        {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: editorialDistance.headingOffset.large }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: editorialTiming.headingDuration / 1000,
-            ease: editorialEasing.typographySettle,
-          }}
-          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
           className="mb-16"
         >
           <h2 className="text-5xl md:text-6xl font-heading font-black text-white mb-4 uppercase">
             Stories & Insights
           </h2>
-          <motion.p
-            initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: editorialTiming.detailsDuration / 1000,
-              delay: editorialTiming.detailsDelay / 1000,
-              ease: editorialEasing.detailsSettle,
-            }}
-            viewport={{ once: true, margin: '-100px' }}
-            className="text-lg text-white/60 max-w-2xl"
-          >
+          <p className="text-lg text-white/60 max-w-2xl">
             Behind-the-scenes stories, photography tips, and creative insights from our latest shoots.
-          </motion.p>
+          </p>
         </motion.div>
 
         {/* Blog Grid */}
@@ -66,87 +52,52 @@ export default function BlogSection() {
           {posts.map((post, idx) => (
             <motion.article
               key={post._id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: idx * 0.1 }}
+              viewport={{ once: true }}
               className="group cursor-pointer"
             >
-              {/* Featured Image - Arrives First */}
+              {/* Featured Image */}
               {post.thumbnailImage && (
-                <motion.div
-                  initial={{ opacity: 0, y: editorialDistance.imageOffset.medium }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: editorialTiming.imageEnter / 1000,
-                    delay: (idx * editorialTiming.hoverDuration) / 1000,
-                    ease: editorialEasing.imageSettle,
-                  }}
-                  viewport={{ once: true, margin: '-100px' }}
-                  className="relative overflow-hidden rounded-lg mb-6 h-96 bg-white/5 flex items-center justify-center"
-                >
+                <div className="relative overflow-hidden rounded-lg mb-6 h-96 bg-white/5 flex items-center justify-center">
                   <Image
                     src={post.thumbnailImage}
                     alt={post.title || 'Blog post'}
                     className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </motion.div>
+                </div>
               )}
 
-              {/* Meta Info - Arrives Second */}
-              <motion.div
-                initial={{ opacity: 0, y: editorialDistance.headingOffset.small }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: editorialTiming.headingDuration / 1000,
-                  delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + idx * editorialTiming.hoverDuration) / 1000,
-                  ease: editorialEasing.typographySettle,
-                }}
-                viewport={{ once: true, margin: '-100px' }}
-                className="flex items-center gap-4 text-xs text-white/40 uppercase tracking-wide mb-3"
-              >
-                {post.publicationDate && (
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {new Date(post.publicationDate).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </div>
-                )}
-                {post.author && (
-                  <div className="flex items-center gap-1">
-                    <User className="w-3 h-3" />
-                    {post.author}
-                  </div>
-                )}
-              </motion.div>
+              {/* Content */}
+              <div className="space-y-3">
+                {/* Meta Info */}
+                <div className="flex items-center gap-4 text-xs text-white/40 uppercase tracking-wide">
+                  {post.publicationDate && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(post.publicationDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  )}
+                  {post.author && (
+                    <div className="flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      {post.author}
+                    </div>
+                  )}
+                </div>
 
-              {/* Title - Arrives Second */}
-              <motion.h3
-                initial={{ opacity: 0, y: editorialDistance.headingOffset.small }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: editorialTiming.headingDuration / 1000,
-                  delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + idx * editorialTiming.hoverDuration) / 1000,
-                  ease: editorialEasing.typographySettle,
-                }}
-                viewport={{ once: true, margin: '-100px' }}
-                className="text-xl font-heading font-bold text-white group-hover:text-white/80 transition-colors mb-3"
-              >
-                {post.title}
-              </motion.h3>
+                {/* Title */}
+                <h3 className="text-xl font-heading font-bold text-white group-hover:text-white/80 transition-colors">
+                  {post.title}
+                </h3>
 
-              {/* Excerpt & CTA - Arrives Last */}
-              <motion.div
-                initial={{ opacity: 0, y: editorialDistance.detailsOffset.small }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: editorialTiming.detailsDuration / 1000,
-                  delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay + idx * editorialTiming.hoverDuration) / 1000,
-                  ease: editorialEasing.detailsSettle,
-                }}
-                viewport={{ once: true, margin: '-100px' }}
-                className="space-y-3"
-              >
+                {/* Excerpt */}
                 {post.excerpt && (
                   <p className="text-sm text-white/60 line-clamp-2">
                     {post.excerpt}
@@ -158,21 +109,17 @@ export default function BlogSection() {
                   <span>Read More</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
-              </motion.div>
+              </div>
             </motion.article>
           ))}
         </div>
 
         {/* View All Link */}
         <motion.div
-          initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: editorialTiming.detailsDuration / 1000,
-            delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay) / 1000,
-            ease: editorialEasing.detailsSettle,
-          }}
-          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          viewport={{ once: true }}
           className="mt-16 text-center"
         >
           <Link

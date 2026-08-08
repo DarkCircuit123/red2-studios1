@@ -3,8 +3,6 @@ import { BaseCrudService } from '@/integrations';
 import { Image } from '@/components/ui/image';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
-import { useEditorialMotion } from '@/hooks/useEditorialMotion';
-import { editorialTiming, editorialEasing, editorialDistance } from '@/lib/editorial-motion-system';
 
 interface BehindTheScenesItem {
   _id: string;
@@ -18,7 +16,6 @@ interface BehindTheScenesItem {
 export default function BehindTheScenesSection() {
   const [items, setItems] = useState<BehindTheScenesItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { ref: sectionRef, isVisible: sectionVisible } = useEditorialMotion({ triggerOnce: true });
 
   useEffect(() => {
     loadItems();
@@ -54,33 +51,20 @@ export default function BehindTheScenesSection() {
   }
 
   return (
-    <section ref={sectionRef} className="w-full py-16 md:py-24 bg-white">
+    <section className="w-full py-16 md:py-24 bg-white">
       <div className="max-w-[100rem] mx-auto px-4 md:px-8">
-        {/* Section Header - Editorial Motion */}
+        {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: editorialDistance.headingOffset.large }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: editorialTiming.headingDuration / 1000,
-            ease: editorialEasing.typographySettle,
-          }}
-          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="font-heading text-5xl md:text-6xl font-bold mb-4 text-black">Behind The Scenes</h2>
-          <motion.p
-            initial={{ opacity: 0, y: editorialDistance.detailsOffset.medium }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: editorialTiming.detailsDuration / 1000,
-              delay: editorialTiming.detailsDelay / 1000,
-              ease: editorialEasing.detailsSettle,
-            }}
-            viewport={{ once: true, margin: '-100px' }}
-            className="font-paragraph text-lg text-gray-600 max-w-2xl mx-auto"
-          >
+          <p className="font-paragraph text-lg text-gray-600 max-w-2xl mx-auto">
             Get an exclusive look at our creative process and the moments that make it all happen.
-          </motion.p>
+          </p>
         </motion.div>
 
         {/* Gallery Grid */}
@@ -88,19 +72,14 @@ export default function BehindTheScenesSection() {
           {items.map((item, index) => (
             <motion.div
               key={item._id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              viewport={{ once: true }}
               className="group"
             >
-              {/* Image Container - Arrives First */}
-              <motion.div
-                initial={{ opacity: 0, y: editorialDistance.imageOffset.medium }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: editorialTiming.imageEnter / 1000,
-                  ease: editorialEasing.imageSettle,
-                }}
-                viewport={{ once: true, margin: '-100px' }}
-                className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-gray-100"
-              >
+              {/* Image Container */}
+              <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-gray-100">
                 {item.photo ? (
                   <Image
                     src={item.photo}
@@ -114,36 +93,15 @@ export default function BehindTheScenesSection() {
                     <span className="text-gray-400">No image</span>
                   </div>
                 )}
-              </motion.div>
+              </div>
 
-              {/* Heading - Arrives Second */}
-              {item.title && (
-                <motion.h3
-                  initial={{ opacity: 0, y: editorialDistance.headingOffset.small }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: editorialTiming.headingDuration / 1000,
-                    delay: (editorialTiming.imageEnter + editorialTiming.headingDelay) / 1000,
-                    ease: editorialEasing.typographySettle,
-                  }}
-                  viewport={{ once: true, margin: '-100px' }}
-                  className="font-heading text-lg font-semibold mb-2 line-clamp-2"
-                >
-                  {item.title}
-                </motion.h3>
-              )}
-
-              {/* Details - Arrives Last */}
-              <motion.div
-                initial={{ opacity: 0, y: editorialDistance.detailsOffset.small }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: editorialTiming.detailsDuration / 1000,
-                  delay: (editorialTiming.imageEnter + editorialTiming.headingDelay + editorialTiming.headingDuration + editorialTiming.detailsDelay) / 1000,
-                  ease: editorialEasing.detailsSettle,
-                }}
-                viewport={{ once: true, margin: '-100px' }}
-              >
+              {/* Content */}
+              <div>
+                {item.title && (
+                  <h3 className="font-heading text-lg font-semibold mb-2 line-clamp-2">
+                    {item.title}
+                  </h3>
+                )}
                 {item.description && (
                   <p className="font-paragraph text-sm text-gray-600 line-clamp-3 mb-3">
                     {item.description}
@@ -158,7 +116,7 @@ export default function BehindTheScenesSection() {
                     })}
                   </p>
                 )}
-              </motion.div>
+              </div>
             </motion.div>
           ))}
         </div>
