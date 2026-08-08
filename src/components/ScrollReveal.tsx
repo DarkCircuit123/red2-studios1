@@ -22,16 +22,16 @@ const getInitialVariant = (direction: RevealDirection) => {
 
   switch (direction) {
     case 'left':
-      return { ...baseConfig, x: -80 };
+      return { ...baseConfig, x: -160 };
     case 'right':
-      return { ...baseConfig, x: 80 };
+      return { ...baseConfig, x: 160 };
     case 'up':
-      return { ...baseConfig, y: 60 };
+      return { ...baseConfig, y: 130 };
     case 'down':
-      return { ...baseConfig, y: -60 };
+      return { ...baseConfig, y: -130 };
     case 'center':
     default:
-      return { ...baseConfig, y: 40, scale: 0.95 };
+      return { ...baseConfig, y: 90, scale: 0.9 };
   }
 };
 
@@ -54,7 +54,7 @@ const getExitVariant = (direction: RevealDirection) => {
       return { opacity: 0, y: 40 };
     case 'center':
     default:
-      return { opacity: 0, y: 20, scale: 0.95 };
+      return { opacity: 0, y: 20, scale: 0.9 };
   }
 };
 
@@ -109,7 +109,13 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     );
   }
 
-  const calculatedDelay = baseDelay + (staggerChildren ? index * 0.1 : delay / 1000);
+  const calculatedDelay = baseDelay + (staggerChildren ? index * 0.08 : delay / 1000);
+
+  // Convert duration (ms) to spring stiffness: shorter duration = higher stiffness
+  // 600ms → stiffness 130, 800ms → stiffness 110, 1000ms → stiffness 90
+  const stiffness = Math.max(90, 1200 / (duration / 1000));
+  // Maintain critical damping ratio (0.95-1.0 for text/buttons, 0.82-0.87 for images/cards)
+  const damping = Math.sqrt(stiffness * 4) * 0.95;
 
   return (
     <motion.div
@@ -118,9 +124,11 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       animate={isVisible ? getAnimateVariant() : getInitialVariant(direction)}
       exit={getExitVariant(direction)}
       transition={{
-        duration: duration / 1000,
+        type: 'spring',
+        stiffness,
+        damping,
+        mass: 1,
         delay: calculatedDelay,
-        ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for premium feel
       }}
       className={className}
     >
