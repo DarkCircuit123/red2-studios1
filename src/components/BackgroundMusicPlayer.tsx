@@ -136,12 +136,13 @@ export default function BackgroundMusicPlayer() {
       
       // If unmuting and not playing, try to play
       if (!newMutedState && !isPlaying && musicTracks.length > 0) {
+        // Call play() directly in synchronous execution path
         const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => setIsPlaying(true))
-            .catch(() => setAudioError(true));
-        }
+        // Handle the returned promise only for error catching
+        playPromise?.catch((error) => {
+          console.warn('[BackgroundMusicPlayer] Playback failed:', error);
+          setAudioError(true);
+        });
       }
     }
   };
