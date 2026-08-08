@@ -27,10 +27,20 @@ export default function WorkPage() {
       setIsLoading(true);
       try {
         const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
-        const images = result.items || [];
+        const allImages = result.items || [];
+        
+        // Filter out items with broken/placeholder URLs
+        const validImages = allImages.filter(image => {
+          // Skip items with example.com or other placeholder URLs
+          if (image.imageUrl?.includes('example.com')) {
+            console.warn('Skipping image with broken placeholder URL:', image.imageUrl);
+            return false;
+          }
+          return !!image.imageUrl;
+        });
         
         // Assign artful layout sizes and orientations
-        const layoutImages: ImageWithLayout[] = images.map((img, index) => {
+        const layoutImages: ImageWithLayout[] = validImages.map((img, index) => {
           const layoutPattern = index % 12;
           let layoutSize: 'small' | 'medium' | 'large' = 'medium';
           let layoutOrientation: 'portrait' | 'landscape' | 'square' = 'square';

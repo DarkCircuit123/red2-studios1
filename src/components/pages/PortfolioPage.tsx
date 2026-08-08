@@ -34,9 +34,19 @@ export default function PortfolioPage() {
       try {
         const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
         
+        // Filter out items with broken/placeholder URLs and load image dimensions
+        const validImages = (result.items || []).filter(image => {
+          // Skip items with example.com or other placeholder URLs
+          if (image.imageUrl?.includes('example.com')) {
+            console.warn('Skipping image with broken placeholder URL:', image.imageUrl);
+            return false;
+          }
+          return !!image.imageUrl;
+        });
+
         // Load image dimensions and determine grid spans
         const imagesWithDimensions = await Promise.all(
-          (result.items || []).map(
+          validImages.map(
             (image) =>
               new Promise<ImageWithAspectRatio>((resolve) => {
                 const img = new window.Image();
@@ -49,6 +59,7 @@ export default function PortfolioPage() {
                   });
                 };
                 img.onerror = () => {
+                  console.warn('Failed to load image:', image.imageUrl);
                   resolve({
                     ...image,
                     aspectRatio: 1,
