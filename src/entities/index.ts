@@ -377,6 +377,8 @@ export interface MusicSettings {
   _updatedDate?: Date;
   /** @wixFieldType text */
   duration?: string;
+  /** @wixFieldType boolean */
+  isDefaultHomepageTrack?: boolean;
   /** @wixFieldType text */
   genre?: string;
   /** @wixFieldType url */
@@ -393,6 +395,8 @@ export interface MusicSettings {
   loopMusic?: boolean;
   /** @wixFieldType text */
   musicTitle?: string;
+  /** @wixFieldType audio */
+  audio?: string;
 }
 
 

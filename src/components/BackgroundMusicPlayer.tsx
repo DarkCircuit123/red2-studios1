@@ -6,28 +6,42 @@ export default function BackgroundMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioError, setAudioError] = useState(false);
-  const [musicTracks, setMusicTracks] = useState<MusicSettings[]>([]);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [currentTrack, setCurrentTrack] = useState<MusicSettings | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
-  const [volume, setVolume] = useState(30);
   const interactionListenersInstalledRef = useRef(false);
 
-  // Load all music tracks from CMS
+  // Load music tracks from CMS and select the default one
   useEffect(() => {
     const loadMusicTracks = async () => {
       try {
         const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 100 });
-        const enabledTracks = result.items?.filter(track => track.isEnabled && track.musicUrl) || [];
-        
-        if (enabledTracks.length > 0) {
-          setMusicTracks(enabledTracks);
-          // Get volume from first track if available
-          if (enabledTracks[0]?.volume) {
-            setVolume(enabledTracks[0].volume);
+        const allTracks = result.items || [];
+
+        // FIRST: Find the enabled track where isDefaultHomepageTrack === true
+        const defaultTrack = allTracks.find(
+          (track) => track.isEnabled && track.musicUrl && track.isDefaultHomepageTrack
+        );
+
+        if (defaultTrack) {
+          console.log('[BackgroundMusicPlayer] Using default track:', defaultTrack.musicTitle);
+          setCurrentTrack(defaultTrack);
+        } else {
+          // FALLBACK: Use the first enabled track with a valid musicUrl
+          const firstEnabledTrack = allTracks.find(
+            (track) => track.isEnabled && track.musicUrl
+          );
+
+          if (firstEnabledTrack) {
+            console.log('[BackgroundMusicPlayer] Using first enabled track:', firstEnabledTrack.musicTitle);
+            setCurrentTrack(firstEnabledTrack);
+          } else {
+            console.log('[BackgroundMusicPlayer] No valid enabled track found');
+            setCurrentTrack(null);
           }
         }
       } catch (error) {
-        // Silently fail - music is optional
+        console.warn('[BackgroundMusicPlayer] Error loading tracks:', error);
+        setCurrentTrack(null);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -36,30 +50,16 @@ export default function BackgroundMusicPlayer() {
     loadMusicTracks();
   }, []);
 
-  // Set audio volume when it changes
+  // Handle track changes - reload audio source when track changes
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = Math.min(1, volume / 100);
-    }
-  }, [volume]);
+    if (!audioRef.current || !currentTrack?.musicUrl) return;
 
-  // Handle track changes - reload audio source whenever currentTrack.musicUrl changes
-  useEffect(() => {
-    if (!audioRef.current || musicTracks.length === 0) return;
+    console.log('[BackgroundMusicPlayer] Loading track:', currentTrack.musicTitle, 'URL:', currentTrack.musicUrl);
 
-    const currentTrack = musicTracks[currentTrackIndex];
-    if (!currentTrack?.musicUrl) {
-      console.warn('[BackgroundMusicPlayer] Track URL missing for index', currentTrackIndex);
-      return;
-    }
-
-    console.log('[BackgroundMusicPlayer] Track loaded:', currentTrack.musicUrl);
-    
     // Update the audio src attribute
     audioRef.current.src = currentTrack.musicUrl;
-    
-    // Always call load() when the source changes
-    // This ensures the audio element reloads the source correctly
+
+    // Call load() once when the source changes
     audioRef.current.load();
 
     // If already playing, attempt to resume playback with new track
@@ -68,7 +68,7 @@ export default function BackgroundMusicPlayer() {
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            console.log('[BackgroundMusicPlayer] Playback started successfully');
+            console.log('[BackgroundMusicPlayer] Playback resumed successfully');
           })
           .catch((error) => {
             console.warn('[BackgroundMusicPlayer] Playback failed:', error);
@@ -76,14 +76,13 @@ export default function BackgroundMusicPlayer() {
           });
       }
     }
-  }, [currentTrackIndex, musicTracks, isPlaying]);
+  }, [currentTrack, isPlaying]);
 
   // Attempt to autoplay music on site load
   useEffect(() => {
-    if (isLoadingSettings || musicTracks.length === 0 || !audioRef.current) return;
+    if (isLoadingSettings || !currentTrack?.musicUrl || !audioRef.current) return;
 
-    const currentTrack = musicTracks[currentTrackIndex];
-    if (!currentTrack?.musicUrl) return;
+    console.log('[BackgroundMusicPlayer] Attempting autoplay for:', currentTrack.musicTitle);
 
     // Set the audio source
     audioRef.current.src = currentTrack.musicUrl;
@@ -94,52 +93,54 @@ export default function BackgroundMusicPlayer() {
     if (playPromise !== undefined) {
       playPromise
         .then(() => {
-          console.log('[BackgroundMusicPlayer] Playback started successfully');
+          console.log('[BackgroundMusicPlayer] Autoplay successful');
           setIsPlaying(true);
           setAudioError(false);
         })
         .catch((err) => {
           // Autoplay was blocked by browser policy - expected behavior
-          console.log('[BackgroundMusicPlayer] Autoplay blocked; waiting for first user interaction');
-          
+          console.log('[BackgroundMusicPlayer] Autoplay blocked by browser; waiting for first user interaction');
+
           // Install one-time interaction listeners if not already installed
           if (!interactionListenersInstalledRef.current) {
             interactionListenersInstalledRef.current = true;
-            
+
             const handleFirstInteraction = (event: Event) => {
               if (!audioRef.current || isPlaying) return;
-              
+
               console.log('[BackgroundMusicPlayer] First user interaction detected:', event.type);
-              
+
               // Call play() directly inside the event handler (synchronous)
               const playPromise = audioRef.current!.play();
               if (playPromise !== undefined) {
                 playPromise
                   .then(() => {
-                    console.log('[BackgroundMusicPlayer] Playback started successfully');
+                    console.log('[BackgroundMusicPlayer] Playback started after user interaction');
                     setIsPlaying(true);
                     setAudioError(false);
                   })
                   .catch((error) => {
-                    console.warn('[BackgroundMusicPlayer] Playback failed:', error);
+                    console.warn('[BackgroundMusicPlayer] Playback failed after interaction:', error);
                     setAudioError(true);
                   });
               }
-              
-              // Remove all temporary listeners after first successful attempt
+
+              // Remove all temporary listeners after first attempt
               document.removeEventListener('pointerdown', handleFirstInteraction);
+              document.removeEventListener('click', handleFirstInteraction);
               document.removeEventListener('keydown', handleFirstInteraction);
               document.removeEventListener('touchstart', handleFirstInteraction);
             };
-            
+
             // Install listeners for first user interaction
             document.addEventListener('pointerdown', handleFirstInteraction);
+            document.addEventListener('click', handleFirstInteraction);
             document.addEventListener('keydown', handleFirstInteraction);
             document.addEventListener('touchstart', handleFirstInteraction, { passive: true });
           }
         });
     }
-  }, [isLoadingSettings, musicTracks.length, currentTrackIndex, isPlaying]);
+  }, [isLoadingSettings, currentTrack, isPlaying]);
 
   const handleAudioPlay = () => {
     setIsPlaying(true);
@@ -154,25 +155,17 @@ export default function BackgroundMusicPlayer() {
     const audio = event.target as HTMLAudioElement;
     const errorCode = audio.error?.code;
     const errorMessage = audio.error?.message || 'Unknown error';
-    
+
     console.warn('[BackgroundMusicPlayer] Audio error:', {
       code: errorCode,
       message: errorMessage,
-      src: audio.src
+      src: audio.src,
     });
     setAudioError(true);
   };
 
-  // Don't render if music is disabled or settings not loaded
-  if (isLoadingSettings || musicTracks.length === 0) {
-    return null;
-  }
-
-  // Get current track
-  const currentTrack = musicTracks[currentTrackIndex];
-
-  // Validate music URL is available
-  if (!currentTrack?.musicUrl) {
+  // Don't render if settings not loaded or no valid track
+  if (isLoadingSettings || !currentTrack?.musicUrl) {
     return null;
   }
 
@@ -183,7 +176,7 @@ export default function BackgroundMusicPlayer() {
         ref={audioRef}
         title="Background Music Player"
         autoPlay
-        loop={currentTrack?.loopMusic !== false}
+        loop={currentTrack.loopMusic !== false}
         preload="auto"
         crossOrigin="anonymous"
         onPlay={handleAudioPlay}
@@ -191,20 +184,9 @@ export default function BackgroundMusicPlayer() {
         onError={handleAudioError}
         style={{ display: 'none' }}
       >
-        <source 
-          src={currentTrack.musicUrl} 
-          type="audio/mpeg"
-        />
-        {/* Fallback for other audio formats */}
-        <source 
-          src={currentTrack.musicUrl} 
-          type="audio/wav"
-        />
-        {/* Fallback for OGG */}
-        <source 
-          src={currentTrack.musicUrl} 
-          type="audio/ogg"
-        />
+        <source src={currentTrack.musicUrl} type="audio/mpeg" />
+        <source src={currentTrack.musicUrl} type="audio/wav" />
+        <source src={currentTrack.musicUrl} type="audio/ogg" />
       </audio>
     </>
   );
