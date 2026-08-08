@@ -37,7 +37,7 @@ export default function PortfolioPage() {
         
         // Filter out items with broken/placeholder URLs using sanitizer
         const allItems = result.items || [];
-        const validImages = filterValidImages(allItems, 'imageUrl');
+        const validImages = filterValidImages(allItems, 'image');
         
         // Generate and log sanitization report
         const report = generateSanitizationReport(
@@ -45,7 +45,7 @@ export default function PortfolioPage() {
           validImages.length,
           allItems
             .filter(img => !validImages.find(v => v._id === img._id))
-            .map(img => img.imageUrl || 'unknown')
+            .map(img => img.image || 'unknown')
         );
         
         if (report.removed > 0) {
@@ -79,14 +79,14 @@ export default function PortfolioPage() {
                   });
                 };
                 img.onerror = () => {
-                  console.warn('Failed to load image:', image.imageUrl);
+                  console.warn('Failed to load image:', image.image);
                   resolve({
                     ...image,
                     aspectRatio: 1,
                     gridSpan: 'square',
                   });
                 };
-                img.src = image.imageUrl || '';
+                img.src = image.image || '';
               })
           )
         );
@@ -225,18 +225,18 @@ export default function PortfolioPage() {
                   }`}
                   onClick={() => {
                     playClickSound();
-                    setSelectedImage(image.imageUrl || '');
+                    setSelectedImage(image.image || '');
                   }}
                 >
                   {/* Image with hover effect */}
                   <div className="relative w-full h-full overflow-hidden bg-black/20">
                     <Image
-                      src={image.imageUrl || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
+                      src={image.image || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
                       alt={image.altText || 'Portfolio image'}
                       className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
                         isVertical ? 'aspect-[3/4]' : isHorizontal ? 'aspect-[16/9]' : 'aspect-square'
                       }`}
-                      data-field-name="imageUrl"
+                      data-field-name="image"
                       data-record-id={image._id}
                     />
                     {/* Subtle overlay on hover */}

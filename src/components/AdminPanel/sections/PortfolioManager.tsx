@@ -118,7 +118,7 @@ export default function PortfolioManager() {
     try {
       const displayOrder = (selectedPortfolio.images?.length || 0);
       await addImage(selectedPortfolio._id, {
-        imageUrl,
+        image: imageUrl,
         displayOrder,
         caption: '',
         altText: formData.imageAltText,
@@ -456,7 +456,7 @@ export default function PortfolioManager() {
                       <GripVertical size={18} className="cursor-grab text-gray-400" />
                       <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded">
                         <Image
-                          src={image.imageUrl}
+                          src={image.image || ''}
                           alt={image.altText || `Image ${index + 1}`}
                           className="h-full w-full object-cover"
                           width={64}

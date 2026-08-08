@@ -31,7 +31,7 @@ export default function WorkPage() {
         const allImages = result.items || [];
         
         // Filter out items with broken/placeholder URLs using sanitizer
-        const validImages = filterValidImages(allImages, 'imageUrl');
+        const validImages = filterValidImages(allImages, 'image');
         
         // Generate and log sanitization report
         const report = generateSanitizationReport(
@@ -39,7 +39,7 @@ export default function WorkPage() {
           validImages.length,
           allImages
             .filter(img => !validImages.find(v => v._id === img._id))
-            .map(img => img.imageUrl || 'unknown')
+            .map(img => img.image || 'unknown')
         );
         
         if (report.removed > 0) {
@@ -230,7 +230,7 @@ export default function WorkPage() {
                   className={getGridClasses(image)}
                   onClick={() => {
                     playClickSound();
-                    setSelectedImage(image.imageUrl || '');
+                    setSelectedImage(image.image || '');
                   }}
                 >
                   {/* Image Container with Parallax */}
@@ -241,10 +241,10 @@ export default function WorkPage() {
                   >
                     {/* Image */}
                     <Image
-                      src={image.imageUrl || 'https://static.wixstatic.com/media/e9d727_9c9c4486a82b496ca6c48026f5bbed4d~mv2.png?originWidth=576&originHeight=384'}
+                      src={image.image || 'https://static.wixstatic.com/media/e9d727_9c9c4486a82b496ca6c48026f5bbed4d~mv2.png?originWidth=576&originHeight=384'}
                       alt={image.altText || 'Portfolio image'}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      data-field-name="imageUrl"
+                      data-field-name="image"
                       data-record-id={image._id}
                     />
 
