@@ -36,6 +36,8 @@ export default function HeroSectionManager() {
           heroTitle: 'Welcome to Our Site',
           heroSubtitle: 'Create something amazing',
           buttonText: 'Get Started',
+          musicEnabled: false,
+          autoplayEnabled: false,
           loopMusic: true,
           volume: 50,
         };

@@ -105,8 +105,32 @@ export default function HomePagePreview() {
         </div>
       </Card>
 
-      {/* Music Status - Now from musicsettings */}
-      {/* Music management moved to BackgroundMusicManager tab */}
+      {/* Music Status */}
+      {settings?.backgroundMusicUrl && (
+        <Card className="p-6 border border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center">
+              <Music className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-slate-900">Background Music</h3>
+              <p className="text-sm text-slate-600 mt-1">{settings.musicTitle || 'Untitled'}</p>
+              <div className="flex gap-4 mt-2 text-xs text-slate-600">
+                <span className={`flex items-center gap-1 ${settings.musicEnabled ? 'text-green-600' : 'text-slate-400'}`}>
+                  ● {settings.musicEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+                <span className={`flex items-center gap-1 ${settings.autoplayEnabled ? 'text-green-600' : 'text-slate-400'}`}>
+                  ● {settings.autoplayEnabled ? 'Autoplay' : 'Manual play'}
+                </span>
+                <span className={`flex items-center gap-1 ${settings.loopMusic ? 'text-green-600' : 'text-slate-400'}`}>
+                  ● {settings.loopMusic ? 'Loop' : 'No loop'}
+                </span>
+                <span className="text-slate-600">● Volume: {settings.volume}%</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Data Summary */}
       <Card className="p-6 border border-slate-200 bg-slate-50">
@@ -130,7 +154,7 @@ export default function HomePagePreview() {
           </div>
           <div>
             <p className="text-slate-600">Music File</p>
-            <p className="font-medium text-slate-900">Managed in Music tab</p>
+            <p className="font-medium text-slate-900">{settings?.backgroundMusicUrl ? '✓ Uploaded' : '—'}</p>
           </div>
           <div>
             <p className="text-slate-600">Last Updated</p>
