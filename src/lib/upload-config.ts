@@ -60,40 +60,17 @@ export function validateFileAgainstConfig(
 ): { valid: true } | { valid: false; error: string } {
   const typeOk =
     config.acceptedMimeTypes.includes(file.type) || file.type.startsWith(config.acceptedPrefix);
-  
   if (!typeOk) {
-    console.warn('[UPLOAD_CONFIG] File type validation failed:', {
-      fileType: file.type,
-      acceptedMimeTypes: config.acceptedMimeTypes,
-      acceptedPrefix: config.acceptedPrefix,
-      label: config.label
-    });
     return {
       valid: false,
       error: `Unsupported ${config.label} file type: ${file.type || 'unknown'}. Supported: ${config.acceptedMimeTypes.join(', ')}`,
     };
   }
-  
   if (file.size > config.maxSizeBytes) {
-    console.warn('[UPLOAD_CONFIG] File size validation failed:', {
-      fileSize: file.size,
-      maxSize: config.maxSizeBytes,
-      fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
-      maxSizeMB: (config.maxSizeBytes / 1024 / 1024).toFixed(2),
-      label: config.label
-    });
     return {
       valid: false,
       error: `File size exceeds ${config.maxSizeLabel} limit. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`,
     };
   }
-  
-  console.log('[UPLOAD_CONFIG] File validation passed:', {
-    fileType: file.type,
-    fileSize: file.size,
-    fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
-    label: config.label
-  });
-  
   return { valid: true };
 }

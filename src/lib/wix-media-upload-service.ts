@@ -241,59 +241,49 @@ function uploadToWix(
   kind: 'image' | 'music' = 'image',
   onProgress?: (progress: UploadProgress) => void
 ): Promise<string> {
-  const uploadId = crypto.randomUUID();
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     
     xhr.addEventListener('load', () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        console.log(`[WIX_MEDIA] [${uploadId}] File uploaded successfully, status: ${xhr.status}`);
+        console.log('[WIX_MEDIA] File uploaded successfully');
         try {
           const response = JSON.parse(xhr.responseText);
           
           // Use appropriate URL builder based on file kind
           let mediaUrl: string | undefined;
           if (kind === 'music') {
-            console.log(`[WIX_MEDIA] [${uploadId}] Using buildWixAudioUrl for audio file`);
             mediaUrl = buildWixAudioUrl(response, file);
           } else {
-            console.log(`[WIX_MEDIA] [${uploadId}] Using buildWixMediaUrl for image file`);
             mediaUrl = buildWixMediaUrl(response, file);
           }
           
           if (mediaUrl) {
-            console.log(`[WIX_MEDIA] [${uploadId}] Media URL resolved:`, { 
-              kind, 
-              urlType: mediaUrl.startsWith('wix:') ? 'wix:image://' : 'https://',
-              urlLength: mediaUrl.length
-            });
             resolve(mediaUrl);
           } else {
-            console.error(`[WIX_MEDIA] [${uploadId}] URL builder returned undefined for ${kind}`);
             reject(new Error('Upload response missing media URL'));
           }
         } catch (e) {
-          console.error(`[WIX_MEDIA] [${uploadId}] Failed to parse upload response:`, e);
           reject(new Error(`Failed to parse upload response: ${e instanceof Error ? e.message : String(e)}`));
         }
       } else {
-        console.error(`[WIX_MEDIA] [${uploadId}] Upload failed with status ${xhr.status}`);
+        console.error(`[WIX_MEDIA] Upload failed with status ${xhr.status}`);
         reject(new Error(`Upload failed with status ${xhr.status}`));
       }
     });
 
     xhr.addEventListener('error', () => {
-      console.error(`[WIX_MEDIA] [${uploadId}] Network error during upload`);
+      console.error('[WIX_MEDIA] Network error during upload');
       reject(new Error('Network error during upload'));
     });
 
     xhr.addEventListener('abort', () => {
-      console.error(`[WIX_MEDIA] [${uploadId}] Upload was aborted`);
+      console.error('[WIX_MEDIA] Upload was aborted');
       reject(new Error('Upload was aborted'));
     });
 
     xhr.addEventListener('timeout', () => {
-      console.error(`[WIX_MEDIA] [${uploadId}] Upload timed out`);
+      console.error('[WIX_MEDIA] Upload timed out');
       reject(new Error('Upload timed out'));
     });
 
@@ -326,13 +316,12 @@ export async function uploadMedia(
   config: UploadConfig,
   onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult> {
-  const uploadId = crypto.randomUUID();
-  console.log(`[WIX_MEDIA] [${uploadId}] Starting ${kind} upload: ${file.name} (${file.size} bytes, type: ${file.type})`);
+  console.log(`[WIX_MEDIA] Starting ${kind} upload: ${file.name} (${file.size} bytes)`);
 
   // Validate file against config
   const validation = validateFileAgainstConfig({ type: file.type, size: file.size }, config);
   if (!validation.valid) {
-    console.error(`[WIX_MEDIA] [${uploadId}] Validation failed: ${validation.error}`);
+    console.error(`[WIX_MEDIA] Validation failed: ${validation.error}`);
     throw {
       code: 'INVALID_FILE',
       message: validation.error
@@ -341,20 +330,13 @@ export async function uploadMedia(
 
   try {
     // Step 1: Request signed upload URL from backend
-    console.log(`[WIX_MEDIA] [${uploadId}] Requesting upload URL from backend`);
     const { uploadUrl, fileName } = await generateUploadUrl(file, kind);
 
     // Step 2: Upload file directly to Wix and get media URL from response
     // Pass kind to uploadToWix so it uses the correct URL builder
-    console.log(`[WIX_MEDIA] [${uploadId}] Uploading to Wix Media Manager`);
     const mediaUrl = await uploadToWix(file, uploadUrl, kind, onProgress);
 
-    console.log(`[WIX_MEDIA] [${uploadId}] ${kind} upload complete:`, { 
-      mediaUrl, 
-      fileName,
-      mediaUrlType: mediaUrl.startsWith('wix:') ? 'wix:image://' : 'https://',
-      mediaUrlLength: mediaUrl.length
-    });
+    console.log(`[WIX_MEDIA] ${kind} upload complete:`, { mediaUrl, fileName });
 
     return {
       mediaUrl,
@@ -363,7 +345,7 @@ export async function uploadMedia(
       mimeType: file.type
     };
   } catch (error) {
-    console.error(`[WIX_MEDIA] [${uploadId}] ${kind} upload failed:`, error);
+    console.error(`[WIX_MEDIA] ${kind} upload failed:`, error);
     
     if (error && typeof error === 'object' && 'code' in error) {
       throw error;
@@ -392,8 +374,7 @@ export async function uploadToWixMedia(
     const { uploadUrl } = await generateUploadUrl(file, kind);
     
     // Upload file directly to Wix and get media URL
-    // CRITICAL: Pass kind parameter so uploadToWix uses correct URL builder
-    const mediaUrl = await uploadToWix(file, uploadUrl, kind);
+    const mediaUrl = await uploadToWix(file, uploadUrl);
     
     console.log(`[WIX_MEDIA] uploadToWixMedia - Upload successful, returning URL: ${mediaUrl}`);
     return mediaUrl;
