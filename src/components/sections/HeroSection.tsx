@@ -43,9 +43,11 @@ export default function HeroSection() {
             });
           }
         } else {
+          console.warn('[HeroSection] No hero image found in CMS');
           setHeroImage(null);
         }
       } else {
+        console.warn('[HeroSection] No homepage images collection data found');
         setHeroImage(null);
       }
       // Reset retry count on success

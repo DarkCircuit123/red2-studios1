@@ -130,9 +130,15 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
 
   const imageProps = {
     ...restProps,
-    onError: () => {
-      // On error, fall back to the fallback image
-      setImgSrc(FALLBACK_IMAGE_URL);
+    onError: (e: any) => {
+      // On error, fall back to the fallback image only if not already fallback
+      if (finalSrc !== FALLBACK_IMAGE_URL) {
+        setImgSrc(FALLBACK_IMAGE_URL);
+      }
+      // Call original onError if provided
+      if (props.onError && typeof props.onError === 'function') {
+        props.onError(e);
+      }
     }
   };
 

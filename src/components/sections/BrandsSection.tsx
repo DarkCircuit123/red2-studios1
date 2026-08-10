@@ -16,6 +16,7 @@ export default function BrandsSection() {
         if (clientsData.items && clientsData.items.length > 0) {
           setBrands(clientsData.items);
         } else {
+          console.warn('[BrandsSection] No brands found in collection');
           setBrands([]);
         }
       } catch (error) {

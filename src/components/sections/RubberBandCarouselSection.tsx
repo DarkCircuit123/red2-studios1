@@ -119,6 +119,7 @@ const RubberBandCarouselSection: React.FC = () => {
         }
       } catch (error) {
         console.error('[RubberBandCarousel] Failed to load portfolio images:', error);
+        console.warn('[RubberBandCarousel] Using fallback images');
         if (!cancelled) setCmsImages(null);
       }
     })();

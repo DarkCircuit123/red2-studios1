@@ -25,10 +25,16 @@ export default function BehindTheScenesSection() {
     try {
       setIsLoading(true);
       const result = await BaseCrudService.getAll<BehindTheScenesItem>('behindthescenes', [], { limit: 100 });
-      const sorted = result.items.sort((a, b) => (a.order || 0) - (b.order || 0));
-      setItems(sorted.slice(0, 3));
+      if (result?.items && result.items.length > 0) {
+        const sorted = result.items.sort((a, b) => (a.order || 0) - (b.order || 0));
+        setItems(sorted.slice(0, 3));
+      } else {
+        console.warn('[BehindTheScenesSection] No items found in collection');
+        setItems([]);
+      }
     } catch (error) {
       console.error('Failed to load behind-the-scenes items:', error);
+      setItems([]);
     } finally {
       setIsLoading(false);
     }

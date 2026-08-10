@@ -15,9 +15,15 @@ export default function BlogSection() {
     const loadPosts = async () => {
       try {
         const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 6 });
-        setPosts(result.items || []);
+        if (result.items && result.items.length > 0) {
+          setPosts(result.items);
+        } else {
+          console.warn('[BlogSection] No blog posts found in collection');
+          setPosts([]);
+        }
       } catch (error) {
         console.error('Error loading blog posts:', error);
+        setPosts([]);
       } finally {
         setIsLoading(false);
       }

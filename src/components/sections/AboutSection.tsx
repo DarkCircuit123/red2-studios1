@@ -26,7 +26,11 @@ export default function AboutSection() {
         const images = homepageImages.items[0] as any;
         if (images?.aboutSectionImage) {
           setAboutImage(images.aboutSectionImage);
+        } else {
+          console.warn('[AboutSection] No aboutSectionImage found in CMS');
         }
+      } else {
+        console.warn('[AboutSection] No homepage images collection data found');
       }
 
       // Load about settings
@@ -40,6 +44,8 @@ export default function AboutSection() {
           if (about?.fontFamily) {
             setFontFamily(about.fontFamily);
           }
+        } else {
+          console.warn('[AboutSection] No about collection data found');
         }
       } catch (error) {
         console.error('[AboutSection] Error loading about settings:', error);

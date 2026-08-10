@@ -19,6 +19,7 @@ export default function SponsorsSection() {
         if (clientsData.items && clientsData.items.length > 0) {
           setSponsors(clientsData.items);
         } else {
+          console.warn('[SponsorsSection] No sponsors found in collection');
           setSponsors([]);
         }
       } catch (error) {
