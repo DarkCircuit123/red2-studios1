@@ -1,18 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, Music, Calendar, AlertCircle, CheckCircle, Upload, Zap, Database, TestTube, LogOut, Trash2 } from 'lucide-react';
+import { Settings, X, Edit2, Music, Calendar, LogOut, Trash2, Upload } from 'lucide-react';
 import { useMember } from '@/integrations';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
-import HeroImageUploader from './HeroImageUploader';
 import MusicManager from './MusicManager';
 import BookingManagerPro from './BookingManagerPro';
-import MediaHealthTab from './AdminPanel/MediaHealthTab';
-import DataManagementTab from './AdminPanel/DataManagementTab';
-import UploadProductionTest from './UploadProductionTest';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
-import { Services, HomepageImages, ClientsPress, AboutSection, Portfolio } from '@/entities/index';
+import { HomepageImages, ClientsPress, AboutSection, Portfolio } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
 
 interface AdminPanelProps {
@@ -42,19 +38,12 @@ interface GallerySlot {
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { member, actions: memberActions } = useMember();
   const [activeTab, setActiveTab] = useState('photos');
-  const [siteTitle, setSiteTitle] = useState('RED2');
-  const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [aboutSettings, setAboutSettings] = useState<AboutSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingAbout, setIsSavingAbout] = useState(false);
-  const [newUsername, setNewUsername] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [credentialsError, setCredentialsError] = useState('');
-  const [credentialsSuccess, setCredentialsSuccess] = useState('');
-  const [isSavingCredentials, setIsSavingCredentials] = useState(false);
   const [portfolioImages, setPortfolioImages] = useState<Portfolio[]>([]);
   const [gallerySlots, setGallerySlots] = useState<GallerySlot[]>([]);
   const [isInitializingGallery, setIsInitializingGallery] = useState(false);
@@ -186,28 +175,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     loadData();
   }, [isOpen, activeTab, initializeGallery]);
 
-  const handleSaveCredentials = async () => {
-    setCredentialsError('');
-    setCredentialsSuccess('');
-
-    if (!newUsername || !newPassword) {
-      setCredentialsError('Username and password are required');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setCredentialsError('Password must be at least 6 characters');
-      return;
-    }
-
-    setCredentialsError(
-      'Admin credentials are stored in Wix Secrets Manager, not in the CMS. ' +
-      'Update ADMIN_USERNAME / ADMIN_PASSWORD there (Developer Tools → Secrets Manager), ' +
-      'then republish. Saving them here would store your password in a data collection.'
-    );
-    setIsSavingCredentials(false);
-  };
-
   const handleLogout = useCallback(async () => {
     playClickSound();
     try {
@@ -230,11 +197,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     { id: 'sponsors', label: 'Sponsors', icon: Upload },
     { id: 'music', label: 'Music', icon: Music },
     { id: 'about', label: 'About', icon: Edit2 },
-    { id: 'text', label: 'Text', icon: Edit2 },
-    { id: 'media-health', label: 'Health', icon: Zap },
-    { id: 'data', label: 'Data', icon: Database },
     { id: 'bookings', label: 'Bookings', icon: Calendar },
-    { id: 'upload-test', label: 'Test', icon: TestTube },
   ];
 
   return (
@@ -305,83 +268,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
 
             {/* Content */}
             <div className="p-6 space-y-8">
-              {/* Credentials Tab */}
-              {activeTab === 'credentials' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      Admin Credentials
-                    </h3>
-                    <p className="text-xs text-black/60">Manage your admin login credentials</p>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-xs text-blue-700">
-                      Admin credentials are managed through Wix Secrets Manager. Update ADMIN_USERNAME and ADMIN_PASSWORD in Developer Tools, then republish.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
-                        Admin Username
-                      </label>
-                      <input
-                        type="text"
-                        value={newUsername}
-                        onChange={(e) => setNewUsername(e.target.value)}
-                        placeholder="Enter admin username"
-                        className="w-full px-4 py-2 border border-black/10 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20 transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2">
-                        Admin Password
-                      </label>
-                      <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Enter admin password (min 6 characters)"
-                        className="w-full px-4 py-2 border border-black/10 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20 transition-all"
-                      />
-                      <p className="text-xs text-black/40 mt-1">Minimum 6 characters required</p>
-                    </div>
-
-                    {credentialsError && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2"
-                      >
-                        <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-red-700">{credentialsError}</p>
-                      </motion.div>
-                    )}
-
-                    {credentialsSuccess && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-2"
-                      >
-                        <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-green-700">{credentialsSuccess}</p>
-                      </motion.div>
-                    )}
-
-                    <button
-                      onClick={handleSaveCredentials}
-                      disabled={isSavingCredentials || !newUsername || !newPassword}
-                      className="w-full px-4 py-3 bg-black text-white rounded-lg text-sm font-heading font-bold uppercase tracking-wide hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      {isSavingCredentials ? 'Saving...' : 'Save Credentials'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* Bookings Tab */}
               {activeTab === 'bookings' && (
                 <div className="bg-gradient-to-b from-black to-black/95 border border-white/10 rounded-lg p-6">
@@ -914,69 +800,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       </a>
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* Text Tab */}
-              {activeTab === 'text' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      Site Text
-                    </h3>
-                    <p className="text-xs text-black/60">Edit site title and tagline</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                        Site Title
-                      </label>
-                      <TextEditableField
-                        value={siteTitle}
-                        onSave={setSiteTitle}
-                        className="text-lg font-heading font-bold text-black"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                        Tagline
-                      </label>
-                      <TextEditableField
-                        value={siteTagline}
-                        onSave={setSiteTagline}
-                        className="text-sm text-black/70"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Media Health Tab */}
-              {activeTab === 'media-health' && (
-                <div>
-                  <MediaHealthTab />
-                </div>
-              )}
-
-              {/* Data Tab */}
-              {activeTab === 'data' && (
-                <div>
-                  <DataManagementTab />
-                </div>
-              )}
-
-              {/* Upload Test Tab */}
-              {activeTab === 'upload-test' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide flex items-center gap-2">
-                      <TestTube className="w-4 h-4" />
-                      Production Upload Test
-                    </h3>
-                    <p className="text-xs text-black/60">Execute a complete end-to-end upload test with real JPG file</p>
-                  </div>
-                  <UploadProductionTest />
                 </div>
               )}
             </div>
