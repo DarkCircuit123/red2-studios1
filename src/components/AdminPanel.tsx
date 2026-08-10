@@ -318,34 +318,64 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Work Tab - Direct Portfolio Images Upload */}
+              {/* Work Tab - Portfolio Images Upload (FIXED: Now uses portfolio items) */}
               {activeTab === 'work' && (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
                       Work Gallery
                     </h3>
-                    <p className="text-xs text-black/60">Upload images directly to the Work section</p>
+                    <p className="text-xs text-black/60">Upload images to your portfolio projects</p>
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <p className="text-xs text-blue-700">
-                      Images uploaded here will appear in the Work page gallery. Upload high-quality photos for the best visual impact.
+                      Select a portfolio project below and upload images. Images will be linked to the project and appear in the Work page gallery.
                     </p>
                   </div>
 
-                  <div>
-                    <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                      Upload Work Photos
-                    </label>
-                    <ImageUploadManager
-                      label="Upload Work Image"
-                      collectionId="portfolioimages"
-                      fieldName="imageUrl"
-                      onImageUpload={(url) => {
-                        console.log('Work image uploaded:', url);
-                      }}
-                    />
+                  <div className="space-y-8 max-h-96 overflow-y-auto">
+                    {portfolioItems.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-sm text-black/60">
+                          No portfolio items found. Create portfolio items in the CMS first, then upload images here.
+                        </p>
+                      </div>
+                    ) : (
+                      portfolioItems.map((item) => (
+                        <div key={item._id} className="border-t border-black/10 pt-6">
+                          <h4 className="text-xs font-heading font-bold text-black mb-4 uppercase tracking-wide">
+                            {item.projectName || 'Untitled Project'}
+                          </h4>
+                          <div className="space-y-4">
+                            {['mainImage', 'galleryImage1', 'galleryImage2', 'galleryImage3'].map((field, idx) => (
+                              <div key={field}>
+                                <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
+                                  {field === 'mainImage' ? 'Main Image' : `Gallery Image ${idx}`}
+                                </label>
+                                <ImageUploadManager
+                                  label={`Upload ${field === 'mainImage' ? 'Main' : `Gallery ${idx}`} Image`}
+                                  currentImage={item[field as keyof Portfolio] as string}
+                                  collectionId="portfolio"
+                                  itemId={item._id}
+                                  fieldName={field}
+                                  onImageUpload={(url) => {
+                                    setPortfolioItems(portfolioItems.map(p => 
+                                      p._id === item._id ? { ...p, [field]: url } : p
+                                    ));
+                                  }}
+                                  onImageDelete={() => {
+                                    setPortfolioItems(portfolioItems.map(p => 
+                                      p._id === item._id ? { ...p, [field]: undefined } : p
+                                    ));
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
