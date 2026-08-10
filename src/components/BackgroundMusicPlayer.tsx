@@ -27,7 +27,12 @@ export default function BackgroundMusicPlayer() {
           setMusicTracks(enabledTracks);
           console.log('[AUDIO_DIAGNOSTIC] Loaded music tracks:', {
             count: enabledTracks.length,
-            tracks: enabledTracks.map(t => ({ title: t.musicTitle, url: t.musicUrl }))
+            tracks: enabledTracks.map(t => ({ 
+              title: t.musicTitle, 
+              url: t.musicUrl,
+              urlType: t.musicUrl?.startsWith('wix:') ? 'wix:image://' : 'https://',
+              urlLength: t.musicUrl?.length
+            }))
           });
           // Get volume from first track if available
           if (enabledTracks[0]?.volume) {
@@ -146,12 +151,15 @@ export default function BackgroundMusicPlayer() {
     const errorCode = audio.error?.code;
     
     // Log audio error diagnostics
-    console.log('[AUDIO_DIAGNOSTIC] Audio error event:', {
+    console.error('[AUDIO_DIAGNOSTIC] Audio error event:', {
       errorCode,
       errorMessage: audio.error?.message,
       src: audio.src,
+      srcType: audio.src?.startsWith('wix:') ? 'wix:image://' : 'https://',
       readyState: audio.readyState,
-      networkState: audio.networkState
+      networkState: audio.networkState,
+      currentTrack: currentTrackIndex,
+      totalTracks: musicTracks.length
     });
     
     setAudioError(true);

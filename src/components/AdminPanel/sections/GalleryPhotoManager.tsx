@@ -7,6 +7,8 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Upload, Trash2, Eye, Plus, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { motion } from 'framer-motion';
+import { uploadMedia } from '@/lib/wix-media-upload-service';
+import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 
 interface GalleryPhoto {
   _id: string;
@@ -147,21 +149,11 @@ export default function GalleryPhotoManager() {
     try {
       setIsUploading(true);
 
-      // Upload image to Wix Media Manager
-      const formDataForUpload = new FormData();
-      formDataForUpload.append('file', selectedFile);
-
-      const uploadResponse = await fetch('/api/media/upload-hero', {
-        method: 'POST',
-        body: formDataForUpload,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
-      }
-
-      const uploadedData = await uploadResponse.json();
-      const imageUrl = uploadedData.url;
+      // Use unified upload service with proper media type handling
+      const result = await uploadMedia(selectedFile, 'image', IMAGE_UPLOAD_CONFIG);
+      
+      console.log('[GalleryPhotoManager] Upload successful:', { mediaUrl: result.mediaUrl });
+      const imageUrl = result.mediaUrl;
 
       // Create gallery slug from category and subcategory
       const gallerySlug = `${formData.category.toLowerCase()}-${formData.subCategory.toLowerCase()}`.replace(/\s+/g, '-');
@@ -201,7 +193,7 @@ export default function GalleryPhotoManager() {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('Error uploading photo:', error);
+      console.error('[GalleryPhotoManager] Error uploading photo:', error);
       alert('Failed to upload photo. Please try again.');
     } finally {
       setIsUploading(false);
