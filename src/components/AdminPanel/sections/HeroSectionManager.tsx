@@ -9,6 +9,7 @@ import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
+import ImageThumbnailPreview from './ImageThumbnailPreview';
 
 export default function HeroSectionManager() {
   const { toast } = useToast();

@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Upload, Trash2, Eye, Plus, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { motion } from 'framer-motion';
+import ImageThumbnailPreview from './ImageThumbnailPreview';
 
 interface GalleryPhoto {
   _id: string;

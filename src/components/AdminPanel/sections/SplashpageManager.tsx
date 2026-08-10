@@ -8,6 +8,7 @@ import { adminCms } from '@/lib/admin-cms';
 import { Splashpage } from '@/entities';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
+import ImageThumbnailPreview from './ImageThumbnailPreview';
 
 interface SplashpageManagerProps {
   onSave?: () => void;
