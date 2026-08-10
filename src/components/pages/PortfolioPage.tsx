@@ -8,6 +8,7 @@ import { ScrollReveal } from '@/components/ScrollReveal';
 import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
 import WixImageResolver from '@/lib/wix-image-resolver';
 import { STATIC_MEDIA_URL } from '@wix/image-kit';
+import { Image } from '@/components/ui/image';
 
 interface ImageWithAspectRatio extends PortfolioImages {
   aspectRatio?: number;
@@ -157,6 +158,44 @@ export default function PortfolioPage() {
         </ScrollReveal>
 
 
+
+        {/* Scrolling Photos Grid */}
+        {!isLoading && allImages.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[300px]"
+          >
+            {allImages.map((image, index) => (
+              <motion.div
+                key={image._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.4 }}
+                className={`relative overflow-hidden rounded-lg bg-white/5 group cursor-pointer ${
+                  image.gridSpan === 'vertical' ? 'md:row-span-2' : ''
+                } ${image.gridSpan === 'horizontal' ? 'md:col-span-2' : ''}`}
+              >
+                <Image
+                  src={WixImageResolver.resolve(image.image).url}
+                  alt={image.altText || image.caption || 'Portfolio image'}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  width={400}
+                  height={300}
+                />
+                {/* Overlay on hover */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end p-4">
+                  {image.caption && (
+                    <p className="text-white text-sm font-paragraph opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {image.caption}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
         {/* Empty State */}
         {!isLoading && allImages.length === 0 && (
