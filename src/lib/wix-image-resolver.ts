@@ -32,6 +32,22 @@ const FALLBACK_IMAGE_URL = 'https://static.wixstatic.com/media/12d367_4f26ccd17f
 const IS_DEVELOPMENT = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
 
 /**
+ * Convert wix:image:// URLs to wixstatic format for CSP compliance
+ */
+const convertWixImageUrl = (url: string): string => {
+  if (!url.includes('wix:image://')) return url;
+  
+  // Format: wix:image://v1/{mediaId}~{version}/{filename}#originWidth=...
+  const match = url.match(/wix:image:\/\/v1\/([^~]+)~([^/]+)\/(.+?)(?:#|$)/);
+  if (match) {
+    const [, mediaId, version, filename] = match;
+    return `https://static.wixstatic.com/media/${mediaId}~${version}/${filename}`;
+  }
+  
+  return url;
+};
+
+/**
  * Extract component name from stack trace for debug logging
  */
 const getCallerComponent = (): string => {
@@ -69,8 +85,10 @@ class WixImageResolver {
 
     // Check for wix:image://v1/ format (Wix Media Manager native)
     if (trimmedUrl.startsWith('wix:image://v1/')) {
+      // Convert to wixstatic format for CSP compliance
+      const convertedUrl = convertWixImageUrl(trimmedUrl);
       return {
-        url: trimmedUrl,
+        url: convertedUrl,
         isValid: true,
         format: 'wix-image',
         isFallback: false

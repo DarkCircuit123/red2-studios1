@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
@@ -14,6 +14,7 @@ export default function BackgroundMusicPlayer() {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [volume, setVolume] = useState(30);
+  const interactionHandlerRef = useRef<((e: Event) => void) | null>(null);
 
   // Load all music tracks from CMS
   useEffect(() => {
@@ -46,68 +47,61 @@ export default function BackgroundMusicPlayer() {
     }
   }, [volume]);
 
-  // Attempt to autoplay music on site load
+  // Attempt to play audio
+  const attemptPlay = useCallback(async () => {
+    if (!audioRef.current || musicTracks.length === 0) return;
+    
+    try {
+      // Ensure audio element is ready
+      if (audioRef.current.readyState === 0) {
+        audioRef.current.load();
+      }
+      
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        await playPromise;
+        setIsPlaying(true);
+        setAudioError(false);
+      }
+    } catch (err) {
+      setAudioError(true);
+    }
+  }, [musicTracks.length]);
+
+  // Setup user interaction listener for first play
   useEffect(() => {
-    if (isLoadingSettings || musicTracks.length === 0 || !audioRef.current) return;
+    if (isLoadingSettings || musicTracks.length === 0 || hasInteracted) return;
 
-    const attemptAutoplay = async () => {
-      try {
-        // Ensure audio element is ready
-        if (audioRef.current!.readyState === 0) {
-          audioRef.current!.load();
-        }
-        
-        // Attempt to play immediately
-        const playPromise = audioRef.current!.play();
-        if (playPromise !== undefined) {
-          await playPromise;
-          setIsPlaying(true);
-          setAudioError(false);
-          setHasInteracted(true);
-        }
-      } catch (err) {
-        // Autoplay was blocked, will retry on first user interaction
-        // Silently fail - don't log errors
-      }
-    };
-
-    // Try autoplay immediately
-    attemptAutoplay();
-
-    // Fallback: Listen for user interaction to retry playback if autoplay failed
-    const handleUserInteraction = async () => {
-      if (!hasInteracted && audioRef.current && !isPlaying) {
+    const handleUserInteraction = async (e: Event) => {
+      if (!hasInteracted) {
         setHasInteracted(true);
+        await attemptPlay();
         
-        try {
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            await playPromise;
-            setIsPlaying(true);
-            setAudioError(false);
-          }
-        } catch (err) {
-          // Silently fail - don't log errors
-          setAudioError(true);
-        }
+        // Remove all listeners after first interaction
+        document.removeEventListener('click', handleUserInteraction);
+        document.removeEventListener('touchstart', handleUserInteraction);
+        document.removeEventListener('keydown', handleUserInteraction);
       }
     };
 
-    // Use { once: true } to automatically remove listener after first trigger
-    document.addEventListener('click', handleUserInteraction, { once: true });
-    // Use passive listener for touchstart since preventDefault is not needed
-    document.addEventListener('touchstart', handleUserInteraction, { once: true, passive: true });
-    document.addEventListener('keydown', handleUserInteraction, { once: true });
+    // Store reference for cleanup
+    interactionHandlerRef.current = handleUserInteraction;
+
+    // Add listeners for first user interaction
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction, { passive: true });
+    document.addEventListener('keydown', handleUserInteraction);
 
     return () => {
-      // Cleanup listeners if component unmounts before interaction
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
-      document.removeEventListener('keydown', handleUserInteraction);
+      if (interactionHandlerRef.current) {
+        document.removeEventListener('click', interactionHandlerRef.current);
+        document.removeEventListener('touchstart', interactionHandlerRef.current);
+        document.removeEventListener('keydown', interactionHandlerRef.current);
+      }
     };
-  }, [isLoadingSettings, musicTracks.length, isPlaying, hasInteracted]);
+  }, [isLoadingSettings, musicTracks.length, hasInteracted, attemptPlay]);
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (audioRef.current) {
       const newMutedState = !isMuted;
       audioRef.current.muted = newMutedState;
@@ -115,15 +109,10 @@ export default function BackgroundMusicPlayer() {
       
       // If unmuting and not playing, try to play
       if (!newMutedState && !isPlaying && musicTracks.length > 0) {
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => setIsPlaying(true))
-            .catch(() => setAudioError(true));
-        }
+        attemptPlay();
       }
     }
-  };
+  }, [isMuted, isPlaying, musicTracks.length, attemptPlay]);
 
   const handleAudioPlay = () => {
     setIsPlaying(true);
