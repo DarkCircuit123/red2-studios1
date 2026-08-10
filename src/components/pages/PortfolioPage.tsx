@@ -67,6 +67,13 @@ export default function PortfolioPage() {
         const allItems = result.items || [];
         const validImages = filterValidImages(allItems, 'image');
         
+        // Sort by displayOrder to maintain 30-slot gallery order (Slot 1-30)
+        const sortedImages = validImages.sort((a, b) => {
+          const orderA = a.displayOrder || 999;
+          const orderB = b.displayOrder || 999;
+          return orderA - orderB;
+        });
+        
         // Generate and log sanitization report
         const report = generateSanitizationReport(
           allItems.length,
@@ -94,7 +101,7 @@ export default function PortfolioPage() {
 
         // Load image dimensions and determine grid spans
         const imagesWithDimensions = await Promise.all(
-          validImages.map(
+          sortedImages.map(
             (image) =>
               new Promise<ImageWithAspectRatio>((resolve) => {
                 const img = new window.Image();

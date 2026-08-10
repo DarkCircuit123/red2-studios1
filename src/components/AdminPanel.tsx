@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, Music, Calendar, AlertCircle, CheckCircle, Upload, Zap, Database, TestTube, LogOut } from 'lucide-react';
+import { Settings, X, Edit2, Music, Calendar, AlertCircle, CheckCircle, Upload, Zap, Database, TestTube, LogOut, Trash2 } from 'lucide-react';
 import { useMember } from '@/integrations';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
@@ -31,6 +31,14 @@ interface MusicSettings {
 
 interface AboutSettings extends AboutSection {}
 
+interface GallerySlot {
+  slotNumber: number; // 1-30
+  itemId: string; // CMS item _id
+  image?: string; // Image URL
+  caption?: string;
+  altText?: string;
+}
+
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { member, actions: memberActions } = useMember();
   const [activeTab, setActiveTab] = useState('photos');
@@ -48,6 +56,76 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [credentialsSuccess, setCredentialsSuccess] = useState('');
   const [isSavingCredentials, setIsSavingCredentials] = useState(false);
   const [portfolioImages, setPortfolioImages] = useState<Portfolio[]>([]);
+  const [gallerySlots, setGallerySlots] = useState<GallerySlot[]>([]);
+  const [isInitializingGallery, setIsInitializingGallery] = useState(false);
+  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
+
+  // Initialize 30-slot gallery with self-healing
+  const initializeGallery = useCallback(async () => {
+    setIsInitializingGallery(true);
+    try {
+      // Fetch all existing portfolio items
+      const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 100 });
+      const existingItems = result?.items || [];
+      
+      // Create a map of existing items by displayOrder
+      const itemsByOrder = new Map<number, Portfolio>();
+      existingItems.forEach(item => {
+        if (item.displayOrder && item.displayOrder >= 1 && item.displayOrder <= 30) {
+          itemsByOrder.set(item.displayOrder, item);
+        }
+      });
+
+      // Self-heal: Create missing slots
+      const slots: GallerySlot[] = [];
+      for (let i = 1; i <= 30; i++) {
+        const existing = itemsByOrder.get(i);
+        if (existing) {
+          slots.push({
+            slotNumber: i,
+            itemId: existing._id,
+            image: existing.image,
+            caption: existing.caption,
+            altText: existing.altText,
+          });
+        } else {
+          // Create missing slot
+          const newItem: Portfolio = {
+            _id: crypto.randomUUID(),
+            displayOrder: i,
+            image: undefined,
+            caption: '',
+            altText: '',
+          };
+          try {
+            await BaseCrudService.create('portfolioimages', newItem);
+            slots.push({
+              slotNumber: i,
+              itemId: newItem._id,
+              image: undefined,
+              caption: '',
+              altText: '',
+            });
+          } catch (error) {
+            console.error(`Failed to create slot ${i}:`, error);
+          }
+        }
+      }
+
+      setGallerySlots(slots);
+      setPortfolioImages(slots.map(s => ({
+        _id: s.itemId,
+        displayOrder: s.slotNumber,
+        image: s.image,
+        caption: s.caption,
+        altText: s.altText,
+      })));
+    } catch (error) {
+      console.error('Failed to initialize gallery:', error);
+    } finally {
+      setIsInitializingGallery(false);
+    }
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -94,16 +172,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           setAboutSettings(null);
         }
 
-        try {
-          const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 100 });
-          if (portfolioResult?.items) {
-            setPortfolioImages(portfolioResult.items);
-          } else {
-            setPortfolioImages([]);
-          }
-        } catch (error) {
-          console.error('Failed to load portfolio images:', error);
-          setPortfolioImages([]);
+        // Initialize gallery on work tab open
+        if (activeTab === 'work') {
+          await initializeGallery();
         }
       } catch (error) {
         console.error('[ADMIN PANEL] Error loading data:', error);
@@ -113,7 +184,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     };
     
     loadData();
-  }, [isOpen]);
+  }, [isOpen, activeTab, initializeGallery]);
 
   const handleSaveCredentials = async () => {
     setCredentialsError('');
@@ -318,84 +389,139 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Work Tab - Portfolio Images Upload (FIXED: Now uses portfolioimages collection) */}
+              {/* Work Tab - 30-Slot Gallery Management */}
               {activeTab === 'work' && (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      Work Gallery
+                      Work Gallery (30 Slots)
                     </h3>
-                    <p className="text-xs text-black/60">Upload and manage portfolio images</p>
+                    <p className="text-xs text-black/60">Manage your portfolio with a deterministic 30-image gallery</p>
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <p className="text-xs text-blue-700">
-                      Upload images to your portfolio gallery. These images will appear on the Portfolio page.
+                      Click any slot to upload an image. Empty slots are automatically created and maintained. Gallery order persists (Slot 1-30).
                     </p>
                   </div>
 
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                        Add New Portfolio Image
-                      </label>
-                      <ImageUploadManager
-                        label="Upload Portfolio Image"
-                        currentImage={undefined}
-                        collectionId="portfolioimages"
-                        itemId={undefined}
-                        fieldName="image"
-                        onImageUpload={(url) => {
-                          // Create new portfolio image entry
-                          const newImage: Portfolio = {
-                            _id: crypto.randomUUID(),
-                            image: url,
-                            displayOrder: portfolioImages.length + 1,
-                            caption: '',
-                            altText: '',
-                          };
-                          setPortfolioImages([...portfolioImages, newImage]);
-                        }}
-                        onImageDelete={() => {}}
-                      />
+                  {isInitializingGallery && (
+                    <div className="text-center py-8">
+                      <p className="text-xs text-black/60">Initializing gallery...</p>
                     </div>
+                  )}
 
-                    {/* Display existing portfolio images */}
-                    {portfolioImages.length > 0 && (
-                      <div className="border-t border-black/10 pt-6">
-                        <h4 className="text-xs font-heading font-bold text-black mb-4 uppercase tracking-wide">
-                          Existing Images ({portfolioImages.length})
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-                          {portfolioImages.map((img) => (
-                            <div key={img._id} className="border border-black/10 rounded-lg p-3 bg-black/2">
-                              {img.image && (
-                                <img
-                                  src={img.image}
-                                  alt={img.altText || 'Portfolio image'}
-                                  className="w-full h-32 object-cover rounded mb-2"
-                                />
+                  {!isInitializingGallery && gallerySlots.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-5 gap-3">
+                        {gallerySlots.map((slot) => (
+                          <div
+                            key={slot.slotNumber}
+                            className="relative group"
+                          >
+                            <div className="aspect-square border-2 border-dashed border-black/20 rounded-lg overflow-hidden bg-black/2 hover:border-black/40 transition-colors cursor-pointer relative"
+                              onClick={() => setUploadingSlot(slot.slotNumber)}
+                            >
+                              {slot.image ? (
+                                <>
+                                  <img
+                                    src={slot.image}
+                                    alt={`Slot ${slot.slotNumber}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                    <span className="text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                      Replace
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center">
+                                  <Upload className="w-4 h-4 text-black/40 mb-1" />
+                                  <span className="text-xs text-black/40 font-bold">Slot {slot.slotNumber}</span>
+                                </div>
                               )}
-                              <p className="text-xs text-black/60 truncate">{img.caption || 'No caption'}</p>
+                            </div>
+
+                            {uploadingSlot === slot.slotNumber && (
+                              <div className="absolute inset-0 z-50">
+                                <ImageUploadManager
+                                  label={`Upload to Slot ${slot.slotNumber}`}
+                                  currentImage={slot.image}
+                                  collectionId="portfolioimages"
+                                  itemId={slot.itemId}
+                                  fieldName="image"
+                                  onImageUpload={async (url) => {
+                                    try {
+                                      // Update the CMS item with the new image
+                                      await BaseCrudService.update('portfolioimages', {
+                                        _id: slot.itemId,
+                                        image: url,
+                                      });
+                                      // Update local state
+                                      const updatedSlots = gallerySlots.map(s =>
+                                        s.slotNumber === slot.slotNumber
+                                          ? { ...s, image: url }
+                                          : s
+                                      );
+                                      setGallerySlots(updatedSlots);
+                                      setUploadingSlot(null);
+                                    } catch (error) {
+                                      console.error(`Failed to update slot ${slot.slotNumber}:`, error);
+                                    }
+                                  }}
+                                  onImageDelete={async () => {
+                                    try {
+                                      // Clear the image from the CMS item
+                                      await BaseCrudService.update('portfolioimages', {
+                                        _id: slot.itemId,
+                                        image: undefined,
+                                      });
+                                      // Update local state
+                                      const updatedSlots = gallerySlots.map(s =>
+                                        s.slotNumber === slot.slotNumber
+                                          ? { ...s, image: undefined }
+                                          : s
+                                      );
+                                      setGallerySlots(updatedSlots);
+                                      setUploadingSlot(null);
+                                    } catch (error) {
+                                      console.error(`Failed to delete image from slot ${slot.slotNumber}:`, error);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            )}
+
+                            {slot.image && (
                               <button
-                                onClick={async () => {
+                                onClick={async (e) => {
+                                  e.stopPropagation();
                                   try {
-                                    await BaseCrudService.delete('portfolioimages', img._id);
-                                    setPortfolioImages(portfolioImages.filter(i => i._id !== img._id));
+                                    await BaseCrudService.update('portfolioimages', {
+                                      _id: slot.itemId,
+                                      image: undefined,
+                                    });
+                                    const updatedSlots = gallerySlots.map(s =>
+                                      s.slotNumber === slot.slotNumber
+                                        ? { ...s, image: undefined }
+                                        : s
+                                    );
+                                    setGallerySlots(updatedSlots);
                                   } catch (error) {
-                                    console.error('Failed to delete image:', error);
+                                    console.error(`Failed to delete image from slot ${slot.slotNumber}:`, error);
                                   }
                                 }}
-                                className="text-xs text-red-600 hover:text-red-700 mt-2 font-bold"
+                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
                               >
-                                Remove
+                                <Trash2 className="w-3 h-3" />
                               </button>
-                            </div>
-                          ))}
-                        </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
