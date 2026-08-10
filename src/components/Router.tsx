@@ -15,7 +15,8 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage').catch(() => ({ defa
 const PrivatePage = lazy(() => import('./pages/PrivatePage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const HangmanGamePage = lazy(() => import('./pages/HangmanGamePage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const ClientRegisterPage = lazy(() => import('./pages/ClientRegisterPage').catch(() => ({ default: () => <div>Error loading page</div> })));
-const WorkPage = lazy(() => import('./pages/WorkPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+// WorkPage is deprecated - /work now redirects to /portfolio
+// const WorkPage = lazy(() => import('./pages/WorkPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const ContactPage = lazy(() => import('./pages/ContactPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const AdminPage = lazy(() => import('./pages/AdminPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const BackgroundMusicPlayer = lazy(() => import('./BackgroundMusicPlayer').catch(() => ({ default: () => null })));
@@ -122,12 +123,9 @@ const router = createBrowserRouter([
         ),
       },
       {
+        // FIXED: /work now redirects to /portfolio (single authoritative Portfolio page)
         path: "work",
-        element: (
-          <Suspense fallback={<div />}>
-            <WorkPage />
-          </Suspense>
-        ),
+        element: <Navigate to="/portfolio" replace />,
       },
       {
         path: "contact",

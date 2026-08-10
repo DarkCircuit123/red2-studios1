@@ -12,7 +12,7 @@ import DataManagementTab from './AdminPanel/DataManagementTab';
 import UploadProductionTest from './UploadProductionTest';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
-import { Services, HomepageImages, Portfolio, ClientsPress, AboutSection } from '@/entities/index';
+import { Services, HomepageImages, PortfolioImages, ClientsPress, AboutSection } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
 
 interface AdminPanelProps {
@@ -37,7 +37,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
-  const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
+  const [portfolioImages, setPortfolioImages] = useState<PortfolioImages[]>([]);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [aboutSettings, setAboutSettings] = useState<AboutSettings | null>(null);
@@ -65,14 +65,15 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
         }
 
         try {
-          const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolio', { limit: 50 });
-          if (portfolioResult?.items) {
-            setPortfolioItems(portfolioResult.items);
+          const portfolioImagesResult = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
+          if (portfolioImagesResult?.items) {
+            setPortfolioImages(portfolioImagesResult.items);
           } else {
-            setPortfolioItems([]);
+            setPortfolioImages([]);
           }
         } catch (error) {
-          setPortfolioItems([]);
+          console.error('[ADMIN PANEL] Failed to load portfolio images:', error);
+          setPortfolioImages([]);
         }
 
         try {
@@ -318,63 +319,82 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Work Tab - Portfolio Images Upload (FIXED: Now uses portfolio items) */}
+              {/* Work Tab - Portfolio Images Upload (FIXED: Now uses portfolioimages collection) */}
               {activeTab === 'work' && (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
                       Work Gallery
                     </h3>
-                    <p className="text-xs text-black/60">Upload images to your portfolio projects</p>
+                    <p className="text-xs text-black/60">Upload and manage portfolio images</p>
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <p className="text-xs text-blue-700">
-                      Select a portfolio project below and upload images. Images will be linked to the project and appear in the Work page gallery.
+                      Upload images to your portfolio gallery. These images will appear on the Portfolio page.
                     </p>
                   </div>
 
-                  <div className="space-y-8 max-h-96 overflow-y-auto">
-                    {portfolioItems.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-sm text-black/60">
-                          No portfolio items found. Create portfolio items in the CMS first, then upload images here.
-                        </p>
-                      </div>
-                    ) : (
-                      portfolioItems.map((item) => (
-                        <div key={item._id} className="border-t border-black/10 pt-6">
-                          <h4 className="text-xs font-heading font-bold text-black mb-4 uppercase tracking-wide">
-                            {item.projectName || 'Untitled Project'}
-                          </h4>
-                          <div className="space-y-4">
-                            {['mainImage', 'galleryImage1', 'galleryImage2', 'galleryImage3'].map((field, idx) => (
-                              <div key={field}>
-                                <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                                  {field === 'mainImage' ? 'Main Image' : `Gallery Image ${idx}`}
-                                </label>
-                                <ImageUploadManager
-                                  label={`Upload ${field === 'mainImage' ? 'Main' : `Gallery ${idx}`} Image`}
-                                  currentImage={item[field as keyof Portfolio] as string}
-                                  collectionId="portfolio"
-                                  itemId={item._id}
-                                  fieldName={field}
-                                  onImageUpload={(url) => {
-                                    setPortfolioItems(portfolioItems.map(p => 
-                                      p._id === item._id ? { ...p, [field]: url } : p
-                                    ));
-                                  }}
-                                  onImageDelete={() => {
-                                    setPortfolioItems(portfolioItems.map(p => 
-                                      p._id === item._id ? { ...p, [field]: undefined } : p
-                                    ));
-                                  }}
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
+                        Add New Portfolio Image
+                      </label>
+                      <ImageUploadManager
+                        label="Upload Portfolio Image"
+                        currentImage={undefined}
+                        collectionId="portfolioimages"
+                        itemId={undefined}
+                        fieldName="image"
+                        onImageUpload={(url) => {
+                          // Create new portfolio image entry
+                          const newImage: PortfolioImages = {
+                            _id: crypto.randomUUID(),
+                            image: url,
+                            displayOrder: portfolioImages.length + 1,
+                            caption: '',
+                            altText: '',
+                          };
+                          setPortfolioImages([...portfolioImages, newImage]);
+                        }}
+                        onImageDelete={() => {}}
+                      />
+                    </div>
+
+                    {/* Display existing portfolio images */}
+                    {portfolioImages.length > 0 && (
+                      <div className="border-t border-black/10 pt-6">
+                        <h4 className="text-xs font-heading font-bold text-black mb-4 uppercase tracking-wide">
+                          Existing Images ({portfolioImages.length})
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                          {portfolioImages.map((img) => (
+                            <div key={img._id} className="border border-black/10 rounded-lg p-3 bg-black/2">
+                              {img.image && (
+                                <img
+                                  src={img.image}
+                                  alt={img.altText || 'Portfolio image'}
+                                  className="w-full h-32 object-cover rounded mb-2"
                                 />
-                              </div>
-                            ))}
-                          </div>
+                              )}
+                              <p className="text-xs text-black/60 truncate">{img.caption || 'No caption'}</p>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await BaseCrudService.delete('portfolioimages', img._id);
+                                    setPortfolioImages(portfolioImages.filter(i => i._id !== img._id));
+                                  } catch (error) {
+                                    console.error('Failed to delete image:', error);
+                                  }
+                                }}
+                                className="text-xs text-red-600 hover:text-red-700 mt-2 font-bold"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))
+                      </div>
                     )}
                   </div>
                 </div>
@@ -463,56 +483,20 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Portfolio Tab */}
+              {/* Portfolio Tab - DEPRECATED: Use Work tab instead */}
               {activeTab === 'portfolio' && (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
                       Portfolio Images
                     </h3>
-                    <p className="text-xs text-black/60">{portfolioItems.length} projects found</p>
+                    <p className="text-xs text-black/60">Use the "Work" tab to manage portfolio images</p>
                   </div>
 
-                  <div className="space-y-8 max-h-96 overflow-y-auto">
-                    {portfolioItems.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-sm text-black/60">No portfolio items found. Add items in the CMS.</p>
-                      </div>
-                    ) : (
-                      portfolioItems.map((item) => (
-                        <div key={item._id} className="border-t border-black/10 pt-6">
-                          <h4 className="text-xs font-heading font-bold text-black mb-4 uppercase tracking-wide">
-                            {item.projectName || 'Untitled Project'}
-                          </h4>
-                          <div className="space-y-4">
-                            {['mainImage', 'galleryImage1', 'galleryImage2', 'galleryImage3'].map((field, idx) => (
-                              <div key={field}>
-                                <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                                  {field === 'mainImage' ? 'Main Image' : `Gallery Image ${idx}`}
-                                </label>
-                                <ImageUploadManager
-                                  label={`Upload ${field === 'mainImage' ? 'Main' : `Gallery ${idx}`} Image`}
-                                  currentImage={item[field as keyof Portfolio] as string}
-                                  collectionId="portfolio"
-                                  itemId={item._id}
-                                  fieldName={field}
-                                  onImageUpload={(url) => {
-                                    setPortfolioItems(portfolioItems.map(p => 
-                                      p._id === item._id ? { ...p, [field]: url } : p
-                                    ));
-                                  }}
-                                  onImageDelete={() => {
-                                    setPortfolioItems(portfolioItems.map(p => 
-                                      p._id === item._id ? { ...p, [field]: undefined } : p
-                                    ));
-                                  }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))
-                    )}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-xs text-yellow-700">
+                      The Portfolio tab has been consolidated. Please use the <strong>Work tab</strong> to upload and manage all portfolio images.
+                    </p>
                   </div>
                 </div>
               )}
