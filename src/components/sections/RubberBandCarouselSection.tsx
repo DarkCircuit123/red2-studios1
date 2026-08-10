@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
 import { BaseCrudService } from '@/integrations';
-import { Portfolio } from '@/entities';
+import { HomepageImages } from '@/entities';
 
 interface CarouselImage {
   id: string;
@@ -82,10 +82,8 @@ const RubberBandCarouselSection: React.FC = () => {
   const isHoveringRef = useRef(false);
   const snapBackAnimationRef = useRef<number>();
 
-  // Images uploaded through Admin -> Portfolio. This section used to render a
-  // hardcoded list, which is why nothing you uploaded ever appeared here: the
-  // upload, the save and the URL format were all correct, but this carousel
-  // was never reading the CMS at all.
+  // Images uploaded through Admin -> Home Page -> Photos tab. This section now reads
+  // from the 'homepageimages' collection which is managed via the admin panel.
   const [cmsImages, setCmsImages] = useState<CarouselImage[] | null>(null);
 
   useEffect(() => {
@@ -93,15 +91,15 @@ const RubberBandCarouselSection: React.FC = () => {
 
     (async () => {
       try {
-        const data = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 100 });
+        const data = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
         const collected: CarouselImage[] = [];
 
         data.items?.forEach((item) => {
-          if (item.image) {
+          if (item.heroImage) {
             collected.push({
               id: item._id,
-              url: item.image,
-              alt: item.caption || item.altText || 'Portfolio work',
+              url: item.heroImage,
+              alt: item.imageName || 'Carousel photo',
             });
           }
         });
@@ -113,7 +111,7 @@ const RubberBandCarouselSection: React.FC = () => {
           setCmsImages(collected.length > 0 ? collected : null);
         }
       } catch (error) {
-        console.error('[RubberBandCarousel] Failed to load portfolio images:', error);
+        console.error('[RubberBandCarousel] Failed to load carousel images:', error);
         console.warn('[RubberBandCarousel] Using fallback images');
         if (!cancelled) setCmsImages(null);
       }
