@@ -9,7 +9,6 @@ import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
-import ImageThumbnailPreview from './ImageThumbnailPreview';
 import { motion } from 'framer-motion';
 
 export default function RubberBandPhotosManager() {
@@ -20,7 +19,7 @@ export default function RubberBandPhotosManager() {
   const [uploading, setUploading] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const replaceFileInputRef = useRef<HTMLInputElement>(null);
+  const replaceFileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   // Load photos on mount
   useEffect(() => {
@@ -117,8 +116,8 @@ export default function RubberBandPhotosManager() {
       }
 
       // Reset file input
-      if (replaceFileInputRef.current) {
-        replaceFileInputRef.current.value = '';
+      if (replaceFileInputRefs.current[photoId]) {
+        replaceFileInputRefs.current[photoId]!.value = '';
       }
     } catch (error) {
       console.error('Replace error:', error);
@@ -260,7 +259,9 @@ export default function RubberBandPhotosManager() {
                         </button>
                         <label className="cursor-pointer">
                           <input
-                            ref={replaceFileInputRef}
+                            ref={(el) => {
+                              if (el) replaceFileInputRefs.current[photo._id] = el;
+                            }}
                             type="file"
                             accept="image/*"
                             onChange={(e) => handleReplacePhoto(e, photo._id)}
@@ -268,7 +269,10 @@ export default function RubberBandPhotosManager() {
                             className="hidden"
                           />
                           <button
-                            onClick={() => replaceFileInputRef.current?.click()}
+                            onClick={() => {
+                              const input = replaceFileInputRefs.current[photo._id];
+                              if (input) input.click();
+                            }}
                             disabled={replacingId === photo._id}
                             className="p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50"
                             title="Replace this image"
