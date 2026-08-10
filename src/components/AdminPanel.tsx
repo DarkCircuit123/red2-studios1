@@ -65,7 +65,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
         }
 
         try {
-          const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolio', { limit: 50 });
+          const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
           if (portfolioResult?.items) {
             setPortfolioItems(portfolioResult.items);
           } else {
