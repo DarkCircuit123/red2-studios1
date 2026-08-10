@@ -190,7 +190,8 @@ export default function PortfolioCarousel({ images, isLoading = false }: Portfol
                   <Image
                     src={image.image || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
                     alt={image.altText || 'Portfolio image'}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                    style={{ objectPosition: 'center' }}
                     data-field-name="image"
                     data-record-id={image._id}
                   />
@@ -256,7 +257,7 @@ export default function PortfolioCarousel({ images, isLoading = false }: Portfol
         </motion.div>
       </div>
 
-      {/* Collage Grid Layout - Masonry with explicit vertical/horizontal crops */}
+      {/* Collage Grid Layout - Masonry with entire photos visible */}
       <div className="mt-12 w-full">
         <h3 className="text-lg font-heading font-semibold text-white mb-6">Gallery Collage</h3>
         <div 
@@ -285,11 +286,11 @@ export default function PortfolioCarousel({ images, isLoading = false }: Portfol
                   setSelectedImage(image.image || '');
                 }}
               >
-                {/* Image with cover fit to maintain crop orientation */}
+                {/* Image with contain fit to show entire photo */}
                 <Image
                   src={image.image || 'https://static.wixstatic.com/media/e9d727_3b2fe8360fd9440eb9b25e69e28303e9~mv2.png?originWidth=384&originHeight=384'}
                   alt={image.altText || 'Portfolio image'}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                   style={{
                     objectPosition: 'center',
                   }}
