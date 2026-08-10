@@ -33,32 +33,6 @@ function getFileExtension(url: string): string {
 }
 
 /**
- * Convert wix:image:// URLs to valid Wix static URLs
- */
-export function convertWixImageUrl(url: string): string {
-  if (!url) return '';
-  
-  // If it's already a valid wixstatic URL, return as-is
-  if (url.includes('wixstatic.com')) {
-    return url;
-  }
-  
-  // If it's a wix:image:// URL, convert to wixstatic format
-  if (url.includes('wix:image://')) {
-    // Extract the media ID and filename from wix:image:// format
-    // Format: wix:image://v1/{mediaId}~{version}/{filename}#originWidth=...
-    const match = url.match(/wix:image:\/\/v1\/([^~]+)~([^/]+)\/(.+?)(?:#|$)/);
-    if (match) {
-      const [, mediaId, version, filename] = match;
-      // Convert to wixstatic format
-      return `https://static.wixstatic.com/media/${mediaId}~${version}/${filename}`;
-    }
-  }
-  
-  return url;
-}
-
-/**
  * Check if a URL is broken or a placeholder
  */
 export function isBrokenUrl(url: string | null | undefined): boolean {
@@ -73,11 +47,6 @@ export function isBrokenUrl(url: string | null | undefined): boolean {
   
   // Check if URL is empty or too short
   if (lowerUrl.length < 10) return true;
-  
-  // Allow wix:image:// URLs - they will be converted
-  if (lowerUrl.includes('wix:image://')) {
-    return false;
-  }
   
   // Check if it's a valid URL format
   try {
@@ -113,20 +82,17 @@ export function sanitizeImageUrl(url: string | null | undefined, collectionId?: 
     return null;
   }
   
-  // Convert wix:image:// URLs to wixstatic format
-  let convertedUrl = convertWixImageUrl(url);
-  
   // Allow external URLs for storiesinsights collection (legitimate external news links)
   if (collectionId === 'storiesinsights') {
-    return convertedUrl;
+    return url;
   }
   
   // For other collections, validate Wix format or allow external URLs
-  const isWixUrl = convertedUrl.includes('wixstatic.com');
-  const isExternalUrl = convertedUrl.startsWith('http://') || convertedUrl.startsWith('https://');
+  const isWixUrl = url.includes('wixstatic.com') || url.includes('wix:image://');
+  const isExternalUrl = url.startsWith('http://') || url.startsWith('https://');
   
   if (isWixUrl || isExternalUrl) {
-    return convertedUrl;
+    return url;
   }
   
   return null;

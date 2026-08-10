@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Music, Upload, Trash2, Volume2, RotateCw, Zap } from 'lucide-react';
+import { Music, Upload, Trash2, Play, Pause, Volume2, RotateCw, Zap } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
-import { MusicSettings } from '@/entities';
+import { adminCms } from '@/lib/admin-cms';
+import { HomePageSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { MUSIC_UPLOAD_CONFIG } from '@/lib/upload-config';
@@ -14,30 +16,26 @@ export default function BackgroundMusicManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [musicTracks, setMusicTracks] = useState<MusicSettings[]>([]);
-  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+  const [settings, setSettings] = useState<HomePageSettings | null>(null);
   const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    loadMusicTracks();
+    loadSettings();
   }, []);
 
-  const loadMusicTracks = async () => {
+  const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 100 });
+      const result = await BaseCrudService.getAll<HomePageSettings>('homepagesettings', {}, { limit: 1 });
       if (result.items.length > 0) {
-        setMusicTracks(result.items);
-        // Select first enabled track or first track
-        const enabledTrack = result.items.find(t => t.isEnabled);
-        setSelectedTrackId(enabledTrack?._id || result.items[0]?._id || null);
+        setSettings(result.items[0]);
       }
     } catch (error) {
-      console.error('Error loading music tracks:', error);
+      console.error('Error loading settings:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load music tracks',
+        description: 'Failed to load settings',
         variant: 'destructive',
       });
     } finally {
@@ -47,7 +45,7 @@ export default function BackgroundMusicManager() {
 
   const handleMusicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !settings) return;
 
     try {
       setIsUploading(true);
@@ -55,25 +53,14 @@ export default function BackgroundMusicManager() {
       // Use unified upload service with wix-media-upload-service
       const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
 
-      // Create new music track in musicsettings collection
-      const newTrack: MusicSettings = {
-        _id: crypto.randomUUID(),
+      // Update settings
+      const updated = {
+        ...settings,
+        backgroundMusicUrl: result.mediaUrl,
         musicTitle: file.name.replace(/\.[^/.]+$/, ''),
-        musicUrl: result.mediaUrl,
-        artist: 'Unknown',
-        album: 'Background Music',
-        genre: 'Background',
-        duration: '0:00',
-        isEnabled: true,
-        isDefaultHomepageTrack: musicTracks.length === 0, // First track is default
-        volume: 30,
-        loopMusic: true,
       };
-
-      await BaseCrudService.create('musicsettings', newTrack);
-      
-      // Reload tracks
-      await loadMusicTracks();
+      await adminCms.update('homepagesettings', updated);
+      setSettings(updated);
 
       toast({
         title: 'Success',
@@ -91,23 +78,29 @@ export default function BackgroundMusicManager() {
     }
   };
 
-  const handleRemoveTrack = async (trackId: string) => {
+  const handleRemoveMusic = async () => {
+    if (!settings) return;
+
     try {
       setIsSaving(true);
-      await BaseCrudService.delete('musicsettings', trackId);
-      
-      // Reload tracks
-      await loadMusicTracks();
+      const updated = {
+        ...settings,
+        backgroundMusicUrl: undefined,
+        musicTitle: undefined,
+      };
+      await adminCms.update('homepagesettings', updated);
+      setSettings(updated);
+      setIsPlaying(false);
 
       toast({
         title: 'Success',
-        description: 'Music track removed',
+        description: 'Music file removed',
       });
     } catch (error) {
-      console.error('Error removing track:', error);
+      console.error('Error removing music:', error);
       toast({
         title: 'Error',
-        description: 'Failed to remove music track',
+        description: 'Failed to remove music file',
         variant: 'destructive',
       });
     } finally {
@@ -115,26 +108,24 @@ export default function BackgroundMusicManager() {
     }
   };
 
-  const handleToggleTrackEnabled = async (trackId: string, currentState: boolean) => {
+  const handleToggleMusicEnabled = async () => {
+    if (!settings) return;
+
     try {
       setIsSaving(true);
-      await BaseCrudService.update('musicsettings', {
-        _id: trackId,
-        isEnabled: !currentState,
-      });
-      
-      // Reload tracks
-      await loadMusicTracks();
+      const updated = { ...settings, musicEnabled: !settings.musicEnabled };
+      await adminCms.update('homepagesettings', updated);
+      setSettings(updated);
 
       toast({
         title: 'Success',
-        description: `Track ${!currentState ? 'enabled' : 'disabled'}`,
+        description: `Music ${updated.musicEnabled ? 'enabled' : 'disabled'}`,
       });
     } catch (error) {
-      console.error('Error toggling track:', error);
+      console.error('Error toggling music:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update track settings',
+        description: 'Failed to update music settings',
         variant: 'destructive',
       });
     } finally {
@@ -142,20 +133,43 @@ export default function BackgroundMusicManager() {
     }
   };
 
-  const handleToggleLoop = async (trackId: string, currentState: boolean) => {
+  const handleToggleAutoplay = async () => {
+    if (!settings) return;
+
     try {
       setIsSaving(true);
-      await BaseCrudService.update('musicsettings', {
-        _id: trackId,
-        loopMusic: !currentState,
-      });
-      
-      // Reload tracks
-      await loadMusicTracks();
+      const updated = { ...settings, autoplayEnabled: !settings.autoplayEnabled };
+      await adminCms.update('homepagesettings', updated);
+      setSettings(updated);
 
       toast({
         title: 'Success',
-        description: `Loop ${!currentState ? 'enabled' : 'disabled'}`,
+        description: `Autoplay ${updated.autoplayEnabled ? 'enabled' : 'disabled'}`,
+      });
+    } catch (error) {
+      console.error('Error toggling autoplay:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update autoplay settings',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleLoop = async () => {
+    if (!settings) return;
+
+    try {
+      setIsSaving(true);
+      const updated = { ...settings, loopMusic: !settings.loopMusic };
+      await adminCms.update('homepagesettings', updated);
+      setSettings(updated);
+
+      toast({
+        title: 'Success',
+        description: `Loop ${updated.loopMusic ? 'enabled' : 'disabled'}`,
       });
     } catch (error) {
       console.error('Error toggling loop:', error);
@@ -169,22 +183,21 @@ export default function BackgroundMusicManager() {
     }
   };
 
-  const handleVolumeChange = async (trackId: string, newVolume: number) => {
-    try {
-      await BaseCrudService.update('musicsettings', {
-        _id: trackId,
-        volume: newVolume,
-      });
+  const handleVolumeChange = async (newVolume: number) => {
+    if (!settings) return;
 
-      if (audioRef && selectedTrackId === trackId) {
+    try {
+      const updated = { ...settings, volume: newVolume };
+      await adminCms.update('homepagesettings', updated);
+      setSettings(updated);
+
+      if (audioRef) {
         audioRef.volume = newVolume / 100;
       }
     } catch (error) {
       console.error('Error updating volume:', error);
     }
   };
-
-  const selectedTrack = musicTracks.find(t => t._id === selectedTrackId);
 
   if (isLoading) {
     return (
@@ -206,6 +219,14 @@ export default function BackgroundMusicManager() {
             </h3>
             <p className="text-sm text-slate-500 mt-1">Upload an MP3 or audio file to use as background music</p>
           </div>
+
+          {/* Current Music Info */}
+          {settings?.backgroundMusicUrl && (
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-sm font-medium text-slate-900">Current Music:</p>
+              <p className="text-sm text-slate-600 mt-1">{settings.musicTitle || 'Untitled'}</p>
+            </div>
+          )}
 
           {/* Upload Button */}
           <label className="block">
@@ -236,116 +257,107 @@ export default function BackgroundMusicManager() {
               </span>
             </Button>
           </label>
+
+          {/* Remove Button */}
+          {settings?.backgroundMusicUrl && (
+            <Button
+              onClick={handleRemoveMusic}
+              disabled={isSaving}
+              variant="outline"
+              className="w-full border-red-200 text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Remove Music
+            </Button>
+          )}
         </div>
       </Card>
 
-      {/* Music Tracks List */}
-      {musicTracks.length > 0 && (
-        <Card className="p-6 border border-slate-200">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900">Music Tracks</h3>
-
-            <div className="space-y-3">
-              {musicTracks.map((track) => (
-                <div key={track._id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{track.musicTitle || 'Untitled'}</p>
-                      <p className="text-xs text-slate-500 mt-1">{track.artist || 'Unknown Artist'}</p>
-                      {track.musicUrl && (
-                        <p className="text-xs text-slate-400 mt-1 truncate">{track.musicUrl}</p>
-                      )}
-                    </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <Button
-                        onClick={() => handleRemoveTrack(track._id)}
-                        disabled={isSaving}
-                        size="sm"
-                        variant="outline"
-                        className="border-red-200 text-red-600 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Track Controls */}
-                  <div className="mt-3 space-y-3">
-                    {/* Volume Control */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-900 flex items-center gap-2">
-                        <Volume2 className="w-3 h-3" />
-                        Volume: {track.volume || 30}%
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={track.volume || 30}
-                        onChange={(e) => handleVolumeChange(track._id, parseInt(e.target.value))}
-                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                      />
-                    </div>
-
-                    {/* Toggle Buttons */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        onClick={() => handleToggleTrackEnabled(track._id, track.isEnabled || false)}
-                        disabled={isSaving}
-                        size="sm"
-                        variant={track.isEnabled ? 'default' : 'outline'}
-                        className={`flex items-center justify-center gap-1 text-xs ${
-                          track.isEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
-                        }`}
-                      >
-                        <Music className="w-3 h-3" />
-                        {track.isEnabled ? 'Enabled' : 'Disabled'}
-                      </Button>
-
-                      <Button
-                        onClick={() => handleToggleLoop(track._id, track.loopMusic || false)}
-                        disabled={isSaving}
-                        size="sm"
-                        variant={track.loopMusic ? 'default' : 'outline'}
-                        className={`flex items-center justify-center gap-1 text-xs ${
-                          track.loopMusic ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
-                        }`}
-                      >
-                        <RotateCw className="w-3 h-3" />
-                        {track.loopMusic ? 'Loop' : 'No Loop'}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      )}
-
       {/* Audio Preview */}
-      {selectedTrack?.musicUrl && (
+      {settings?.backgroundMusicUrl && (
         <Card className="p-6 border border-slate-200">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900">Preview</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Preview & Controls</h3>
 
             {/* Audio Player */}
             <audio
               ref={setAudioRef}
-              src={selectedTrack.musicUrl}
+              src={settings.backgroundMusicUrl}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               className="w-full"
               controls
             />
+
+            {/* Volume Control */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-900 flex items-center gap-2">
+                <Volume2 className="w-4 h-4" />
+                Volume: {settings.volume}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={settings.volume || 50}
+                onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
+                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
           </div>
         </Card>
       )}
 
+      {/* Settings */}
+      <Card className="p-6 border border-slate-200">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-slate-900">Music Settings</h3>
+
+          {/* Toggle Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Button
+              onClick={handleToggleMusicEnabled}
+              disabled={isSaving || !settings?.backgroundMusicUrl}
+              variant={settings?.musicEnabled ? 'default' : 'outline'}
+              className={`flex items-center justify-center gap-2 ${
+                settings?.musicEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
+              }`}
+            >
+              <Music className="w-4 h-4" />
+              {settings?.musicEnabled ? 'Enabled' : 'Disabled'}
+            </Button>
+
+            <Button
+              onClick={handleToggleAutoplay}
+              disabled={isSaving || !settings?.backgroundMusicUrl}
+              variant={settings?.autoplayEnabled ? 'default' : 'outline'}
+              className={`flex items-center justify-center gap-2 ${
+                settings?.autoplayEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              {settings?.autoplayEnabled ? 'Autoplay On' : 'Autoplay Off'}
+            </Button>
+
+            <Button
+              onClick={handleToggleLoop}
+              disabled={isSaving || !settings?.backgroundMusicUrl}
+              variant={settings?.loopMusic ? 'default' : 'outline'}
+              className={`flex items-center justify-center gap-2 ${
+                settings?.loopMusic ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
+              }`}
+            >
+              <RotateCw className="w-4 h-4" />
+              {settings?.loopMusic ? 'Loop On' : 'Loop Off'}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       {/* Info Box */}
       <Card className="p-4 bg-blue-50 border border-blue-200">
         <p className="text-sm text-blue-900">
-          <strong>Note:</strong> Music plays after the first user interaction (click, touch, or key press). Enabled tracks are used by the background music player.
+          <strong>Note:</strong> Autoplay may be blocked by browsers. Users may need to interact with the page first to enable audio playback.
         </p>
       </Card>
     </div>

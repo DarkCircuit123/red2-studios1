@@ -184,61 +184,12 @@ function buildWixMediaUrl(response: any, file: File): string | undefined {
 }
 
 /**
- * Dedicated audio URL resolver for uploaded music files.
- * 
- * Converts Wix media upload response to a valid HTTPS audio URL that
- * HTMLAudioElement can load and play.
- * 
- * The upload response contains a static URL like:
- *   https://music.wixstatic.com/mp3/{mediaId}.mp3
- *   or
- *   https://static.wixstatic.com/media/{mediaId}~{variant}.{ext}
- * 
- * We extract and return the HTTPS URL directly - no wix:image:// conversion.
- */
-function buildWixAudioUrl(response: any, file: File): string | undefined {
-  console.log('[WIX_AUDIO] buildWixAudioUrl - upload response:', response);
-  
-  const f = response?.file;
-  if (!f) {
-    console.error('[WIX_AUDIO] buildWixAudioUrl - no file in response');
-    return undefined;
-  }
-
-  // Get the static URL from the response
-  const staticUrl = f?.url;
-  if (!staticUrl) {
-    console.error('[WIX_AUDIO] buildWixAudioUrl - no URL in response');
-    return undefined;
-  }
-
-  // Validate it's an HTTPS URL
-  if (!staticUrl.startsWith('https://')) {
-    console.error('[WIX_AUDIO] buildWixAudioUrl - URL is not HTTPS', { staticUrl });
-    return undefined;
-  }
-
-  // Validate it's a Wix static domain (music.wixstatic.com or static.wixstatic.com)
-  if (!staticUrl.includes('wixstatic.com')) {
-    console.error('[WIX_AUDIO] buildWixAudioUrl - URL is not from Wix static domain', { staticUrl });
-    return undefined;
-  }
-
-  console.log('[WIX_AUDIO] resolved audio URL', { staticUrl });
-  return staticUrl;
-}
-
-/**
  * Upload file directly to Wix Media Manager using signed URL
  * Returns the media URL from the upload response
- * 
- * For audio files, uses buildWixAudioUrl to resolve to HTTPS URL.
- * For image files, uses buildWixMediaUrl to resolve to wix:image:// URL.
  */
 function uploadToWix(
   file: File,
   uploadUrl: string,
-  kind: 'image' | 'music' = 'image',
   onProgress?: (progress: UploadProgress) => void
 ): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -249,15 +200,7 @@ function uploadToWix(
         console.log('[WIX_MEDIA] File uploaded successfully');
         try {
           const response = JSON.parse(xhr.responseText);
-          
-          // Use appropriate URL builder based on file kind
-          let mediaUrl: string | undefined;
-          if (kind === 'music') {
-            mediaUrl = buildWixAudioUrl(response, file);
-          } else {
-            mediaUrl = buildWixMediaUrl(response, file);
-          }
-          
+          const mediaUrl = buildWixMediaUrl(response, file);
           if (mediaUrl) {
             resolve(mediaUrl);
           } else {
@@ -333,8 +276,7 @@ export async function uploadMedia(
     const { uploadUrl, fileName } = await generateUploadUrl(file, kind);
 
     // Step 2: Upload file directly to Wix and get media URL from response
-    // Pass kind to uploadToWix so it uses the correct URL builder
-    const mediaUrl = await uploadToWix(file, uploadUrl, kind, onProgress);
+    const mediaUrl = await uploadToWix(file, uploadUrl, onProgress);
 
     console.log(`[WIX_MEDIA] ${kind} upload complete:`, { mediaUrl, fileName });
 

@@ -1,6 +1,34 @@
 import { type FittingType, getPlaceholder, sdk, STATIC_MEDIA_URL } from '@wix/image-kit'
 import { forwardRef, type ImgHTMLAttributes, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useSize } from '@/hooks/use-size'
+import WixImageResolver from '@/lib/wix-image-resolver'
+
+// Inline CSS for image animation
+const imageStyles = `
+  @keyframes scanMask {
+    0% {
+        mask-position: 0% 200%;
+    }
+    100% {
+        mask-position: 0% -100%;
+    }
+  }
+
+  img[src*='12d367_71ebdd7141d041e4be3d91d80d4578dd'] {
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 1) 50%, transparent 100%);
+    mask-size: 100% 200%;
+    mask-repeat: no-repeat;
+    animation: scanMask 2s linear infinite;
+  }
+`;
+
+// Inject styles into document head
+if (typeof document !== 'undefined' && !document.getElementById('image-styles')) {
+  const styleElement = document.createElement('style');
+  styleElement.id = 'image-styles';
+  styleElement.textContent = imageStyles;
+  document.head.appendChild(styleElement);
+}
 
 const FALLBACK_IMAGE_URL = "https://static.wixstatic.com/media/12d367_4f26ccd17f8f4e3a8958306ea08c2332~mv2.png";
 
@@ -11,20 +39,28 @@ type ImageData = {
 }
 
 const getImageData = (url: string): ImageData | undefined => {
-  if (!url || typeof url !== 'string') return undefined;
+  // Use WixImageResolver to validate and normalize the URL first
+  const resolved = WixImageResolver.resolve(url);
+  
+  // If URL is not valid or is a fallback, don't try to parse it
+  if (!resolved.isValid || resolved.isFallback) {
+    return undefined;
+  }
+
+  const normalizedUrl = resolved.url;
 
   // wix:image://v1/${uri}/${filename}#originWidth=${width}&originHeight=${height}
   const wixImagePrefix = 'wix:image://v1/'
-  if (url.startsWith(wixImagePrefix)) {
-    const uri = url.replace(wixImagePrefix, '').split('#')[0].split('/')[0]
+  if (normalizedUrl.startsWith(wixImagePrefix)) {
+    const uri = normalizedUrl.replace(wixImagePrefix, '').split('#')[0].split('/')[0]
 
-    const params = new URLSearchParams(url.split('#')[1] || '')
+    const params = new URLSearchParams(normalizedUrl.split('#')[1] || '')
     const width = parseInt(params.get('originWidth') || '0', 10)
     const height = parseInt(params.get('originHeight') || '0', 10)
 
     return { id: uri, width, height }
-  } else if (url.startsWith(STATIC_MEDIA_URL)) {
-    const urlObj = new URL(url)
+  } else if (normalizedUrl.startsWith(STATIC_MEDIA_URL)) {
+    const urlObj = new URL(normalizedUrl)
     if (urlObj.searchParams.get('originWidth') && urlObj.searchParams.get('originHeight')) {
       const uri = urlObj.pathname.split('/').slice(2).join('/')
       const width = parseInt(urlObj.searchParams.get('originWidth') || '0', 10)
@@ -65,18 +101,29 @@ WixImage.displayName = 'WixImage'
 
 export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }, ref) => {
   const [imgSrc, setImgSrc] = useState<string | undefined>(src)
-  const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
+    // If src prop changes, resolve it through WixImageResolver and update state
     if (src !== imgSrc) {
-      setImgSrc(src);
-      setHasError(false);
+      const resolved = WixImageResolver.resolve(src, {
+        fieldName: props['data-field-name'] as string | undefined,
+        recordId: props['data-record-id'] as string | undefined
+      });
+      // Guard: only update state if the resolved URL is different
+      setImgSrc(prevSrc => prevSrc === resolved.url ? prevSrc : resolved.url);
     }
-  }, [src])
+  }, [src, props['data-field-name'], props['data-record-id']])
 
   if (!imgSrc) {
     return <div data-empty-image ref={ref} {...props} />
   }
+
+  // Resolve the URL through WixImageResolver for consistency
+  const resolved = WixImageResolver.resolve(imgSrc, {
+    fieldName: props['data-field-name'] as string | undefined,
+    recordId: props['data-record-id'] as string | undefined
+  });
+  const finalSrc = resolved.url;
 
   // Destructure priority out of props before spreading to avoid passing boolean to DOM
   const { priority, ...restProps } = props;
@@ -84,16 +131,16 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
   const imageProps = {
     ...restProps,
     onError: () => {
-      setHasError(true);
+      // On error, fall back to the fallback image
       setImgSrc(FALLBACK_IMAGE_URL);
     }
   };
 
-  const imageData = getImageData(imgSrc);
+  const imageData = getImageData(finalSrc);
 
   if (!imageData) {
     // If we can't parse as Wix image data, render as regular img
-    return <img data-error-image={hasError} ref={ref} src={imgSrc} {...imageProps} />
+    return <img data-error-image={finalSrc === FALLBACK_IMAGE_URL} ref={ref} src={finalSrc} {...imageProps} />
   }
 
   return <WixImage ref={ref} data={imageData} {...imageProps} />
