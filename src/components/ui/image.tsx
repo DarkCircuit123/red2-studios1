@@ -38,6 +38,36 @@ type ImageData = {
   height: number
 }
 
+/**
+ * Convert wix:image:// URLs to HTTPS URLs for browser rendering
+ * This resolves the CSP issue where browsers cannot load wix:image:// directly
+ */
+const convertWixImageToHttps = (url: string): string => {
+  const wixImagePrefix = 'wix:image://v1/';
+  if (url.startsWith(wixImagePrefix)) {
+    // Extract the URI and parameters from wix:image://v1/{uri}/{filename}#{params}
+    const withoutPrefix = url.replace(wixImagePrefix, '');
+    const [uriPart, paramsString] = withoutPrefix.split('#');
+    const uri = uriPart.split('/')[0];
+    
+    // Parse origin dimensions if available
+    const params = new URLSearchParams(paramsString || '');
+    const originWidth = params.get('originWidth');
+    const originHeight = params.get('originHeight');
+    
+    // Build HTTPS URL using Wix static CDN
+    let httpsUrl = `${STATIC_MEDIA_URL}${uri}`;
+    
+    // Add origin dimensions if available
+    if (originWidth && originHeight) {
+      httpsUrl += `?originWidth=${originWidth}&originHeight=${originHeight}`;
+    }
+    
+    return httpsUrl;
+  }
+  return url;
+};
+
 const getImageData = (url: string): ImageData | undefined => {
   // Use WixImageResolver to validate and normalize the URL first
   const resolved = WixImageResolver.resolve(url);
@@ -109,8 +139,10 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
         fieldName: props['data-field-name'] as string | undefined,
         recordId: props['data-record-id'] as string | undefined
       });
+      // Convert wix:image:// to HTTPS for browser rendering (CSP compliance)
+      const browserUrl = convertWixImageToHttps(resolved.url);
       // Guard: only update state if the resolved URL is different
-      setImgSrc(prevSrc => prevSrc === resolved.url ? prevSrc : resolved.url);
+      setImgSrc(prevSrc => prevSrc === browserUrl ? prevSrc : browserUrl);
     }
   }, [src, props['data-field-name'], props['data-record-id']])
 
@@ -123,7 +155,8 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
     fieldName: props['data-field-name'] as string | undefined,
     recordId: props['data-record-id'] as string | undefined
   });
-  const finalSrc = resolved.url;
+  // Convert wix:image:// to HTTPS for browser rendering (CSP compliance)
+  const finalSrc = convertWixImageToHttps(resolved.url);
 
   // Destructure priority out of props before spreading to avoid passing boolean to DOM
   const { priority, ...restProps } = props;
