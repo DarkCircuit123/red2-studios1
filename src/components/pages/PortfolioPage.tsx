@@ -6,7 +6,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
-import PortfolioCarousel from '@/components/PortfolioCarousel';
 import WixImageResolver from '@/lib/wix-image-resolver';
 import { STATIC_MEDIA_URL } from '@wix/image-kit';
 
@@ -157,10 +156,7 @@ export default function PortfolioPage() {
           </p>
         </ScrollReveal>
 
-        {/* Auto-Scrolling Carousel with Parallax */}
-        <ScrollReveal direction="up" duration={800} className="mb-24">
-          <PortfolioCarousel images={allImages} isLoading={isLoading} />
-        </ScrollReveal>
+
 
         {/* Empty State */}
         {!isLoading && allImages.length === 0 && (
