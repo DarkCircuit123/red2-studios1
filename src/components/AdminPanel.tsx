@@ -12,7 +12,7 @@ import DataManagementTab from './AdminPanel/DataManagementTab';
 import UploadProductionTest from './UploadProductionTest';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
-import { Services, HomepageImages, PortfolioImages, ClientsPress, AboutSection } from '@/entities/index';
+import { Services, HomepageImages, ClientsPress, AboutSection } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
 
 interface AdminPanelProps {
@@ -37,7 +37,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [siteTitle, setSiteTitle] = useState('RED2');
   const [siteTagline, setSiteTagline] = useState('BY JORDAN MICHAEL ZUNIGA');
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
-  const [portfolioImages, setPortfolioImages] = useState<PortfolioImages[]>([]);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [aboutSettings, setAboutSettings] = useState<AboutSettings | null>(null);
@@ -62,18 +61,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           }
         } catch (error) {
           setHomepageImages(null);
-        }
-
-        try {
-          const portfolioImagesResult = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
-          if (portfolioImagesResult?.items) {
-            setPortfolioImages(portfolioImagesResult.items);
-          } else {
-            setPortfolioImages([]);
-          }
-        } catch (error) {
-          console.error('[ADMIN PANEL] Failed to load portfolio images:', error);
-          setPortfolioImages([]);
         }
 
         try {
@@ -156,7 +143,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const tabs = [
     { id: 'photos', label: 'Photos', icon: Upload },
     { id: 'work', label: 'Work', icon: Upload },
-    { id: 'portfolio', label: 'Portfolio', icon: Upload },
     { id: 'sponsors', label: 'Sponsors', icon: Upload },
     { id: 'music', label: 'Music', icon: Music },
     { id: 'about', label: 'About', icon: Edit2 },
@@ -479,24 +465,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         }}
                       />
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Portfolio Tab - DEPRECATED: Use Work tab instead */}
-              {activeTab === 'portfolio' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      Portfolio Images
-                    </h3>
-                    <p className="text-xs text-black/60">Use the "Work" tab to manage portfolio images</p>
-                  </div>
-
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-xs text-yellow-700">
-                      The Portfolio tab has been consolidated. Please use the <strong>Work tab</strong> to upload and manage all portfolio images.
-                    </p>
                   </div>
                 </div>
               )}

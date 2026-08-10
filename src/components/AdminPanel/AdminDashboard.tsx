@@ -14,7 +14,6 @@ export default function AdminDashboard() {
     { id: 'splashpage', label: 'Splash Page', icon: Image, enabled: true },
     { id: 'gallery', label: 'Work Gallery', icon: Briefcase, enabled: true },
     { id: 'about', label: 'About Page', icon: FileText, enabled: false },
-    { id: 'portfolio', label: 'Portfolio', icon: Briefcase, enabled: false },
     { id: 'services', label: 'Services', icon: Settings, enabled: false },
     { id: 'booking', label: 'Booking', icon: Calendar, enabled: false },
     { id: 'contact', label: 'Contact', icon: Mail, enabled: false },
@@ -85,7 +84,7 @@ export default function AdminDashboard() {
               </TabsContent>
 
               {/* Disabled tabs placeholder */}
-              {['about', 'portfolio', 'services', 'booking', 'contact', 'settings'].map((tabId) => (
+              {['about', 'services', 'booking', 'contact', 'settings'].map((tabId) => (
                 <TabsContent key={tabId} value={tabId} className="m-0">
                   <div className="text-center py-12">
                     <p className="text-slate-500">This tab is coming soon.</p>
