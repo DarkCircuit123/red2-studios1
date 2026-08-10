@@ -6,6 +6,7 @@ import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
 import MusicManager from './MusicManager';
 import BookingManagerPro from './BookingManagerPro';
+import RubberBandPhotosManager from './AdminPanel/sections/RubberBandPhotosManager';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages, ClientsPress, AboutSection, Portfolio } from '@/entities/index';
@@ -413,82 +414,90 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
 
               {/* Photos Tab */}
               {activeTab === 'photos' && (
-                <div className="space-y-6">
+                <div className="space-y-8">
+                  {/* Rubber Band Carousel Section */}
                   <div>
-                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      Site Photos
-                    </h3>
-                    <p className="text-xs text-black/60">Manage hero, about, and contact section images</p>
+                    <RubberBandPhotosManager />
                   </div>
 
-                  <div className="space-y-6">
+                  {/* Divider */}
+                  <div className="border-t border-black/10 pt-8">
                     <div>
-                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                        Hero Background Image
-                      </label>
-                      <ImageUploadManager
-                        label="Upload Hero Image"
-                        currentImage={homepageImages?.heroImage}
-                        collectionId="homepageimages"
-                        itemId={homepageImages?._id}
-                        fieldName="heroImage"
-                        onImageUpload={(url) => {
-                          if (homepageImages) {
-                            setHomepageImages({ ...homepageImages, heroImage: url });
-                          }
-                        }}
-                        onImageDelete={() => {
-                          if (homepageImages) {
-                            setHomepageImages({ ...homepageImages, heroImage: undefined });
-                          }
-                        }}
-                      />
+                      <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
+                        Site Photos
+                      </h3>
+                      <p className="text-xs text-black/60">Manage hero, about, and contact section images</p>
                     </div>
 
-                    <div>
-                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                        About Section Image
-                      </label>
-                      <ImageUploadManager
-                        label="Upload About Image"
-                        currentImage={homepageImages?.aboutSectionImage}
-                        collectionId="homepageimages"
-                        itemId={homepageImages?._id}
-                        fieldName="aboutSectionImage"
-                        onImageUpload={(url) => {
-                          if (homepageImages) {
-                            setHomepageImages({ ...homepageImages, aboutSectionImage: url });
-                          }
-                        }}
-                        onImageDelete={() => {
-                          if (homepageImages) {
-                            setHomepageImages({ ...homepageImages, aboutSectionImage: undefined });
-                          }
-                        }}
-                      />
-                    </div>
+                    <div className="space-y-6 mt-6">
+                      <div>
+                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
+                          Hero Background Image
+                        </label>
+                        <ImageUploadManager
+                          label="Upload Hero Image"
+                          currentImage={homepageImages?.heroImage}
+                          collectionId="homepageimages"
+                          itemId={homepageImages?._id}
+                          fieldName="heroImage"
+                          onImageUpload={(url) => {
+                            if (homepageImages) {
+                              setHomepageImages({ ...homepageImages, heroImage: url });
+                            }
+                          }}
+                          onImageDelete={() => {
+                            if (homepageImages) {
+                              setHomepageImages({ ...homepageImages, heroImage: undefined });
+                            }
+                          }}
+                        />
+                      </div>
 
-                    <div>
-                      <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                        Contact Section Background
-                      </label>
-                      <ImageUploadManager
-                        label="Upload Contact Background"
-                        currentImage={homepageImages?.contactBackgroundImage}
-                        collectionId="homepageimages"
-                        itemId={homepageImages?._id}
-                        fieldName="contactBackgroundImage"
-                        onImageUpload={(url) => {
-                          if (homepageImages) {
-                            setHomepageImages({ ...homepageImages, contactBackgroundImage: url });
-                          }
-                        }}
-                        onImageDelete={() => {
-                          if (homepageImages) {
-                            setHomepageImages({ ...homepageImages, contactBackgroundImage: undefined });
-                          }
-                        }}
-                      />
+                      <div>
+                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
+                          About Section Image
+                        </label>
+                        <ImageUploadManager
+                          label="Upload About Image"
+                          currentImage={homepageImages?.aboutSectionImage}
+                          collectionId="homepageimages"
+                          itemId={homepageImages?._id}
+                          fieldName="aboutSectionImage"
+                          onImageUpload={(url) => {
+                            if (homepageImages) {
+                              setHomepageImages({ ...homepageImages, aboutSectionImage: url });
+                            }
+                          }}
+                          onImageDelete={() => {
+                            if (homepageImages) {
+                              setHomepageImages({ ...homepageImages, aboutSectionImage: undefined });
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
+                          Contact Section Background
+                        </label>
+                        <ImageUploadManager
+                          label="Upload Contact Background"
+                          currentImage={homepageImages?.contactBackgroundImage}
+                          collectionId="homepageimages"
+                          itemId={homepageImages?._id}
+                          fieldName="contactBackgroundImage"
+                          onImageUpload={(url) => {
+                            if (homepageImages) {
+                              setHomepageImages({ ...homepageImages, contactBackgroundImage: url });
+                            }
+                          }}
+                          onImageDelete={() => {
+                            if (homepageImages) {
+                              setHomepageImages({ ...homepageImages, contactBackgroundImage: undefined });
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
