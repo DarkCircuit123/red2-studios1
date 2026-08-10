@@ -143,10 +143,10 @@ export default function ContactSection() {
       id="contact" 
       className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden"
     >
-      {/* Background image layer with 35% opacity */}
+      {/* Background image layer with 15% opacity */}
       {contactBackgroundImage && (
         <div 
-          className="absolute inset-0 z-0 opacity-35"
+          className="absolute inset-0 z-0 opacity-15"
           style={{
             backgroundImage: `url('${contactBackgroundImage}')`,
             backgroundSize: 'cover',
