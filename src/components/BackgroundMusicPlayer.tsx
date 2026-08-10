@@ -25,6 +25,10 @@ export default function BackgroundMusicPlayer() {
         
         if (enabledTracks.length > 0) {
           setMusicTracks(enabledTracks);
+          console.log('[AUDIO_DIAGNOSTIC] Loaded music tracks:', {
+            count: enabledTracks.length,
+            tracks: enabledTracks.map(t => ({ title: t.musicTitle, url: t.musicUrl }))
+          });
           // Get volume from first track if available
           if (enabledTracks[0]?.volume) {
             setVolume(enabledTracks[0].volume);
@@ -32,6 +36,7 @@ export default function BackgroundMusicPlayer() {
         }
       } catch (error) {
         // Silently fail - music is optional
+        console.log('[AUDIO_DIAGNOSTIC] Failed to load music tracks:', error);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -52,6 +57,14 @@ export default function BackgroundMusicPlayer() {
     if (!audioRef.current || musicTracks.length === 0) return;
     
     try {
+      // Log audio element state before play attempt
+      console.log('[AUDIO_DIAGNOSTIC] Attempting play:', {
+        src: audioRef.current.src,
+        readyState: audioRef.current.readyState,
+        networkState: audioRef.current.networkState,
+        error: audioRef.current.error?.message
+      });
+      
       // Ensure audio element is ready
       if (audioRef.current.readyState === 0) {
         audioRef.current.load();
@@ -62,8 +75,11 @@ export default function BackgroundMusicPlayer() {
         await playPromise;
         setIsPlaying(true);
         setAudioError(false);
+        console.log('[AUDIO_DIAGNOSTIC] Play successful');
       }
     } catch (err) {
+      // Log play() rejection - expected if no user gesture yet
+      console.log('[AUDIO_DIAGNOSTIC] Play rejected (expected if no user gesture):', err instanceof Error ? err.message : String(err));
       setAudioError(true);
     }
   }, [musicTracks.length]);
@@ -117,17 +133,27 @@ export default function BackgroundMusicPlayer() {
   const handleAudioPlay = () => {
     setIsPlaying(true);
     setAudioError(false);
+    console.log('[AUDIO_DIAGNOSTIC] Audio play event fired');
   };
 
   const handleAudioPause = () => {
     setIsPlaying(false);
+    console.log('[AUDIO_DIAGNOSTIC] Audio pause event fired');
   };
 
   const handleAudioError = (event: Event) => {
     const audio = event.target as HTMLAudioElement;
     const errorCode = audio.error?.code;
     
-    // Silently fail - don't log errors for audio playback
+    // Log audio error diagnostics
+    console.log('[AUDIO_DIAGNOSTIC] Audio error event:', {
+      errorCode,
+      errorMessage: audio.error?.message,
+      src: audio.src,
+      readyState: audio.readyState,
+      networkState: audio.networkState
+    });
+    
     setAudioError(true);
   };
 
@@ -157,6 +183,8 @@ export default function BackgroundMusicPlayer() {
         onPlay={handleAudioPlay}
         onPause={handleAudioPause}
         onError={handleAudioError}
+        onLoadedMetadata={() => console.log('[AUDIO_DIAGNOSTIC] loadedmetadata event fired')}
+        onCanPlay={() => console.log('[AUDIO_DIAGNOSTIC] canplay event fired')}
         style={{ display: 'none' }}
       >
         <source 
