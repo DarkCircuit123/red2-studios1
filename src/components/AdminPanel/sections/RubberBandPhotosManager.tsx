@@ -3,12 +3,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image as ImageIcon, Upload, Trash2, Eye, Plus, RefreshCw } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { motion } from 'framer-motion';
 
 export default function RubberBandPhotosManager() {
@@ -29,7 +29,17 @@ export default function RubberBandPhotosManager() {
   const loadPhotos = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
+      const response = await fetch('/api/cms/get-homepageimages', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load photos: HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
       setPhotos(result.items || []);
     } catch (error) {
       console.error('Error loading photos:', error);
@@ -53,11 +63,17 @@ export default function RubberBandPhotosManager() {
       // Upload the image
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
+      // Convert wix:image:// to HTTPS for storage
+      const httpsUrl = convertWixImageToHttps(result.mediaUrl);
+      if (!httpsUrl) {
+        throw new Error('Failed to convert uploaded image URL to HTTPS');
+      }
+
       // Create new photo entry
       const newPhoto: HomepageImages = {
         _id: crypto.randomUUID(),
         imageName: file.name.replace(/\.[^/.]+$/, ''),
-        heroImage: result.mediaUrl,
+        heroImage: httpsUrl,
         isActive: true,
       };
 
@@ -95,16 +111,22 @@ export default function RubberBandPhotosManager() {
       // Upload the new image
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
+      // Convert wix:image:// to HTTPS for storage
+      const httpsUrl = convertWixImageToHttps(result.mediaUrl);
+      if (!httpsUrl) {
+        throw new Error('Failed to convert uploaded image URL to HTTPS');
+      }
+
       // Update the photo with new image URL
       const photoToUpdate = photos.find(p => p._id === photoId);
       if (photoToUpdate) {
         const updatedPhoto: HomepageImages = {
           ...photoToUpdate,
-          heroImage: result.mediaUrl,
+          heroImage: httpsUrl,
           imageName: file.name.replace(/\.[^/.]+$/, ''),
         };
 
-        await BaseCrudService.update('homepageimages', updatedPhoto);
+        await adminCms.update('homepageimages', updatedPhoto);
         
         // Update local state
         setPhotos(photos.map(p => p._id === photoId ? updatedPhoto : p));
@@ -134,7 +156,7 @@ export default function RubberBandPhotosManager() {
   const handleDeletePhoto = async (photoId: string) => {
     try {
       setIsSaving(true);
-      await BaseCrudService.delete('homepageimages', photoId);
+      await adminCms.delete('homepageimages', photoId);
       setPhotos(photos.filter(p => p._id !== photoId));
 
       toast({
