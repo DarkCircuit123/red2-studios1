@@ -74,7 +74,7 @@ export const GET: APIRoute = async ({ request }) => {
     const { Portfolio } = await import('@/entities/index');
 
     // Fetch all portfolio items
-    const result = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 1000 });
+    const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 1000 });
 
     const items = result.items || [];
     console.log(`[PORTFOLIO_VERIFY] Verifying ${items.length} portfolio items`);

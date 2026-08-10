@@ -275,39 +275,6 @@ export interface DataExportAudit {
 
 
 /**
- * Collection ID: galleryphotos
- * Interface for GalleryPhotos
- */
-export interface GalleryPhotos {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType text */
-  gallerySlug?: string;
-  /** @wixFieldType text */
-  category?: string;
-  /** @wixFieldType text */
-  subCategory?: string;
-  /** @wixFieldType text */
-  title?: string;
-  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
-  image?: string;
-  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
-  thumbnail?: string;
-  /** @wixFieldType text */
-  description?: string;
-  /** @wixFieldType number */
-  displayOrder?: number;
-  /** @wixFieldType boolean */
-  featured?: boolean;
-  /** @wixFieldType datetime */
-  createdDate?: Date | string;
-  /** @wixFieldType datetime */
-  updatedDate?: Date | string;
-}
-
-
-/**
  * Collection ID: homepageimages
  * Interface for HomepageImages
  */
@@ -509,9 +476,9 @@ export interface PortfolioImageBackups {
 
 /**
  * Collection ID: portfolioimages
- * Interface for PortfolioImages
+ * Interface for Portfolio
  */
-export interface PortfolioImages {
+export interface Portfolio {
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;

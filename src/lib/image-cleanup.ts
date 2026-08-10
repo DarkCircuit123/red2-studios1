@@ -43,7 +43,7 @@ export async function detectOversizedImages(): Promise<ImageCleanupReport> {
 
   try {
     // Fetch all portfolio items
-    const result = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 100 });
+    const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 100 });
     const items = result?.items || [];
     
     report.totalRecords = items.length;
@@ -121,7 +121,7 @@ export async function clearOversizedImagesFromRecord(
       updateData[field] = null;
     }
 
-    await BaseCrudService.update('portfolio', updateData);
+    await BaseCrudService.update('portfolioimages', updateData);
     console.log(`Cleared oversized images from ${itemId}:`, fieldsToClean);
   } catch (error) {
     console.error('Error clearing oversized images:', error);

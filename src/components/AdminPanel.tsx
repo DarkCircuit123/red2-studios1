@@ -12,7 +12,7 @@ import DataManagementTab from './AdminPanel/DataManagementTab';
 import UploadProductionTest from './UploadProductionTest';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
-import { Services, HomepageImages, ClientsPress, AboutSection } from '@/entities/index';
+import { Services, HomepageImages, ClientsPress, AboutSection, Portfolio } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
 
 interface AdminPanelProps {
@@ -47,6 +47,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [credentialsError, setCredentialsError] = useState('');
   const [credentialsSuccess, setCredentialsSuccess] = useState('');
   const [isSavingCredentials, setIsSavingCredentials] = useState(false);
+  const [portfolioImages, setPortfolioImages] = useState<Portfolio[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -91,6 +92,18 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           }
         } catch (error) {
           setAboutSettings(null);
+        }
+
+        try {
+          const portfolioResult = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 100 });
+          if (portfolioResult?.items) {
+            setPortfolioImages(portfolioResult.items);
+          } else {
+            setPortfolioImages([]);
+          }
+        } catch (error) {
+          console.error('Failed to load portfolio images:', error);
+          setPortfolioImages([]);
         }
       } catch (error) {
         console.error('[ADMIN PANEL] Error loading data:', error);
@@ -334,7 +347,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         fieldName="image"
                         onImageUpload={(url) => {
                           // Create new portfolio image entry
-                          const newImage: PortfolioImages = {
+                          const newImage: Portfolio = {
                             _id: crypto.randomUUID(),
                             image: url,
                             displayOrder: portfolioImages.length + 1,

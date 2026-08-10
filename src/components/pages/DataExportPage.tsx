@@ -31,7 +31,7 @@ function DataExportPageContent() {
           BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 1 }),
           getAvailability(),
           BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 1 }),
-          BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 1 }),
+          BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 1 }),
           BaseCrudService.getAll<Services>('services', {}, { limit: 1 }),
           BaseCrudService.getAll<TeamMembers>('teammembers', {}, { limit: 1 }),
         ]);
@@ -104,7 +104,7 @@ function DataExportPageContent() {
         BaseCrudService.getAll('blogposts', {}, { limit: 1000 }),
         getAvailability(),
         BaseCrudService.getAll('clientspress', {}, { limit: 1000 }),
-        BaseCrudService.getAll('portfolio', {}, { limit: 1000 }),
+        BaseCrudService.getAll('portfolioimages', {}, { limit: 1000 }),
         BaseCrudService.getAll('services', {}, { limit: 1000 }),
         BaseCrudService.getAll('teammembers', {}, { limit: 1000 }),
       ]);

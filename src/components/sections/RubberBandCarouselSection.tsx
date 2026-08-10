@@ -93,22 +93,17 @@ const RubberBandCarouselSection: React.FC = () => {
 
     (async () => {
       try {
-        const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 100 });
+        const data = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 100 });
         const collected: CarouselImage[] = [];
 
-        data.items?.forEach((project) => {
-          (['mainImage', 'galleryImage1', 'galleryImage2', 'galleryImage3'] as const).forEach(
-            (field, idx) => {
-              const url = project[field] as string | undefined;
-              if (url) {
-                collected.push({
-                  id: `${project._id}-${idx}`,
-                  url,
-                  alt: project.projectName || 'Portfolio work',
-                });
-              }
-            }
-          );
+        data.items?.forEach((item) => {
+          if (item.image) {
+            collected.push({
+              id: item._id,
+              url: item.image,
+              alt: item.caption || item.altText || 'Portfolio work',
+            });
+          }
         });
 
         if (!cancelled) {

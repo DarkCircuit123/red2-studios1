@@ -17,7 +17,7 @@ export default function AIImageSearchSection() {
   useEffect(() => {
     const loadPortfolio = async () => {
       try {
-        const data = await BaseCrudService.getAll<Portfolio>('portfolio', {}, { limit: 50 });
+        const data = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 50 });
         setPortfolioItems(data.items || []);
         setFilteredItems(data.items || []);
       } catch (error) {
