@@ -144,7 +144,7 @@ export default function HeroSectionManager() {
                 alt="Hero background preview"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                 <Eye className="w-6 h-6 text-white" />
               </div>
             </div>

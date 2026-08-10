@@ -173,7 +173,7 @@ export default function RubberBandPhotosManager() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {photos.map((photo) => (
-                <div key={photo._id} className="relative group rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                <div key={photo._id} className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
                   {/* Photo Thumbnail Preview */}
                   {photo.heroImage && (
                     <div className="relative w-full h-48 bg-slate-100">
@@ -182,7 +182,7 @@ export default function RubberBandPhotosManager() {
                         alt={photo.imageName || 'Carousel photo'}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 gap-2">
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2">
                         <button
                           onClick={() => window.open(photo.heroImage, '_blank')}
                           className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"

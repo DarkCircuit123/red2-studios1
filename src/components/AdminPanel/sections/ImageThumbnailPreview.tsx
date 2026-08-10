@@ -35,7 +35,7 @@ export default function ImageThumbnailPreview({
   if (compact) {
     // Compact thumbnail for grid layouts (e.g., 30-slot portfolio gallery)
     return (
-      <div className="relative group w-full h-full rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+      <div className="relative w-full h-full rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
         <Image
           src={imageUrl}
           alt={altText || title || `Image ${slotNumber || ''}`}
@@ -44,8 +44,8 @@ export default function ImageThumbnailPreview({
           className="w-full h-full object-cover"
         />
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 gap-2">
+        {/* Always visible overlay with actions */}
+        <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-2">
           {onView && (
             <button
               onClick={onView}
@@ -66,9 +66,9 @@ export default function ImageThumbnailPreview({
           )}
         </div>
 
-        {/* Slot indicator (subtle) */}
+        {/* Slot indicator - always visible */}
         {slotNumber && (
-          <div className="absolute bottom-1 right-1 bg-black/50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute bottom-1 right-1 bg-black/50 text-white text-xs px-2 py-1 rounded">
             #{slotNumber}
           </div>
         )}
@@ -79,7 +79,7 @@ export default function ImageThumbnailPreview({
   // Full-size thumbnail for detail views
   return (
     <div className="space-y-3">
-      <div className="relative group rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+      <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
         <div className="relative w-full h-64">
           <Image
             src={imageUrl}
@@ -89,22 +89,28 @@ export default function ImageThumbnailPreview({
             className="w-full h-full object-cover"
           />
 
-          {/* Hover overlay */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <Eye className="w-6 h-6 text-white" />
+          {/* Always visible overlay with actions */}
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center gap-3">
+            {onView && (
+              <button
+                onClick={onView}
+                className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                title="View full image"
+              >
+                <Eye className="w-6 h-6" />
+              </button>
+            )}
+            {onRemove && (
+              <button
+                onClick={onRemove}
+                className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                title="Remove image"
+              >
+                <Trash2 className="w-6 h-6" />
+              </button>
+            )}
           </div>
         </div>
-
-        {/* Remove button */}
-        {onRemove && (
-          <button
-            onClick={onRemove}
-            className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
-            title="Remove image"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
       </div>
 
       {/* Image info */}

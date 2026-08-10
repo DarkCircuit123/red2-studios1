@@ -461,7 +461,7 @@ export default function GalleryPhotoManager() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="group relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300 transition-colors"
+                className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300 transition-colors"
               >
                 {/* Image */}
                 <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
@@ -469,10 +469,10 @@ export default function GalleryPhotoManager() {
                     <img
                       src={photo.image}
                       alt={photo.title || 'Gallery photo'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover"
                     />
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 gap-2">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2">
                     <button
                       onClick={() => window.open(photo.image, '_blank')}
                       className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
