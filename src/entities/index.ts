@@ -485,41 +485,6 @@ export interface PINAccessLog {
 
 
 /**
- * Collection ID: portfolio
- * Interface for Portfolio
- */
-export interface Portfolio {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType text */
-  projectName?: string;
-  /** @wixFieldType text */
-  imageAltText?: string;
-  /** @wixFieldType text */
-  seoDescription?: string;
-  /** @wixFieldType text */
-  seoTitle?: string;
-  /** @wixFieldType text */
-  shortDescription?: string;
-  /** @wixFieldType text */
-  fullDescription?: string;
-  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
-  mainImage?: string;
-  /** @wixFieldType text */
-  category?: string;
-  /** @wixFieldType date */
-  projectDate?: Date | string;
-  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
-  galleryImage1?: string;
-  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
-  galleryImage2?: string;
-  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
-  galleryImage3?: string;
-}
-
-
-/**
  * Collection ID: portfolioimagebackups
  * Interface for PortfolioImageBackups
  */
