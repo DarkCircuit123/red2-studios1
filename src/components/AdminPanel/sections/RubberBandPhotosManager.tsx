@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Image as ImageIcon, Upload, Trash2, Eye, Plus, Replace2 } from 'lucide-react';
+import { Image as ImageIcon, Upload, Trash2, Eye, Plus, RefreshCw } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages } from '@/entities';
@@ -280,7 +280,7 @@ export default function RubberBandPhotosManager() {
                             {replacingId === photo._id ? (
                               <LoadingSpinner className="w-4 h-4" />
                             ) : (
-                              <Replace2 className="w-4 h-4" />
+                              <RefreshCw className="w-4 h-4" />
                             )}
                           </button>
                         </label>
