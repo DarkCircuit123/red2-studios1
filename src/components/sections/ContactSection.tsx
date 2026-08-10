@@ -142,13 +142,20 @@ export default function ContactSection() {
       ref={sectionRef} 
       id="contact" 
       className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden"
-      style={contactBackgroundImage ? {
-        backgroundImage: `url('${contactBackgroundImage}')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-      } : undefined}
     >
+      {/* Background image layer with 35% opacity */}
+      {contactBackgroundImage && (
+        <div 
+          className="absolute inset-0 z-0 opacity-35"
+          style={{
+            backgroundImage: `url('${contactBackgroundImage}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+          }}
+        />
+      )}
+
       {/* Animated background overlay */}
       <div className="absolute inset-0 z-0">
         <motion.div
