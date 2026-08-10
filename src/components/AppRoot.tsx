@@ -60,17 +60,18 @@ export default function AppRoot() {
     checkSession();
     
     // CRITICAL: Fallback timeout to prevent infinite loading
-    // If splash doesn't complete within 5 seconds, force it to complete
+    // If splash doesn't complete within 3 seconds, force it to complete
     const fallbackTimer = setTimeout(() => {
       setSplashComplete(true);
       sessionStorage.setItem('splashScreenShown', 'true');
-    }, 5000);
+    }, 3000);
     
     return () => clearTimeout(fallbackTimer);
   }, [checkSession]);
 
   const handleSplashComplete = () => {
     setSplashComplete(true);
+    sessionStorage.setItem('splashScreenShown', 'true');
   };
 
   return (

@@ -30,9 +30,9 @@ export default function HeroSection() {
 
   const loadHeroImage = async () => {
     try {
-      const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-      if (homepageImages?.items && homepageImages.items.length > 0) {
-        const images = homepageImages.items[0] as HomepageImage;
+      const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+      if (result?.items && result.items.length > 0) {
+        const images = result.items[0] as HomepageImage;
         if (images?.heroImage && typeof images.heroImage === 'string' && images.heroImage.trim()) {
           setHeroImage(images.heroImage);
           // Load focal point if available
@@ -43,11 +43,9 @@ export default function HeroSection() {
             });
           }
         } else {
-          console.warn('[HeroSection] No hero image found in CMS');
           setHeroImage(null);
         }
       } else {
-        console.warn('[HeroSection] No homepage images collection data found');
         setHeroImage(null);
       }
       // Reset retry count on success

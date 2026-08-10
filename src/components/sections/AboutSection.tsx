@@ -21,16 +21,12 @@ export default function AboutSection() {
   const loadAboutData = async () => {
     try {
       // Load from HomepageImages collection first
-      const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-      if (homepageImages?.items && homepageImages.items.length > 0) {
-        const images = homepageImages.items[0] as any;
+      const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+      if (result?.items && result.items.length > 0) {
+        const images = result.items[0] as any;
         if (images?.aboutSectionImage) {
           setAboutImage(images.aboutSectionImage);
-        } else {
-          console.warn('[AboutSection] No aboutSectionImage found in CMS');
         }
-      } else {
-        console.warn('[AboutSection] No homepage images collection data found');
       }
 
       // Load about settings
@@ -44,8 +40,6 @@ export default function AboutSection() {
           if (about?.fontFamily) {
             setFontFamily(about.fontFamily);
           }
-        } else {
-          console.warn('[AboutSection] No about collection data found');
         }
       } catch (error) {
         console.error('[AboutSection] Error loading about settings:', error);

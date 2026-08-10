@@ -131,9 +131,9 @@ export default function HeroImageUploader({
       }
 
       // Save to CMS
-      const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-      if (homepageImages?.items && homepageImages.items.length > 0) {
-        const item = homepageImages.items[0] as any;
+      const cmsResult = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+      if (cmsResult?.items && cmsResult.items.length > 0) {
+        const item = cmsResult.items[0] as any;
         await adminCms.update('homepageimages', {
           _id: item._id,
           heroImage: result.mediaUrl,
@@ -157,9 +157,9 @@ export default function HeroImageUploader({
   const handleDeleteImage = async () => {
     setIsDeleting(true);
     try {
-      const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-      if (homepageImages?.items && homepageImages.items.length > 0) {
-        const item = homepageImages.items[0] as any;
+      const cmsResult = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+      if (cmsResult?.items && cmsResult.items.length > 0) {
+        const item = cmsResult.items[0] as any;
         await adminCms.update('homepageimages', {
           _id: item._id,
           heroImage: null,

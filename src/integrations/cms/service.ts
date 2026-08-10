@@ -17,7 +17,10 @@ export const cmsService = {
     options?: { limit?: number; skip?: number }
   ) => {
     try {
-      return await WixBaseCrudService.getAll<T>(collectionId, refs || {}, options);
+      // Ensure refs is always an object, never undefined
+      const refsParam = refs || {};
+      const optionsParam = options || { limit: 50 };
+      return await WixBaseCrudService.getAll<T>(collectionId, refsParam, optionsParam);
     } catch (error) {
       console.error(`[CMS] Error fetching from ${collectionId}:`, error);
       throw error;

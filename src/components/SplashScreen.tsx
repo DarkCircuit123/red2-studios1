@@ -33,26 +33,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     const loadActiveLogo = async () => {
       try {
-        // Diagnostic: CMS query initiated
-        const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+        const result = await BaseCrudService.getAll<Splashpage>('splashpage', {}, { limit: 50 });
         
-        // Diagnostic: Query completed, check results
-        if (!result.items || result.items.length === 0) {
-          // No items in collection - this is acceptable, splash will be skipped
-          setIsLoadingLogo(false);
-          return;
-        }
-        
-        const activeLogo = result.items.find((item) => item.isActive);
-        
-        if (activeLogo?.logoImage) {
-          // Diagnostic: Active logo found with image
-          setLogoImage(activeLogo.logoImage);
-        } else {
-          // No active logo or no image field - splash will be skipped
+        if (result?.items && result.items.length > 0) {
+          const activeLogo = result.items.find((item) => item.isActive);
+          if (activeLogo?.logoImage) {
+            setLogoImage(activeLogo.logoImage);
+          }
         }
       } catch (err) {
-        // Diagnostic: Log error but don't display to user
         console.error('[SplashScreen] CMS query error:', err);
       } finally {
         setIsLoadingLogo(false);

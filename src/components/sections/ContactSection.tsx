@@ -27,9 +27,9 @@ export default function ContactSection() {
 
   const loadContactBackground = async () => {
     try {
-      const homepageImages = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-      if (homepageImages?.items && homepageImages.items.length > 0) {
-        const images = homepageImages.items[0] as any;
+      const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+      if (result?.items && result.items.length > 0) {
+        const images = result.items[0] as any;
         if (images?.contactBackgroundImage) {
           setContactBackgroundImage(images.contactBackgroundImage);
         }
