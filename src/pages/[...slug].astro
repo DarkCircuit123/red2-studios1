@@ -8,7 +8,8 @@ const cspHeader = "default-src 'self'; script-src 'self' 'unsafe-inline' https:/
 
 Astro.response.headers.set('Content-Security-Policy', cspHeader);
 Astro.response.headers.set('X-Content-Type-Options', 'nosniff');
-Astro.response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+// X-Frame-Options removed to allow Wix preview/framewire framing
+// Astro.response.headers.set('X-Frame-Options', 'SAMEORIGIN');
 Astro.response.headers.set('X-XSS-Protection', '1; mode=block');
 ---
 
