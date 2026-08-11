@@ -99,7 +99,6 @@ The updated CSP policy now allows the site to be framed by:
 ### 3. 404 Errors for Internal Wix APIs
 **Status:** Expected behavior
 - `https://manage.wix.com/_api/wix-user-preferences-webapp/getVolatilePrefForSite/...` (404)
-- `https://app.base44.com/api/apps/public/prod/domain/...` (404)
 - These are Wix internal API calls that may not be available in all environments
 - Do not impact site stability or functionality
 
