@@ -130,11 +130,18 @@ const WixImage = forwardRef<HTMLImageElement, WixImageProps>(
 WixImage.displayName = 'WixImage'
 
 export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }, ref) => {
-  const [imgSrc, setImgSrc] = useState<string | undefined>(src)
+  const [imgSrc, setImgSrc] = useState<string | undefined>(() => {
+    // Initialize with converted URL to prevent wix:image:// from ever reaching the DOM
+    if (src) {
+      const resolved = WixImageResolver.resolve(src);
+      return convertWixImageToHttps(resolved.url);
+    }
+    return undefined;
+  })
 
   useEffect(() => {
     // If src prop changes, resolve it through WixImageResolver and update state
-    if (src !== imgSrc) {
+    if (src) {
       const resolved = WixImageResolver.resolve(src, {
         fieldName: props['data-field-name'] as string | undefined,
         recordId: props['data-record-id'] as string | undefined
@@ -143,6 +150,8 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
       const browserUrl = convertWixImageToHttps(resolved.url);
       // Guard: only update state if the resolved URL is different
       setImgSrc(prevSrc => prevSrc === browserUrl ? prevSrc : browserUrl);
+    } else {
+      setImgSrc(undefined);
     }
   }, [src, props['data-field-name'], props['data-record-id']])
 
@@ -157,6 +166,12 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
   });
   // Convert wix:image:// to HTTPS for browser rendering (CSP compliance)
   const finalSrc = convertWixImageToHttps(resolved.url);
+
+  // CRITICAL: Ensure finalSrc is never a wix:image:// URL
+  if (finalSrc.startsWith('wix:image://')) {
+    console.error('[Image] CSP Violation: wix:image:// URL reached DOM. This should never happen.', finalSrc);
+    return <img data-error-image ref={ref} src={FALLBACK_IMAGE_URL} {...props} />
+  }
 
   // Destructure priority out of props before spreading to avoid passing boolean to DOM
   const { priority, ...restProps } = props;
