@@ -39,6 +39,8 @@ const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
 
   const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
+    if (!img) return;
+    
     // Guard: only update if dimensions are valid and actually changed
     const newWidth = img.naturalWidth || 1920;
     const newHeight = img.naturalHeight || 1080;
@@ -245,7 +247,7 @@ const RubberBandCarouselSection: React.FC = () => {
     };
 
     snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
-  }, []);
+  }, [easeOutElastic]);
 
   // Step 4: Main animation loop - optimized to avoid unnecessary state updates
   // Use a ref to track the last scroll position to prevent excessive state updates

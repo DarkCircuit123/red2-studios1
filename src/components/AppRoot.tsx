@@ -8,7 +8,6 @@ import { MemberProvider } from '@/integrations/members/providers';
 import { useAdminAuth } from '@/lib/adminAuthStore';
 import { initCSPFixes } from '@/lib/csp-headers-fix';
 import { initAuthErrorHandling } from '@/lib/auth-error-handler';
-import { initPublishingFixes } from '@/lib/publishing-fix';
 
 // DEV ONLY. Lets Vite's dependency scanner find every third-party package in
 // its initial crawl so it pre-bundles them in one pass. Without this, packages
@@ -21,11 +20,10 @@ if (import.meta.env.DEV) {
   import('@/lib/vite-dep-preload');
 }
 
-// Initialize security, error handling, and publishing fixes on app load
+// Initialize security and error handling on app load
 if (typeof window !== 'undefined') {
   initCSPFixes();
   initAuthErrorHandling();
-  initPublishingFixes();
 }
 
 class RouterErrorBoundary extends React.Component<
