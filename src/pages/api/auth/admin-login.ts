@@ -19,28 +19,36 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Validate credentials - exact match required
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      // Create signed session token
-      const sessionToken = await signAdminToken(username, 86400 * 7 * 1000);
+      try {
+        // Create signed session token
+        const sessionToken = await signAdminToken(username, 86400 * 7 * 1000);
 
-      // Set secure httpOnly cookie with SameSite=None for cross-site iframe compatibility
-      cookies.set('admin_session', sessionToken, {
-        path: '/',
-        httpOnly: true,
-        secure: true, // Always secure for SameSite=None
-        sameSite: 'none',
-        partitioned: true, // Partitioned cookie for cross-site iframe
-        maxAge: 86400 * 7, // 7 days
-      });
+        // Set secure httpOnly cookie with SameSite=None for cross-site iframe compatibility
+        cookies.set('admin_session', sessionToken, {
+          path: '/',
+          httpOnly: true,
+          secure: true, // Always secure for SameSite=None
+          sameSite: 'none',
+          partitioned: true, // Partitioned cookie for cross-site iframe
+          maxAge: 86400 * 7, // 7 days
+        });
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          admin: true,
-          username: ADMIN_USERNAME,
-          token: sessionToken,
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+        return new Response(
+          JSON.stringify({
+            success: true,
+            admin: true,
+            username: ADMIN_USERNAME,
+            token: sessionToken,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      } catch (tokenError) {
+        console.error('[ADMIN LOGIN] Token signing failed:', tokenError);
+        return new Response(
+          JSON.stringify({ success: false, message: 'Failed to create session token' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     return new Response(

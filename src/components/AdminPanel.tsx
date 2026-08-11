@@ -7,6 +7,7 @@ import ImageUploadManager from './ImageUploadManager';
 import MusicManager from './MusicManager';
 import BookingManagerPro from './BookingManagerPro';
 import RubberBandPhotosManager from './AdminPanel/sections/RubberBandPhotosManager';
+import BehindTheScenesManager from './AdminPanel/sections/BehindTheScenesManager';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages, ClientsPress, AboutSection, Portfolio } from '@/entities/index';
@@ -194,6 +195,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
 
   const tabs = [
     { id: 'photos', label: 'Photos', icon: Upload },
+    { id: 'behind-scenes', label: 'Behind Scenes', icon: Upload },
     { id: 'work', label: 'Work', icon: Upload },
     { id: 'sponsors', label: 'Sponsors', icon: Upload },
     { id: 'music', label: 'Music', icon: Music },
@@ -269,6 +271,11 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
 
             {/* Content */}
             <div className="p-6 space-y-8">
+              {/* Behind Scenes Tab */}
+              {activeTab === 'behind-scenes' && (
+                <BehindTheScenesManager onSave={() => {}} />
+              )}
+
               {/* Bookings Tab */}
               {activeTab === 'bookings' && (
                 <div className="bg-gradient-to-b from-black to-black/95 border border-white/10 rounded-lg p-6">

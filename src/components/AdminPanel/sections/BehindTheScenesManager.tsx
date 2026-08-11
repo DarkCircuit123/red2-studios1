@@ -1,43 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BaseCrudService } from '@/integrations';
-import { adminCms } from '@/lib/admin-cms';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Upload, Trash2, Loader } from 'lucide-react';
 import { Image } from '@/components/ui/image';
-import { Trash2, Plus, Edit2, X } from 'lucide-react';
-import { uploadMedia } from '@/lib/wix-media-upload-service';
-import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
-import { useToast } from '@/hooks/use-toast';
+import { BehindTheScenes } from '@/entities/index';
 
-interface BehindTheScenesItem {
-  _id: string;
-  photo?: string;
-  title?: string;
-  description?: string;
-  order?: number;
-  dateTaken?: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
+interface BehindTheScenesManagerProps {
+  onSave?: () => void;
 }
 
-export default function BehindTheScenesManager() {
-  const { toast } = useToast();
-  const [items, setItems] = useState<BehindTheScenesItem[]>([]);
+export default function BehindTheScenesManager({ onSave }: BehindTheScenesManagerProps) {
+  const [items, setItems] = useState<BehindTheScenes[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [formData, setFormData] = useState({
-    photo: '',
-    title: '',
-    description: '',
-    order: 0,
-    dateTaken: '',
-  });
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
-  // Load items on mount
   useEffect(() => {
     loadItems();
   }, []);
@@ -45,328 +23,220 @@ export default function BehindTheScenesManager() {
   const loadItems = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<BehindTheScenesItem>('behindthescenes', [], { limit: 100 });
-      setItems(result.items.sort((a, b) => (a.order || 0) - (b.order || 0)));
+      const result = await BaseCrudService.getAll<BehindTheScenes>('behindthescenes', [], { limit: 100 });
+      const sorted = (result?.items || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+      setItems(sorted);
     } catch (error) {
       console.error('Failed to load behind-the-scenes items:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load items',
-        variant: 'destructive',
-      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAddNew = () => {
-    setIsAdding(true);
-    setFormData({
-      photo: '',
-      title: '',
-      description: '',
-      order: items.length,
-      dateTaken: new Date().toISOString().split('T')[0],
-    });
-  };
-
-  const handleEdit = (item: BehindTheScenesItem) => {
-    setEditingId(item._id);
-    setFormData({
-      photo: item.photo || '',
-      title: item.title || '',
-      description: item.description || '',
-      order: item.order || 0,
-      dateTaken: item.dateTaken || '',
-    });
-  };
-
-  const handleCancel = () => {
-    setIsAdding(false);
-    setEditingId(null);
-    setFormData({
-      photo: '',
-      title: '',
-      description: '',
-      order: 0,
-      dateTaken: '',
-    });
-  };
-
-  const handleSave = async () => {
+  const handlePhotoUpload = useCallback(async (itemId: string, file: File) => {
     try {
-      if (!formData.title.trim()) {
-        toast({
-          title: 'Error',
-          description: 'Please enter a title',
-          variant: 'destructive',
-        });
-        return;
+      setUploadingId(itemId);
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Upload to Wix media
+      const uploadResponse = await fetch('/api/media/upload-hero', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
       }
 
-      if (editingId) {
-        // Update existing
-        await adminCms.update('behindthescenes', {
-          _id: editingId,
-          photo: formData.photo,
-          title: formData.title,
-          description: formData.description,
-          order: formData.order,
-          dateTaken: formData.dateTaken,
-        });
-      } else {
-        // Create new
-        await adminCms.create('behindthescenes', {
-          _id: crypto.randomUUID(),
-          photo: formData.photo,
-          title: formData.title,
-          description: formData.description,
-          order: formData.order,
-          dateTaken: formData.dateTaken,
-        });
-      }
+      const uploadData = await uploadResponse.json();
+      const imageUrl = uploadData.mediaUrl || uploadData.url;
 
-      toast({
-        title: 'Success',
-        description: editingId ? 'Item updated' : 'Item created',
+      // Update the item with new image
+      await BaseCrudService.update<BehindTheScenes>('behindthescenes', {
+        _id: itemId,
+        photo: imageUrl,
       });
 
-      handleCancel();
+      // Reload items
       await loadItems();
+      onSave?.();
     } catch (error) {
-      console.error('Failed to save item:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save item',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
-
-    try {
-      await adminCms.delete('behindthescenes', id);
-      await loadItems();
-      toast({
-        title: 'Success',
-        description: 'Item deleted',
-      });
-    } catch (error) {
-      console.error('Failed to delete item:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete item',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsUploadingImage(true);
-      const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
-
-      setFormData(prev => ({
-        ...prev,
-        photo: result.mediaUrl || '',
-      }));
-
-      toast({
-        title: 'Success',
-        description: 'Image uploaded successfully',
-      });
-    } catch (error) {
-      console.error('Failed to upload image:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to upload image',
-        variant: 'destructive',
-      });
+      console.error('Failed to upload photo:', error);
+      alert('Failed to upload photo. Please try again.');
     } finally {
-      setIsUploadingImage(false);
+      setUploadingId(null);
     }
+  }, [onSave]);
+
+  const handleDeletePhoto = useCallback(async (itemId: string) => {
+    try {
+      await BaseCrudService.update<BehindTheScenes>('behindthescenes', {
+        _id: itemId,
+        photo: undefined,
+      });
+      await loadItems();
+      onSave?.();
+    } catch (error) {
+      console.error('Failed to delete photo:', error);
+      alert('Failed to delete photo. Please try again.');
+    }
+  }, [onSave]);
+
+  const handleSaveEdit = useCallback(async (itemId: string) => {
+    try {
+      await BaseCrudService.update<BehindTheScenes>('behindthescenes', {
+        _id: itemId,
+        title: editTitle,
+        description: editDescription,
+      });
+      setEditingId(null);
+      await loadItems();
+      onSave?.();
+    } catch (error) {
+      console.error('Failed to save changes:', error);
+      alert('Failed to save changes. Please try again.');
+    }
+  }, [editTitle, editDescription, onSave]);
+
+  const startEdit = (item: BehindTheScenes) => {
+    setEditingId(item._id);
+    setEditTitle(item.title || '');
+    setEditDescription(item.description || '');
   };
 
-  if (isLoading && items.length === 0) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <LoadingSpinner />
+        <Loader className="w-6 h-6 animate-spin" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Behind The Scenes</h3>
-        {!isAdding && !editingId && (
-          <Button onClick={handleAddNew} className="flex items-center gap-2">
-            <Plus size={16} />
-            Add New
-          </Button>
-        )}
-      </div>
+      <div className="bg-gray-50 rounded-lg p-6">
+        <h3 className="text-lg font-semibold mb-4">Behind The Scenes Photos</h3>
+        <p className="text-sm text-gray-600 mb-6">
+          Manage the photos displayed in the Behind The Scenes section. Upload new photos or edit existing ones.
+        </p>
 
-      {/* Add/Edit Form */}
-      {(isAdding || editingId) && (
-        <div className="border rounded-lg p-6 bg-gray-50 space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="font-semibold">{editingId ? 'Edit' : 'Add New'} Behind The Scenes</h4>
-            <button onClick={handleCancel} className="text-gray-500 hover:text-gray-700">
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Photo</label>
-            <div className="flex gap-4">
-              {formData.photo && (
-                <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
-                  <Image
-                    src={formData.photo}
-                    alt="Preview"
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover"
-                  />
+        <div className="space-y-4">
+          {items.map((item) => (
+            <div key={item._id} className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex gap-4">
+                {/* Photo Preview */}
+                <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
+                  {item.photo ? (
+                    <Image
+                      src={item.photo}
+                      alt={item.title || 'Behind the scenes'}
+                      width={96}
+                      height={96}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                      <span className="text-xs text-gray-400">No image</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="flex-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-md file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-primary file:text-white
-                    hover:file:bg-primary/90"
-                />
-                <p className="text-xs text-gray-500 mt-2">Upload a new image or use existing URL</p>
-              </div>
-            </div>
-          </div>
 
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Title</label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter title"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Description</label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter description"
-              rows={3}
-            />
-          </div>
-
-          {/* Order */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Order</label>
-              <Input
-                type="number"
-                value={formData.order}
-                onChange={(e) => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
-                placeholder="0"
-              />
-            </div>
-
-            {/* Date Taken */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Date Taken</label>
-              <Input
-                type="date"
-                value={formData.dateTaken}
-                onChange={(e) => setFormData(prev => ({ ...prev, dateTaken: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 justify-end pt-4">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave}>
-              {editingId ? 'Update' : 'Create'}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Items List */}
-      <div className="space-y-3">
-        {items.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No behind-the-scenes items yet. Add one to get started!</p>
-          </div>
-        ) : (
-          items.map((item) => (
-            <div key={item._id} className="border rounded-lg p-4 flex gap-4 items-start hover:bg-gray-50 transition">
-              {/* Thumbnail */}
-              {item.photo && (
-                <div className="w-24 h-24 rounded-lg overflow-hidden border flex-shrink-0">
-                  <Image
-                    src={item.photo}
-                    alt={item.title || 'Behind the scenes'}
-                    width={96}
-                    height={96}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h4 className="font-semibold text-sm">{item.title}</h4>
-                    <p className="text-xs text-gray-600 mt-1 line-clamp-2">{item.description}</p>
-                    {item.dateTaken && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        Date: {new Date(item.dateTaken).toLocaleDateString()}
+                {/* Content */}
+                <div className="flex-1">
+                  {editingId === item._id ? (
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder="Title"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                      <textarea
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        placeholder="Description"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        rows={2}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSaveEdit(item._id)}
+                          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-1">{item.title || 'Untitled'}</h4>
+                      <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                        {item.description || 'No description'}
                       </p>
-                    )}
-                    <p className="text-xs text-gray-500">Order: {item.order}</p>
-                  </div>
+                      <button
+                        onClick={() => startEdit(item)}
+                        className="text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 flex-shrink-0">
+                {/* Actions */}
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 text-sm">
+                    <Upload className="w-4 h-4" />
+                    <span>Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handlePhotoUpload(item._id, file);
+                        }
+                      }}
+                      disabled={uploadingId === item._id}
+                      className="hidden"
+                    />
+                  </label>
+                  {item.photo && (
                     <button
-                      onClick={() => handleEdit(item)}
-                      className="p-2 hover:bg-gray-200 rounded-lg transition"
-                      title="Edit"
+                      onClick={() => handleDeletePhoto(item._id)}
+                      className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 text-sm text-red-600"
                     >
-                      <Edit2 size={16} className="text-gray-600" />
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
                     </button>
-                    <button
-                      onClick={() => handleDelete(item._id)}
-                      className="p-2 hover:bg-red-100 rounded-lg transition"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} className="text-red-600" />
-                    </button>
-                  </div>
+                  )}
                 </div>
               </div>
+
+              {uploadingId === item._id && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                  <Loader className="w-4 h-4 animate-spin" />
+                  <span>Uploading...</span>
+                </div>
+              )}
             </div>
-          ))
+          ))}
+        </div>
+
+        {items.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <p>No behind-the-scenes items found. Add items in the CMS first.</p>
+          </div>
         )}
       </div>
     </div>
