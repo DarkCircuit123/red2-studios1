@@ -1,3 +1,4 @@
+import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
 import cloudProviderFetchAdapter from "@wix/cloud-provider-fetch-adapter";
 import wix from "@wix/astro";
