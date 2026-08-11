@@ -55,6 +55,7 @@ loadFramewire(true);`
         'zod',
         'lucide-react',
         'react-router-dom',
+        'lodash',
         '@wix/data',
         '@wix/ecom',
         '@wix/essentials',

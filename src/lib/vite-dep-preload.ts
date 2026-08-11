@@ -55,6 +55,7 @@ import 'class-variance-authority';
 import 'tailwind-merge';
 import 'zod';
 import 'lucide-react';
+import 'lodash';
 
 // Wix SDK modules used by src/
 import '@wix/data';
