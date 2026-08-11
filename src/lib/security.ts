@@ -4,22 +4,24 @@
  */
 
 // Content Security Policy helper
-// CRITICAL: Comprehensive policy for Wix platform integration
+// CRITICAL: Production-safe policy for Wix platform integration
+// - Allows https://static.parastorage.com and https://*.parastorage.com for:
+//   * Wix-hosted fonts (Cormorant Garamond, Roboto, Oswald, Nunito Sans, Helvetica Neue)
+//   * Wix Framewire infrastructure (script-src and script-src-elem)
 // - Allows wix:image:// protocol for Wix Media Manager images
-// - Allows https://static.parastorage.com and *.parastorage.com for framewire script injection
 // - Allows wixapis.com and wix.com for Wix API calls
-// - Allows unsafe-eval for dynamic script evaluation
+// - NO unsafe-inline, NO unsafe-eval (production-safe)
 // - Includes script-src-elem for explicit script element loading
 // - Removed Google Maps (not used in project)
 // - Removed FullStory (not used in project)
 export const CSP_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com",
-    "script-src-elem 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net",
+    "script-src 'self' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com",
+    "script-src-elem 'self' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com",
     "img-src 'self' data: https: blob: wix:image:// https://static.parastorage.com https://*.parastorage.com",
-    "font-src 'self' https://fonts.gstatic.com data: https://static.parastorage.com https://*.parastorage.com",
+    "font-src 'self' https://fonts.gstatic.com https://static.parastorage.com https://*.parastorage.com",
     "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com ws: wss:",
     "frame-ancestors 'self' https://*.wix-code.com https://*.remote-machine.wix-code.com",
     "base-uri 'self'",
