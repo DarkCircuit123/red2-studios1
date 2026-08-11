@@ -115,6 +115,6 @@ loadFramewire(true);`
     checkOrigin: false
   },
   headers: {
-    'Content-Security-Policy': "default-src 'self'; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com; connect-src 'self' https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; frame-ancestors 'self' https://*.wix.com https://*.wix-code.com;"
+    'Content-Security-Policy': "default-src 'self'; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com; connect-src 'self' https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; frame-ancestors 'self' https://*.wix.com https://*.wix-code.com https://*.remote-machine.wix-code.com;"
   }
 });

@@ -5,7 +5,8 @@ import "@/styles/global.css";
 
 // PRODUCTION CSP POLICY - Strict security without unsafe-inline for scripts
 // wix:image:// URLs are converted to HTTPS in the Image component, so they don't need CSP allowance
-const cspHeader = "default-src 'self'; script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: wss: https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+// frame-ancestors allows Wix framing for preview and embedded environments
+const cspHeader = "default-src 'self'; script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: wss: https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://*.wix.com https://*.wix-code.com https://*.remote-machine.wix-code.com";
 
 Astro.response.headers.set('Content-Security-Policy', cspHeader);
 Astro.response.headers.set('X-Content-Type-Options', 'nosniff');
