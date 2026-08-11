@@ -3,8 +3,8 @@ import { Head } from "@/components/Head";
 import AppRoot from "@/components/AppRoot";
 import "@/styles/global.css";
 
-// Set CSP headers for security
-const cspHeader = "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://edge.fullstory.com https://cdn.fullstory.com; img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com wix:image wix:image://v1 https://edge.fullstory.com; style-src 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com; font-src 'self' data: https://static.parastorage.com https://*.parastorage.com; connect-src 'self' https: wss: https://edge.fullstory.com https://cdn.fullstory.com; object-src 'none'; base-uri 'self'; form-action 'self'";
+// Set CSP headers for security - includes Google Fonts and FullStory
+const cspHeader = "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://edge.fullstory.com https://cdn.fullstory.com; img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com wix:image wix:image://v1 https://edge.fullstory.com; style-src 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://fonts.googleapis.com; font-src 'self' data: https://static.parastorage.com https://*.parastorage.com https://fonts.gstatic.com; connect-src 'self' https: wss: https://edge.fullstory.com https://api.fullstory.com; object-src 'none'; base-uri 'self'; form-action 'self'";
 
 Astro.response.headers.set('Content-Security-Policy', cspHeader);
 Astro.response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -16,6 +16,9 @@ Astro.response.headers.set('X-XSS-Protection', '1; mode=block');
 <html lang="en" class="w-full h-full">
   <head>
     <meta http-equiv="Content-Security-Policy" content={cspHeader} />
+    <!-- Preconnect to Google Fonts for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <Head />
   </head>
   <body class="w-full h-full">

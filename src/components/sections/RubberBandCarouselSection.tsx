@@ -39,14 +39,17 @@ const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
 
   const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
+    // Guard: only update if dimensions are valid and actually changed
+    const newWidth = img.naturalWidth || 1920;
+    const newHeight = img.naturalHeight || 1080;
+    
     setImageDims(prevDims => {
-      // Guard: only update if dimensions actually changed
-      if (prevDims.width === img.naturalWidth && prevDims.height === img.naturalHeight) {
+      if (prevDims.width === newWidth && prevDims.height === newHeight) {
         return prevDims;
       }
       return {
-        width: img.naturalWidth,
-        height: img.naturalHeight,
+        width: newWidth,
+        height: newHeight,
       };
     });
   }, []);

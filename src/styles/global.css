@@ -1,6 +1,13 @@
 @import './fonts.css';
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
+/* Preconnect to Google Fonts for CSP compliance */
+@supports (selector(:root)) {
+  :root {
+    /* Fonts preconnected via link tags in HTML head */
+  }
+}
+
 /* CSP Meta Tag for Security */
 @supports (selector(:root)) {
   :root {
