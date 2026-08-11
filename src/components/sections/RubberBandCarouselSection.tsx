@@ -42,8 +42,9 @@ const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
     if (!img) return;
     
     // Guard: only update if dimensions are valid and actually changed
-    const newWidth = img.naturalWidth || 1920;
-    const newHeight = img.naturalHeight || 1080;
+    // naturalWidth/naturalHeight may be 0 during load, so check > 0
+    const newWidth = (img.naturalWidth && img.naturalWidth > 0) ? img.naturalWidth : 1920;
+    const newHeight = (img.naturalHeight && img.naturalHeight > 0) ? img.naturalHeight : 1080;
     
     setImageDims(prevDims => {
       if (prevDims.width === newWidth && prevDims.height === newHeight) {

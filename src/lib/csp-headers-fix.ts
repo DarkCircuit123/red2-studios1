@@ -2,10 +2,18 @@
  * CSP Headers Configuration Fix
  * Addresses Content-Security-Policy violations for images, scripts, and frame-ancestors
  * 
+ * PRODUCTION CSP POLICY:
+ * - Strict default-src 'self' (no unsafe-inline, no unsafe-eval)
+ * - script-src: Only self + FullStory CDN (no inline scripts)
+ * - img-src: self + HTTPS + data: + blob: (for temporary previews)
+ * - style-src: self + unsafe-inline (required for Tailwind/styled-components)
+ * - font-src: self + Google Fonts
+ * - connect-src: self + HTTPS + FullStory APIs
+ * 
  * Issues Fixed:
- * 1. img-src CSP violation for wix:image:// URLs
- * 2. script-src CSP violation for edge.fullstory.com
- * 3. frame-ancestors CSP warning when delivered via meta element
+ * 1. wix:image:// URLs are converted to HTTPS in Image component (not allowed in CSP)
+ * 2. FullStory scripts loaded from CDN (allowed in script-src)
+ * 3. frame-ancestors 'none' prevents clickjacking
  * 4. Deprecated MouseEvent.mozInputSource warning
  */
 
@@ -14,14 +22,15 @@ import { initEventPolyfills } from './event-polyfills';
 export const CSP_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://edge.fullstory.com https://cdn.fullstory.com",
-    "img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com wix:image wix:image://v1 https://edge.fullstory.com",
-    "style-src 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com",
-    "font-src 'self' data: https://static.parastorage.com https://*.parastorage.com",
-    "connect-src 'self' https: wss: https://edge.fullstory.com https://cdn.fullstory.com",
+    "script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com",
+    "img-src 'self' data: https: blob:",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "connect-src 'self' https: wss: https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'"
+    "form-action 'self'",
+    "frame-ancestors 'none'"
   ].join('; ')
 };
 

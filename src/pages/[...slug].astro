@@ -3,8 +3,9 @@ import { Head } from "@/components/Head";
 import AppRoot from "@/components/AppRoot";
 import "@/styles/global.css";
 
-// Set CSP headers for security - includes Google Fonts and FullStory
-const cspHeader = "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://edge.fullstory.com https://cdn.fullstory.com; img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com wix:image wix:image://v1 https://edge.fullstory.com; style-src 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://fonts.googleapis.com; font-src 'self' data: https://static.parastorage.com https://*.parastorage.com https://fonts.gstatic.com; connect-src 'self' https: wss: https://edge.fullstory.com https://api.fullstory.com; object-src 'none'; base-uri 'self'; form-action 'self'";
+// PRODUCTION CSP POLICY - Strict security without unsafe-inline for scripts
+// wix:image:// URLs are converted to HTTPS in the Image component, so they don't need CSP allowance
+const cspHeader = "default-src 'self'; script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: wss: https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
 
 Astro.response.headers.set('Content-Security-Policy', cspHeader);
 Astro.response.headers.set('X-Content-Type-Options', 'nosniff');

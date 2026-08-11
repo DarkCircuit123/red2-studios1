@@ -55,6 +55,7 @@ class RouterErrorBoundary extends React.Component<
 export default function AppRoot() {
   const [splashComplete, setSplashComplete] = useState(false);
   const { checkSession } = useAdminAuth();
+  const adminCheckInitiatedRef = React.useRef(false);
 
   // Check if splash was already shown in this session and verify admin session
   useEffect(() => {
@@ -64,8 +65,16 @@ export default function AppRoot() {
       return;
     }
     
-    // Check admin session on app load
-    checkSession();
+    // Guard against duplicate admin checks in React Strict Mode
+    if (adminCheckInitiatedRef.current) {
+      return;
+    }
+    adminCheckInitiatedRef.current = true;
+    
+    // Check admin session on app load (fire and forget - don't block splash)
+    checkSession().catch(() => {
+      // Silently ignore admin check errors - they're not critical for app load
+    });
     
     // CRITICAL: Fallback timeout to prevent infinite loading
     // If splash doesn't complete within 3 seconds, force it to complete

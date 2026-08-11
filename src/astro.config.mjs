@@ -115,6 +115,6 @@ loadFramewire(true);`
     checkOrigin: false
   },
   headers: {
-    'Content-Security-Policy': "default-src 'self'; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.fullstory.com https://edge.fullstory.com; connect-src 'self' https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; frame-ancestors 'none';"
+    'Content-Security-Policy': "default-src 'self'; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com; connect-src 'self' https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; frame-ancestors 'none';"
   }
 });

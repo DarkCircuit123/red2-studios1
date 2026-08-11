@@ -1,7 +1,14 @@
 /**
  * Authentication Error Handler
- * Handles 401/403 errors from authentication endpoints
- * Prevents publishing button from being blocked by auth failures
+ * Handles 401/403 errors from authentication endpoints gracefully
+ * 
+ * CRITICAL: This handler is for LOGGING ONLY - it does NOT suppress errors
+ * or prevent proper error handling. It simply tracks auth errors for debugging.
+ * 
+ * Expected behavior:
+ * - Anonymous users: 403 from getCurrentMember() is EXPECTED and NORMAL
+ * - Admin checks: 401 from admin-check is EXPECTED for non-admin users
+ * - These errors are handled gracefully in the service layer, not here
  */
 
 export interface AuthErrorContext {
@@ -16,7 +23,7 @@ class AuthErrorHandler {
   private maxErrors = 10;
 
   /**
-   * Log an authentication error
+   * Log an authentication error for debugging
    */
   logError(endpoint: string, status: number, error?: string) {
     const context: AuthErrorContext = {
@@ -64,80 +71,13 @@ class AuthErrorHandler {
 export const authErrorHandler = new AuthErrorHandler();
 
 /**
- * Intercept fetch requests to handle auth errors gracefully
- */
-export function initAuthErrorInterception() {
-  if (typeof window === 'undefined') return;
-
-  const originalFetch = window.fetch;
-
-  window.fetch = async function(...args: any[]) {
-    try {
-      const response = await originalFetch.apply(this, args);
-
-      // Log auth errors but don't throw
-      if (response.status === 401 || response.status === 403) {
-        const url = args[0]?.toString() || 'unknown';
-        authErrorHandler.logError(url, response.status);
-
-        // For admin-verify endpoint, silently fail (user is not admin)
-        if (url.includes('admin-verify')) {
-          return response; // Return response as-is, don't throw
-        }
-
-        // For other auth endpoints, also return gracefully
-        if (url.includes('/api/auth/')) {
-          return response;
-        }
-      }
-
-      return response;
-    } catch (error) {
-      // Log network errors but don't block
-      console.debug('[Auth Error Handler] Fetch error:', error);
-      throw error;
-    }
-  };
-}
-
-/**
- * Suppress auth-related console errors
- */
-export function suppressAuthConsoleErrors() {
-  if (typeof window === 'undefined') return;
-
-  const originalError = console.error;
-  const originalWarn = console.warn;
-
-  console.error = function(...args: any[]) {
-    const message = args[0]?.toString() || '';
-    
-    // Suppress auth-related errors
-    if (message.includes('401') || message.includes('403') || message.includes('admin-verify')) {
-      return; // Silently ignore
-    }
-    
-    originalError.apply(console, args);
-  };
-
-  console.warn = function(...args: any[]) {
-    const message = args[0]?.toString() || '';
-    
-    // Suppress auth-related warnings
-    if (message.includes('401') || message.includes('403') || message.includes('Unauthorized')) {
-      return; // Silently ignore
-    }
-    
-    originalWarn.apply(console, args);
-  };
-}
-
-/**
  * Initialize auth error handling
+ * ONLY logs errors - does NOT suppress them
  */
 export function initAuthErrorHandling() {
   if (typeof window === 'undefined') return;
 
-  initAuthErrorInterception();
-  suppressAuthConsoleErrors();
+  // Just initialize the handler - no fetch interception or console suppression
+  // Auth errors are handled properly in the service layer
+  console.debug('[Auth Error Handler] Initialized (logging only)');
 }

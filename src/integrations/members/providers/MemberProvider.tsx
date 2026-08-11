@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, ReactNode, useRef } from 'react';
-import { MemberActions, MemberContext, MemberState } from '.';
 import { getCurrentMember, Member } from '..';
+import { MemberContext, type MemberState, type MemberActions } from './MemberContext';
 
 // Local storage key
 const MEMBER_STORAGE_KEY = 'member-store';
