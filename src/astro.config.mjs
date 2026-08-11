@@ -91,6 +91,14 @@ loadFramewire(true);`
         '@radix-ui/react-toggle-group',
         '@radix-ui/react-tooltip',
       ],
+      exclude: [],
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: undefined,
+        },
+      },
     },
     css: !isBuild ? {
       postcss: {
@@ -115,6 +123,6 @@ loadFramewire(true);`
     checkOrigin: false
   },
   headers: {
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com https://static.parastorage.com https://*.parastorage.com; script-src-elem 'self' https://cdn.fullstory.com https://edge.fullstory.com https://static.parastorage.com https://*.parastorage.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://static.parastorage.com https://*.parastorage.com; connect-src 'self' https: wss: https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://*.wix.com https://*.wix-code.com https://*.remote-machine.wix-code.com;"
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com https://static.parastorage.com https://*.parastorage.com https://*.remote-machine.wix-code.com; script-src-elem 'self' https://cdn.fullstory.com https://edge.fullstory.com https://static.parastorage.com https://*.parastorage.com https://*.remote-machine.wix-code.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://static.parastorage.com https://*.parastorage.com; connect-src 'self' https: wss: https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com https://*.remote-machine.wix-code.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://*.wix.com https://*.wix-code.com https://*.remote-machine.wix-code.com;"
   }
 });
