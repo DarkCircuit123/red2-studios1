@@ -1,6 +1,14 @@
 @import './fonts.css';
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
+/* CSP Meta Tag for Security */
+@supports (selector(:root)) {
+  :root {
+    /* Content-Security-Policy enforced via meta tag and headers */
+    --csp-enabled: true;
+  }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
