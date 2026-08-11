@@ -3,12 +3,10 @@ import { Head } from "@/components/Head";
 import AppRoot from "@/components/AppRoot";
 import "@/styles/global.css";
 
-// PRODUCTION CSP POLICY - Strict security without unsafe-inline for scripts
-// wix:image:// URLs are converted to HTTPS in the Image component, so they don't need CSP allowance
-// frame-ancestors allows Wix framing for preview and embedded environments
-const cspHeader = "default-src 'self'; script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: wss: https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://*.wix.com https://*.wix-code.com https://*.remote-machine.wix-code.com";
+// CSP is configured in astro.config.mjs to ensure a single, consistent policy
+// that includes all required Wix infrastructure domains (Framewire, fonts, etc.)
+// Do not set conflicting CSP headers here.
 
-Astro.response.headers.set('Content-Security-Policy', cspHeader);
 Astro.response.headers.set('X-Content-Type-Options', 'nosniff');
 // X-Frame-Options removed to allow Wix preview/framewire framing
 // Astro.response.headers.set('X-Frame-Options', 'SAMEORIGIN');
@@ -17,7 +15,6 @@ Astro.response.headers.set('X-XSS-Protection', '1; mode=block');
 
 <html lang="en" class="w-full h-full">
   <head>
-    <meta http-equiv="Content-Security-Policy" content={cspHeader} />
     <!-- Preconnect to Google Fonts for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
