@@ -67,6 +67,15 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
+        
+        // Handle specific error types
+        if (data.error === 'SESSION_SECRET_MISSING') {
+          throw new Error(
+            'Server configuration error: SESSION_SECRET is not configured in Wix Secrets Manager. ' +
+            'Please contact the administrator to configure this secret.'
+          );
+        }
+        
         throw new Error(data.message || 'Login failed');
       }
 
