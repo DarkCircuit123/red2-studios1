@@ -47,25 +47,42 @@ type ImageData = {
 const convertWixImageToHttps = (url: string): string => {
   const wixImagePrefix = 'wix:image://v1/';
   if (url.startsWith(wixImagePrefix)) {
-    // Extract the URI and parameters from wix:image://v1/{uri}/{filename}#{params}
-    const withoutPrefix = url.replace(wixImagePrefix, '');
-    const [uriPart, paramsString] = withoutPrefix.split('#');
-    const uri = uriPart.split('/')[0];
-    
-    // Parse origin dimensions if available
-    const params = new URLSearchParams(paramsString || '');
-    const originWidth = params.get('originWidth');
-    const originHeight = params.get('originHeight');
-    
-    // Build HTTPS URL using Wix static CDN
-    let httpsUrl = `${STATIC_MEDIA_URL}${uri}`;
-    
-    // Add origin dimensions if available
-    if (originWidth && originHeight) {
-      httpsUrl += `?originWidth=${originWidth}&originHeight=${originHeight}`;
+    try {
+      // Extract the URI and parameters from wix:image://v1/{uri}/{filename}#{params}
+      const withoutPrefix = url.replace(wixImagePrefix, '');
+      const [uriPart, paramsString] = withoutPrefix.split('#');
+      const uri = uriPart.split('/')[0];
+      
+      // Validate URI is not empty
+      if (!uri || uri.length === 0) {
+        console.error('[Image] Invalid wix:image:// URL - empty URI:', url);
+        return FALLBACK_IMAGE_URL;
+      }
+      
+      // Parse origin dimensions if available
+      const params = new URLSearchParams(paramsString || '');
+      const originWidth = params.get('originWidth');
+      const originHeight = params.get('originHeight');
+      
+      // Build HTTPS URL using Wix static CDN
+      let httpsUrl = `${STATIC_MEDIA_URL}${uri}`;
+      
+      // Add origin dimensions if available
+      if (originWidth && originHeight) {
+        httpsUrl += `?originWidth=${originWidth}&originHeight=${originHeight}`;
+      }
+      
+      // Validate the resulting URL
+      if (!httpsUrl.startsWith('https://')) {
+        console.error('[Image] Conversion failed - URL is not HTTPS:', httpsUrl);
+        return FALLBACK_IMAGE_URL;
+      }
+      
+      return httpsUrl;
+    } catch (error) {
+      console.error('[Image] Error converting wix:image:// URL:', url, error);
+      return FALLBACK_IMAGE_URL;
     }
-    
-    return httpsUrl;
   }
   return url;
 }
@@ -117,7 +134,13 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
     // Initialize with converted URL to prevent wix:image:// from ever reaching the DOM
     if (src) {
       const resolved = WixImageResolver.resolve(src);
-      return convertWixImageToHttps(resolved.url);
+      const converted = convertWixImageToHttps(resolved.url);
+      // CRITICAL: Validate that conversion succeeded
+      if (converted.startsWith('wix:image://')) {
+        console.error('[Image] Failed to convert wix:image:// URL during initialization:', src);
+        return FALLBACK_IMAGE_URL;
+      }
+      return converted;
     }
     return undefined;
   })
@@ -131,6 +154,12 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
       });
       // Convert wix:image:// to HTTPS for browser rendering (CSP compliance)
       const browserUrl = convertWixImageToHttps(resolved.url);
+      // CRITICAL: Validate that conversion succeeded
+      if (browserUrl.startsWith('wix:image://')) {
+        console.error('[Image] Failed to convert wix:image:// URL in effect:', src);
+        setImgSrc(FALLBACK_IMAGE_URL);
+        return;
+      }
       // Guard: only update state if the resolved URL is different
       setImgSrc(prevSrc => prevSrc === browserUrl ? prevSrc : browserUrl);
     } else {
@@ -140,6 +169,12 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
 
   if (!imgSrc) {
     return <div data-empty-image ref={ref} {...props} />
+  }
+
+  // CRITICAL: Ensure imgSrc is never a wix:image:// URL before rendering
+  if (imgSrc.startsWith('wix:image://')) {
+    console.error('[Image] CSP Violation: wix:image:// URL reached render. This should never happen.', imgSrc);
+    return <img data-error-image ref={ref} src={FALLBACK_IMAGE_URL} {...props} />
   }
 
   // Resolve the URL through WixImageResolver for consistency

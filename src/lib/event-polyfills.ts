@@ -18,7 +18,6 @@ export function suppressDeprecatedEventWarnings() {
   const suppressedPatterns = [
     /mozInputSource/i,
     /deprecated/i,
-    /FullStory init has already been called/i,
   ];
 
   // Override console.warn
@@ -39,9 +38,7 @@ export function suppressDeprecatedEventWarnings() {
     const message = args[0]?.toString() || '';
     
     // Suppress specific errors that don't affect functionality
-    if (message.includes('Loading failed for the <script>') && message.includes('fullstory')) {
-      return; // FullStory is optional, don't error
-    }
+    // (FullStory errors are no longer suppressed since FullStory is not used)
     
     // Otherwise, call the original error
     originalError.apply(console, args);

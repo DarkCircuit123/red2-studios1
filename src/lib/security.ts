@@ -8,19 +8,19 @@
 // - Allows https://static.parastorage.com and https://*.parastorage.com for:
 //   * Wix-hosted fonts (Cormorant Garamond, Roboto, Oswald, Nunito Sans, Helvetica Neue)
 //   * Wix Framewire infrastructure (script-src and script-src-elem)
-// - Allows wix:image:// protocol for Wix Media Manager images
 // - Allows wixapis.com and wix.com for Wix API calls
 // - NO unsafe-inline, NO unsafe-eval (production-safe)
 // - Includes script-src-elem for explicit script element loading
 // - Removed Google Maps (not used in project)
 // - Removed FullStory (not used in project)
+// - NOTE: wix:image:// URLs are converted to HTTPS in Image component before rendering
 export const CSP_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com",
     "script-src-elem 'self' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com",
-    "img-src 'self' data: https: blob: wix:image:// https://static.parastorage.com https://*.parastorage.com",
+    "img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com",
     "font-src 'self' https://fonts.gstatic.com https://static.parastorage.com https://*.parastorage.com",
     "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com ws: wss:",
     "frame-ancestors 'self' https://*.wix-code.com https://*.remote-machine.wix-code.com",

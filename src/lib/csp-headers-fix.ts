@@ -4,16 +4,16 @@
  * 
  * PRODUCTION CSP POLICY:
  * - Strict default-src 'self' (no unsafe-inline, no unsafe-eval)
- * - script-src: Only self + FullStory CDN (no inline scripts)
+ * - script-src: Only self + Wix CDNs (no inline scripts, no FullStory)
  * - img-src: self + HTTPS + data: + blob: (for temporary previews)
  * - style-src: self + unsafe-inline (required for Tailwind/styled-components)
  * - font-src: self + Google Fonts
- * - connect-src: self + HTTPS + FullStory APIs
+ * - connect-src: self + HTTPS (no FullStory APIs)
  * 
  * Issues Fixed:
  * 1. wix:image:// URLs are converted to HTTPS in Image component (not allowed in CSP)
- * 2. FullStory scripts loaded from CDN (allowed in script-src)
- * 3. frame-ancestors 'none' prevents clickjacking
+ * 2. FullStory removed (not used in project, was causing CSP violations)
+ * 3. frame-ancestors allows Wix preview/framewire framing
  * 4. Deprecated MouseEvent.mozInputSource warning
  */
 
@@ -22,15 +22,16 @@ import { initEventPolyfills } from './event-polyfills';
 export const CSP_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' https://cdn.fullstory.com https://edge.fullstory.com",
-    "img-src 'self' data: https: blob:",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https: wss: https://api.fullstory.com https://edge.fullstory.com https://rs.fullstory.com",
+    "script-src 'self' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com",
+    "script-src-elem 'self' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net",
+    "img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com",
+    "font-src 'self' https://fonts.gstatic.com https://static.parastorage.com https://*.parastorage.com",
+    "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com ws: wss:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'"
+    "frame-ancestors 'self' https://*.wix-code.com https://*.remote-machine.wix-code.com"
   ].join('; ')
 };
 
@@ -42,18 +43,4 @@ export function initCSPFixes() {
 
   // Initialize event polyfills for deprecated properties
   initEventPolyfills();
-
-  // Suppress FullStory initialization warnings
-  if (typeof window !== 'undefined' && (window as any).FS) {
-    const originalInit = (window as any).FS.init;
-    let initialized = false;
-    
-    (window as any).FS.init = function(...args: any[]) {
-      if (!initialized) {
-        initialized = true;
-        return originalInit.apply(this, args);
-      }
-      // Silently ignore subsequent init calls
-    };
-  }
 }

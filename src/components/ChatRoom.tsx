@@ -37,11 +37,22 @@ export default function ChatRoom() {
     const messageId = crypto.randomUUID();
     setSendingMessageId(messageId);
 
+    // Validate avatar URL before storing
+    let avatarUrl = member.profile?.photo?.url;
+    if (avatarUrl && typeof avatarUrl === 'string') {
+      // Ensure it's a valid HTTPS URL or wix:image:// URL
+      if (!avatarUrl.startsWith('https://') && !avatarUrl.startsWith('wix:image://')) {
+        avatarUrl = undefined;
+      }
+    } else {
+      avatarUrl = undefined;
+    }
+
     const newMessage: ChatMessage = {
       id: messageId,
       userId: member._id || '',
       userName: member.profile?.nickname || member.contact?.firstName || 'Anonymous',
-      userAvatar: member.profile?.photo?.url,
+      userAvatar: avatarUrl,
       content: messageText,
       timestamp: new Date(),
     };
