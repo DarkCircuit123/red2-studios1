@@ -29,7 +29,7 @@ export default function UpcomingBookings() {
   const loadBookings = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll('bookings', {}, { limit: 100 });
+      const result = await BaseCrudService.getAll('bookings', {}, { limit: 100, suppressAuth: true });
       const allBookings = (result.items || []) as Booking[];
       
       // Sort by date (upcoming first)
