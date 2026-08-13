@@ -1,36 +1,10 @@
 /**
  * Security utilities for hacker-proof implementation
  * Implements OWASP best practices and modern security patterns
+ * 
+ * NOTE: Content Security Policy is now defined in src/components/Head.tsx
+ * as the single source of truth for CSP configuration.
  */
-
-// Content Security Policy helper
-// CRITICAL: Comprehensive policy for Wix platform integration
-// - Allows wix:image:// protocol for Wix Media Manager images
-// - Allows https://static.parastorage.com and *.parastorage.com for framewire script injection
-// - Allows wixapis.com and wix.com for Wix API calls
-// - Allows unsafe-eval for dynamic script evaluation
-// - Includes script-src-elem for explicit script element loading
-// - Removed Google Maps (not used in project)
-// - Removed FullStory (not used in project)
-export const CSP_HEADERS = {
-  'Content-Security-Policy': [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com",
-    "script-src-elem 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com",
-    "img-src 'self' data: https: blob: wix:image:// https://static.parastorage.com https://*.parastorage.com",
-    "font-src 'self' https://fonts.gstatic.com data: https://static.parastorage.com https://*.parastorage.com",
-    "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com ws: wss:",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join('; '),
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-};
 
 // Input sanitization
 export function sanitizeInput(input: string): string {
