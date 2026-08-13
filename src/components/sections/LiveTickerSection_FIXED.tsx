@@ -192,6 +192,7 @@ export default function LiveTickerSection() {
               animate={{ 
                 opacity: [1, 0.3, 1],
                 scale: [1, 1.2, 1],
+                boxShadow: ['0 0 0 0 rgba(111, 8, 9, 0.7)', '0 0 0 8px rgba(111, 8, 9, 0)', '0 0 0 0 rgba(111, 8, 9, 0.7)']
               }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
