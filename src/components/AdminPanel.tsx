@@ -7,6 +7,7 @@ import ImageUploadManager from './ImageUploadManager';
 import MusicManager from './MusicManager';
 import BookingManagerPro from './BookingManagerPro';
 import RubberBandPhotosManager from './AdminPanel/sections/RubberBandPhotosManager';
+import SplashpageManager from './AdminPanel/sections/SplashpageManager';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages, ClientsPress, AboutSection, Portfolio } from '@/entities/index';
@@ -415,9 +416,25 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
               {/* Photos Tab */}
               {activeTab === 'photos' && (
                 <div className="space-y-8">
-                  {/* Rubber Band Carousel Section */}
+                  {/* Splash Screen Logo Section */}
                   <div>
-                    <RubberBandPhotosManager />
+                    <div>
+                      <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
+                        Splash Screen Logo
+                      </h3>
+                      <p className="text-xs text-black/60">Manage the splash screen logo displayed on page load</p>
+                    </div>
+                    <div className="mt-6">
+                      <SplashpageManager />
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-black/10 pt-8">
+                    {/* Rubber Band Carousel Section */}
+                    <div>
+                      <RubberBandPhotosManager />
+                    </div>
                   </div>
 
                   {/* Divider */}
