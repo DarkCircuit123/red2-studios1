@@ -12,6 +12,7 @@ export const Head = () => {
       {/* Content Security Policy - Comprehensive policy for Wix platform integration */}
       {/* NOTE: frame-ancestors is delivered via HTTP headers in astro.config.mjs, not via meta tag */}
       {/* CRITICAL FIXES:
+          - Added wix:image:// scheme to img-src for CMS portfolio images
           - Removed FullStory (not used in project, was causing CSP violations)
           - Removed base44.com (obsolete dependency, was causing 404 errors)
           - Kept frame-ancestors for Wix remote-code iframe reachability
