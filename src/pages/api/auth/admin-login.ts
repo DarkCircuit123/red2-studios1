@@ -3,7 +3,7 @@ import { signAdminToken, readSecret } from '@/lib/auth-security';
 
 // Hardcoded admin credentials
 const ADMIN_USERNAME = 'Jordan310';
-const ADMIN_PASSWORD = 'Iloveanna1!';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
