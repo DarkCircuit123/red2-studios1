@@ -19,51 +19,6 @@ Astro.response.headers.set('X-XSS-Protection', '1; mode=block');
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <Head />
-    
-    <!-- CRITICAL: Block FullStory at the earliest possible point, before any scripts load -->
-    <script is:inline>
-      // Block window.FS immediately
-      if (typeof window !== 'undefined') {
-        try {
-          Object.defineProperty(window, 'FS', {
-            get() { return undefined; },
-            set(v) { /* ignore */ },
-            configurable: false
-          });
-        } catch (e) {}
-        
-        try {
-          Object.defineProperty(window, '_fs_ready', {
-            get() { return undefined; },
-            set(v) { /* ignore */ },
-            configurable: false
-          });
-        } catch (e) {}
-        
-        // Block script loading before appendChild is called
-        const origAppendChild = Element.prototype.appendChild;
-        Element.prototype.appendChild = function(node) {
-          if (node instanceof HTMLScriptElement) {
-            const src = (node.src || node.getAttribute('src') || '').toLowerCase();
-            if (src.includes('fullstory')) {
-              return node; // Block it
-            }
-          }
-          return origAppendChild.call(this, node);
-        };
-        
-        const origInsertBefore = Element.prototype.insertBefore;
-        Element.prototype.insertBefore = function(newNode, refNode) {
-          if (newNode instanceof HTMLScriptElement) {
-            const src = (newNode.src || newNode.getAttribute('src') || '').toLowerCase();
-            if (src.includes('fullstory')) {
-              return newNode; // Block it
-            }
-          }
-          return origInsertBefore.call(this, newNode, refNode);
-        };
-      }
-    </script>
   </head>
   <body class="w-full h-full">
     <div id="root" class="w-full h-full">
