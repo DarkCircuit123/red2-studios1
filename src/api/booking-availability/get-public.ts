@@ -14,9 +14,9 @@ export async function GET({ request }: { request: Request }) {
   try {
     console.log('[Backend] GET /api/booking-availability/get-public - Fetching public available slots');
 
-    // Use BaseCrudService to fetch available slots
+    // Use BaseCrudService to fetch available slots with suppressAuth to bypass permission restrictions
     // No authentication required for public endpoint
-    const result = await BaseCrudService.getAll<BookingAvailability>('bookingavailability');
+    const result = await BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { suppressAuth: true });
 
     // Filter for available slots only
     const availableSlots = (result.items || []).filter(slot => slot.isAvailable === true);

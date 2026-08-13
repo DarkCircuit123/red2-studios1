@@ -69,8 +69,8 @@ export async function POST({ request }: { request: Request }) {
 
     console.log('[Backend] Creating booking record:', JSON.stringify(booking, null, 2));
 
-    // Save booking to CMS
-    const bookingResult = await BaseCrudService.create<Bookings>('bookings', booking);
+    // Save booking to CMS with suppressAuth to bypass permission restrictions
+    const bookingResult = await BaseCrudService.create<Bookings>('bookings', booking, undefined, { suppressAuth: true });
     console.log('[Backend] Booking created successfully:', JSON.stringify(bookingResult, null, 2));
 
     // Mark the availability slot as booked
@@ -81,7 +81,7 @@ export async function POST({ request }: { request: Request }) {
 
     console.log('[Backend] Updating availability slot:', JSON.stringify(updateData, null, 2));
 
-    const updateResult = await BaseCrudService.update<BookingAvailability>('bookingavailability', updateData);
+    const updateResult = await BaseCrudService.update<BookingAvailability>('bookingavailability', updateData, { suppressAuth: true });
     console.log('[Backend] Availability slot updated successfully:', JSON.stringify(updateResult, null, 2));
 
     return new Response(

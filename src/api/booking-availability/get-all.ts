@@ -40,8 +40,8 @@ export async function GET({ request }: { request: Request }) {
 
     console.log(`[GET_ALL:${requestId}] Query params: limit=${limit}, skip=${skip}`);
 
-    // Query with elevated permissions
-    const results = await BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { limit, skip });
+    // Query with elevated permissions and suppressAuth to bypass permission restrictions
+    const results = await BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { limit, skip, suppressAuth: true });
 
     const duration = new Date().getTime() - startTime.getTime();
     console.log(`[GET_ALL:${requestId}] ✓ Fetched ${results.items?.length || 0} slots (total: ${results.totalCount}) in ${duration}ms`);
