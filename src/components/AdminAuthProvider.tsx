@@ -18,40 +18,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check session on mount
+  // Initialize loading state to false on mount
+  // DO NOT check admin session on mount - it causes ERR_NETWORK errors
+  // because /api/auth/admin-verify tries to verify tokens on every page load
+  // even when there's no admin session. Only check admin session when explicitly needed.
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await fetch('/api/auth/admin-verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ action: 'verify' }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.valid) {
-            setIsAuthenticated(true);
-            setAdminUsername(data.username || 'Admin');
-          } else {
-            setIsAuthenticated(false);
-            setAdminUsername(null);
-          }
-        } else {
-          setIsAuthenticated(false);
-          setAdminUsername(null);
-        }
-      } catch (err) {
-        console.error('[AdminAuthProvider] Session check error:', err);
-        setIsAuthenticated(false);
-        setAdminUsername(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkSession();
+    setIsLoading(false);
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
