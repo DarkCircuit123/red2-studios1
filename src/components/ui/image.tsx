@@ -2,8 +2,7 @@ import { forwardRef, type ImgHTMLAttributes, useEffect, useRef, useState } from 
 import { useSize } from '@/hooks/use-size'
 import WixImageResolver from '@/lib/wix-image-resolver'
 
-// STATIC_MEDIA_URL is a constant that can be safely used in client components
-const STATIC_MEDIA_URL = 'https://static.wixstatic.com/media/'
+const FALLBACK_IMAGE_URL = "https://static.wixstatic.com/media/12d367_4f26ccd17f8f4e3a8958306ea08c2332~mv2.png";
 
 // Inline CSS for image animation
 const imageStyles = `
@@ -32,62 +31,10 @@ if (typeof document !== 'undefined' && !document.getElementById('image-styles'))
   document.head.appendChild(styleElement);
 }
 
-const FALLBACK_IMAGE_URL = "https://static.wixstatic.com/media/12d367_4f26ccd17f8f4e3a8958306ea08c2332~mv2.png";
-
 type ImageData = {
   id: string
   width: number
   height: number
-}
-
-/**
- * Convert wix:image:// URLs to HTTPS URLs for browser rendering
- * This resolves the CSP issue where browsers cannot load wix:image:// directly
- */
-const convertWixImageToHttps = (url: string): string => {
-  const wixImagePrefix = 'wix:image://v1/';
-  if (url.startsWith(wixImagePrefix)) {
-    try {
-      // Extract the URI and parameters from wix:image://v1/{uri}/{filename}#{params}
-      const withoutPrefix = url.replace(wixImagePrefix, '');
-      const [uriPart, paramsString] = withoutPrefix.split('#');
-      
-      // Extract URI (first segment before /)
-      const uriSegments = uriPart.split('/');
-      const uri = uriSegments[0];
-      
-      // Validate URI is not empty and looks like a valid Wix media ID
-      if (!uri || uri.length === 0) {
-        console.error('[Image] Invalid wix:image:// URL - empty URI:', url);
-        return FALLBACK_IMAGE_URL;
-      }
-      
-      // Parse origin dimensions if available
-      const params = new URLSearchParams(paramsString || '');
-      const originWidth = params.get('originWidth');
-      const originHeight = params.get('originHeight');
-      
-      // Build HTTPS URL using Wix static CDN
-      let httpsUrl = `${STATIC_MEDIA_URL}${uri}`;
-      
-      // Add origin dimensions if available (preserve metadata)
-      if (originWidth && originHeight) {
-        httpsUrl += `?originWidth=${originWidth}&originHeight=${originHeight}`;
-      }
-      
-      // Validate the resulting URL is HTTPS
-      if (!httpsUrl.startsWith('https://')) {
-        console.error('[Image] Conversion failed - URL is not HTTPS:', httpsUrl);
-        return FALLBACK_IMAGE_URL;
-      }
-      
-      return httpsUrl;
-    } catch (error) {
-      console.error('[Image] Error converting wix:image:// URL:', url, error);
-      return FALLBACK_IMAGE_URL;
-    }
-  }
-  return url;
 }
 
 const getImageData = (url: string): ImageData | undefined => {
@@ -101,17 +48,8 @@ const getImageData = (url: string): ImageData | undefined => {
 
   const normalizedUrl = resolved.url;
 
-  // wix:image://v1/${uri}/${filename}#originWidth=${width}&originHeight=${height}
-  const wixImagePrefix = 'wix:image://v1/'
-  if (normalizedUrl.startsWith(wixImagePrefix)) {
-    const uri = normalizedUrl.replace(wixImagePrefix, '').split('#')[0].split('/')[0]
-
-    const params = new URLSearchParams(normalizedUrl.split('#')[1] || '')
-    const width = parseInt(params.get('originWidth') || '0', 10)
-    const height = parseInt(params.get('originHeight') || '0', 10)
-
-    return { id: uri, width, height }
-  } else if (normalizedUrl.startsWith(STATIC_MEDIA_URL)) {
+  // Extract dimensions from HTTPS URL (WixImageResolver already converted wix:image:// to HTTPS)
+  if (normalizedUrl.startsWith('https://static.wixstatic.com/media/')) {
     try {
       const urlObj = new URL(normalizedUrl)
       if (urlObj.searchParams.get('originWidth') && urlObj.searchParams.get('originHeight')) {
@@ -134,48 +72,33 @@ export type ImageProps = ImgHTMLAttributes<HTMLImageElement> & {
 
 export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }, ref) => {
   const [imgSrc, setImgSrc] = useState<string | undefined>(() => {
-    // Initialize with converted URL to prevent wix:image:// from ever reaching the DOM
+    // Initialize with resolved URL from WixImageResolver
+    // WixImageResolver automatically converts wix:image:// to HTTPS
     if (src) {
       const resolved = WixImageResolver.resolve(src);
-      const converted = convertWixImageToHttps(resolved.url);
-      // CRITICAL: Validate that conversion succeeded - wix:image:// must NEVER reach DOM
-      if (converted && converted.startsWith('wix:image://')) {
-        console.error('[Image] CRITICAL: Failed to convert wix:image:// URL during initialization:', src);
-        return FALLBACK_IMAGE_URL;
+      // CRITICAL: Validate that URL is HTTPS and never wix:image://
+      if (resolved.url && !resolved.url.startsWith('wix:image://')) {
+        return resolved.url;
       }
-      // Double-check: ensure no wix:image:// URLs slip through
-      if (converted && !converted.startsWith('https://') && !converted.startsWith('http://') && !converted.startsWith('data:')) {
-        console.error('[Image] CRITICAL: Invalid URL format after conversion:', converted);
-        return FALLBACK_IMAGE_URL;
-      }
-      return converted || FALLBACK_IMAGE_URL;
+      // If resolution failed or returned wix:image://, use fallback
+      return FALLBACK_IMAGE_URL;
     }
     return undefined;
   })
 
   useEffect(() => {
-    // If src prop changes, resolve it through WixImageResolver and update state
+    // If src prop changes, resolve it through WixImageResolver
     if (src) {
       const resolved = WixImageResolver.resolve(src, {
         fieldName: props['data-field-name'] as string | undefined,
         recordId: props['data-record-id'] as string | undefined
       });
-      // Convert wix:image:// to HTTPS for browser rendering (CSP compliance)
-      const browserUrl = convertWixImageToHttps(resolved.url);
-      // CRITICAL: Validate that conversion succeeded - wix:image:// must NEVER reach DOM
-      if (browserUrl && browserUrl.startsWith('wix:image://')) {
-        console.error('[Image] CRITICAL: Failed to convert wix:image:// URL in effect:', src);
+      // CRITICAL: Validate that URL is HTTPS and never wix:image://
+      if (resolved.url && !resolved.url.startsWith('wix:image://')) {
+        setImgSrc(resolved.url);
+      } else {
         setImgSrc(FALLBACK_IMAGE_URL);
-        return;
       }
-      // Double-check: ensure no wix:image:// URLs slip through
-      if (browserUrl && !browserUrl.startsWith('https://') && !browserUrl.startsWith('http://') && !browserUrl.startsWith('data:')) {
-        console.error('[Image] CRITICAL: Invalid URL format after conversion in effect:', browserUrl);
-        setImgSrc(FALLBACK_IMAGE_URL);
-        return;
-      }
-      // Guard: only update state if the resolved URL is different
-      setImgSrc(prevSrc => prevSrc === browserUrl ? prevSrc : (browserUrl || FALLBACK_IMAGE_URL));
     } else {
       setImgSrc(undefined);
     }
@@ -191,23 +114,9 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
     return <img data-error-image ref={ref} src={FALLBACK_IMAGE_URL} {...props} />
   }
 
-  // Resolve the URL through WixImageResolver for consistency
-  const resolved = WixImageResolver.resolve(imgSrc, {
-    fieldName: props['data-field-name'] as string | undefined,
-    recordId: props['data-record-id'] as string | undefined
-  });
-  // Convert wix:image:// to HTTPS for browser rendering (CSP compliance)
-  const finalSrc = convertWixImageToHttps(resolved.url);
-
-  // CRITICAL: Ensure finalSrc is never a wix:image:// URL
-  if (finalSrc && finalSrc.startsWith('wix:image://')) {
-    console.error('[Image] CRITICAL CSP VIOLATION: wix:image:// URL reached DOM. This should never happen.', finalSrc);
-    return <img data-error-image ref={ref} src={FALLBACK_IMAGE_URL} {...props} />
-  }
-
   // Final validation: ensure URL is safe for browser rendering
-  if (finalSrc && !finalSrc.startsWith('https://') && !finalSrc.startsWith('http://') && !finalSrc.startsWith('data:')) {
-    console.error('[Image] CRITICAL: Invalid URL format in final render:', finalSrc);
+  if (!imgSrc.startsWith('https://') && !imgSrc.startsWith('http://') && !imgSrc.startsWith('data:')) {
+    console.error('[Image] CRITICAL: Invalid URL format in final render:', imgSrc);
     return <img data-error-image ref={ref} src={FALLBACK_IMAGE_URL} {...props} />
   }
 
@@ -218,7 +127,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
     ...restProps,
     onError: (e: any) => {
       // On error, fall back to the fallback image only if not already fallback
-      if (finalSrc !== FALLBACK_IMAGE_URL) {
+      if (imgSrc !== FALLBACK_IMAGE_URL) {
         setImgSrc(FALLBACK_IMAGE_URL);
       }
       // Call original onError if provided
@@ -228,7 +137,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
     }
   };
 
-  // Render as regular img tag (simplified approach without WixImage component)
-  return <img data-error-image={finalSrc === FALLBACK_IMAGE_URL} ref={ref} src={finalSrc || FALLBACK_IMAGE_URL} {...imageProps} />
+  // Render as regular img tag
+  return <img data-error-image={imgSrc === FALLBACK_IMAGE_URL} ref={ref} src={imgSrc || FALLBACK_IMAGE_URL} {...imageProps} />
 })
 Image.displayName = 'Image'

@@ -8,7 +8,7 @@ import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
-import { convertWixImageToHttps } from '@/lib/convert-wix-image';
+import WixImageResolver from '@/lib/wix-image-resolver';
 import { motion } from 'framer-motion';
 
 export default function RubberBandPhotosManager() {
@@ -63,9 +63,9 @@ export default function RubberBandPhotosManager() {
       // Upload the image
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
-      // Convert wix:image:// to HTTPS for storage
-      const httpsUrl = convertWixImageToHttps(result.mediaUrl);
-      if (!httpsUrl) {
+      // Use WixImageResolver to convert wix:image:// to HTTPS for storage
+      const resolved = WixImageResolver.resolve(result.mediaUrl);
+      if (!resolved.url) {
         throw new Error('Failed to convert uploaded image URL to HTTPS');
       }
 
@@ -73,7 +73,7 @@ export default function RubberBandPhotosManager() {
       const newPhoto: HomepageImages = {
         _id: crypto.randomUUID(),
         imageName: file.name.replace(/\.[^/.]+$/, ''),
-        heroImage: httpsUrl,
+        heroImage: resolved.url,
         isActive: true,
       };
 
@@ -111,9 +111,9 @@ export default function RubberBandPhotosManager() {
       // Upload the new image
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
-      // Convert wix:image:// to HTTPS for storage
-      const httpsUrl = convertWixImageToHttps(result.mediaUrl);
-      if (!httpsUrl) {
+      // Use WixImageResolver to convert wix:image:// to HTTPS for storage
+      const resolved = WixImageResolver.resolve(result.mediaUrl);
+      if (!resolved.url) {
         throw new Error('Failed to convert uploaded image URL to HTTPS');
       }
 
@@ -122,7 +122,7 @@ export default function RubberBandPhotosManager() {
       if (photoToUpdate) {
         const updatedPhoto: HomepageImages = {
           ...photoToUpdate,
-          heroImage: httpsUrl,
+          heroImage: resolved.url,
           imageName: file.name.replace(/\.[^/.]+$/, ''),
         };
 

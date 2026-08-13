@@ -1,11 +1,21 @@
 /**
  * WixImageResolver - Universal Wix Image URL Handler
  * 
- * Handles all Wix image URL formats and ensures compatibility across the app:
- * - wix:image://v1/ URLs (Wix Media Manager native format)
- * - https://static.wixstatic.com/ URLs (Wix CDN format)
+ * CRITICAL: This is the SINGLE SHARED resolver for ALL image URLs in the app.
+ * All image rendering (Image.tsx, portfolio, hero, splash, CMS, admin) routes through here.
+ * 
+ * Handles all Wix image URL formats and ensures compatibility:
+ * - wix:image://v1/{mediaId}~{extension}/{filename}#{params} → https://static.wixstatic.com/media/{mediaId}~{extension}?params
+ * - https://static.wixstatic.com/ URLs (Wix CDN format) - passed through
  * - Legacy base64 data URLs (converts to fallback)
  * - Blob URLs (temporary previews - converts to fallback)
+ * 
+ * CONVERSION RULES:
+ * 1. Extract Wix media ID from wix:image:// URL (first segment before /)
+ * 2. Convert to https://static.wixstatic.com/media/{mediaId}
+ * 3. Preserve originWidth/originHeight as query parameters (not hash)
+ * 4. Never use wix:image:// directly in DOM, CSS, or preload
+ * 5. Validate final URL is HTTPS before rendering
  * 
  * This resolver is the single source of truth for image URL handling.
  * All image rendering should route through this utility.
@@ -16,7 +26,7 @@
  */
 
 export interface ResolvedImageUrl {
-  /** The final URL to render */
+  /** The final URL to render (HTTPS only, never wix:image://) */
   url: string;
   /** Whether this is a valid Wix URL */
   isValid: boolean;
@@ -30,6 +40,7 @@ export interface ResolvedImageUrl {
 
 const FALLBACK_IMAGE_URL = 'https://static.wixstatic.com/media/12d367_4f26ccd17f8f4e3a8958306ea08c2332~mv2.png';
 const IS_DEVELOPMENT = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
+const STATIC_MEDIA_URL = 'https://static.wixstatic.com/media/';
 
 /**
  * Extract component name from stack trace for debug logging
@@ -48,9 +59,64 @@ const getCallerComponent = (): string => {
   return 'unknown';
 };
 
+/**
+ * Convert wix:image:// URLs to HTTPS static.wixstatic.com URLs
+ * This is the CRITICAL conversion that prevents wix:image:// from reaching the browser
+ */
+function convertWixImageToHttps(url: string): string {
+  const wixImagePrefix = 'wix:image://v1/';
+  if (!url.startsWith(wixImagePrefix)) {
+    return url; // Not a wix:image:// URL, return as-is
+  }
+
+  try {
+    // Extract the URI and parameters from wix:image://v1/{uri}/{filename}#{params}
+    const withoutPrefix = url.replace(wixImagePrefix, '');
+    
+    // Split on # to separate URI/filename from parameters
+    const [uriPart, paramsString] = withoutPrefix.split('#');
+    
+    // Extract the media ID (first segment before /)
+    // Format: {mediaId}~{extension}/{filename}
+    const uriSegments = uriPart.split('/');
+    const mediaId = uriSegments[0]; // e.g., "e9d727_dc338c865879444cab6ecb545a8e8d0b~mv2.png"
+    
+    // Validate media ID is not empty and looks like a valid Wix media ID
+    if (!mediaId || mediaId.length === 0) {
+      console.error('[WixImageResolver] Invalid wix:image:// URL - empty media ID:', url);
+      return FALLBACK_IMAGE_URL;
+    }
+    
+    // Parse origin dimensions if available
+    const params = new URLSearchParams(paramsString || '');
+    const originWidth = params.get('originWidth');
+    const originHeight = params.get('originHeight');
+    
+    // Build HTTPS URL using Wix static CDN
+    let httpsUrl = `${STATIC_MEDIA_URL}${mediaId}`;
+    
+    // Add origin dimensions as query parameters (not hash)
+    if (originWidth && originHeight) {
+      httpsUrl += `?originWidth=${originWidth}&originHeight=${originHeight}`;
+    }
+    
+    // Validate the resulting URL is HTTPS
+    if (!httpsUrl.startsWith('https://')) {
+      console.error('[WixImageResolver] Conversion failed - URL is not HTTPS:', httpsUrl);
+      return FALLBACK_IMAGE_URL;
+    }
+    
+    return httpsUrl;
+  } catch (error) {
+    console.error('[WixImageResolver] Error converting wix:image:// URL:', url, error);
+    return FALLBACK_IMAGE_URL;
+  }
+}
+
 class WixImageResolver {
   /**
-   * Resolve any image URL to a valid, renderable format
+   * Resolve any image URL to a valid, renderable HTTPS format
+   * CRITICAL: This converts wix:image:// to HTTPS before returning
    * This is the main entry point for all image rendering
    */
   static resolve(url: string | undefined | null, context?: { recordId?: string; fieldName?: string }): ResolvedImageUrl {
@@ -68,16 +134,28 @@ class WixImageResolver {
     const trimmedUrl = url.trim();
 
     // Check for wix:image://v1/ format (Wix Media Manager native)
+    // CRITICAL: Convert to HTTPS immediately
     if (trimmedUrl.startsWith('wix:image://v1/')) {
+      const httpsUrl = convertWixImageToHttps(trimmedUrl);
+      // If conversion failed, httpsUrl will be FALLBACK_IMAGE_URL
+      if (httpsUrl === FALLBACK_IMAGE_URL) {
+        return {
+          url: FALLBACK_IMAGE_URL,
+          isValid: false,
+          format: 'wix-image',
+          isFallback: true,
+          error: 'Failed to convert wix:image:// URL to HTTPS'
+        };
+      }
       return {
-        url: trimmedUrl,
+        url: httpsUrl,
         isValid: true,
         format: 'wix-image',
         isFallback: false
       };
     }
 
-    // Check for static.wixstatic.com format (Wix CDN)
+    // Check for static.wixstatic.com format (Wix CDN) - already HTTPS
     if (trimmedUrl.startsWith('https://static.wixstatic.com/')) {
       return {
         url: trimmedUrl,

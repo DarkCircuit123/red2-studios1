@@ -6,7 +6,7 @@ import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { BaseCrudService } from '@/integrations';
-import { convertWixImageToHttps } from '@/lib/convert-wix-image';
+import WixImageResolver from '@/lib/wix-image-resolver';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -32,10 +32,10 @@ export default function ContactSection() {
       if (result?.items && result.items.length > 0) {
         const images = result.items[0] as any;
         if (images?.contactBackgroundImage && typeof images.contactBackgroundImage === 'string') {
-          // Convert wix:image:// to HTTPS URL for browser rendering
-          const httpsUrl = convertWixImageToHttps(images.contactBackgroundImage);
-          if (httpsUrl) {
-            setContactBackgroundImage(httpsUrl);
+          // Use WixImageResolver to convert wix:image:// to HTTPS URL for browser rendering
+          const resolved = WixImageResolver.resolve(images.contactBackgroundImage);
+          if (resolved.url) {
+            setContactBackgroundImage(resolved.url);
           }
         }
       }
@@ -148,7 +148,7 @@ export default function ContactSection() {
         <div 
           className="absolute inset-0 z-0 opacity-15"
           style={{
-            backgroundImage: `url('${contactBackgroundImage}')`,
+            backgroundImage: `url('${WixImageResolver.resolve(contactBackgroundImage).url}')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed',
