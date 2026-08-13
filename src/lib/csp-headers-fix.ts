@@ -4,17 +4,19 @@
  * 
  * PRODUCTION CSP POLICY:
  * - Strict default-src 'self' (no unsafe-inline, no unsafe-eval)
- * - script-src: Only self + Wix CDNs (no inline scripts, no FullStory)
+ * - script-src: Only self + Wix CDNs (no inline scripts, no FullStory, no base44)
  * - img-src: self + HTTPS + data: + blob: (for temporary previews)
  * - style-src: self + unsafe-inline (required for Tailwind/styled-components)
  * - font-src: self + Google Fonts
- * - connect-src: self + HTTPS (no FullStory APIs)
+ * - connect-src: self + HTTPS (no FullStory APIs, no base44)
+ * - frame-ancestors: allows Wix remote-code iframe for live preview
  * 
  * Issues Fixed:
  * 1. wix:image:// URLs are converted to HTTPS in Image component (not allowed in CSP)
  * 2. FullStory removed (not used in project, was causing CSP violations)
- * 3. frame-ancestors allows Wix preview/framewire framing
- * 4. Deprecated MouseEvent.mozInputSource warning
+ * 3. base44.com removed (obsolete dependency, was causing 404 errors)
+ * 4. frame-ancestors allows Wix preview/framewire framing
+ * 5. Deprecated MouseEvent.mozInputSource warning
  */
 
 import { initEventPolyfills } from './event-polyfills';
@@ -31,7 +33,7 @@ export const CSP_HEADERS = {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'self' https://*.wix-code.com https://*.remote-machine.wix-code.com"
+    "frame-ancestors 'self' https://*.wix-code.com https://*.remote-machine.wix-code.com https://*.wix.com"
   ].join('; ')
 };
 

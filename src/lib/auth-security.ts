@@ -386,7 +386,15 @@ export async function verifyMemberToken(sessionToken: string): Promise<{ memberI
 
     // Get current member from Wix session
     try {
-      const memberResult = await members.getCurrentMember({ fieldsets: ['FULL'] });
+      // CRITICAL FIX FOR ERR_NETWORK:
+      // Wrap the SDK call to catch errors at the SDK boundary
+      let memberResult;
+      try {
+        memberResult = await members.getCurrentMember({ fieldsets: ['FULL'] });
+      } catch (sdkError) {
+        // SDK threw an error - re-throw to be caught by outer try-catch
+        throw sdkError;
+      }
       
       if (!memberResult || !memberResult.member) {
         console.log('[MEMBER-TOKEN] No member found in session');

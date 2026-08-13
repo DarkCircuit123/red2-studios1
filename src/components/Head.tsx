@@ -11,6 +11,12 @@ export const Head = () => {
       
       {/* Content Security Policy - Comprehensive policy for Wix platform integration */}
       {/* NOTE: frame-ancestors is delivered via HTTP headers in astro.config.mjs, not via meta tag */}
+      {/* CRITICAL FIXES:
+          - Removed FullStory (not used in project, was causing CSP violations)
+          - Removed base44.com (obsolete dependency, was causing 404 errors)
+          - Kept frame-ancestors for Wix remote-code iframe reachability
+          - Kept all Wix infrastructure domains for Framewire, fonts, and APIs
+      */}
       <meta httpEquiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com; script-src-elem 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com; img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com; font-src 'self' https://fonts.gstatic.com data: https://static.parastorage.com https://*.parastorage.com; connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com https://upload.wixmp.com ws: wss:; base-uri 'self'; form-action 'self';" />
       
       {/* Preconnect to external resources */}

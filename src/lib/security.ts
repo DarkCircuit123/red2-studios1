@@ -13,6 +13,8 @@
 // - Includes script-src-elem for explicit script element loading
 // - Removed Google Maps (not used in project)
 // - Removed FullStory (not used in project)
+// - Removed base44.com (obsolete dependency, was causing 404 errors)
+// - frame-ancestors allows Wix remote-code iframe reachability for live preview
 // - NOTE: wix:image:// URLs are converted to HTTPS in Image component before rendering
 export const CSP_HEADERS = {
   'Content-Security-Policy': [
@@ -23,7 +25,7 @@ export const CSP_HEADERS = {
     "img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com",
     "font-src 'self' https://fonts.gstatic.com https://static.parastorage.com https://*.parastorage.com",
     "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com ws: wss:",
-    "frame-ancestors 'self' https://*.wix-code.com https://*.remote-machine.wix-code.com",
+    "frame-ancestors 'self' https://*.wix-code.com https://*.remote-machine.wix-code.com https://*.wix.com",
     "base-uri 'self'",
     "form-action 'self'",
   ].join('; '),
