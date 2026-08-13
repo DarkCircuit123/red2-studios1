@@ -48,7 +48,12 @@ export function isBrokenUrl(url: string | null | undefined): boolean {
   // Check if URL is empty or too short
   if (lowerUrl.length < 10) return true;
   
-  // Check if it's a valid URL format
+  // Accept wix:image:// URLs (Wix Media Manager format - valid for CMS storage)
+  if (url.startsWith('wix:image://v1/')) {
+    return false;
+  }
+  
+  // Check if it's a valid URL format (for http/https URLs)
   try {
     new URL(url);
     return false;

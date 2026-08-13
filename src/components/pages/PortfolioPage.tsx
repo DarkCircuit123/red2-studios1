@@ -108,7 +108,19 @@ export default function PortfolioPage() {
               new Promise<ImageWithAspectRatio>((resolve) => {
                 const img = new window.Image();
                 img.onload = () => {
-                  const aspectRatio = img.naturalWidth / img.naturalHeight;
+                  const naturalWidth = img.naturalWidth;
+                  const naturalHeight = img.naturalHeight;
+                  
+                  if (!naturalWidth || !naturalHeight) {
+                    resolve({
+                      ...image,
+                      aspectRatio: 1,
+                      gridSpan: 'square',
+                    });
+                    return;
+                  }
+                  
+                  const aspectRatio = naturalWidth / naturalHeight;
                   resolve({
                     ...image,
                     aspectRatio,
