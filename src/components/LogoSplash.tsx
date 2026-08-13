@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { BaseCrudService } from '@/integrations';
 import { Splashpage } from '@/entities';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 export default function LogoSplash() {
   const [visible, setVisible] = useState(true);
@@ -31,8 +32,9 @@ export default function LogoSplash() {
         const activeLogo = result.items.find((item) => item.isActive);
         if (activeLogo?.logoImage) {
           // Diagnostic: Active logo found with image
-          console.log('[LogoSplash] Using active logo:', activeLogo.logoImage);
-          setLogoImage(activeLogo.logoImage);
+          const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
+          console.log('[LogoSplash] Using active logo:', convertedUrl);
+          setLogoImage(convertedUrl);
           setIsLoadingLogo(false);
           return;
         }
@@ -41,8 +43,9 @@ export default function LogoSplash() {
         const firstLogoWithImage = result.items.find((item) => item.logoImage);
         if (firstLogoWithImage?.logoImage) {
           // Diagnostic: Using first available logo
-          console.log('[LogoSplash] Using first available logo:', firstLogoWithImage.logoImage);
-          setLogoImage(firstLogoWithImage.logoImage);
+          const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
+          console.log('[LogoSplash] Using first available logo:', convertedUrl);
+          setLogoImage(convertedUrl);
           setIsLoadingLogo(false);
           return;
         }

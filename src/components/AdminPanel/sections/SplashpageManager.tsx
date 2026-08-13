@@ -8,6 +8,7 @@ import { adminCms } from '@/lib/admin-cms';
 import { Splashpage } from '@/entities';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import ImageThumbnailPreview from './ImageThumbnailPreview';
 
 interface SplashpageManagerProps {
@@ -231,7 +232,7 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
           <div className="flex flex-col items-center gap-4">
             <div className="w-full max-w-xs h-40 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200">
               <ImageComponent
-                src={activeLogo.logoImage}
+                src={convertWixImageToHttps(activeLogo.logoImage) || activeLogo.logoImage}
                 alt={activeLogo.altText || ''}
                 width={300}
                 height={160}
