@@ -33,21 +33,10 @@ function getFileExtension(url: string): string {
 }
 
 /**
- * Check if a URL is empty (null, undefined, or empty string)
- */
-export function isEmpty(url: string | null | undefined): boolean {
-  return !url || (typeof url === 'string' && url.trim().length === 0);
-}
-
-/**
  * Check if a URL is broken or a placeholder
- * NOTE: Empty URLs are NOT considered broken - they are simply unpopulated slots
  */
 export function isBrokenUrl(url: string | null | undefined): boolean {
-  // Empty fields are NOT broken - they are unpopulated slots
-  if (isEmpty(url)) return false;
-  
-  if (typeof url !== 'string') return true;
+  if (!url || typeof url !== 'string') return true;
   
   const lowerUrl = url.toLowerCase().trim();
   
@@ -56,7 +45,7 @@ export function isBrokenUrl(url: string | null | undefined): boolean {
     return true;
   }
   
-  // Check if URL is too short (but not empty - that's handled above)
+  // Check if URL is empty or too short
   if (lowerUrl.length < 10) return true;
   
   // Accept wix:image:// URLs (Wix Media Manager format - valid for CMS storage)
@@ -154,8 +143,6 @@ export function sanitizeImageFields<T extends Record<string, any>>(
 
 /**
  * Filter array of items, removing those with broken image URLs
- * NOTE: Empty image fields are NOT filtered out - they are valid unpopulated slots
- * Only items with actual broken/invalid URLs are filtered
  */
 export function filterValidImages<T extends Record<string, any>>(
   items: T[],
@@ -163,9 +150,7 @@ export function filterValidImages<T extends Record<string, any>>(
 ): T[] {
   return items.filter(item => {
     const imageUrl = item[imageField];
-    // Empty fields are valid (unpopulated slots) - keep them
-    if (isEmpty(imageUrl)) return true;
-    // Filter out only broken URLs
+    if (!imageUrl || typeof imageUrl !== 'string') return false;
     return !isBrokenUrl(imageUrl);
   });
 }
@@ -182,9 +167,7 @@ export function sanitizeBatch<T extends Record<string, any>>(
 }
 
 /**
- * Get sanitization report with distinction between empty slots and invalid images
- * Empty slots are unpopulated fields (intentional)
- * Invalid images are broken/corrupt URLs (errors)
+ * Get sanitization report
  */
 export function generateSanitizationReport(
   originalCount: number,
@@ -203,33 +186,5 @@ export function generateSanitizationReport(
     removed: originalCount - sanitizedCount,
     brokenUrls,
     percentageRemoved: originalCount > 0 ? ((originalCount - sanitizedCount) / originalCount) * 100 : 0,
-  };
-}
-
-/**
- * Get portfolio-specific diagnostic report
- * Distinguishes between empty slots and invalid images
- */
-export function generatePortfolioDiagnosticReport(
-  allItems: any[],
-  validImages: any[],
-  imageField: string = 'image'
-): {
-  totalSlots: number;
-  validImages: number;
-  emptySlots: number;
-  invalidImages: number;
-} {
-  const emptySlots = allItems.filter(item => isEmpty(item[imageField])).length;
-  const invalidImages = allItems.filter(item => {
-    const url = item[imageField];
-    return !isEmpty(url) && isBrokenUrl(url);
-  }).length;
-  
-  return {
-    totalSlots: allItems.length,
-    validImages: validImages.length,
-    emptySlots,
-    invalidImages,
   };
 }

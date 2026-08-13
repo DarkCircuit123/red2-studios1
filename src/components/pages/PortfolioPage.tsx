@@ -5,7 +5,7 @@ import { PortfolioImages } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ScrollReveal } from '@/components/ScrollReveal';
-import { filterValidImages, generatePortfolioDiagnosticReport, isEmpty } from '@/lib/image-url-sanitizer';
+import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
 import WixImageResolver from '@/lib/wix-image-resolver';
 import { Image } from '@/components/ui/image';
 
@@ -32,38 +32,43 @@ export default function PortfolioPage() {
       try {
         const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
         
-        // Get all items (including empty slots)
+        // Filter out items with broken/placeholder URLs using sanitizer
         const allItems = result.items || [];
-        
-        // Filter to keep only items with valid images (empty slots are kept, broken URLs are removed)
         const validImages = filterValidImages(allItems, 'image');
         
-        // Generate diagnostic report distinguishing empty slots from invalid images
-        const report = generatePortfolioDiagnosticReport(allItems, validImages, 'image');
-        
-        // Log diagnostic report
-        console.info(
-          `[PortfolioPage] Portfolio Diagnostic Report:\n` +
-          `  Total slots: ${report.totalSlots}\n` +
-          `  Valid images: ${report.validImages}\n` +
-          `  Empty slots: ${report.emptySlots}\n` +
-          `  Invalid images: ${report.invalidImages}`
-        );
-        
-        // Store report for display in status component
-        sessionStorage.setItem('portfolioDiagnosticReport', JSON.stringify(report));
-        
-        // Filter out empty slots for rendering (keep only items with actual images)
-        const populatedImages = validImages.filter(img => !isEmpty(img.image));
-        
-        // Sort by displayOrder to maintain gallery order
-        const sortedImages = populatedImages.sort((a, b) => {
+        // Sort by displayOrder to maintain 30-slot gallery order (Slot 1-30)
+        const sortedImages = validImages.sort((a, b) => {
           const orderA = a.displayOrder || 999;
           const orderB = b.displayOrder || 999;
           return orderA - orderB;
         });
+        
+        // Generate and log sanitization report
+        const report = generateSanitizationReport(
+          allItems.length,
+          validImages.length,
+          allItems
+            .filter(img => !validImages.find(v => v._id === img._id))
+            .map(img => img.image || 'unknown')
+        );
+        
+        if (report.removed > 0) {
+          console.info(
+            `[PortfolioPage] Image Sanitization Report:\n` +
+            `  Original: ${report.originalCount}\n` +
+            `  Valid: ${report.sanitizedCount}\n` +
+            `  Removed: ${report.removed} (${report.percentageRemoved.toFixed(1)}%)`
+          );
+          // Store report for display in status component
+          sessionStorage.setItem('imageSanitizationReport', JSON.stringify({
+            originalCount: report.originalCount,
+            sanitizedCount: report.sanitizedCount,
+            removed: report.removed,
+            percentageRemoved: report.percentageRemoved,
+          }));
+        }
 
-        // Load image dimensions and determine grid spans (only for populated images)
+        // Load image dimensions and determine grid spans
         const imagesWithDimensions = await Promise.all(
           sortedImages.map(
             (image) =>
