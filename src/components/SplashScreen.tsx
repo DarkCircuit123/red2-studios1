@@ -36,9 +36,20 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         const result = await BaseCrudService.getAll<Splashpage>('splashpage', {}, { limit: 50 });
         
         if (result?.items && result.items.length > 0) {
+          // First try to find an active logo
           const activeLogo = result.items.find((item) => item.isActive);
           if (activeLogo?.logoImage) {
             setLogoImage(activeLogo.logoImage);
+            setIsLoadingLogo(false);
+            return;
+          }
+          
+          // Fallback: use first logo with an image if no active one found
+          const firstLogoWithImage = result.items.find((item) => item.logoImage);
+          if (firstLogoWithImage?.logoImage) {
+            setLogoImage(firstLogoWithImage.logoImage);
+            setIsLoadingLogo(false);
+            return;
           }
         }
       } catch (err) {

@@ -22,11 +22,22 @@ export default function LogoSplash() {
           return;
         }
         
+        // First try to find an active logo
         const activeLogo = result.items.find((item) => item.isActive);
-        
         if (activeLogo?.logoImage) {
           // Diagnostic: Active logo found with image
           setLogoImage(activeLogo.logoImage);
+          setIsLoadingLogo(false);
+          return;
+        }
+        
+        // Fallback: use first logo with an image if no active one found
+        const firstLogoWithImage = result.items.find((item) => item.logoImage);
+        if (firstLogoWithImage?.logoImage) {
+          // Diagnostic: Using first available logo
+          setLogoImage(firstLogoWithImage.logoImage);
+          setIsLoadingLogo(false);
+          return;
         }
       } catch (err) {
         // Diagnostic: Log error but don't display to user
