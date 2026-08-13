@@ -74,7 +74,6 @@ export const codeSpittingStrategy = {
 
   // Split by feature
   features: {
-    gallery: () => import('@/components/sections/Interactive3DGallerySection'),
     blog: () => import('@/components/sections/BlogSection'),
     contact: () => import('@/components/sections/ContactSection'),
   },
