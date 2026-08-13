@@ -1,3 +1,5 @@
+'use client';
+
 import { create } from 'zustand';
 import { CartItem, CartState } from '../ecom-service';
 

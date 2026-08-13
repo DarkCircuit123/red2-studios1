@@ -1,3 +1,5 @@
+'use client';
+
 import React, { Suspense, useState, useEffect } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';

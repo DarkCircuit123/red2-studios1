@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { getCurrentMember, Member } from '..';
 import { MemberContext, type MemberState, type MemberActions } from './MemberContext';
