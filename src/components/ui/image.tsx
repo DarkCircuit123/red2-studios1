@@ -136,11 +136,11 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
       const resolved = WixImageResolver.resolve(src);
       const converted = convertWixImageToHttps(resolved.url);
       // CRITICAL: Validate that conversion succeeded
-      if (converted.startsWith('wix:image://')) {
+      if (converted && converted.startsWith('wix:image://')) {
         console.error('[Image] Failed to convert wix:image:// URL during initialization:', src);
         return FALLBACK_IMAGE_URL;
       }
-      return converted;
+      return converted || FALLBACK_IMAGE_URL;
     }
     return undefined;
   })
@@ -155,13 +155,13 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
       // Convert wix:image:// to HTTPS for browser rendering (CSP compliance)
       const browserUrl = convertWixImageToHttps(resolved.url);
       // CRITICAL: Validate that conversion succeeded
-      if (browserUrl.startsWith('wix:image://')) {
+      if (browserUrl && browserUrl.startsWith('wix:image://')) {
         console.error('[Image] Failed to convert wix:image:// URL in effect:', src);
         setImgSrc(FALLBACK_IMAGE_URL);
         return;
       }
       // Guard: only update state if the resolved URL is different
-      setImgSrc(prevSrc => prevSrc === browserUrl ? prevSrc : browserUrl);
+      setImgSrc(prevSrc => prevSrc === browserUrl ? prevSrc : (browserUrl || FALLBACK_IMAGE_URL));
     } else {
       setImgSrc(undefined);
     }
@@ -186,7 +186,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
   const finalSrc = convertWixImageToHttps(resolved.url);
 
   // CRITICAL: Ensure finalSrc is never a wix:image:// URL
-  if (finalSrc.startsWith('wix:image://')) {
+  if (finalSrc && finalSrc.startsWith('wix:image://')) {
     console.error('[Image] CSP Violation: wix:image:// URL reached DOM. This should never happen.', finalSrc);
     return <img data-error-image ref={ref} src={FALLBACK_IMAGE_URL} {...props} />
   }
@@ -209,6 +209,6 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
   };
 
   // Render as regular img tag (simplified approach without WixImage component)
-  return <img data-error-image={finalSrc === FALLBACK_IMAGE_URL} ref={ref} src={finalSrc} {...imageProps} />
+  return <img data-error-image={finalSrc === FALLBACK_IMAGE_URL} ref={ref} src={finalSrc || FALLBACK_IMAGE_URL} {...imageProps} />
 })
 Image.displayName = 'Image'

@@ -63,6 +63,12 @@ export const getCurrentMember = async (): Promise<Member | null> => {
     if (isExpectedAuthError(error)) {
       // Expected - no member logged in, return null silently
       // This is normal for anonymous/unauthenticated visitors
+      // 401/403 errors are expected for anonymous users - do NOT retry or log as error
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('403') || message.includes('401')) {
+        // Silent return for auth errors - this is normal for anonymous visitors
+        return null;
+      }
       // Suppress the console.log to reduce noise during initial auth check
       return null;
     }
