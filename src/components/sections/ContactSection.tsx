@@ -6,7 +6,7 @@ import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { BaseCrudService } from '@/integrations';
-import WixImageResolver from '@/lib/wix-image-resolver';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -32,10 +32,10 @@ export default function ContactSection() {
       if (result?.items && result.items.length > 0) {
         const images = result.items[0] as any;
         if (images?.contactBackgroundImage && typeof images.contactBackgroundImage === 'string') {
-          // Use WixImageResolver to convert wix:image:// to HTTPS URL for browser rendering
-          const resolved = WixImageResolver.resolve(images.contactBackgroundImage);
-          if (resolved.url) {
-            setContactBackgroundImage(resolved.url);
+          // Convert wix:image:// to HTTPS URL for browser rendering
+          const httpsUrl = convertWixImageToHttps(images.contactBackgroundImage);
+          if (httpsUrl) {
+            setContactBackgroundImage(httpsUrl);
           }
         }
       }
@@ -143,7 +143,7 @@ export default function ContactSection() {
       id="contact" 
       className="relative w-full py-16 md:py-24 lg:py-32 bg-black overflow-hidden"
     >
-      {/* Background image layer with 15% opacity - CRITICAL: Already resolved to HTTPS in state */}
+      {/* Background image layer with 15% opacity */}
       {contactBackgroundImage && (
         <div 
           className="absolute inset-0 z-0 opacity-15"

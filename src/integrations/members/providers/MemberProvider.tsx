@@ -1,8 +1,6 @@
-'use client';
-
 import React, { useState, useEffect, useCallback, ReactNode, useRef } from 'react';
+import { MemberActions, MemberContext, MemberState } from '.';
 import { getCurrentMember, Member } from '..';
-import { MemberContext, type MemberState, type MemberActions } from './MemberContext';
 
 // Local storage key
 const MEMBER_STORAGE_KEY = 'member-store';
@@ -107,11 +105,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
       } catch (err) {
         // Silently handle errors - getCurrentMember already filters expected errors
         // This catch block should rarely be hit since the service handles errors gracefully
-        // 401/403 errors for anonymous users are expected and should not trigger retries
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        if (!errorMessage.includes('403') && !errorMessage.includes('401')) {
-          console.error('[MEMBER PROVIDER] Unexpected error:', err);
-        }
+        console.error('[MEMBER PROVIDER] Unexpected error:', err);
         updateState({
           member: null,
           isAuthenticated: false,

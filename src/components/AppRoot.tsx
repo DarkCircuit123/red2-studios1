@@ -1,5 +1,3 @@
-'use client';
-
 import React, { Suspense, useState, useEffect } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
@@ -7,10 +5,7 @@ import SplashScreen from '@/components/SplashScreen';
 import LogoSplash from '@/components/LogoSplash';
 import { AdminAuthProvider } from '@/components/AdminAuthProvider';
 import { MemberProvider } from '@/integrations/members/providers';
-import { initCSPFixes } from '@/lib/csp-headers-fix';
-import { initAuthErrorHandling } from '@/lib/auth-error-handler';
-import initializeRuntimeImageSafetyGuard from '@/lib/runtime-image-safety-guard';
-import initializeFullStoryBlocker from '@/lib/fullstory-blocker';
+import { useAdminAuth } from '@/lib/adminAuthStore';
 
 // DEV ONLY. Lets Vite's dependency scanner find every third-party package in
 // its initial crawl so it pre-bundles them in one pass. Without this, packages
@@ -21,17 +16,6 @@ import initializeFullStoryBlocker from '@/lib/fullstory-blocker';
 // See src/lib/vite-dep-preload.ts.
 if (import.meta.env.DEV) {
   import('@/lib/vite-dep-preload');
-}
-
-// Initialize security and error handling on app load
-if (typeof window !== 'undefined') {
-  // CRITICAL: Initialize safety guards FIRST, before any other code runs
-  // This ensures all image URLs and FullStory requests are blocked at runtime
-  initializeFullStoryBlocker();
-  initializeRuntimeImageSafetyGuard();
-  
-  initCSPFixes();
-  initAuthErrorHandling();
 }
 
 class RouterErrorBoundary extends React.Component<
@@ -62,12 +46,9 @@ class RouterErrorBoundary extends React.Component<
 
 export default function AppRoot() {
   const [splashComplete, setSplashComplete] = useState(false);
-  const adminCheckInitiatedRef = React.useRef(false);
+  const { checkSession } = useAdminAuth();
 
-  // Check if splash was already shown in this session
-  // DO NOT call checkSession() on app load - it causes ERR_NETWORK errors
-  // because /api/auth/admin-check tries to verify tokens on every page load
-  // even when there's no admin session. Only check admin session when explicitly needed.
+  // Check if splash was already shown in this session and verify admin session
   useEffect(() => {
     const splashShown = sessionStorage.getItem('splashScreenShown') === 'true';
     if (splashShown) {
@@ -75,11 +56,8 @@ export default function AppRoot() {
       return;
     }
     
-    // Guard against duplicate checks in React Strict Mode
-    if (adminCheckInitiatedRef.current) {
-      return;
-    }
-    adminCheckInitiatedRef.current = true;
+    // Check admin session on app load
+    checkSession();
     
     // CRITICAL: Fallback timeout to prevent infinite loading
     // If splash doesn't complete within 3 seconds, force it to complete
@@ -89,7 +67,7 @@ export default function AppRoot() {
     }, 3000);
     
     return () => clearTimeout(fallbackTimer);
-  }, []);
+  }, [checkSession]);
 
   const handleSplashComplete = () => {
     setSplashComplete(true);

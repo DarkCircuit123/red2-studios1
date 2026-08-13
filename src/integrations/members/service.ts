@@ -32,26 +32,11 @@ const isExpectedAuthError = (error: unknown): boolean => {
  * Get the current authenticated member
  * Returns null for unauthenticated users (expected case)
  * Only logs unexpected errors
- * 
- * CRITICAL FIX FOR ERR_NETWORK:
- * The Wix Members SDK makes internal network requests that fail for anonymous users.
- * These failures must be caught at the SDK boundary to prevent unhandled rejections
- * from reaching the global error handler, which triggers the Wix FallbackWidget ERR_NETWORK error.
  */
 export const getCurrentMember = async (): Promise<Member | null> => {
   try {
     console.log('[MEMBER SERVICE] Loading current member...');
-    
-    // Wrap the SDK call in a try-catch to ensure errors are caught at the SDK boundary
-    let member;
-    try {
-      member = await members.getCurrentMember({ fieldsets: ["FULL"] });
-    } catch (sdkError) {
-      // SDK threw an error - re-throw to be caught by outer try-catch
-      // This ensures the error is handled gracefully and doesn't become an unhandled rejection
-      throw sdkError;
-    }
-    
+    const member = await members.getCurrentMember({ fieldsets: ["FULL"] });
     if (!member) {
       console.log('[MEMBER SERVICE] No member session found (anonymous user)');
       return null; // No member session - normal for anonymous visitors
@@ -63,12 +48,6 @@ export const getCurrentMember = async (): Promise<Member | null> => {
     if (isExpectedAuthError(error)) {
       // Expected - no member logged in, return null silently
       // This is normal for anonymous/unauthenticated visitors
-      // 401/403 errors are expected for anonymous users - do NOT retry or log as error
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes('403') || message.includes('401')) {
-        // Silent return for auth errors - this is normal for anonymous visitors
-        return null;
-      }
       // Suppress the console.log to reduce noise during initial auth check
       return null;
     }

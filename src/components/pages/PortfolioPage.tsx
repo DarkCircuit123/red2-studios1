@@ -7,12 +7,43 @@ import Footer from '@/components/Footer';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
 import WixImageResolver from '@/lib/wix-image-resolver';
+import { STATIC_MEDIA_URL } from '@wix/image-kit';
 import { Image } from '@/components/ui/image';
 
 interface ImageWithAspectRatio extends PortfolioImages {
   aspectRatio?: number;
   gridSpan?: 'vertical' | 'horizontal' | 'square';
 }
+
+/**
+ * Convert wix:image:// URLs to HTTPS URLs for browser rendering
+ * This resolves the CSP issue where browsers cannot load wix:image:// directly
+ */
+const convertWixImageToHttps = (url: string): string => {
+  const wixImagePrefix = 'wix:image://v1/';
+  if (url.startsWith(wixImagePrefix)) {
+    // Extract the URI and parameters from wix:image://v1/{uri}/{filename}#{params}
+    const withoutPrefix = url.replace(wixImagePrefix, '');
+    const [uriPart, paramsString] = withoutPrefix.split('#');
+    const uri = uriPart.split('/')[0];
+    
+    // Parse origin dimensions if available
+    const params = new URLSearchParams(paramsString || '');
+    const originWidth = params.get('originWidth');
+    const originHeight = params.get('originHeight');
+    
+    // Build HTTPS URL using Wix static CDN
+    let httpsUrl = `${STATIC_MEDIA_URL}${uri}`;
+    
+    // Add origin dimensions if available
+    if (originWidth && originHeight) {
+      httpsUrl += `?originWidth=${originWidth}&originHeight=${originHeight}`;
+    }
+    
+    return httpsUrl;
+  }
+  return url;
+};
 
 export default function PortfolioPage() {
   const [allImages, setAllImages] = useState<ImageWithAspectRatio[]>([]);
@@ -75,19 +106,7 @@ export default function PortfolioPage() {
               new Promise<ImageWithAspectRatio>((resolve) => {
                 const img = new window.Image();
                 img.onload = () => {
-                  const naturalWidth = img.naturalWidth;
-                  const naturalHeight = img.naturalHeight;
-                  
-                  if (!naturalWidth || !naturalHeight) {
-                    resolve({
-                      ...image,
-                      aspectRatio: 1,
-                      gridSpan: 'square',
-                    });
-                    return;
-                  }
-                  
-                  const aspectRatio = naturalWidth / naturalHeight;
+                  const aspectRatio = img.naturalWidth / img.naturalHeight;
                   resolve({
                     ...image,
                     aspectRatio,
@@ -105,7 +124,8 @@ export default function PortfolioPage() {
                 // Resolve wix:image:// URLs to HTTPS before setting as src
                 // This ensures the browser can load the image without CSP violations
                 const resolved = WixImageResolver.resolve(image.image);
-                img.src = resolved.url || '';
+                const browserUrl = convertWixImageToHttps(resolved.url);
+                img.src = browserUrl || '';
               })
           )
         );

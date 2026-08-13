@@ -4,34 +4,29 @@
  */
 
 // Content Security Policy helper
-// CRITICAL: Production-safe policy for Wix platform integration
-// - Allows https://static.parastorage.com and https://*.parastorage.com for:
-//   * Wix-hosted fonts (Cormorant Garamond, Roboto, Oswald, Nunito Sans, Helvetica Neue)
-//   * Wix Framewire infrastructure (script-src and script-src-elem)
+// CRITICAL: Comprehensive policy for Wix platform integration
+// - Allows wix:image:// protocol for Wix Media Manager images
+// - Allows https://static.parastorage.com and *.parastorage.com for framewire script injection
 // - Allows wixapis.com and wix.com for Wix API calls
-// - NO unsafe-inline, NO unsafe-eval (production-safe)
+// - Allows unsafe-eval for dynamic script evaluation
 // - Includes script-src-elem for explicit script element loading
 // - Removed Google Maps (not used in project)
 // - Removed FullStory (not used in project)
-// - Removed base44.com (obsolete dependency, was causing 404 errors)
-// - frame-ancestors allows Wix remote-code iframe reachability for live preview
-// - NOTE: wix:image:// URLs are converted to HTTPS in Image component before rendering
 export const CSP_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com",
-    "script-src-elem 'self' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net https://*.wixapis.com https://*.wix.com",
+    "script-src-elem 'self' 'unsafe-inline' https://static.parastorage.com https://*.parastorage.com https://cdn.jsdelivr.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.parastorage.com https://*.parastorage.com",
-    "img-src 'self' data: https: blob: https://static.parastorage.com https://*.parastorage.com https://static.wixstatic.com",
-    "font-src 'self' https://fonts.gstatic.com https://static.parastorage.com https://*.parastorage.com",
+    "img-src 'self' data: https: blob: wix:image:// https://static.parastorage.com https://*.parastorage.com",
+    "font-src 'self' https://fonts.gstatic.com data: https://static.parastorage.com https://*.parastorage.com",
     "connect-src 'self' https://*.wixapis.com https://*.wix.com https://*.parastorage.com https://*.wix-code.com ws: wss:",
-    "frame-ancestors 'self' https://*.wix-code.com https://*.remote-machine.wix-code.com https://*.wix.com",
+    "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
   ].join('; '),
   'X-Content-Type-Options': 'nosniff',
-  // X-Frame-Options removed to allow Wix preview/framewire framing - CSP frame-ancestors handles this
-  // 'X-Frame-Options': 'DENY',
+  'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',

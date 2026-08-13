@@ -18,15 +18,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
 
     try {
       // Get current member
-      // CRITICAL FIX FOR ERR_NETWORK:
-      // Wrap the SDK call to catch errors at the SDK boundary
-      let currentMember;
-      try {
-        currentMember = await membersClient.getCurrentMember();
-      } catch (sdkError) {
-        // SDK threw an error - re-throw to be caught by outer try-catch
-        throw sdkError;
-      }
+      const currentMember = await membersClient.getCurrentMember();
 
       if (!currentMember?.member?._id) {
         return new Response(

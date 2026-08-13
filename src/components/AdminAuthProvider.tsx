@@ -18,12 +18,40 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize loading state to false on mount
-  // DO NOT check admin session on mount - it causes ERR_NETWORK errors
-  // because /api/auth/admin-verify tries to verify tokens on every page load
-  // even when there's no admin session. Only check admin session when explicitly needed.
+  // Check session on mount
   useEffect(() => {
-    setIsLoading(false);
+    const checkSession = async () => {
+      try {
+        const response = await fetch('/api/auth/admin-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ action: 'verify' }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.valid) {
+            setIsAuthenticated(true);
+            setAdminUsername(data.username || 'Admin');
+          } else {
+            setIsAuthenticated(false);
+            setAdminUsername(null);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setAdminUsername(null);
+        }
+      } catch (err) {
+        console.error('[AdminAuthProvider] Session check error:', err);
+        setIsAuthenticated(false);
+        setAdminUsername(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
@@ -39,15 +67,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        
-        // Handle specific error types
-        if (data.error === 'SESSION_SECRET_MISSING') {
-          throw new Error(
-            'Server configuration error: SESSION_SECRET is not configured in Wix Secrets Manager. ' +
-            'Please contact the administrator to configure this secret.'
-          );
-        }
-        
         throw new Error(data.message || 'Login failed');
       }
 

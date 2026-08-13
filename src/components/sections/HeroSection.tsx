@@ -85,17 +85,10 @@ export default function HeroSection() {
   }, []);
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e?.currentTarget;
-    if (!img) return;
-
-    const naturalWidth = img.naturalWidth;
-    const naturalHeight = img.naturalHeight;
-
-    if (!naturalWidth || !naturalHeight) return;
-
+    const img = e.currentTarget;
     setImageDimensions({
-      width: naturalWidth,
-      height: naturalHeight,
+      width: img.naturalWidth,
+      height: img.naturalHeight,
     });
   };
 

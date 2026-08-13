@@ -50,6 +50,7 @@ export default function LiveTickerSection() {
   const [isPaused, setIsPaused] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [playingVideoIndex, setPlayingVideoIndex] = useState<number | null>(null);
   const animationRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -64,18 +65,13 @@ export default function LiveTickerSection() {
         ];
 
         const allStories: RSSStory[] = [];
+        let successCount = 0;
 
         for (const feed of feeds) {
           try {
-            // FIX: Use manual timeout instead of AbortSignal.timeout() for compatibility
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            
             const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`, {
-              signal: controller.signal,
+              signal: AbortSignal.timeout(8000), // 8 second timeout per feed
             });
-            
-            clearTimeout(timeoutId);
             
             if (response.ok) {
               // Verify response is JSON before parsing
@@ -102,6 +98,7 @@ export default function LiveTickerSection() {
                   videoUrl: item.videoUrl || item.media?.content?.[0]?.url,
                 }));
                 allStories.push(...feedStories);
+                successCount++;
               }
             }
           } catch (err) {
@@ -162,6 +159,8 @@ export default function LiveTickerSection() {
     setIsPaused(!isPaused);
   };
 
+  // ... keep existing code (handleWatchVideo and handleStoryClick removed - using anchor tags instead) ...
+
   // Always show if we have stories (even during loading or with fallback)
   if (stories.length === 0) {
     return null;
@@ -192,6 +191,7 @@ export default function LiveTickerSection() {
               animate={{ 
                 opacity: [1, 0.3, 1],
                 scale: [1, 1.2, 1],
+                boxShadow: ['0 0 0 0 rgba(111, 8, 9, 0.7)', '0 0 0 8px rgba(111, 8, 9, 0)', '0 0 0 0 rgba(111, 8, 9, 0.7)']
               }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
@@ -199,6 +199,7 @@ export default function LiveTickerSection() {
             <motion.span 
               animate={{ 
                 opacity: [0.6, 1, 0.6],
+                textShadow: ['0 0 0px rgba(111, 8, 9, 0)', '0 0 10px rgba(111, 8, 9, 0.8)', '0 0 0px rgba(111, 8, 9, 0)']
               }}
               transition={{ duration: 2, repeat: Infinity }}
               className="text-xs font-heading font-bold text-primary tracking-widest uppercase whitespace-nowrap"
@@ -253,6 +254,7 @@ export default function LiveTickerSection() {
           rel={isExternalLink ? 'noopener noreferrer' : undefined}
           animate={{ 
             borderColor: ['rgba(111, 8, 9, 0.1)', 'rgba(111, 8, 9, 0.4)', 'rgba(111, 8, 9, 0.1)'],
+            boxShadow: ['0 0 0px rgba(111, 8, 9, 0)', '0 0 12px rgba(111, 8, 9, 0.3)', '0 0 0px rgba(111, 8, 9, 0)']
           }}
           transition={{ duration: 3, repeat: Infinity }}
           className="block overflow-hidden rounded-lg bg-black/30 border p-4 cursor-pointer hover:bg-black/40 transition-colors duration-200"
@@ -328,6 +330,7 @@ export default function LiveTickerSection() {
               <motion.div 
                 animate={idx === currentIndex ? {
                   backgroundColor: ['rgba(111, 8, 9, 1)', 'rgba(111, 8, 9, 0.7)', 'rgba(111, 8, 9, 1)'],
+                  boxShadow: ['0 0 0px rgba(111, 8, 9, 0)', '0 0 8px rgba(111, 8, 9, 0.6)', '0 0 0px rgba(111, 8, 9, 0)']
                 } : {}}
                 transition={idx === currentIndex ? { duration: 2, repeat: Infinity } : {}}
                 className={`h-1 rounded-full transition-all duration-300 ${

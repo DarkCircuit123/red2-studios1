@@ -4,7 +4,7 @@ import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
 import { BaseCrudService } from '@/integrations';
 import { HomepageImages } from '@/entities';
-import WixImageResolver from '@/lib/wix-image-resolver';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 interface CarouselImage {
   id: string;
@@ -39,20 +39,14 @@ const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
 
   const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
-    if (!img) return;
-    
-    // Guard: only update if dimensions are valid and actually changed
-    // naturalWidth/naturalHeight may be 0 during load, so check > 0
-    const newWidth = (img.naturalWidth && img.naturalWidth > 0) ? img.naturalWidth : 1920;
-    const newHeight = (img.naturalHeight && img.naturalHeight > 0) ? img.naturalHeight : 1080;
-    
     setImageDims(prevDims => {
-      if (prevDims.width === newWidth && prevDims.height === newHeight) {
+      // Guard: only update if dimensions actually changed
+      if (prevDims.width === img.naturalWidth && prevDims.height === img.naturalHeight) {
         return prevDims;
       }
       return {
-        width: newWidth,
-        height: newHeight,
+        width: img.naturalWidth,
+        height: img.naturalHeight,
       };
     });
   }, []);
@@ -103,12 +97,12 @@ const RubberBandCarouselSection: React.FC = () => {
 
         data.items?.forEach((item) => {
           if (item.heroImage) {
-            // Use WixImageResolver to convert wix:image:// URLs to HTTPS for browser rendering
-            const resolved = WixImageResolver.resolve(item.heroImage);
-            if (resolved.url) {
+            // Convert wix:image:// URLs to HTTPS for browser rendering
+            const httpsUrl = convertWixImageToHttps(item.heroImage);
+            if (httpsUrl) {
               collected.push({
                 id: item._id,
-                url: resolved.url,
+                url: httpsUrl,
                 alt: item.imageName || 'Carousel photo',
               });
             }
@@ -248,7 +242,7 @@ const RubberBandCarouselSection: React.FC = () => {
     };
 
     snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
-  }, [easeOutElastic]);
+  }, []);
 
   // Step 4: Main animation loop - optimized to avoid unnecessary state updates
   // Use a ref to track the last scroll position to prevent excessive state updates

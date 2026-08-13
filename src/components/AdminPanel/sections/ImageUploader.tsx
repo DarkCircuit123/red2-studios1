@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, Trash2, Eye } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Image } from '@/components/ui/image';
 
 interface ImageUploaderProps {
   imageUrl?: string;
@@ -65,7 +64,7 @@ export default function ImageUploader({
       {/* Preview */}
       {imageUrl && (
         <div className="relative w-full h-48 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
-          <Image src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+          <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
             <Eye className="w-6 h-6 text-white" />
           </div>

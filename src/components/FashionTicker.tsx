@@ -68,18 +68,13 @@ export default function FashionTicker() {
         ];
 
         const allNews: FashionNews[] = [];
+        let successCount = 0;
 
         for (const feed of feeds) {
           try {
-            // FIX: Use manual timeout instead of AbortSignal.timeout() for compatibility
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            
             const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`, {
-              signal: controller.signal,
+              signal: AbortSignal.timeout(8000), // 8 second timeout per feed
             });
-            
-            clearTimeout(timeoutId);
             
             if (response.ok) {
               // Verify response is JSON before parsing
@@ -106,6 +101,7 @@ export default function FashionTicker() {
                   source: feed.source,
                 }));
                 allNews.push(...feedNews);
+                successCount++;
               }
             }
           } catch (err) {
@@ -152,37 +148,39 @@ export default function FashionTicker() {
     <div className="w-full bg-black border-t border-b border-gray-800 py-2 overflow-hidden">
       <div className="flex items-center gap-4 px-4">
         {/* Label */}
-        <motion.div
-          animate={{ opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="flex-shrink-0 text-xs font-heading font-bold text-primary uppercase tracking-widest whitespace-nowrap"
-        >
-          📰 Fashion News
-        </motion.div>
+        <div className="flex-shrink-0">
+          <motion.span 
+            animate={{ opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-xs font-heading font-bold text-primary tracking-widest uppercase whitespace-nowrap"
+          >
+            🔴 Live News
+          </motion.span>
+        </div>
 
         {/* Ticker */}
         <div className="flex-1 overflow-hidden">
           <motion.div
-            animate={{ x: [0, -100 * news.length + '%'] }}
+            className="flex gap-8"
+            animate={{ x: ['0%', '-50%'] }}
             transition={{
-              duration: news.length * 8,
+              duration: 60,
               repeat: Infinity,
               ease: 'linear',
             }}
-            className="flex gap-8 whitespace-nowrap"
           >
             {duplicatedNews.map((item, idx) => (
-              <motion.a
+              <a
                 key={`${item.id}-${idx}`}
                 href={item.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                whileHover={{ scale: 1.02 }}
-                className="flex-shrink-0 inline-block text-sm text-gray-300 hover:text-primary transition-colors duration-200 line-clamp-1 max-w-xs"
+                className="flex-shrink-0 text-xs text-gray-300 hover:text-primary transition-colors duration-300 whitespace-nowrap cursor-pointer group"
               >
-                <span className="text-primary font-bold mr-2">{item.source}:</span>
-                {item.title}
-              </motion.a>
+                <span className="text-gray-600 mr-2">•</span>
+                <span className="group-hover:underline">{item.title}</span>
+                <span className="text-gray-600 ml-1 text-[10px]">({item.source})</span>
+              </a>
             ))}
           </motion.div>
         </div>
