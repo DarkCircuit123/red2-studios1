@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { BaseCrudService } from '@/integrations';
 import { Splashpage } from '@/entities';
 
@@ -43,8 +44,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           // First try to find an active logo
           const activeLogo = result.items.find((item) => item.isActive);
           if (activeLogo?.logoImage) {
-            console.log('[SplashScreen] Using active logo:', activeLogo.logoImage);
-            setLogoImage(activeLogo.logoImage);
+            const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
+            console.log('[SplashScreen] Using active logo:', convertedUrl);
+            setLogoImage(convertedUrl);
             setIsLoadingLogo(false);
             return;
           }
@@ -52,8 +54,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           // Fallback: use first logo with an image if no active one found
           const firstLogoWithImage = result.items.find((item) => item.logoImage);
           if (firstLogoWithImage?.logoImage) {
-            console.log('[SplashScreen] Using first available logo:', firstLogoWithImage.logoImage);
-            setLogoImage(firstLogoWithImage.logoImage);
+            const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
+            console.log('[SplashScreen] Using first available logo:', convertedUrl);
+            setLogoImage(convertedUrl);
             setIsLoadingLogo(false);
             return;
           }

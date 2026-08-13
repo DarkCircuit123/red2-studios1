@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Image as ImageComponent } from '@/components/ui/image';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { BaseCrudService } from '@/integrations';
 import { Splashpage } from '@/entities';
 
@@ -39,8 +40,10 @@ export default function SplashpageLogo({
       const activeLogo = result.items.find((item) => item.isActive);
       
       if (activeLogo && activeLogo.logoImage) {
+        // Convert Wix image URL to HTTPS for CSP compliance
+        const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
         // Diagnostic: Active logo found with image
-        setLogo(activeLogo);
+        setLogo({ ...activeLogo, logoImage: convertedUrl });
       } else {
         // No active logo or no image field
         setError(true);
