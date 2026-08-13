@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Image as ImageComponent } from '@/components/ui/image';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { BaseCrudService } from '@/integrations';
 import { Splashpage } from '@/entities';
@@ -15,7 +14,8 @@ export default function SplashpageLogo({
   width = 200,
   height = 100,
 }: SplashpageLogoProps) {
-  const [logo, setLogo] = useState<Splashpage | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [altText, setAltText] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -28,11 +28,10 @@ export default function SplashpageLogo({
       setIsLoading(true);
       setError(false);
       
-      // Diagnostic: CMS query initiated
+      // Query CMS for active logo
       const result = await BaseCrudService.getAll<Splashpage>('splashpage');
       
       if (!result.items || result.items.length === 0) {
-        // No items in collection
         setError(true);
         return;
       }
@@ -42,14 +41,16 @@ export default function SplashpageLogo({
       if (activeLogo && activeLogo.logoImage) {
         // Convert Wix image URL to HTTPS for CSP compliance
         const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
-        // Diagnostic: Active logo found with image
-        setLogo({ ...activeLogo, logoImage: convertedUrl });
+        if (convertedUrl) {
+          setLogoUrl(convertedUrl);
+          setAltText(activeLogo.altText || '');
+        } else {
+          setError(true);
+        }
       } else {
-        // No active logo or no image field
         setError(true);
       }
     } catch (err) {
-      // Diagnostic: Log error but don't display to user
       console.error('[SplashpageLogo] CMS query error:', err);
       setError(true);
     } finally {
@@ -68,17 +69,18 @@ export default function SplashpageLogo({
     );
   }
 
-  if (error || !logo || !logo.logoImage) {
+  if (error || !logoUrl) {
     return null;
   }
 
   return (
-    <ImageComponent
-      src={logo.logoImage}
-      alt={logo.altText || ''}
+    <img
+      src={logoUrl}
+      alt={altText}
       width={width}
       height={height}
       className={`object-contain ${className}`}
+      loading="lazy"
     />
   );
 }

@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Image } from '@/components/ui/image';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { BaseCrudService } from '@/integrations';
@@ -146,12 +145,11 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           delay: prefersReducedMotion ? 0 : 0.3
         }}
       >
-        <Image
+        <img
           src={logoImage}
-          alt=""
-          className="w-48 h-auto sm:w-56 md:w-72 lg:w-80"
-          width={320}
-          priority
+          alt="Logo"
+          className="w-48 h-auto sm:w-56 md:w-72 lg:w-80 max-w-full"
+          loading="eager"
         />
       </motion.div>
     </motion.div>
