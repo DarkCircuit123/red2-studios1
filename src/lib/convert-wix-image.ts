@@ -7,7 +7,8 @@
  *   // Use httpsUrl in style, src, or backgroundImage
  */
 
-import { STATIC_MEDIA_URL } from '@wix/image-kit';
+// STATIC_MEDIA_URL is a constant that can be safely used in client components
+const STATIC_MEDIA_URL = 'https://static.wixstatic.com/media/';
 
 export const convertWixImageToHttps = (url: string | null | undefined): string | null => {
   if (!url || typeof url !== 'string') {

@@ -1,7 +1,9 @@
-import { type FittingType, getPlaceholder, sdk, STATIC_MEDIA_URL } from '@wix/image-kit'
-import { forwardRef, type ImgHTMLAttributes, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, type ImgHTMLAttributes, useEffect, useRef, useState } from 'react'
 import { useSize } from '@/hooks/use-size'
 import WixImageResolver from '@/lib/wix-image-resolver'
+
+// STATIC_MEDIA_URL is a constant that can be safely used in client components
+const STATIC_MEDIA_URL = 'https://static.wixstatic.com/media/'
 
 // Inline CSS for image animation
 const imageStyles = `
@@ -66,7 +68,7 @@ const convertWixImageToHttps = (url: string): string => {
     return httpsUrl;
   }
   return url;
-};
+}
 
 const getImageData = (url: string): ImageData | undefined => {
   // Use WixImageResolver to validate and normalize the URL first
@@ -90,44 +92,25 @@ const getImageData = (url: string): ImageData | undefined => {
 
     return { id: uri, width, height }
   } else if (normalizedUrl.startsWith(STATIC_MEDIA_URL)) {
-    const urlObj = new URL(normalizedUrl)
-    if (urlObj.searchParams.get('originWidth') && urlObj.searchParams.get('originHeight')) {
-      const uri = urlObj.pathname.split('/').slice(2).join('/')
-      const width = parseInt(urlObj.searchParams.get('originWidth') || '0', 10)
-      const height = parseInt(urlObj.searchParams.get('originHeight') || '0', 10)
-      return { id: uri, width, height }
+    try {
+      const urlObj = new URL(normalizedUrl)
+      if (urlObj.searchParams.get('originWidth') && urlObj.searchParams.get('originHeight')) {
+        const uri = urlObj.pathname.split('/').slice(2).join('/')
+        const width = parseInt(urlObj.searchParams.get('originWidth') || '0', 10)
+        const height = parseInt(urlObj.searchParams.get('originHeight') || '0', 10)
+        return { id: uri, width, height }
+      }
+    } catch (e) {
+      // Invalid URL, return undefined
+      return undefined;
     }
   }
+  return undefined;
 }
 
 export type ImageProps = ImgHTMLAttributes<HTMLImageElement> & {
-  fittingType?: FittingType
+  fittingType?: 'fill' | 'fit'
 }
-
-type WixImageProps = Omit<ImageProps, 'src'> & { data: ImageData }
-const WixImage = forwardRef<HTMLImageElement, WixImageProps>(
-  ({ data, fittingType = 'fill', ...imgProps }, parentRef) => {
-    const ref = useRef<HTMLImageElement | null>(null)
-    const size = useSize(ref)
-
-    // Expose the ref to the parent component
-    useImperativeHandle(parentRef, () => ref.current as HTMLImageElement)
-
-    if (!size) {
-      const { uri, ...placeholder } = getPlaceholder(fittingType ?? 'fit', data, { htmlTag: 'img' })
-      // @ts-expect-error placeholder.css.img properties are not typed correctly.
-      return <img ref={ref} src={`${STATIC_MEDIA_URL}${uri}`} style={placeholder.css.img} {...placeholder.attr}  {...imgProps} />
-    }
-
-    const scale = fittingType === 'fit' ? sdk.getScaleToFitImageURL : sdk.getScaleToFillImageURL
-    const height = size.height || data.height * (size.width / data.width) || data.height
-    const width = size.width || data.width * (size.height / data.height) || data.width
-    const src = scale(data.id, data.width, data.height, width, height)
-
-    return <img ref={ref} {...imgProps} src={src} />
-  }
-)
-WixImage.displayName = 'WixImage'
 
 export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }, ref) => {
   const [imgSrc, setImgSrc] = useState<string | undefined>(() => {
@@ -190,13 +173,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(({ src, ...props }
     }
   };
 
-  const imageData = getImageData(finalSrc);
-
-  if (!imageData) {
-    // If we can't parse as Wix image data, render as regular img
-    return <img data-error-image={finalSrc === FALLBACK_IMAGE_URL} ref={ref} src={finalSrc} {...imageProps} />
-  }
-
-  return <WixImage ref={ref} data={imageData} {...imageProps} />
+  // Render as regular img tag (simplified approach without WixImage component)
+  return <img data-error-image={finalSrc === FALLBACK_IMAGE_URL} ref={ref} src={finalSrc} {...imageProps} />
 })
 Image.displayName = 'Image'

@@ -57,11 +57,13 @@ import 'zod';
 import 'lucide-react';
 import 'lodash';
 
-// Wix SDK modules used by src/
+// Wix SDK modules used by src/ (server-side only - API routes)
+// NOTE: @wix/image-kit is NOT imported here because it's only used in
+// server-side API routes and should not be bundled into the client.
+// Client components use local constants instead.
 import '@wix/data';
 import '@wix/ecom';
 import '@wix/essentials';
-import '@wix/image-kit';
 import '@wix/media';
 import '@wix/members';
 import '@wix/redirects';

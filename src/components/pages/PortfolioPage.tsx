@@ -7,8 +7,10 @@ import Footer from '@/components/Footer';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
 import WixImageResolver from '@/lib/wix-image-resolver';
-import { STATIC_MEDIA_URL } from '@wix/image-kit';
 import { Image } from '@/components/ui/image';
+
+// STATIC_MEDIA_URL is a constant that can be safely used in client components
+const STATIC_MEDIA_URL = 'https://static.wixstatic.com/media/';
 
 interface ImageWithAspectRatio extends PortfolioImages {
   aspectRatio?: number;
