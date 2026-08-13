@@ -35,10 +35,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       try {
         const result = await BaseCrudService.getAll<Splashpage>('splashpage', {}, { limit: 50 });
         
+        console.log('[SplashScreen] CMS query result:', result);
+        
         if (result?.items && result.items.length > 0) {
+          console.log('[SplashScreen] Found items:', result.items);
+          
           // First try to find an active logo
           const activeLogo = result.items.find((item) => item.isActive);
           if (activeLogo?.logoImage) {
+            console.log('[SplashScreen] Using active logo:', activeLogo.logoImage);
             setLogoImage(activeLogo.logoImage);
             setIsLoadingLogo(false);
             return;
@@ -47,10 +52,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           // Fallback: use first logo with an image if no active one found
           const firstLogoWithImage = result.items.find((item) => item.logoImage);
           if (firstLogoWithImage?.logoImage) {
+            console.log('[SplashScreen] Using first available logo:', firstLogoWithImage.logoImage);
             setLogoImage(firstLogoWithImage.logoImage);
             setIsLoadingLogo(false);
             return;
           }
+          
+          console.log('[SplashScreen] No items with logoImage found');
+        } else {
+          console.log('[SplashScreen] No items in collection');
         }
       } catch (err) {
         console.error('[SplashScreen] CMS query error:', err);

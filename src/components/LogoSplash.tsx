@@ -16,16 +16,22 @@ export default function LogoSplash() {
         // Diagnostic: CMS query initiated
         const result = await BaseCrudService.getAll<Splashpage>('splashpage');
         
+        console.log('[LogoSplash] CMS query result:', result);
+        
         if (!result.items || result.items.length === 0) {
           // No items in collection
+          console.log('[LogoSplash] No items in collection');
           setIsLoadingLogo(false);
           return;
         }
+        
+        console.log('[LogoSplash] Found items:', result.items);
         
         // First try to find an active logo
         const activeLogo = result.items.find((item) => item.isActive);
         if (activeLogo?.logoImage) {
           // Diagnostic: Active logo found with image
+          console.log('[LogoSplash] Using active logo:', activeLogo.logoImage);
           setLogoImage(activeLogo.logoImage);
           setIsLoadingLogo(false);
           return;
@@ -35,10 +41,13 @@ export default function LogoSplash() {
         const firstLogoWithImage = result.items.find((item) => item.logoImage);
         if (firstLogoWithImage?.logoImage) {
           // Diagnostic: Using first available logo
+          console.log('[LogoSplash] Using first available logo:', firstLogoWithImage.logoImage);
           setLogoImage(firstLogoWithImage.logoImage);
           setIsLoadingLogo(false);
           return;
         }
+        
+        console.log('[LogoSplash] No items with logoImage found');
       } catch (err) {
         // Diagnostic: Log error but don't display to user
         console.error('[LogoSplash] CMS query error:', err);
