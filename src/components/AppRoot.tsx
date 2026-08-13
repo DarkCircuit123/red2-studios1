@@ -10,6 +10,7 @@ import { MemberProvider } from '@/integrations/members/providers';
 import { initCSPFixes } from '@/lib/csp-headers-fix';
 import { initAuthErrorHandling } from '@/lib/auth-error-handler';
 import initializeRuntimeImageSafetyGuard from '@/lib/runtime-image-safety-guard';
+import { initializeFullStoryBlocker } from '@/lib/fullstory-blocker';
 
 // DEV ONLY. Lets Vite's dependency scanner find every third-party package in
 // its initial crawl so it pre-bundles them in one pass. Without this, packages
@@ -24,7 +25,11 @@ if (import.meta.env.DEV) {
 
 // Initialize security and error handling on app load
 if (typeof window !== 'undefined') {
-  // CRITICAL: Initialize safety guards FIRST, before any other code runs
+  // CRITICAL: Initialize FullStory blocker FIRST, before any other code runs
+  // This must run before Wix injects FullStory scripts
+  initializeFullStoryBlocker();
+  
+  // Then initialize other safety guards
   initializeRuntimeImageSafetyGuard();
   
   initCSPFixes();
