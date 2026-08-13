@@ -25,13 +25,30 @@
 
 import { BaseCrudService } from '@/integrations';
 import { BookingAvailability } from '@/entities/index';
+import { verifyAdminToken, getClientIP } from '@/lib/auth-security';
 
-export async function GET({ request }: { request: Request }) {
+export async function GET({ request, cookies }: { request: Request; cookies: any }) {
   const startTime = new Date();
   const requestId = Math.random().toString(36).substring(7);
   
   try {
     console.log(`[GET_ALL:${requestId}] GET /api/booking-availability - Starting`);
+
+    // ADMIN GATE: Verify admin session before allowing access
+    const sessionToken = cookies?.get?.('admin_session')?.value;
+    const validation = sessionToken
+      ? await verifyAdminToken(sessionToken)
+      : { valid: false as const };
+
+    if (!validation.valid) {
+      console.warn(`[GET_ALL:${requestId}] [SECURITY] Unauthenticated get-all attempt from IP: ${getClientIP(request.headers)}`);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[GET_ALL:${requestId}] ✓ Admin authenticated`);
 
     // Parse query parameters
     const url = new URL(request.url);

@@ -19,8 +19,7 @@
  * 500: Server error
  */
 
-import { auth } from '@wix/essentials';
-import { items } from '@wix/data';
+import { BaseCrudService } from '@/integrations';
 import { requireAdmin } from '@/lib/auth-security';
 
 export async function DELETE({ request, cookies }: { request: Request; cookies: any }) {
@@ -49,9 +48,8 @@ export async function DELETE({ request, cookies }: { request: Request; cookies: 
       );
     }
 
-    // Use elevated permissions to delete the booking availability
-    const elevatedRemove = auth.elevate(items.remove);
-    await elevatedRemove('bookingavailability', body.id);
+    // Use BaseCrudService to delete with elevated permissions
+    await BaseCrudService.delete('bookingavailability', body.id);
 
     const duration = new Date().getTime() - startTime.getTime();
     console.log(`[DELETE:${requestId}] ✓ Successfully deleted slot ${body.id} in ${duration}ms`);

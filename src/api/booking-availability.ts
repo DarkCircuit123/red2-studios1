@@ -24,6 +24,7 @@ export async function getAvailability(): Promise<{
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
     });
 
     console.log('[Frontend] Get availability response status:', response.status);
@@ -74,6 +75,7 @@ export async function getBookings(): Promise<{
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
     });
 
     console.log('[Frontend] Get bookings response status:', response.status);
@@ -137,6 +139,7 @@ export async function createBookingAvailability(
           'Content-Type': 'application/json',
         },
         body: payload,
+        credentials: 'include',
       });
       console.log('[Frontend] Fetch request completed');
     } catch (fetchError) {
@@ -212,6 +215,7 @@ export async function updateBookingAvailability(
         'Content-Type': 'application/json',
       },
       body: payload,
+      credentials: 'include',
     });
 
     console.log('[Frontend] Response status:', response.status);
@@ -267,6 +271,7 @@ export async function deleteBookingAvailability(
         'Content-Type': 'application/json',
       },
       body: payload,
+      credentials: 'include',
     });
 
     console.log('[Frontend] Response status:', response.status);
@@ -321,6 +326,7 @@ export async function getPublicAvailability(): Promise<{
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
     });
 
     console.log('[Frontend] Get public availability response status:', response.status);
@@ -386,6 +392,7 @@ export async function submitPublicBooking(
         clientMessage,
         slotId
       }),
+      credentials: 'include',
     });
 
     console.log('[Frontend] Submit booking response status:', response.status);
