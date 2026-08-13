@@ -1,17 +1,18 @@
 /**
  * Backend endpoint for fetching all bookings
- * Uses elevated permissions to bypass frontend restrictions
+ * Uses Wix SDK auth.elevate() to bypass collection permission restrictions
  * 
  * This endpoint is called from the frontend BookingManagerPro component
- * and uses backend-only APIs with elevated permissions to read from
- * the bookings collection.
+ * and uses the Wix @wix/data API with auth.elevate() to read from
+ * the bookings collection with elevated permissions.
  * 
  * CRITICAL: The bookings collection has read: ADMIN permissions.
- * suppressAuth: true is required to bypass this restriction on the backend.
+ * auth.elevate() is required to bypass this restriction on the backend.
+ * BaseCrudService.suppressAuth does NOT work on the backend.
  */
 
-// Import CMS service for backend data access
-import { BaseCrudService } from '@/integrations';
+import { auth } from '@wix/essentials';
+import { items } from '@wix/data';
 import { Bookings } from '@/entities/index';
 import { verifyAdminToken, getClientIP } from '@/lib/auth-security';
 
@@ -21,12 +22,7 @@ export async function GET({ request, cookies }: { request: Request; cookies: any
   try {
     console.log(`[GET_BOOKINGS:${requestId}] Starting request`);
     
-    // ADMIN GATE. This endpoint queries with suppressAuth: true, so it
-    // bypasses collection permissions entirely and returns every client's
-    // name, email, phone number and message. It previously had no
-    // authentication of any kind - anyone who knew the URL could GET the
-    // full client list. Locking the bookings collection to PRIVILEGED
-    // read would have been pointless while this route stayed open.
+    // ADMIN GATE: Verify admin session before allowing access to bookings
     const sessionToken = cookies?.get?.('admin_session')?.value;
     console.log(`[GET_BOOKINGS:${requestId}] Session token present: ${!!sessionToken}`);
     
@@ -43,12 +39,12 @@ export async function GET({ request, cookies }: { request: Request; cookies: any
     }
 
     console.log(`[GET_BOOKINGS:${requestId}] ✓ Admin authenticated as: ${validation.username}`);
-    console.log(`[GET_BOOKINGS:${requestId}] Attempting to fetch bookings collection with suppressAuth: true`);
+    console.log(`[GET_BOOKINGS:${requestId}] Attempting to fetch bookings collection with auth.elevate()`);
 
-    // Use BaseCrudService to fetch bookings with suppressAuth to bypass permission restrictions
-    // suppressAuth: true tells Wix to bypass collection permission checks on the backend
-    // This is REQUIRED because the bookings collection has read: ADMIN permissions
-    const results = await BaseCrudService.getAll<Bookings>('bookings', {}, { limit: 500, suppressAuth: true });
+    // Use Wix SDK auth.elevate() to bypass permission restrictions
+    // This is the CORRECT way to read protected collections on the backend
+    const elevatedQuery = auth.elevate(items.query);
+    const results = await elevatedQuery('bookings').find();
 
     console.log(`[GET_BOOKINGS:${requestId}] ✓ Successfully fetched ${results.items?.length || 0} bookings (total: ${results.totalCount})`);
 
@@ -70,7 +66,7 @@ export async function GET({ request, cookies }: { request: Request; cookies: any
     // Check if this is a WDE0027 permission error
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (errorMessage.includes('WDE0027') || errorMessage.includes('permissions')) {
-      console.error(`[GET_BOOKINGS:${requestId}] CRITICAL: Permission error detected - suppressAuth may not be working`);
+      console.error(`[GET_BOOKINGS:${requestId}] CRITICAL: Permission error detected - auth.elevate() may not be working`);
     }
     
     return new Response(

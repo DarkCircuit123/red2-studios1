@@ -2,11 +2,12 @@
  * Backend endpoint for fetching all bookings with admin authentication
  * Used by UpcomingBookings component and other admin interfaces
  * 
- * This endpoint requires admin session and uses elevated permissions
+ * This endpoint requires admin session and uses Wix SDK auth.elevate()
  * to bypass collection permission restrictions.
  */
 
-import { BaseCrudService } from '@/integrations';
+import { auth } from '@wix/essentials';
+import { items } from '@wix/data';
 import { Bookings } from '@/entities/index';
 import { verifyAdminToken, getClientIP } from '@/lib/auth-security';
 
@@ -33,8 +34,10 @@ export async function GET({ request, cookies }: { request: Request; cookies: any
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '100'), 500);
     const skip = parseInt(url.searchParams.get('skip') || '0');
 
-    // Use BaseCrudService to fetch bookings with suppressAuth to bypass permission restrictions
-    const results = await BaseCrudService.getAll<Bookings>('bookings', {}, { limit, skip, suppressAuth: true });
+    // Use Wix SDK auth.elevate() to fetch bookings with elevated permissions
+    // This is the CORRECT way to read protected collections on the backend
+    const elevatedQuery = auth.elevate(items.query);
+    const results = await elevatedQuery('bookings').find({ limit, skip });
 
     console.log('[Backend] Fetched bookings:', results.items?.length || 0);
 
