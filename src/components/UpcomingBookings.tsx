@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Mail, Phone, User, Trash2, Check } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 
 interface Booking {
@@ -29,8 +28,25 @@ export default function UpcomingBookings() {
   const loadBookings = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll('bookings', {}, { limit: 100, suppressAuth: true });
-      const allBookings = (result.items || []) as Booking[];
+      // Use backend API endpoint with admin authentication
+      const response = await fetch('/api/booking-availability/get-all-bookings', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load bookings: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load bookings');
+      }
+
+      const allBookings = (result.data || []) as Booking[];
       
       // Sort by date (upcoming first)
       const sorted = allBookings.sort((a, b) => {

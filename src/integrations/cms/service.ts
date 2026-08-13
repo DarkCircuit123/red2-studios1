@@ -14,7 +14,7 @@ export const cmsService = {
   getAll: async <T>(
     collectionId: string,
     refs?: { singleRef?: string[]; multiRef?: string[] },
-    options?: { limit?: number; skip?: number }
+    options?: { limit?: number; skip?: number; suppressAuth?: boolean }
   ) => {
     try {
       // Ensure refs is always an object, never undefined
@@ -33,10 +33,11 @@ export const cmsService = {
   getById: async <T>(
     collectionId: string,
     itemId: string,
-    refs?: { singleRef?: string[]; multiRef?: string[] }
+    refs?: { singleRef?: string[]; multiRef?: string[] },
+    options?: { suppressAuth?: boolean }
   ) => {
     try {
-      return await WixBaseCrudService.getById<T>(collectionId, itemId, refs);
+      return await WixBaseCrudService.getById<T>(collectionId, itemId, refs, options);
     } catch (error) {
       console.error(`[CMS] Error fetching ${itemId} from ${collectionId}:`, error);
       throw error;
@@ -49,10 +50,11 @@ export const cmsService = {
   create: async <T>(
     collectionId: string,
     itemData: T,
-    multiRefs?: Record<string, string[]>
+    multiRefs?: Record<string, string[]>,
+    options?: { suppressAuth?: boolean }
   ) => {
     try {
-      return await WixBaseCrudService.create(collectionId, itemData, multiRefs);
+      return await WixBaseCrudService.create(collectionId, itemData, multiRefs, options);
     } catch (error) {
       console.error(`[CMS] Error creating in ${collectionId}:`, error);
       throw error;
@@ -64,10 +66,11 @@ export const cmsService = {
    */
   update: async <T>(
     collectionId: string,
-    itemData: Partial<T> & { _id: string }
+    itemData: Partial<T> & { _id: string },
+    options?: { suppressAuth?: boolean }
   ) => {
     try {
-      return await WixBaseCrudService.update(collectionId, itemData);
+      return await WixBaseCrudService.update(collectionId, itemData, options);
     } catch (error) {
       console.error(`[CMS] Error updating in ${collectionId}:`, error);
       throw error;
@@ -77,9 +80,9 @@ export const cmsService = {
   /**
    * Delete an item
    */
-  delete: async (collectionId: string, itemId: string) => {
+  delete: async (collectionId: string, itemId: string, options?: { suppressAuth?: boolean }) => {
     try {
-      return await WixBaseCrudService.delete(collectionId, itemId);
+      return await WixBaseCrudService.delete(collectionId, itemId, options);
     } catch (error) {
       console.error(`[CMS] Error deleting from ${collectionId}:`, error);
       throw error;
@@ -92,10 +95,11 @@ export const cmsService = {
   addReferences: async (
     collectionId: string,
     itemId: string,
-    refs: Record<string, string[]>
+    refs: Record<string, string[]>,
+    options?: { suppressAuth?: boolean }
   ) => {
     try {
-      return await WixBaseCrudService.addReferences(collectionId, itemId, refs);
+      return await WixBaseCrudService.addReferences(collectionId, itemId, refs, options);
     } catch (error) {
       console.error(`[CMS] Error adding references in ${collectionId}:`, error);
       throw error;
@@ -108,10 +112,11 @@ export const cmsService = {
   removeReferences: async (
     collectionId: string,
     itemId: string,
-    refs: Record<string, string[]>
+    refs: Record<string, string[]>,
+    options?: { suppressAuth?: boolean }
   ) => {
     try {
-      return await WixBaseCrudService.removeReferences(collectionId, itemId, refs);
+      return await WixBaseCrudService.removeReferences(collectionId, itemId, refs, options);
     } catch (error) {
       console.error(`[CMS] Error removing references in ${collectionId}:`, error);
       throw error;
