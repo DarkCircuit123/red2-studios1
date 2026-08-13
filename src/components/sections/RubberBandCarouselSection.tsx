@@ -87,45 +87,57 @@ const RubberBandCarouselSection: React.FC = () => {
   // from the 'homepageimages' collection which is managed via the admin panel.
   const [cmsImages, setCmsImages] = useState<CarouselImage[] | null>(null);
 
+  // Load carousel images from CMS
+  const loadCarouselImages = useCallback(async () => {
+    try {
+      const data = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
+      const collected: CarouselImage[] = [];
+
+      data.items?.forEach((item) => {
+        if (item.heroImage) {
+          // Convert wix:image:// URLs to HTTPS for browser rendering
+          const httpsUrl = convertWixImageToHttps(item.heroImage);
+          if (httpsUrl) {
+            collected.push({
+              id: item._id,
+              url: httpsUrl,
+              alt: item.imageName || 'Carousel photo',
+            });
+          }
+        }
+      });
+
+      // Only take over when there is something to show, so an empty or
+      // failed read leaves the existing visuals in place rather than
+      // blanking the section.
+      setCmsImages(collected.length > 0 ? collected : null);
+    } catch (error) {
+      console.error('[RubberBandCarousel] Failed to load carousel images:', error);
+      console.warn('[RubberBandCarousel] Using fallback images');
+      setCmsImages(null);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
-      try {
-        const data = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
-        const collected: CarouselImage[] = [];
+    // Load images immediately on mount
+    if (!cancelled) {
+      loadCarouselImages();
+    }
 
-        data.items?.forEach((item) => {
-          if (item.heroImage) {
-            // Convert wix:image:// URLs to HTTPS for browser rendering
-            const httpsUrl = convertWixImageToHttps(item.heroImage);
-            if (httpsUrl) {
-              collected.push({
-                id: item._id,
-                url: httpsUrl,
-                alt: item.imageName || 'Carousel photo',
-              });
-            }
-          }
-        });
-
-        if (!cancelled) {
-          // Only take over when there is something to show, so an empty or
-          // failed read leaves the existing visuals in place rather than
-          // blanking the section.
-          setCmsImages(collected.length > 0 ? collected : null);
-        }
-      } catch (error) {
-        console.error('[RubberBandCarousel] Failed to load carousel images:', error);
-        console.warn('[RubberBandCarousel] Using fallback images');
-        if (!cancelled) setCmsImages(null);
+    // Poll for new images every 3 seconds to catch admin uploads
+    const pollInterval = setInterval(() => {
+      if (!cancelled) {
+        loadCarouselImages();
       }
-    })();
+    }, 3000);
 
     return () => {
       cancelled = true;
+      clearInterval(pollInterval);
     };
-  }, []);
+  }, [loadCarouselImages]);
 
   // Fallback used only until the CMS responds, or if it has no images yet.
   const fallbackImages: CarouselImage[] = useMemo(() => [
