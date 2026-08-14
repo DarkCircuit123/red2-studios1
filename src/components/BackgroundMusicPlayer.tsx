@@ -15,7 +15,7 @@ export default function BackgroundMusicPlayer() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [volume, setVolume] = useState(30);
 
-  // Load all music tracks from CMS
+  // Load all music tracks from CMS on every site load
   useEffect(() => {
     const loadMusicTracks = async () => {
       try {
@@ -28,9 +28,13 @@ export default function BackgroundMusicPlayer() {
           if (enabledTracks[0]?.volume) {
             setVolume(enabledTracks[0].volume);
           }
+          console.log('[MUSIC_PLAYER] Loaded enabled music tracks:', enabledTracks.length);
+        } else {
+          console.log('[MUSIC_PLAYER] No enabled music tracks found');
         }
       } catch (error) {
         // Silently fail - music is optional
+        console.error('[MUSIC_PLAYER] Error loading music tracks:', error);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -47,6 +51,7 @@ export default function BackgroundMusicPlayer() {
   }, [volume]);
 
   // Attempt to autoplay music on site load
+  // If browser autoplay policy blocks audible playback, initialize on first user interaction
   useEffect(() => {
     if (isLoadingSettings || musicTracks.length === 0 || !audioRef.current) return;
 
@@ -57,6 +62,8 @@ export default function BackgroundMusicPlayer() {
           audioRef.current!.load();
         }
         
+        console.log('[MUSIC_PLAYER] Attempting autoplay on site load');
+        
         // Attempt to play immediately
         const playPromise = audioRef.current!.play();
         if (playPromise !== undefined) {
@@ -64,10 +71,11 @@ export default function BackgroundMusicPlayer() {
           setIsPlaying(true);
           setAudioError(false);
           setHasInteracted(true);
+          console.log('[MUSIC_PLAYER] Autoplay succeeded');
         }
       } catch (err) {
-        // Autoplay was blocked, will retry on first user interaction
-        // Silently fail - don't log errors
+        // Autoplay was blocked by browser policy, will retry on first user interaction
+        console.log('[MUSIC_PLAYER] Autoplay blocked by browser policy, waiting for user interaction');
       }
     };
 
@@ -77,6 +85,7 @@ export default function BackgroundMusicPlayer() {
     // Fallback: Listen for user interaction to retry playback if autoplay failed
     const handleUserInteraction = async () => {
       if (!hasInteracted && audioRef.current && !isPlaying) {
+        console.log('[MUSIC_PLAYER] User interaction detected, attempting playback');
         setHasInteracted(true);
         
         try {
@@ -85,9 +94,10 @@ export default function BackgroundMusicPlayer() {
             await playPromise;
             setIsPlaying(true);
             setAudioError(false);
+            console.log('[MUSIC_PLAYER] Playback started on user interaction');
           }
         } catch (err) {
-          // Silently fail - don't log errors
+          console.error('[MUSIC_PLAYER] Playback failed on user interaction:', err);
           setAudioError(true);
         }
       }
@@ -138,7 +148,7 @@ export default function BackgroundMusicPlayer() {
     const audio = event.target as HTMLAudioElement;
     const errorCode = audio.error?.code;
     
-    // Silently fail - don't log errors for audio playback
+    console.error('[MUSIC_PLAYER] Audio playback error:', errorCode);
     setAudioError(true);
   };
 

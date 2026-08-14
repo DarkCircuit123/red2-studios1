@@ -63,13 +63,14 @@ export default function BackgroundMusicManager() {
       setIsUploading(true);
 
       // Use unified upload service with wix-media-upload-service
+      // This will use buildWixAudioUrl() for audio files to get HTTPS URL
       const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
 
-      // Update settings with the uploaded music URL
+      // Update settings with the uploaded music URL (HTTPS URL from buildWixAudioUrl)
       const updated: MusicSettings = {
         ...settings,
-        musicUrl: result.mediaUrl,
-        audio: result.mediaUrl,
+        musicUrl: result.mediaUrl,  // HTTPS audio URL from Wix Media Manager
+        audio: result.mediaUrl,      // Store the same HTTPS URL in audio field
         musicTitle: file.name.replace(/\.[^/.]+$/, ''),
         isEnabled: true,
       };
