@@ -9,6 +9,7 @@ import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { motion } from 'framer-motion';
 
 export default function RubberBandPhotosManager() {
@@ -104,7 +105,7 @@ export default function RubberBandPhotosManager() {
           imageName: file.name.replace(/\.[^/.]+$/, ''),
         };
 
-        await BaseCrudService.update('homepageimages', updatedPhoto);
+        await adminCms.update('homepageimages', updatedPhoto);
         
         // Update local state
         setPhotos(photos.map(p => p._id === photoId ? updatedPhoto : p));
@@ -134,7 +135,7 @@ export default function RubberBandPhotosManager() {
   const handleDeletePhoto = async (photoId: string) => {
     try {
       setIsSaving(true);
-      await BaseCrudService.delete('homepageimages', photoId);
+      await adminCms.delete('homepageimages', photoId);
       setPhotos(photos.filter(p => p._id !== photoId));
 
       toast({
@@ -228,91 +229,100 @@ export default function RubberBandPhotosManager() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {photos.map((photo, index) => (
-                <motion.div
-                  key={photo._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="relative rounded-lg overflow-hidden border-2 border-slate-200 bg-white hover:border-purple-300 transition-colors group"
-                >
-                  {/* Position Badge */}
-                  <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                    #{index + 1}
-                  </div>
+              {photos.map((photo, index) => {
+                // Convert wix:image URLs to HTTPS for display
+                const displayImageUrl = convertWixImageToHttps(photo.heroImage) || photo.heroImage;
+                
+                return (
+                  <motion.div
+                    key={photo._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="relative rounded-lg overflow-hidden border-2 border-slate-200 bg-white hover:border-purple-300 transition-colors group"
+                  >
+                    {/* Position Badge */}
+                    <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                      #{index + 1}
+                    </div>
 
-                  {/* Photo Thumbnail Preview */}
-                  {photo.heroImage && (
-                    <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
-                      <img
-                        src={photo.heroImage}
-                        alt={photo.imageName || 'Carousel photo'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                        <button
-                          onClick={() => window.open(photo.heroImage, '_blank')}
-                          className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                          title="View full image"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <label className="cursor-pointer">
-                          <input
-                            ref={(el) => {
-                              if (el) replaceFileInputRefs.current[photo._id] = el;
-                            }}
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleReplacePhoto(e, photo._id)}
-                            disabled={replacingId === photo._id}
-                            className="hidden"
-                          />
+                    {/* Photo Thumbnail Preview */}
+                    {displayImageUrl && (
+                      <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
+                        <img
+                          src={displayImageUrl}
+                          alt={photo.imageName || 'Carousel photo'}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            console.warn('Failed to load image:', displayImageUrl);
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                           <button
-                            onClick={() => {
-                              const input = replaceFileInputRefs.current[photo._id];
-                              if (input) input.click();
-                            }}
-                            disabled={replacingId === photo._id}
-                            className="p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50"
-                            title="Replace this image"
+                            onClick={() => window.open(displayImageUrl, '_blank')}
+                            className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                            title="View full image"
                           >
-                            {replacingId === photo._id ? (
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <label className="cursor-pointer">
+                            <input
+                              ref={(el) => {
+                                if (el) replaceFileInputRefs.current[photo._id] = el;
+                              }}
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleReplacePhoto(e, photo._id)}
+                              disabled={replacingId === photo._id}
+                              className="hidden"
+                            />
+                            <button
+                              onClick={() => {
+                                const input = replaceFileInputRefs.current[photo._id];
+                                if (input) input.click();
+                              }}
+                              disabled={replacingId === photo._id}
+                              className="p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50"
+                              title="Replace this image"
+                            >
+                              {replacingId === photo._id ? (
+                                <LoadingSpinner className="w-4 h-4" />
+                              ) : (
+                                <RefreshCw className="w-4 h-4" />
+                              )}
+                            </button>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePhoto(photo._id)}
+                            disabled={isSaving}
+                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Delete this image"
+                          >
+                            {isSaving ? (
                               <LoadingSpinner className="w-4 h-4" />
                             ) : (
-                              <RefreshCw className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             )}
                           </button>
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => handleDeletePhoto(photo._id)}
-                          disabled={isSaving}
-                          className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Delete this image"
-                        >
-                          {isSaving ? (
-                            <LoadingSpinner className="w-4 h-4" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Photo Info */}
+                    <div className="p-3 space-y-2 bg-white">
+                      <p className="text-sm font-medium text-slate-900 truncate">
+                        {photo.imageName || 'Untitled'}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                        <span>Active in carousel</span>
                       </div>
                     </div>
-                  )}
-
-                  {/* Photo Info */}
-                  <div className="p-3 space-y-2 bg-white">
-                    <p className="text-sm font-medium text-slate-900 truncate">
-                      {photo.imageName || 'Untitled'}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
-                      <span>Active in carousel</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </div>
