@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Upload, Trash2, Eye, Plus, X } from 'lucide-react';
+import { Upload, Trash2, Eye, Plus, X, RefreshCw, Maximize2 } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { motion } from 'framer-motion';
 import ImageThumbnailPreview from './ImageThumbnailPreview';
@@ -33,12 +33,21 @@ interface UploadFormData {
   featured: boolean;
 }
 
+interface PreviewState {
+  photoId: string | null;
+  imageUrl: string | null;
+}
+
 export default function GalleryPhotoManager() {
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [fullImagePreview, setFullImagePreview] = useState<PreviewState>({
+    photoId: null,
+    imageUrl: null,
+  });
   const [formData, setFormData] = useState<UploadFormData>({
     category: 'Commercial',
     subCategory: 'Los Angeles 2006',
@@ -476,9 +485,20 @@ export default function GalleryPhotoManager() {
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
                     <button
                       type="button"
-                      onClick={() => window.open(convertWixImageToHttps(photo.image) || photo.image, '_blank')}
+                      onClick={() => {
+                        const imageUrl = convertWixImageToHttps(photo.image) || photo.image;
+                        setFullImagePreview({ photoId: photo._id, imageUrl });
+                      }}
                       className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                      title="View full image"
+                      title="Preview full image"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => window.open(convertWixImageToHttps(photo.image) || photo.image, '_blank')}
+                      className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                      title="View full image in new tab"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -522,6 +542,35 @@ export default function GalleryPhotoManager() {
           </div>
         )}
       </Card>
+
+      {/* Full Image Preview Modal */}
+      {fullImagePreview.imageUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setFullImagePreview({ photoId: null, imageUrl: null })}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setFullImagePreview({ photoId: null, imageUrl: null })}
+              className="absolute top-4 right-4 z-10 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              title="Close preview"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={fullImagePreview.imageUrl}
+              alt="Full preview"
+              className="w-full h-full object-contain"
+            />
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
