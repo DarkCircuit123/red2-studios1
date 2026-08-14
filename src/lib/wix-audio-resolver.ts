@@ -63,13 +63,13 @@ export function convertWixAudioUrl(wixUrl: string): string | null {
 
 /**
  * Get a playable audio URL from MusicSettings
- * Tries musicUrl first, then converts audio field if needed
+ * Uses canonical audio field (HTTPS URL) for playback
  */
 export function getPlayableAudioUrl(musicUrl?: string, audioField?: string): string | null {
-  // Prefer musicUrl if it's a valid HTTPS URL
-  if (musicUrl && musicUrl.startsWith('https://')) {
-    console.log('[WIX_AUDIO] Using musicUrl:', musicUrl);
-    return musicUrl;
+  // Prefer audioField (canonical audio field) if it's a valid HTTPS URL
+  if (audioField && audioField.startsWith('https://')) {
+    console.log('[WIX_AUDIO] Using canonical audio field (HTTPS):', audioField);
+    return audioField;
   }
 
   // Try to convert audio field if it's a wix:audio URL
@@ -81,10 +81,19 @@ export function getPlayableAudioUrl(musicUrl?: string, audioField?: string): str
     }
   }
 
-  // If audioField is already an HTTPS URL, use it
-  if (audioField && audioField.startsWith('https://')) {
-    console.log('[WIX_AUDIO] Using audioField (HTTPS):', audioField);
-    return audioField;
+  // Fallback to musicUrl if it's a valid HTTPS URL
+  if (musicUrl && musicUrl.startsWith('https://')) {
+    console.log('[WIX_AUDIO] Using musicUrl (fallback):', musicUrl);
+    return musicUrl;
+  }
+
+  // Try to convert musicUrl if it's a wix:audio URL
+  if (musicUrl && musicUrl.startsWith('wix:audio://')) {
+    const converted = convertWixAudioUrl(musicUrl);
+    if (converted) {
+      console.log('[WIX_AUDIO] Using converted musicUrl (fallback):', converted);
+      return converted;
+    }
   }
 
   console.warn('[WIX_AUDIO] No playable audio URL found:', { musicUrl, audioField });

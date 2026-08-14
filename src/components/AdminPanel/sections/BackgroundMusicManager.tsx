@@ -36,36 +36,25 @@ export default function BackgroundMusicManager() {
         console.log('[MUSIC_MANAGER] Found existing settings:', result.items[0]);
         setSettings(result.items[0]);
       } else {
-        // Create a default music settings entry if none exists
-        console.log('[MUSIC_MANAGER] No settings found, creating default...');
-        const newSettings: MusicSettings = {
+        // No settings found - create a placeholder that will be persisted on first upload
+        console.log('[MUSIC_MANAGER] No settings found, creating placeholder...');
+        const placeholderSettings: MusicSettings = {
           _id: crypto.randomUUID(),
           musicTitle: 'Background Music',
           isEnabled: false,
           autoplayEnabled: false,
           loopMusic: true,
           volume: 50,
+          // No audio/musicUrl yet - will be set on upload
         };
         
-        try {
-          const created = await adminCms.create('musicsettings', newSettings);
-          console.log('[MUSIC_MANAGER] Successfully created default settings:', created);
-          setSettings(newSettings);
-        } catch (createError) {
-          console.error('[MUSIC_MANAGER] Failed to create default settings:', createError);
-          // Still set local state even if creation fails, so user can upload
-          setSettings(newSettings);
-          toast({
-            title: 'Warning',
-            description: 'Could not create default settings, but you can still upload music',
-            variant: 'default',
-          });
-        }
+        setSettings(placeholderSettings);
+        console.log('[MUSIC_MANAGER] Placeholder created (not persisted yet)');
       }
     } catch (error) {
       console.error('[MUSIC_MANAGER] Error loading settings:', error);
-      // Create a temporary settings object so user can still upload
-      const tempSettings: MusicSettings = {
+      // Create a placeholder so user can still upload
+      const placeholderSettings: MusicSettings = {
         _id: crypto.randomUUID(),
         musicTitle: 'Background Music',
         isEnabled: false,
@@ -73,7 +62,7 @@ export default function BackgroundMusicManager() {
         loopMusic: true,
         volume: 50,
       };
-      setSettings(tempSettings);
+      setSettings(placeholderSettings);
       toast({
         title: 'Warning',
         description: 'Could not load music settings, but you can still upload music',
@@ -92,31 +81,55 @@ export default function BackgroundMusicManager() {
       setIsUploading(true);
       console.log('[MUSIC_MANAGER] Starting music upload:', { fileName: file.name, size: file.size, type: file.type });
 
-      // Use unified upload service with wix-media-upload-service
-      // This will use buildWixAudioUrl() for audio files to get HTTPS URL
+      // Upload file to Wix Media Manager
       const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
       console.log('[MUSIC_MANAGER] Upload completed, received URL:', { mediaUrl: result.mediaUrl });
 
-      // Update settings with the uploaded music URL (HTTPS URL from buildWixAudioUrl)
-      const updated: MusicSettings = {
-        ...settings,
-        musicUrl: result.mediaUrl,  // HTTPS audio URL from Wix Media Manager
-        audio: result.mediaUrl,      // Store the same HTTPS URL in audio field
-        musicTitle: file.name.replace(/\.[^/.]+$/, ''),
-        isEnabled: true,
-      };
+      // Check if this is a new record or an update
+      let updated: MusicSettings;
+      let isNewRecord = false;
+
+      // Check if settings has been persisted to CMS (has _createdDate or was loaded from CMS)
+      if (settings._createdDate) {
+        // Existing record - update it
+        console.log('[MUSIC_MANAGER] Updating existing MusicSettings record');
+        updated = {
+          ...settings,
+          audio: result.mediaUrl,  // Canonical audio field - store HTTPS URL
+          musicTitle: file.name.replace(/\.[^/.]+$/, ''),
+          isEnabled: true,
+        };
+      } else {
+        // New record - create it with the uploaded audio
+        console.log('[MUSIC_MANAGER] Creating new MusicSettings record');
+        isNewRecord = true;
+        updated = {
+          ...settings,
+          audio: result.mediaUrl,  // Canonical audio field - store HTTPS URL
+          musicTitle: file.name.replace(/\.[^/.]+$/, ''),
+          isEnabled: true,
+        };
+      }
       
       console.log('[MUSIC_MANAGER] Saving to CMS:', { 
         _id: updated._id,
-        musicUrl: updated.musicUrl,
+        audio: updated.audio,
         musicTitle: updated.musicTitle,
-        isEnabled: updated.isEnabled
+        isEnabled: updated.isEnabled,
+        isNewRecord
       });
       
-      await adminCms.update('musicsettings', updated);
-      console.log('[MUSIC_MANAGER] Successfully saved to CMS');
-      
-      setSettings(updated);
+      if (isNewRecord) {
+        // Create new record
+        const created = await adminCms.create('musicsettings', updated);
+        console.log('[MUSIC_MANAGER] Successfully created new MusicSettings record:', created);
+        setSettings(updated);
+      } else {
+        // Update existing record
+        await adminCms.update('musicsettings', updated);
+        console.log('[MUSIC_MANAGER] Successfully updated MusicSettings record');
+        setSettings(updated);
+      }
 
       toast({
         title: 'Success',
@@ -144,9 +157,25 @@ export default function BackgroundMusicManager() {
       setIsSaving(true);
       console.log('[MUSIC_MANAGER] Removing music...');
       
+      // Only update if this record has been persisted to CMS
+      if (!settings._createdDate) {
+        console.log('[MUSIC_MANAGER] Record not persisted yet, just clearing local state');
+        const cleared: MusicSettings = {
+          ...settings,
+          audio: undefined,
+          musicTitle: undefined,
+          isEnabled: false,
+        };
+        setSettings(cleared);
+        toast({
+          title: 'Success',
+          description: 'Music cleared',
+        });
+        return;
+      }
+
       const updated: MusicSettings = {
         ...settings,
-        musicUrl: undefined,
         audio: undefined,
         musicTitle: undefined,
         isEnabled: false,
@@ -184,9 +213,12 @@ export default function BackgroundMusicManager() {
       
       const updated: MusicSettings = { ...settings, isEnabled: !settings.isEnabled };
       
-      console.log('[MUSIC_MANAGER] Saving toggle to CMS:', { _id: updated._id, isEnabled: updated.isEnabled });
-      await adminCms.update('musicsettings', updated);
-      console.log('[MUSIC_MANAGER] Successfully toggled music enabled');
+      // Only update CMS if record has been persisted
+      if (settings._createdDate) {
+        console.log('[MUSIC_MANAGER] Saving toggle to CMS:', { _id: updated._id, isEnabled: updated.isEnabled });
+        await adminCms.update('musicsettings', updated);
+        console.log('[MUSIC_MANAGER] Successfully toggled music enabled');
+      }
       
       setSettings(updated);
 
@@ -215,9 +247,12 @@ export default function BackgroundMusicManager() {
       
       const updated: MusicSettings = { ...settings, autoplayEnabled: !settings.autoplayEnabled };
       
-      console.log('[MUSIC_MANAGER] Saving autoplay toggle to CMS:', { _id: updated._id, autoplayEnabled: updated.autoplayEnabled });
-      await adminCms.update('musicsettings', updated);
-      console.log('[MUSIC_MANAGER] Successfully toggled autoplay');
+      // Only update CMS if record has been persisted
+      if (settings._createdDate) {
+        console.log('[MUSIC_MANAGER] Saving autoplay toggle to CMS:', { _id: updated._id, autoplayEnabled: updated.autoplayEnabled });
+        await adminCms.update('musicsettings', updated);
+        console.log('[MUSIC_MANAGER] Successfully toggled autoplay');
+      }
       
       setSettings(updated);
 
@@ -246,9 +281,12 @@ export default function BackgroundMusicManager() {
       
       const updated: MusicSettings = { ...settings, loopMusic: !settings.loopMusic };
       
-      console.log('[MUSIC_MANAGER] Saving loop toggle to CMS:', { _id: updated._id, loopMusic: updated.loopMusic });
-      await adminCms.update('musicsettings', updated);
-      console.log('[MUSIC_MANAGER] Successfully toggled loop');
+      // Only update CMS if record has been persisted
+      if (settings._createdDate) {
+        console.log('[MUSIC_MANAGER] Saving loop toggle to CMS:', { _id: updated._id, loopMusic: updated.loopMusic });
+        await adminCms.update('musicsettings', updated);
+        console.log('[MUSIC_MANAGER] Successfully toggled loop');
+      }
       
       setSettings(updated);
 
@@ -276,9 +314,12 @@ export default function BackgroundMusicManager() {
       
       const updated: MusicSettings = { ...settings, volume: newVolume };
       
-      console.log('[MUSIC_MANAGER] Saving volume to CMS:', { _id: updated._id, volume: updated.volume });
-      await adminCms.update('musicsettings', updated);
-      console.log('[MUSIC_MANAGER] Successfully updated volume');
+      // Only update CMS if record has been persisted
+      if (settings._createdDate) {
+        console.log('[MUSIC_MANAGER] Saving volume to CMS:', { _id: updated._id, volume: updated.volume });
+        await adminCms.update('musicsettings', updated);
+        console.log('[MUSIC_MANAGER] Successfully updated volume');
+      }
       
       setSettings(updated);
 
@@ -312,7 +353,7 @@ export default function BackgroundMusicManager() {
           </div>
 
           {/* Current Music Info */}
-          {settings?.musicUrl && (
+          {settings?.audio && (
             <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
               <p className="text-sm font-medium text-slate-900">Current Music:</p>
               <p className="text-sm text-slate-600 mt-1">{settings.musicTitle || 'Untitled'}</p>
@@ -350,7 +391,7 @@ export default function BackgroundMusicManager() {
           </label>
 
           {/* Remove Button */}
-          {settings?.musicUrl && (
+          {settings?.audio && (
             <Button
               onClick={handleRemoveMusic}
               disabled={isSaving}
@@ -365,7 +406,7 @@ export default function BackgroundMusicManager() {
       </Card>
 
       {/* Audio Preview */}
-      {settings?.musicUrl && (
+      {settings?.audio && (
         <Card className="p-6 border border-slate-200">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-slate-900">Preview & Controls</h3>
@@ -373,7 +414,7 @@ export default function BackgroundMusicManager() {
             {/* Audio Player */}
             <audio
               ref={setAudioRef}
-              src={settings.musicUrl}
+              src={settings.audio}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               className="w-full"
@@ -408,7 +449,7 @@ export default function BackgroundMusicManager() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
               onClick={handleToggleMusicEnabled}
-              disabled={isSaving || !settings?.musicUrl}
+              disabled={isSaving || !settings?.audio}
               variant={settings?.isEnabled ? 'default' : 'outline'}
               className={`flex items-center justify-center gap-2 ${
                 settings?.isEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
@@ -420,7 +461,7 @@ export default function BackgroundMusicManager() {
 
             <Button
               onClick={handleToggleAutoplay}
-              disabled={isSaving || !settings?.musicUrl}
+              disabled={isSaving || !settings?.audio}
               variant={settings?.autoplayEnabled ? 'default' : 'outline'}
               className={`flex items-center justify-center gap-2 ${
                 settings?.autoplayEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
@@ -432,7 +473,7 @@ export default function BackgroundMusicManager() {
 
             <Button
               onClick={handleToggleLoop}
-              disabled={isSaving || !settings?.musicUrl}
+              disabled={isSaving || !settings?.audio}
               variant={settings?.loopMusic ? 'default' : 'outline'}
               className={`flex items-center justify-center gap-2 ${
                 settings?.loopMusic ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
