@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import { Member } from '..';
+import type { Member } from '../types';
 
 export interface MemberState {
   member: Member | null;

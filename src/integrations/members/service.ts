@@ -1,5 +1,5 @@
 import { members } from "@wix/members";
-import { Member } from ".";
+import type { Member } from "./types";
 
 /**
  * Check if an error is expected for unauthenticated users
