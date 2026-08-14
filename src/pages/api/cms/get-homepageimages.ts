@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     }
 
     // Use elevated context to read homepageimages
-    const elevatedQuery = auth.elevate(items.queryDataItems);
+    const elevatedQuery = auth.elevate(items.query);
     const result = await elevatedQuery('homepageimages').find();
 
     return new Response(

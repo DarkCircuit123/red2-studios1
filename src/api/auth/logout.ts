@@ -1,4 +1,4 @@
-import { members } from '@wix/members';
+import { members as createMembersClient } from '@wix/members';
 
 export async function POST(context: any) {
   try {
@@ -6,7 +6,7 @@ export async function POST(context: any) {
     const wixContext = context.locals;
     
     // Get the logout URL from Wix Members API
-    const membersClient = members(wixContext);
+    const membersClient = createMembersClient(wixContext);
     
     // Generate logout URL
     const logoutUrl = await membersClient.generateLogoutUrl({
