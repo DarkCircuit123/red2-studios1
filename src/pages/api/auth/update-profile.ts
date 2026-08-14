@@ -1,4 +1,4 @@
-import { members as createMembersClient } from '@wix/members';
+import { members } from '@wix/members';
 
 export async function POST({ request, locals }: { request: Request; locals: any }) {
   try {
@@ -14,7 +14,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
 
     // Get the context from locals (provided by @wix/astro integration)
     const context = locals;
-    const membersClient = createMembersClient(context);
+    const membersClient = members(context);
 
     try {
       // Get current member

@@ -1,4 +1,4 @@
-import { members as createMembersClient } from '@wix/members';
+import { members } from '@wix/members';
 import { BaseCrudService } from '@/integrations';
 
 // Helper to extract IP address from request headers
@@ -116,7 +116,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
 
     // Get the context from locals (provided by @wix/astro integration)
     const context = locals;
-    const membersClient = createMembersClient(context);
+    const membersClient = members(context);
 
     try {
       // Create new member with email and password
