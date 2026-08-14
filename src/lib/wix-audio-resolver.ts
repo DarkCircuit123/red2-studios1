@@ -1,0 +1,92 @@
+/**
+ * Wix Audio URL Resolver
+ * Converts wix:audio:// URLs to playable HTTPS URLs
+ */
+
+/**
+ * Convert a wix:audio:// URL to a playable HTTPS URL
+ * 
+ * Wix audio URLs look like:
+ * wix:audio://v1/e9d727_045b73d775954cdfbdc9c5ecbf864866.mp3/VibeDepot%20-%20Slow%20Jazz.mp3#duration=160
+ * 
+ * We need to extract the media ID and convert it to an HTTPS URL
+ */
+export function convertWixAudioUrl(wixUrl: string): string | null {
+  if (!wixUrl) return null;
+  
+  // If it's already an HTTPS URL, return as-is
+  if (wixUrl.startsWith('https://')) {
+    console.log('[WIX_AUDIO] URL is already HTTPS:', wixUrl);
+    return wixUrl;
+  }
+  
+  // If it's not a wix:audio URL, return null
+  if (!wixUrl.startsWith('wix:audio://')) {
+    console.warn('[WIX_AUDIO] URL is not a wix:audio URL:', wixUrl);
+    return null;
+  }
+
+  try {
+    // Parse the wix:audio URL
+    // Format: wix:audio://v1/{mediaId}.{ext}/{filename}#duration={duration}
+    const urlPart = wixUrl.replace('wix:audio://', '');
+    
+    // Extract the media ID and extension
+    // Example: v1/e9d727_045b73d775954cdfbdc9c5ecbf864866.mp3/VibeDepot%20-%20Slow%20Jazz.mp3#duration=160
+    const match = urlPart.match(/v1\/([^/]+)\//);
+    if (!match || !match[1]) {
+      console.error('[WIX_AUDIO] Could not extract media ID from URL:', wixUrl);
+      return null;
+    }
+
+    const mediaId = match[1]; // e.g., "e9d727_045b73d775954cdfbdc9c5ecbf864866.mp3"
+    
+    // Build the HTTPS URL
+    // Wix media URLs follow this pattern: https://static.wixstatic.com/media/{mediaId}
+    const httpsUrl = `https://static.wixstatic.com/media/${mediaId}`;
+    
+    console.log('[WIX_AUDIO] Converted wix:audio URL to HTTPS:', {
+      original: wixUrl,
+      mediaId,
+      converted: httpsUrl
+    });
+    
+    return httpsUrl;
+  } catch (error) {
+    console.error('[WIX_AUDIO] Error converting wix:audio URL:', {
+      url: wixUrl,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return null;
+  }
+}
+
+/**
+ * Get a playable audio URL from MusicSettings
+ * Tries musicUrl first, then converts audio field if needed
+ */
+export function getPlayableAudioUrl(musicUrl?: string, audioField?: string): string | null {
+  // Prefer musicUrl if it's a valid HTTPS URL
+  if (musicUrl && musicUrl.startsWith('https://')) {
+    console.log('[WIX_AUDIO] Using musicUrl:', musicUrl);
+    return musicUrl;
+  }
+
+  // Try to convert audio field if it's a wix:audio URL
+  if (audioField && audioField.startsWith('wix:audio://')) {
+    const converted = convertWixAudioUrl(audioField);
+    if (converted) {
+      console.log('[WIX_AUDIO] Using converted audio field:', converted);
+      return converted;
+    }
+  }
+
+  // If audioField is already an HTTPS URL, use it
+  if (audioField && audioField.startsWith('https://')) {
+    console.log('[WIX_AUDIO] Using audioField (HTTPS):', audioField);
+    return audioField;
+  }
+
+  console.warn('[WIX_AUDIO] No playable audio URL found:', { musicUrl, audioField });
+  return null;
+}

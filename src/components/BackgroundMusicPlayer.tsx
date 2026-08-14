@@ -3,6 +3,7 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { MusicSettings } from '@/entities/index';
+import { getPlayableAudioUrl } from '@/lib/wix-audio-resolver';
 
 export default function BackgroundMusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -14,6 +15,7 @@ export default function BackgroundMusicPlayer() {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [volume, setVolume] = useState(30);
+  const [playableUrl, setPlayableUrl] = useState<string | null>(null);
 
   // Load all music tracks from CMS on every site load
   useEffect(() => {
@@ -30,6 +32,7 @@ export default function BackgroundMusicPlayer() {
             musicTitle: t.musicTitle,
             isEnabled: t.isEnabled,
             musicUrl: t.musicUrl ? '✓ (present)' : '✗ (missing)',
+            audio: t.audio ? '✓ (present)' : '✗ (missing)',
             volume: t.volume,
             loopMusic: t.loopMusic,
             autoplayEnabled: t.autoplayEnabled
@@ -38,11 +41,13 @@ export default function BackgroundMusicPlayer() {
         
         const enabledTracks = result.items?.filter(track => {
           const isEnabled = track.isEnabled === true;
-          const hasUrl = !!track.musicUrl;
+          // Check both musicUrl and audio field for playable URL
+          const hasUrl = !!track.musicUrl || !!track.audio;
           console.log('[MUSIC_PLAYER] Filtering track:', {
             title: track.musicTitle,
             isEnabled,
-            hasUrl,
+            hasMusicUrl: !!track.musicUrl,
+            hasAudioField: !!track.audio,
             included: isEnabled && hasUrl
           });
           return isEnabled && hasUrl;
@@ -52,7 +57,8 @@ export default function BackgroundMusicPlayer() {
           console.log('[MUSIC_PLAYER] Found enabled tracks:', enabledTracks.length);
           console.log('[MUSIC_PLAYER] First track details:', {
             title: enabledTracks[0].musicTitle,
-            url: enabledTracks[0].musicUrl,
+            musicUrl: enabledTracks[0].musicUrl,
+            audioField: enabledTracks[0].audio,
             volume: enabledTracks[0].volume,
             loop: enabledTracks[0].loopMusic,
             autoplay: enabledTracks[0].autoplayEnabled
@@ -78,6 +84,26 @@ export default function BackgroundMusicPlayer() {
     loadMusicTracks();
   }, []);
 
+  // Resolve playable URL from current track
+  useEffect(() => {
+    if (musicTracks.length === 0 || currentTrackIndex >= musicTracks.length) {
+      setPlayableUrl(null);
+      return;
+    }
+
+    const currentTrack = musicTracks[currentTrackIndex];
+    const url = getPlayableAudioUrl(currentTrack.musicUrl, currentTrack.audio);
+    
+    console.log('[MUSIC_PLAYER] Resolved playable URL:', {
+      trackTitle: currentTrack.musicTitle,
+      musicUrl: currentTrack.musicUrl,
+      audioField: currentTrack.audio,
+      playableUrl: url
+    });
+    
+    setPlayableUrl(url);
+  }, [musicTracks, currentTrackIndex]);
+
   // Set audio volume when it changes
   useEffect(() => {
     if (audioRef.current) {
@@ -88,11 +114,12 @@ export default function BackgroundMusicPlayer() {
   // Attempt to autoplay music on site load
   // If browser autoplay policy blocks audible playback, initialize on first user interaction
   useEffect(() => {
-    if (isLoadingSettings || musicTracks.length === 0 || !audioRef.current) {
+    if (isLoadingSettings || musicTracks.length === 0 || !audioRef.current || !playableUrl) {
       console.log('[MUSIC_PLAYER] Skipping autoplay setup:', {
         isLoadingSettings,
         tracksCount: musicTracks.length,
-        hasAudioRef: !!audioRef.current
+        hasAudioRef: !!audioRef.current,
+        hasPlayableUrl: !!playableUrl
       });
       return;
     }
@@ -171,7 +198,7 @@ export default function BackgroundMusicPlayer() {
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
     };
-  }, [isLoadingSettings, musicTracks.length, isPlaying, hasInteracted]);
+  }, [isLoadingSettings, musicTracks.length, isPlaying, hasInteracted, playableUrl]);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -192,11 +219,13 @@ export default function BackgroundMusicPlayer() {
   };
 
   const handleAudioPlay = () => {
+    console.log('[MUSIC_PLAYER] Audio started playing');
     setIsPlaying(true);
     setAudioError(false);
   };
 
   const handleAudioPause = () => {
+    console.log('[MUSIC_PLAYER] Audio paused');
     setIsPlaying(false);
   };
 
@@ -227,19 +256,20 @@ export default function BackgroundMusicPlayer() {
   // Get current track
   const currentTrack = musicTracks[currentTrackIndex];
 
-  // Validate music URL is available
-  if (!currentTrack?.musicUrl) {
-    console.log('[MUSIC_PLAYER] Not rendering - no music URL on current track:', {
+  // Validate playable URL is available
+  if (!playableUrl) {
+    console.log('[MUSIC_PLAYER] Not rendering - no playable URL:', {
       trackIndex: currentTrackIndex,
       trackTitle: currentTrack?.musicTitle,
-      hasUrl: !!currentTrack?.musicUrl
+      musicUrl: currentTrack?.musicUrl,
+      audioField: currentTrack?.audio
     });
     return null;
   }
 
   console.log('[MUSIC_PLAYER] Rendering with track:', {
     title: currentTrack.musicTitle,
-    url: currentTrack.musicUrl,
+    playableUrl,
     isPlaying,
     isMuted
   });
@@ -260,17 +290,17 @@ export default function BackgroundMusicPlayer() {
         style={{ display: 'none' }}
       >
         <source 
-          src={currentTrack.musicUrl} 
+          src={playableUrl} 
           type="audio/mpeg"
         />
         {/* Fallback for other audio formats */}
         <source 
-          src={currentTrack.musicUrl} 
+          src={playableUrl} 
           type="audio/wav"
         />
         {/* Fallback for OGG */}
         <source 
-          src={currentTrack.musicUrl} 
+          src={playableUrl} 
           type="audio/ogg"
         />
       </audio>
