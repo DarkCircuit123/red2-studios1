@@ -4,13 +4,14 @@ import { Settings, X, Edit2, Music, Calendar, LogOut, Trash2, Upload } from 'luc
 import { useMember } from '@/integrations';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
+import MusicManager from './MusicManager';
 import BackgroundMusicManager from './AdminPanel/sections/BackgroundMusicManager';
 import BookingManagerPro from './BookingManagerPro';
 import RubberBandPhotosManager from './AdminPanel/sections/RubberBandPhotosManager';
 import SplashpageManager from './AdminPanel/sections/SplashpageManager';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
-import { HomepageImages, ClientsPress, AboutSection, Portfolio } from '@/entities/index';
+import { HomepageImages, ClientsPress, AboutSection, Portfolio, MusicSettings } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
 
 interface AdminPanelProps {
@@ -33,6 +34,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState('photos');
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
+  const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [aboutSettings, setAboutSettings] = useState<AboutSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingAbout, setIsSavingAbout] = useState(false);
@@ -719,16 +721,47 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                      <p className="text-sm text-yellow-700 mb-3">No music settings found.</p>
-                      <a
-                        href="https://manage.wix.com/dashboard"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-700 transition-all"
-                      >
-                        Open CMS to Add Music Settings
-                      </a>
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-700 mb-3">No music settings found. Upload your first track to get started.</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
+                          Upload Music File
+                        </label>
+                        <MusicManager
+                          label="Upload Music"
+                          currentMusicUrl={undefined}
+                          collectionId="musicsettings"
+                          fieldName="musicUrl"
+                          onMusicUpload={async (url) => {
+                            try {
+                              // Create new Music Settings record with the uploaded URL
+                              const newMusicSettings: MusicSettings = {
+                                _id: crypto.randomUUID(),
+                                musicUrl: url,
+                                musicTitle: 'Background Music',
+                                isEnabled: true,
+                                volume: 50,
+                                loopMusic: true,
+                                artist: '',
+                                album: '',
+                                genre: '',
+                                duration: '',
+                                isDefaultHomepageTrack: true,
+                              };
+                              await BaseCrudService.create('musicsettings', newMusicSettings);
+                              setMusicSettings(newMusicSettings);
+                              console.log('[ADMIN PANEL] Music Settings record created:', newMusicSettings._id);
+                            } catch (error) {
+                              console.error('[ADMIN PANEL] Error creating Music Settings record:', error);
+                            }
+                          }}
+                          onMusicDelete={() => {
+                            // No-op when no record exists
+                          }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
