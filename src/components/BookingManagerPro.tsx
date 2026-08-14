@@ -91,6 +91,13 @@ export default function BookingManagerPro() {
       return false;
     }
 
+    // Validate that the selected date is today or in the future
+    const today = getTodayString();
+    if (selectedDate < today) {
+      addNotification('warning', 'Cannot add time slots for past dates');
+      return false;
+    }
+
     // Check for overlapping slots
     const dateSlots = availabilities.filter(a => {
       const aDate = normalizeDateString(a.bookingDate);

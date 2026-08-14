@@ -49,6 +49,19 @@ export default function BookingManager() {
       return;
     }
 
+    // Validate that end time is after start time
+    if (newSlot.startTime >= newSlot.endTime) {
+      alert('End time must be after start time');
+      return;
+    }
+
+    // Validate that the selected date is today or in the future
+    const today = new Date().toISOString().split('T')[0];
+    if (selectedDate < today) {
+      alert('Cannot add time slots for past dates');
+      return;
+    }
+
     try {
       const availability: BookingAvailability = {
         bookingDate: selectedDate,

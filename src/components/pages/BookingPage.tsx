@@ -52,10 +52,25 @@ export default function BookingPage() {
           setBookings([]);
         } else {
           const allBookings = result.data || [];
+          const today = getTodayString();
           
-          // Filter for available bookings and ensure they have valid dates/times
+          // Filter for available bookings with valid dates/times and future dates only
           const validBookings = allBookings.filter(b => {
-            return b.isAvailable === true && b.bookingDate && b.startTime && b.endTime;
+            // Check basic requirements
+            if (b.isAvailable !== true || !b.bookingDate || !b.startTime || !b.endTime) {
+              return false;
+            }
+            
+            // Normalize the booking date to YYYY-MM-DD format
+            const bookingDateStr = normalizeDateString(b.bookingDate);
+            
+            // Ensure the booking date is today or in the future
+            if (!bookingDateStr || bookingDateStr < today) {
+              console.warn('Filtering out past date:', bookingDateStr, 'today:', today);
+              return false;
+            }
+            
+            return true;
           });
           
           setBookings(validBookings);

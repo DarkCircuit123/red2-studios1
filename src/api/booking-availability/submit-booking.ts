@@ -10,6 +10,7 @@
 
 import { Bookings, BookingAvailability } from '@/entities/index';
 import { BaseCrudService } from '@/integrations';
+import { getTodayString, normalizeDateString } from '@/lib/date-formatter';
 
 interface BookingSubmission {
   clientName: string;
@@ -52,6 +53,19 @@ export async function POST({ request }: { request: Request }) {
         JSON.stringify({ success: false, error: 'Missing required field: slotId' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Validate that the booking date is today or in the future
+    if (body.bookingDate) {
+      const bookingDateStr = normalizeDateString(body.bookingDate);
+      const today = getTodayString();
+      if (bookingDateStr < today) {
+        console.error('[Backend] Booking date is in the past:', bookingDateStr);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Cannot book for past dates' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Create booking record
