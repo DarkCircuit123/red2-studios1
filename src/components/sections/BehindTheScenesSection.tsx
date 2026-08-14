@@ -3,6 +3,7 @@ import { BaseCrudService } from '@/integrations';
 import { Image } from '@/components/ui/image';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 interface BehindTheScenesItem {
   _id: string;
@@ -88,7 +89,7 @@ export default function BehindTheScenesSection() {
               <div className="relative overflow-hidden rounded-lg mb-4 aspect-square bg-gray-100">
                 {item.photo ? (
                   <Image
-                    src={item.photo}
+                    src={convertWixImageToHttps(item.photo) || item.photo}
                     alt={item.title || 'Behind the scenes'}
                     width={400}
                     height={400}

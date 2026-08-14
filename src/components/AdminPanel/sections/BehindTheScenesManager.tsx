@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
-import { Trash2, Plus, Edit2, X } from 'lucide-react';
+import { Trash2, Plus, Edit2, X, Upload } from 'lucide-react';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import { useToast } from '@/hooks/use-toast';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 interface BehindTheScenesItem {
   _id: string;
@@ -29,6 +30,7 @@ export default function BehindTheScenesManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     photo: '',
     title: '',
@@ -192,6 +194,51 @@ export default function BehindTheScenesManager() {
     }
   };
 
+  /**
+   * Quick upload: Upload a photo directly to an existing item without opening edit form
+   * This allows rapid multi-photo uploads with immediate persistence
+   */
+  const handleQuickUpload = async (e: React.ChangeEvent<HTMLInputElement>, itemId: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingItemId(itemId);
+      setIsUploadingImage(true);
+
+      // Upload to Wix Media Manager
+      const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
+
+      if (!result.mediaUrl) {
+        throw new Error('Upload succeeded but no media URL returned');
+      }
+
+      // Persist to CMS immediately
+      await adminCms.update('behindthescenes', {
+        _id: itemId,
+        photo: result.mediaUrl,
+      });
+
+      // Reload items to reflect the change
+      await loadItems();
+
+      toast({
+        title: 'Success',
+        description: 'Photo updated successfully',
+      });
+    } catch (error) {
+      console.error('Failed to upload and save photo:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to upload photo',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingImage(false);
+      setUploadingItemId(null);
+    }
+  };
+
   if (isLoading && items.length === 0) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -229,7 +276,7 @@ export default function BehindTheScenesManager() {
               {formData.photo && (
                 <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
                   <Image
-                    src={formData.photo}
+                    src={convertWixImageToHttps(formData.photo) || formData.photo}
                     alt="Preview"
                     width={128}
                     height={128}
@@ -242,14 +289,17 @@ export default function BehindTheScenesManager() {
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
+                  disabled={isUploadingImage}
                   className="block w-full text-sm text-gray-500
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-md file:border-0
                     file:text-sm file:font-semibold
                     file:bg-primary file:text-white
-                    hover:file:bg-primary/90"
+                    hover:file:bg-primary/90
+                    disabled:opacity-50 disabled:cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-500 mt-2">Upload a new image or use existing URL</p>
+                {isUploadingImage && <p className="text-xs text-gray-500 mt-2">Uploading...</p>}
+                {!isUploadingImage && <p className="text-xs text-gray-500 mt-2">Upload a new image or use existing URL</p>}
               </div>
             </div>
           </div>
@@ -303,7 +353,7 @@ export default function BehindTheScenesManager() {
             <Button variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>
+            <Button onClick={handleSave} disabled={isUploadingImage}>
               {editingId ? 'Update' : 'Create'}
             </Button>
           </div>
@@ -319,25 +369,54 @@ export default function BehindTheScenesManager() {
         ) : (
           items.map((item) => (
             <div key={item._id} className="border rounded-lg p-4 flex gap-4 items-start hover:bg-gray-50 transition">
-              {/* Thumbnail */}
-              {item.photo && (
-                <div className="w-24 h-24 rounded-lg overflow-hidden border flex-shrink-0">
-                  <Image
-                    src={item.photo}
-                    alt={item.title || 'Behind the scenes'}
-                    width={96}
-                    height={96}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+              {/* Thumbnail with Quick Upload */}
+              <div className="relative w-24 h-24 rounded-lg overflow-hidden border flex-shrink-0 bg-gray-100 group">
+                {item.photo ? (
+                  <>
+                    <Image
+                      src={convertWixImageToHttps(item.photo) || item.photo}
+                      alt={item.title || 'Behind the scenes'}
+                      width={96}
+                      height={96}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Quick Upload Overlay */}
+                    <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleQuickUpload(e, item._id)}
+                        disabled={isUploadingImage || uploadingItemId === item._id}
+                        className="hidden"
+                      />
+                      <Upload size={20} className="text-white" />
+                    </label>
+                    {uploadingItemId === item._id && (
+                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <label className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-200 transition">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleQuickUpload(e, item._id)}
+                      disabled={isUploadingImage || uploadingItemId === item._id}
+                      className="hidden"
+                    />
+                    <Upload size={20} className="text-gray-400" />
+                  </label>
+                )}
+              </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h4 className="font-semibold text-sm">{item.title}</h4>
-                    <p className="text-xs text-gray-600 mt-1 line-clamp-2">{item.description}</p>
+                    <h4 className="font-semibold text-sm">{item.title || '(No title)'}</h4>
+                    <p className="text-xs text-gray-600 mt-1 line-clamp-2">{item.description || '(No description)'}</p>
                     {item.dateTaken && (
                       <p className="text-xs text-gray-500 mt-2">
                         Date: {new Date(item.dateTaken).toLocaleDateString()}
@@ -359,7 +438,7 @@ export default function BehindTheScenesManager() {
                       onClick={() => handleDelete(item._id)}
                       className="p-2 hover:bg-red-100 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Delete"
-                      disabled={isLoading}
+                      disabled={isLoading || uploadingItemId === item._id}
                     >
                       <Trash2 size={16} className="text-red-600" />
                     </button>
