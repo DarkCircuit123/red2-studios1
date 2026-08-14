@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
-import { BaseCrudService } from '@/integrations';
-import { Splashpage } from '@/entities';
+import type { Splashpage } from '@/entities';
 
 interface SplashpageLogoProps {
   className?: string;
@@ -28,15 +27,27 @@ export default function SplashpageLogo({
       setIsLoading(true);
       setError(false);
       
-      // Query CMS for active logo
-      const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+      // CRITICAL: Use fetch to call API endpoint, not direct BaseCrudService
+      // BaseCrudService is server-side only and causes WDE0053 when called from client
+      const response = await fetch('/api/cms/get-splashpage', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) {
+        console.warn('[SplashpageLogo] API returned status:', response.status);
+        setError(true);
+        return;
+      }
+      
+      const result = await response.json();
       
       if (!result.items || result.items.length === 0) {
         setError(true);
         return;
       }
       
-      const activeLogo = result.items.find((item) => item.isActive);
+      const activeLogo = result.items.find((item: Splashpage) => item.isActive);
       
       if (activeLogo && activeLogo.logoImage) {
         // Convert Wix image URL to HTTPS for CSP compliance
@@ -51,7 +62,7 @@ export default function SplashpageLogo({
         setError(true);
       }
     } catch (err) {
-      console.error('[SplashpageLogo] CMS query error:', err);
+      console.error('[SplashpageLogo] API fetch error:', err);
       setError(true);
     } finally {
       setIsLoading(false);

@@ -6,6 +6,93 @@ import type { Member } from '../types';
 // Local storage key
 const MEMBER_STORAGE_KEY = 'member-store';
 
+/**
+ * Safe storage wrapper - handles localStorage unavailability gracefully
+ */
+const safeStorage = {
+  isAvailable: (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const test = '__storage_test__';
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  getItem: (key: string): string | null => {
+    try {
+      if (typeof window === 'undefined') return null;
+      if (typeof localStorage === 'undefined' || localStorage === null) return null;
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.debug('[STORAGE] getItem failed:', error instanceof Error ? error.message : String(error));
+      return null;
+    }
+  },
+
+  setItem: (key: string, value: string): boolean => {
+    try {
+      if (typeof window === 'undefined') return false;
+      if (typeof localStorage === 'undefined' || localStorage === null) return false;
+      localStorage.setItem(key, value);
+      return true;
+    } catch (error) {
+      console.debug('[STORAGE] setItem failed:', error instanceof Error ? error.message : String(error));
+      return false;
+    }
+  },
+
+  removeItem: (key: string): boolean => {
+    try {
+      if (typeof window === 'undefined') return false;
+      if (typeof localStorage === 'undefined' || localStorage === null) return false;
+      localStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      console.debug('[STORAGE] removeItem failed:', error instanceof Error ? error.message : String(error));
+      return false;
+    }
+  },
+};
+
+/**
+ * Sanitize member data for storage - only persist primitive/plain data fields
+ * NEVER persist raw Wix member objects, SDK clients, or circular references
+ */
+const sanitizeMemberForStorage = (member: Member | null): Record<string, any> | null => {
+  if (!member) return null;
+  
+  try {
+    // Only extract safe, serializable fields
+    return {
+      _id: member._id || undefined,
+      loginEmail: member.loginEmail || undefined,
+      loginEmailVerified: member.loginEmailVerified || undefined,
+      status: member.status || undefined,
+      contact: member.contact ? {
+        firstName: member.contact.firstName || undefined,
+        lastName: member.contact.lastName || undefined,
+        phones: Array.isArray(member.contact.phones) ? member.contact.phones : undefined,
+      } : undefined,
+      profile: member.profile ? {
+        nickname: member.profile.nickname || undefined,
+        title: member.profile.title || undefined,
+        // Note: photo URL is safe, but we exclude the full photo object to avoid circular refs
+        photoUrl: member.profile.photo?.url || undefined,
+      } : undefined,
+      _createdDate: member._createdDate ? new Date(member._createdDate).toISOString() : undefined,
+      _updatedDate: member._updatedDate ? new Date(member._updatedDate).toISOString() : undefined,
+      lastLoginDate: member.lastLoginDate ? new Date(member.lastLoginDate).toISOString() : undefined,
+    };
+  } catch (error) {
+    console.error('[MEMBER PROVIDER] Error sanitizing member:', error);
+    return null;
+  }
+};
+
 interface MemberProviderProps {
   children: ReactNode;
 }
@@ -20,25 +107,20 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
     let storedIsAuthenticated = false;
 
     if (typeof window !== 'undefined') {
-      try {
-        // Check if localStorage is accessible before attempting to use it
-        if (typeof localStorage !== 'undefined' && localStorage !== null) {
-          const stored = localStorage.getItem(MEMBER_STORAGE_KEY);
-          if (stored) {
-             const parsedData = JSON.parse(stored);
-             // Restore both member data and authentication status
-             storedMemberData = parsedData.member || null;
-             storedIsAuthenticated = parsedData.isAuthenticated || false;
-             console.log('[MEMBER PROVIDER INIT] Restored from localStorage:', {
-               isAuthenticated: storedIsAuthenticated,
-               hasMember: !!storedMemberData,
-             });
-           }
-         }
-      } catch (error) {
-        // Silently handle localStorage errors - this is expected in some contexts (e.g., cross-origin iframes)
-        // Don't log as error to avoid console spam during hydration
-        console.debug('[MEMBER PROVIDER INIT] localStorage unavailable:', error instanceof Error ? error.message : String(error));
+      const stored = safeStorage.getItem(MEMBER_STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsedData = JSON.parse(stored);
+          // Restore both member data and authentication status
+          storedMemberData = parsedData.member || null;
+          storedIsAuthenticated = parsedData.isAuthenticated || false;
+          console.log('[MEMBER PROVIDER INIT] Restored from storage:', {
+            isAuthenticated: storedIsAuthenticated,
+            hasMember: !!storedMemberData,
+          });
+        } catch (error) {
+          console.debug('[MEMBER PROVIDER INIT] Failed to parse stored data:', error instanceof Error ? error.message : String(error));
+        }
       }
     }
 
@@ -63,18 +145,19 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
   // Save state to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Sanitize member data before storage to avoid circular references
+      const sanitizedMember = sanitizeMemberForStorage(state.member);
+      
+      const storageData = {
+        member: sanitizedMember,
+        isAuthenticated: state.isAuthenticated,
+      };
+      
       try {
-        // Check if localStorage is accessible before attempting to use it
-        if (typeof localStorage !== 'undefined' && localStorage !== null) {
-          // Save both member data and authentication status for persistent login
-          localStorage.setItem(MEMBER_STORAGE_KEY, JSON.stringify({
-            member: state.member,
-            isAuthenticated: state.isAuthenticated,
-          }));
-        }
+        const serialized = JSON.stringify(storageData);
+        safeStorage.setItem(MEMBER_STORAGE_KEY, serialized);
       } catch (error) {
-        // Silently handle localStorage errors - this is expected in some contexts
-        console.debug('[MEMBER PROVIDER] localStorage save failed:', error instanceof Error ? error.message : String(error));
+        console.debug('[MEMBER PROVIDER] Failed to serialize state:', error instanceof Error ? error.message : String(error));
       }
     }
   }, [state.member, state.isAuthenticated]);
@@ -169,18 +252,11 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
     logout: useCallback(async () => {
       console.log('[LOGOUT] Starting logout process...');
       
-      // Clear localStorage IMMEDIATELY - BEFORE any async operations
+      // Clear storage IMMEDIATELY - BEFORE any async operations
       // This ensures that even if the page reloads during logout, we won't restore stale auth state
       if (typeof window !== 'undefined') {
-        try {
-          // Check if localStorage is accessible before attempting to use it
-          if (typeof localStorage !== 'undefined' && localStorage !== null) {
-            localStorage.removeItem(MEMBER_STORAGE_KEY);
-            console.log('[LOGOUT] Cleared localStorage immediately');
-          }
-        } catch (error) {
-          console.debug('[LOGOUT] Error clearing localStorage:', error instanceof Error ? error.message : String(error));
-        }
+        safeStorage.removeItem(MEMBER_STORAGE_KEY);
+        console.log('[LOGOUT] Cleared storage immediately');
       }
 
       // Clear all local state FIRST - before any async operations
@@ -208,7 +284,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
       }
 
       // Redirect to home after state is cleared and API is called
-      // The page reload will restore from localStorage (which is now empty)
+      // The page reload will restore from storage (which is now empty)
       console.log('[LOGOUT] Redirecting to home...');
       window.location.href = '/';
     }, [updateState]),

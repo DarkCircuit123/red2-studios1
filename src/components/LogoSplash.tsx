@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Image } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
-import { Splashpage } from '@/entities';
+import type { Splashpage } from '@/entities';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 export default function LogoSplash() {
@@ -10,14 +9,25 @@ export default function LogoSplash() {
   const [logoImage, setLogoImage] = useState<string | null>(null);
   const [isLoadingLogo, setIsLoadingLogo] = useState(true);
 
-  // Load active logo from Splashpage CMS
+  // Load active logo from Splashpage CMS via API
   useEffect(() => {
     const loadActiveLogo = async () => {
       try {
-        // Diagnostic: CMS query initiated
-        const result = await BaseCrudService.getAll<Splashpage>('splashpage');
+        // CRITICAL: Use fetch to call API endpoint, not direct BaseCrudService
+        // BaseCrudService is server-side only and causes WDE0053 when called from client
+        const response = await fetch('/api/cms/get-splashpage', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
         
-        console.log('[LogoSplash] CMS query result:', result);
+        if (!response.ok) {
+          console.warn('[LogoSplash] API returned status:', response.status);
+          setIsLoadingLogo(false);
+          return;
+        }
+        
+        const result = await response.json();
+        console.log('[LogoSplash] API result:', result);
         
         if (!result.items || result.items.length === 0) {
           // No items in collection
@@ -29,7 +39,7 @@ export default function LogoSplash() {
         console.log('[LogoSplash] Found items:', result.items);
         
         // First try to find an active logo
-        const activeLogo = result.items.find((item) => item.isActive);
+        const activeLogo = result.items.find((item: Splashpage) => item.isActive);
         if (activeLogo?.logoImage) {
           // Diagnostic: Active logo found with image
           const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
@@ -40,7 +50,7 @@ export default function LogoSplash() {
         }
         
         // Fallback: use first logo with an image if no active one found
-        const firstLogoWithImage = result.items.find((item) => item.logoImage);
+        const firstLogoWithImage = result.items.find((item: Splashpage) => item.logoImage);
         if (firstLogoWithImage?.logoImage) {
           // Diagnostic: Using first available logo
           const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
@@ -53,7 +63,7 @@ export default function LogoSplash() {
         console.log('[LogoSplash] No items with logoImage found');
       } catch (err) {
         // Diagnostic: Log error but don't display to user
-        console.error('[LogoSplash] CMS query error:', err);
+        console.error('[LogoSplash] API fetch error:', err);
       } finally {
         setIsLoadingLogo(false);
       }

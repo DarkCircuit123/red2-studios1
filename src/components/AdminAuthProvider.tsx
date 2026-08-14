@@ -22,12 +22,19 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        // Add timeout to prevent hanging if endpoint is unreachable
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
         const response = await fetch('/api/auth/admin-verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ action: 'verify' }),
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
@@ -43,7 +50,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
           setAdminUsername(null);
         }
       } catch (err) {
-        console.error('[AdminAuthProvider] Session check error:', err);
+        // Handle network errors gracefully - don't crash the app
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.warn('[AdminAuthProvider] Session check timeout');
+        } else {
+          console.warn('[AdminAuthProvider] Session check error:', err instanceof Error ? err.message : String(err));
+        }
+        // Fail safely - treat as unauthenticated
         setIsAuthenticated(false);
         setAdminUsername(null);
       } finally {
@@ -58,12 +71,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
       const response = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ username, password }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
@@ -101,14 +120,20 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
       await fetch('/api/auth/admin-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ action: 'logout' }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
     } catch (err) {
-      console.error('[AdminAuthProvider] Logout error:', err);
+      console.warn('[AdminAuthProvider] Logout error:', err instanceof Error ? err.message : String(err));
     } finally {
       // Clear stored token
       try {

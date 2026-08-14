@@ -2,14 +2,24 @@ import { BaseCrudService as WixBaseCrudService } from '@wix/codegen-framework-pa
 
 /**
  * CMS Service - Wrapper around BaseCrudService for type-safe operations
+ * 
+ * CRITICAL: BaseCrudService is SERVER-SIDE ONLY
+ * Client-side calls will fail with WDE0053
+ * Use this service only in:
+ * - API routes (src/api/*)
+ * - Server-side functions
+ * - Backend operations
+ * 
+ * For client-side CMS access, use fetch() to call API endpoints
  */
 
-// Re-export BaseCrudService for direct use
+// Re-export BaseCrudService for direct use (server-side only)
 export const BaseCrudService = WixBaseCrudService;
 
 export const cmsService = {
   /**
    * Get all items from a collection
+   * SERVER-SIDE ONLY - Do not call from client components
    */
   getAll: async <T>(
     collectionId: string,
