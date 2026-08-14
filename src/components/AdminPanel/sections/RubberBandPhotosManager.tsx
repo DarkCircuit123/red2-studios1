@@ -285,11 +285,17 @@ export default function RubberBandPhotosManager() {
                           </button>
                         </label>
                         <button
+                          type="button"
                           onClick={() => handleDeletePhoto(photo._id)}
-                          className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                          disabled={isSaving}
+                          className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Delete this image"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {isSaving ? (
+                            <LoadingSpinner className="w-4 h-4" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </div>

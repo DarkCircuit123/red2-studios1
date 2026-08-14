@@ -472,16 +472,20 @@ export default function GalleryPhotoManager() {
                       className="w-full h-full object-cover"
                     />
                   )}
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
                     <button
+                      type="button"
                       onClick={() => window.open(photo.image, '_blank')}
                       className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      title="View full image"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => deletePhoto(photo._id)}
                       className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      title="Delete this photo"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

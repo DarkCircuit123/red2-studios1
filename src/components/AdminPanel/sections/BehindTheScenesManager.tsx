@@ -357,8 +357,9 @@ export default function BehindTheScenesManager() {
                     </button>
                     <button
                       onClick={() => handleDelete(item._id)}
-                      className="p-2 hover:bg-red-100 rounded-lg transition"
+                      className="p-2 hover:bg-red-100 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Delete"
+                      disabled={isLoading}
                     >
                       <Trash2 size={16} className="text-red-600" />
                     </button>
