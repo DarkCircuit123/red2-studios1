@@ -21,19 +21,24 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
 
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem(MEMBER_STORAGE_KEY);
-        if (stored) {
-          const parsedData = JSON.parse(stored);
-          // Restore both member data and authentication status
-          storedMemberData = parsedData.member || null;
-          storedIsAuthenticated = parsedData.isAuthenticated || false;
-          console.log('[MEMBER PROVIDER INIT] Restored from localStorage:', {
-            isAuthenticated: storedIsAuthenticated,
-            hasMember: !!storedMemberData,
-          });
-        }
+        // Check if localStorage is accessible before attempting to use it
+        if (typeof localStorage !== 'undefined' && localStorage !== null) {
+          const stored = localStorage.getItem(MEMBER_STORAGE_KEY);
+          if (stored) {
+             const parsedData = JSON.parse(stored);
+             // Restore both member data and authentication status
+             storedMemberData = parsedData.member || null;
+             storedIsAuthenticated = parsedData.isAuthenticated || false;
+             console.log('[MEMBER PROVIDER INIT] Restored from localStorage:', {
+               isAuthenticated: storedIsAuthenticated,
+               hasMember: !!storedMemberData,
+             });
+           }
+         }
       } catch (error) {
-        console.error('Error loading member state from localStorage:', error);
+        // Silently handle localStorage errors - this is expected in some contexts (e.g., cross-origin iframes)
+        // Don't log as error to avoid console spam during hydration
+        console.debug('[MEMBER PROVIDER INIT] localStorage unavailable:', error instanceof Error ? error.message : String(error));
       }
     }
 
@@ -59,13 +64,17 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        // Save both member data and authentication status for persistent login
-        localStorage.setItem(MEMBER_STORAGE_KEY, JSON.stringify({
-          member: state.member,
-          isAuthenticated: state.isAuthenticated,
-        }));
+        // Check if localStorage is accessible before attempting to use it
+        if (typeof localStorage !== 'undefined' && localStorage !== null) {
+          // Save both member data and authentication status for persistent login
+          localStorage.setItem(MEMBER_STORAGE_KEY, JSON.stringify({
+            member: state.member,
+            isAuthenticated: state.isAuthenticated,
+          }));
+        }
       } catch (error) {
-        console.error('Error saving member state to localStorage:', error);
+        // Silently handle localStorage errors - this is expected in some contexts
+        console.debug('[MEMBER PROVIDER] localStorage save failed:', error instanceof Error ? error.message : String(error));
       }
     }
   }, [state.member, state.isAuthenticated]);
@@ -164,10 +173,13 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
       // This ensures that even if the page reloads during logout, we won't restore stale auth state
       if (typeof window !== 'undefined') {
         try {
-          localStorage.removeItem(MEMBER_STORAGE_KEY);
-          console.log('[LOGOUT] Cleared localStorage immediately');
+          // Check if localStorage is accessible before attempting to use it
+          if (typeof localStorage !== 'undefined' && localStorage !== null) {
+            localStorage.removeItem(MEMBER_STORAGE_KEY);
+            console.log('[LOGOUT] Cleared localStorage immediately');
+          }
         } catch (error) {
-          console.error('[LOGOUT] Error clearing localStorage:', error);
+          console.debug('[LOGOUT] Error clearing localStorage:', error instanceof Error ? error.message : String(error));
         }
       }
 
