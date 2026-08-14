@@ -31,35 +31,35 @@ export default function BackgroundMusicPlayer() {
             _id: t._id,
             musicTitle: t.musicTitle,
             isEnabled: t.isEnabled,
-            audio: t.audio ? '✓ (present)' : '✗ (missing)',
+            musicUrl: t.musicUrl ? '✓ (present)' : '✗ (missing)',
             volume: t.volume,
             loopMusic: t.loopMusic,
             autoplayEnabled: t.autoplayEnabled
           }))
         });
         
-        // Filter for enabled tracks with canonical audio field
+        // Filter for enabled tracks with musicUrl field
         const enabledTracks = result.items?.filter(track => {
           const isEnabled = track.isEnabled === true;
-          // Use canonical audio field for playable URL
-          const hasAudio = !!track.audio;
+          // Use musicUrl field for playable URL
+          const hasMusicUrl = !!track.musicUrl;
           console.log('[MUSIC_PLAYER] Filtering track:', {
             title: track.musicTitle,
             isEnabled,
-            hasAudio,
-            audioValue: track.audio,
-            audioLength: track.audio?.length,
-            audioIsHttps: track.audio?.startsWith('https://'),
-            included: isEnabled && hasAudio
+            hasMusicUrl,
+            musicUrlValue: track.musicUrl,
+            musicUrlLength: track.musicUrl?.length,
+            musicUrlIsHttps: track.musicUrl?.startsWith('https://'),
+            included: isEnabled && hasMusicUrl
           });
-          return isEnabled && hasAudio;
+          return isEnabled && hasMusicUrl;
         }) || [];
         
         if (enabledTracks.length > 0) {
           console.log('[MUSIC_PLAYER] Found enabled tracks:', enabledTracks.length);
           console.log('[MUSIC_PLAYER] First track details:', {
             title: enabledTracks[0].musicTitle,
-            audio: enabledTracks[0].audio,
+            musicUrl: enabledTracks[0].musicUrl,
             volume: enabledTracks[0].volume,
             loop: enabledTracks[0].loopMusic,
             autoplay: enabledTracks[0].autoplayEnabled
@@ -93,14 +93,14 @@ export default function BackgroundMusicPlayer() {
     }
 
     const currentTrack = musicTracks[currentTrackIndex];
-    // Use canonical audio field for playable URL
-    const url = getPlayableAudioUrl(undefined, currentTrack.audio);
+    // Use musicUrl field for playable URL
+    const url = getPlayableAudioUrl(currentTrack.musicUrl, undefined);
     
     console.log('[MUSIC_PLAYER] Resolved playable URL:', {
       trackTitle: currentTrack.musicTitle,
-      audio: currentTrack.audio,
-      audioLength: currentTrack.audio?.length,
-      audioIsHttps: currentTrack.audio?.startsWith('https://'),
+      musicUrl: currentTrack.musicUrl,
+      musicUrlLength: currentTrack.musicUrl?.length,
+      musicUrlIsHttps: currentTrack.musicUrl?.startsWith('https://'),
       playableUrl: url
     });
     
@@ -264,7 +264,7 @@ export default function BackgroundMusicPlayer() {
     console.log('[MUSIC_PLAYER] Not rendering - no playable URL:', {
       trackIndex: currentTrackIndex,
       trackTitle: currentTrack?.musicTitle,
-      audioField: currentTrack?.audio
+      musicUrlField: currentTrack?.musicUrl
     });
     return null;
   }

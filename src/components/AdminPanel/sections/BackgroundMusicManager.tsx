@@ -45,7 +45,7 @@ export default function BackgroundMusicManager() {
           autoplayEnabled: false,
           loopMusic: true,
           volume: 50,
-          // No audio/musicUrl yet - will be set on upload
+          // No musicUrl yet - will be set on upload
         };
         
         setSettings(placeholderSettings);
@@ -99,7 +99,7 @@ export default function BackgroundMusicManager() {
         console.log('[MUSIC_MANAGER] Updating existing MusicSettings record');
         updated = {
           ...settings,
-          audio: result.mediaUrl,  // Canonical audio field - store HTTPS URL
+          musicUrl: result.mediaUrl,  // Store HTTPS URL in musicUrl field (@wixFieldType url)
           musicTitle: file.name.replace(/\.[^/.]+$/, ''),
           isEnabled: true,
         };
@@ -109,7 +109,7 @@ export default function BackgroundMusicManager() {
         isNewRecord = true;
         updated = {
           ...settings,
-          audio: result.mediaUrl,  // Canonical audio field - store HTTPS URL
+          musicUrl: result.mediaUrl,  // Store HTTPS URL in musicUrl field (@wixFieldType url)
           musicTitle: file.name.replace(/\.[^/.]+$/, ''),
           isEnabled: true,
         };
@@ -117,9 +117,9 @@ export default function BackgroundMusicManager() {
       
       console.log('[MUSIC_MANAGER] Saving to CMS:', { 
         _id: updated._id,
-        audio: updated.audio,
-        audioLength: updated.audio?.length,
-        audioIsHttps: updated.audio?.startsWith('https://'),
+        musicUrl: updated.musicUrl,
+        musicUrlLength: updated.musicUrl?.length,
+        musicUrlIsHttps: updated.musicUrl?.startsWith('https://'),
         musicTitle: updated.musicTitle,
         isEnabled: updated.isEnabled,
         isNewRecord
@@ -130,9 +130,9 @@ export default function BackgroundMusicManager() {
         const created = await adminCms.create('musicsettings', updated);
         console.log('[MUSIC_MANAGER] Successfully created new MusicSettings record:', {
           _id: created._id,
-          audio: created.audio,
-          audioLength: created.audio?.length,
-          audioIsHttps: created.audio?.startsWith('https://'),
+          musicUrl: created.musicUrl,
+          musicUrlLength: created.musicUrl?.length,
+          musicUrlIsHttps: created.musicUrl?.startsWith('https://'),
           musicTitle: created.musicTitle,
           isEnabled: created.isEnabled
         });
@@ -142,9 +142,9 @@ export default function BackgroundMusicManager() {
         const updateResult = await adminCms.update('musicsettings', updated);
         console.log('[MUSIC_MANAGER] Successfully updated MusicSettings record:', {
           _id: updateResult._id,
-          audio: updateResult.audio,
-          audioLength: updateResult.audio?.length,
-          audioIsHttps: updateResult.audio?.startsWith('https://'),
+          musicUrl: updateResult.musicUrl,
+          musicUrlLength: updateResult.musicUrl?.length,
+          musicUrlIsHttps: updateResult.musicUrl?.startsWith('https://'),
           musicTitle: updateResult.musicTitle,
           isEnabled: updateResult.isEnabled
         });
@@ -182,7 +182,7 @@ export default function BackgroundMusicManager() {
         console.log('[MUSIC_MANAGER] Record not persisted yet, just clearing local state');
         const cleared: MusicSettings = {
           ...settings,
-          audio: undefined,
+          musicUrl: undefined,
           musicTitle: undefined,
           isEnabled: false,
         };
@@ -196,7 +196,7 @@ export default function BackgroundMusicManager() {
 
       const updated: MusicSettings = {
         ...settings,
-        audio: undefined,
+        musicUrl: undefined,
         musicTitle: undefined,
         isEnabled: false,
       };
@@ -373,7 +373,7 @@ export default function BackgroundMusicManager() {
           </div>
 
           {/* Current Music Info */}
-          {settings?.audio && (
+          {settings?.musicUrl && (
             <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
               <p className="text-sm font-medium text-slate-900">Current Music:</p>
               <p className="text-sm text-slate-600 mt-1">{settings.musicTitle || 'Untitled'}</p>
@@ -411,7 +411,7 @@ export default function BackgroundMusicManager() {
           </label>
 
           {/* Remove Button */}
-          {settings?.audio && (
+          {settings?.musicUrl && (
             <Button
               onClick={handleRemoveMusic}
               disabled={isSaving}
@@ -426,7 +426,7 @@ export default function BackgroundMusicManager() {
       </Card>
 
       {/* Audio Preview */}
-      {settings?.audio && (
+      {settings?.musicUrl && (
         <Card className="p-6 border border-slate-200">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-slate-900">Preview & Controls</h3>
@@ -434,7 +434,7 @@ export default function BackgroundMusicManager() {
             {/* Audio Player */}
             <audio
               ref={setAudioRef}
-              src={settings.audio}
+              src={settings.musicUrl}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               className="w-full"
@@ -469,7 +469,7 @@ export default function BackgroundMusicManager() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
               onClick={handleToggleMusicEnabled}
-              disabled={isSaving || !settings?.audio}
+              disabled={isSaving || !settings?.musicUrl}
               variant={settings?.isEnabled ? 'default' : 'outline'}
               className={`flex items-center justify-center gap-2 ${
                 settings?.isEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
@@ -481,7 +481,7 @@ export default function BackgroundMusicManager() {
 
             <Button
               onClick={handleToggleAutoplay}
-              disabled={isSaving || !settings?.audio}
+              disabled={isSaving || !settings?.musicUrl}
               variant={settings?.autoplayEnabled ? 'default' : 'outline'}
               className={`flex items-center justify-center gap-2 ${
                 settings?.autoplayEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
@@ -493,7 +493,7 @@ export default function BackgroundMusicManager() {
 
             <Button
               onClick={handleToggleLoop}
-              disabled={isSaving || !settings?.audio}
+              disabled={isSaving || !settings?.musicUrl}
               variant={settings?.loopMusic ? 'default' : 'outline'}
               className={`flex items-center justify-center gap-2 ${
                 settings?.loopMusic ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''

@@ -63,27 +63,12 @@ export function convertWixAudioUrl(wixUrl: string): string | null {
 
 /**
  * Get a playable audio URL from MusicSettings
- * Uses canonical audio field (HTTPS URL) for playback
+ * Uses musicUrl field (HTTPS URL) for playback
  */
 export function getPlayableAudioUrl(musicUrl?: string, audioField?: string): string | null {
-  // Prefer audioField (canonical audio field) if it's a valid HTTPS URL
-  if (audioField && audioField.startsWith('https://')) {
-    console.log('[WIX_AUDIO] Using canonical audio field (HTTPS):', audioField);
-    return audioField;
-  }
-
-  // Try to convert audio field if it's a wix:audio URL
-  if (audioField && audioField.startsWith('wix:audio://')) {
-    const converted = convertWixAudioUrl(audioField);
-    if (converted) {
-      console.log('[WIX_AUDIO] Using converted audio field:', converted);
-      return converted;
-    }
-  }
-
-  // Fallback to musicUrl if it's a valid HTTPS URL
+  // Prefer musicUrl (canonical field) if it's a valid HTTPS URL
   if (musicUrl && musicUrl.startsWith('https://')) {
-    console.log('[WIX_AUDIO] Using musicUrl (fallback):', musicUrl);
+    console.log('[WIX_AUDIO] Using musicUrl field (HTTPS):', musicUrl);
     return musicUrl;
   }
 
@@ -91,7 +76,22 @@ export function getPlayableAudioUrl(musicUrl?: string, audioField?: string): str
   if (musicUrl && musicUrl.startsWith('wix:audio://')) {
     const converted = convertWixAudioUrl(musicUrl);
     if (converted) {
-      console.log('[WIX_AUDIO] Using converted musicUrl (fallback):', converted);
+      console.log('[WIX_AUDIO] Using converted musicUrl:', converted);
+      return converted;
+    }
+  }
+
+  // Fallback to audioField if it's a valid HTTPS URL
+  if (audioField && audioField.startsWith('https://')) {
+    console.log('[WIX_AUDIO] Using audioField (fallback):', audioField);
+    return audioField;
+  }
+
+  // Try to convert audioField if it's a wix:audio URL
+  if (audioField && audioField.startsWith('wix:audio://')) {
+    const converted = convertWixAudioUrl(audioField);
+    if (converted) {
+      console.log('[WIX_AUDIO] Using converted audioField (fallback):', converted);
       return converted;
     }
   }
