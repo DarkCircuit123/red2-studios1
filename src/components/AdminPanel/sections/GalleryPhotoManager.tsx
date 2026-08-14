@@ -8,6 +8,7 @@ import { Upload, Trash2, Eye, Plus, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { motion } from 'framer-motion';
 import ImageThumbnailPreview from './ImageThumbnailPreview';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 interface GalleryPhoto {
   _id: string;
@@ -467,7 +468,7 @@ export default function GalleryPhotoManager() {
                 <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
                   {photo.image && (
                     <img
-                      src={photo.image}
+                      src={convertWixImageToHttps(photo.image) || photo.image}
                       alt={photo.title || 'Gallery photo'}
                       className="w-full h-full object-cover"
                     />
@@ -475,7 +476,7 @@ export default function GalleryPhotoManager() {
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
                     <button
                       type="button"
-                      onClick={() => window.open(photo.image, '_blank')}
+                      onClick={() => window.open(convertWixImageToHttps(photo.image) || photo.image, '_blank')}
                       className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                       title="View full image"
                     >

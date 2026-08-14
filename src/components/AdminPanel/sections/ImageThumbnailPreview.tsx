@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image as ImageIcon, Trash2, Eye } from 'lucide-react';
 import { Image } from '@/components/ui/image';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 interface ImageThumbnailPreviewProps {
   imageUrl?: string;
@@ -34,10 +35,11 @@ export default function ImageThumbnailPreview({
 
   if (compact) {
     // Compact thumbnail for grid layouts (e.g., 30-slot portfolio gallery)
+    const resolvedUrl = convertWixImageToHttps(imageUrl) || imageUrl;
     return (
       <div className="relative w-full h-full rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
         <Image
-          src={imageUrl}
+          src={resolvedUrl}
           alt={altText || title || `Image ${slotNumber || ''}`}
           width={200}
           height={200}
@@ -77,12 +79,13 @@ export default function ImageThumbnailPreview({
   }
 
   // Full-size thumbnail for detail views
+  const resolvedUrl = convertWixImageToHttps(imageUrl) || imageUrl;
   return (
     <div className="space-y-3">
       <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
         <div className="relative w-full h-64">
           <Image
-            src={imageUrl}
+            src={resolvedUrl}
             alt={altText || title || 'Uploaded image'}
             width={400}
             height={256}
