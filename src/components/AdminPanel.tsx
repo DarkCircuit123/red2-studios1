@@ -750,7 +750,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 duration: '',
                                 isDefaultHomepageTrack: true,
                               };
-                              await BaseCrudService.create('musicsettings', newMusicSettings);
+                              await adminCms.create('musicsettings', newMusicSettings);
                               setMusicSettings(newMusicSettings);
                               console.log('[ADMIN PANEL] Music Settings record created:', newMusicSettings._id);
                             } catch (error) {
