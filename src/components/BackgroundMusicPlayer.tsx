@@ -149,7 +149,7 @@ export default function BackgroundMusicPlayer() {
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           await playPromise;
-          setIsPlaying(true);
+          // isPlaying will be set to true by handleAudioPlay event listener
           setAudioError(false);
           setHasInteracted(true);
           console.log('[MUSIC_PLAYER] Autoplay succeeded');
@@ -159,6 +159,7 @@ export default function BackgroundMusicPlayer() {
         console.log('[MUSIC_PLAYER] Autoplay blocked by browser policy, waiting for user interaction', {
           error: err instanceof Error ? err.message : String(err)
         });
+        setAudioError(true);
       }
     };
 
@@ -177,13 +178,14 @@ export default function BackgroundMusicPlayer() {
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
             await playPromise;
-            setIsPlaying(true);
+            // isPlaying will be set to true by handleAudioPlay event listener
             setAudioError(false);
             console.log('[MUSIC_PLAYER] Playback started on user interaction');
           }
         } catch (err) {
           console.error('[MUSIC_PLAYER] Playback failed on user interaction:', err);
           setAudioError(true);
+          setIsPlaying(false);
         }
       }
     };
@@ -214,8 +216,14 @@ export default function BackgroundMusicPlayer() {
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           playPromise
-            .then(() => setIsPlaying(true))
-            .catch(() => setAudioError(true));
+            .then(() => {
+              // isPlaying will be set to true by handleAudioPlay event listener
+              setAudioError(false);
+            })
+            .catch(() => {
+              setAudioError(true);
+              setIsPlaying(false);
+            });
         }
       }
     }
@@ -245,6 +253,7 @@ export default function BackgroundMusicPlayer() {
       networkState: audio.networkState
     });
     setAudioError(true);
+    setIsPlaying(false);
   };
 
   // Don't render if music is disabled or settings not loaded
