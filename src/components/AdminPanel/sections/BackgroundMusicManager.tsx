@@ -27,11 +27,17 @@ export default function BackgroundMusicManager() {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
+      console.log('[MUSIC_MANAGER] Loading music settings...');
+      
       const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
+      console.log('[MUSIC_MANAGER] Query result:', { itemCount: result.items.length, items: result.items });
+      
       if (result.items.length > 0) {
+        console.log('[MUSIC_MANAGER] Found existing settings:', result.items[0]);
         setSettings(result.items[0]);
       } else {
         // Create a default music settings entry if none exists
+        console.log('[MUSIC_MANAGER] No settings found, creating default...');
         const newSettings: MusicSettings = {
           _id: crypto.randomUUID(),
           musicTitle: 'Background Music',
@@ -40,15 +46,38 @@ export default function BackgroundMusicManager() {
           loopMusic: true,
           volume: 50,
         };
-        await adminCms.create('musicsettings', newSettings);
-        setSettings(newSettings);
+        
+        try {
+          const created = await adminCms.create('musicsettings', newSettings);
+          console.log('[MUSIC_MANAGER] Successfully created default settings:', created);
+          setSettings(newSettings);
+        } catch (createError) {
+          console.error('[MUSIC_MANAGER] Failed to create default settings:', createError);
+          // Still set local state even if creation fails, so user can upload
+          setSettings(newSettings);
+          toast({
+            title: 'Warning',
+            description: 'Could not create default settings, but you can still upload music',
+            variant: 'default',
+          });
+        }
       }
     } catch (error) {
-      console.error('Error loading settings:', error);
+      console.error('[MUSIC_MANAGER] Error loading settings:', error);
+      // Create a temporary settings object so user can still upload
+      const tempSettings: MusicSettings = {
+        _id: crypto.randomUUID(),
+        musicTitle: 'Background Music',
+        isEnabled: false,
+        autoplayEnabled: false,
+        loopMusic: true,
+        volume: 50,
+      };
+      setSettings(tempSettings);
       toast({
-        title: 'Error',
-        description: 'Failed to load music settings',
-        variant: 'destructive',
+        title: 'Warning',
+        description: 'Could not load music settings, but you can still upload music',
+        variant: 'default',
       });
     } finally {
       setIsLoading(false);
@@ -61,10 +90,12 @@ export default function BackgroundMusicManager() {
 
     try {
       setIsUploading(true);
+      console.log('[MUSIC_MANAGER] Starting music upload:', { fileName: file.name, size: file.size, type: file.type });
 
       // Use unified upload service with wix-media-upload-service
       // This will use buildWixAudioUrl() for audio files to get HTTPS URL
       const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
+      console.log('[MUSIC_MANAGER] Upload completed, received URL:', { mediaUrl: result.mediaUrl });
 
       // Update settings with the uploaded music URL (HTTPS URL from buildWixAudioUrl)
       const updated: MusicSettings = {
@@ -74,7 +105,17 @@ export default function BackgroundMusicManager() {
         musicTitle: file.name.replace(/\.[^/.]+$/, ''),
         isEnabled: true,
       };
+      
+      console.log('[MUSIC_MANAGER] Saving to CMS:', { 
+        _id: updated._id,
+        musicUrl: updated.musicUrl,
+        musicTitle: updated.musicTitle,
+        isEnabled: updated.isEnabled
+      });
+      
       await adminCms.update('musicsettings', updated);
+      console.log('[MUSIC_MANAGER] Successfully saved to CMS');
+      
       setSettings(updated);
 
       toast({
@@ -82,10 +123,13 @@ export default function BackgroundMusicManager() {
         description: 'Music file uploaded successfully',
       });
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('[MUSIC_MANAGER] Upload error:', error);
+      const errorMessage = error instanceof Error ? error.message : 
+                          (error && typeof error === 'object' && 'message' in error) ? (error as any).message :
+                          'Failed to upload music file';
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to upload music file',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -98,6 +142,8 @@ export default function BackgroundMusicManager() {
 
     try {
       setIsSaving(true);
+      console.log('[MUSIC_MANAGER] Removing music...');
+      
       const updated: MusicSettings = {
         ...settings,
         musicUrl: undefined,
@@ -105,7 +151,11 @@ export default function BackgroundMusicManager() {
         musicTitle: undefined,
         isEnabled: false,
       };
+      
+      console.log('[MUSIC_MANAGER] Saving removal to CMS:', { _id: updated._id });
       await adminCms.update('musicsettings', updated);
+      console.log('[MUSIC_MANAGER] Successfully removed music');
+      
       setSettings(updated);
       setIsPlaying(false);
 
@@ -114,7 +164,7 @@ export default function BackgroundMusicManager() {
         description: 'Music file removed',
       });
     } catch (error) {
-      console.error('Error removing music:', error);
+      console.error('[MUSIC_MANAGER] Error removing music:', error);
       toast({
         title: 'Error',
         description: 'Failed to remove music file',
@@ -130,8 +180,14 @@ export default function BackgroundMusicManager() {
 
     try {
       setIsSaving(true);
+      console.log('[MUSIC_MANAGER] Toggling music enabled:', { current: settings.isEnabled });
+      
       const updated: MusicSettings = { ...settings, isEnabled: !settings.isEnabled };
+      
+      console.log('[MUSIC_MANAGER] Saving toggle to CMS:', { _id: updated._id, isEnabled: updated.isEnabled });
       await adminCms.update('musicsettings', updated);
+      console.log('[MUSIC_MANAGER] Successfully toggled music enabled');
+      
       setSettings(updated);
 
       toast({
@@ -139,7 +195,7 @@ export default function BackgroundMusicManager() {
         description: `Music ${updated.isEnabled ? 'enabled' : 'disabled'}`,
       });
     } catch (error) {
-      console.error('Error toggling music:', error);
+      console.error('[MUSIC_MANAGER] Error toggling music:', error);
       toast({
         title: 'Error',
         description: 'Failed to update music settings',
@@ -155,8 +211,14 @@ export default function BackgroundMusicManager() {
 
     try {
       setIsSaving(true);
+      console.log('[MUSIC_MANAGER] Toggling autoplay:', { current: settings.autoplayEnabled });
+      
       const updated: MusicSettings = { ...settings, autoplayEnabled: !settings.autoplayEnabled };
+      
+      console.log('[MUSIC_MANAGER] Saving autoplay toggle to CMS:', { _id: updated._id, autoplayEnabled: updated.autoplayEnabled });
       await adminCms.update('musicsettings', updated);
+      console.log('[MUSIC_MANAGER] Successfully toggled autoplay');
+      
       setSettings(updated);
 
       toast({
@@ -164,7 +226,7 @@ export default function BackgroundMusicManager() {
         description: `Autoplay ${updated.autoplayEnabled ? 'enabled' : 'disabled'}`,
       });
     } catch (error) {
-      console.error('Error toggling autoplay:', error);
+      console.error('[MUSIC_MANAGER] Error toggling autoplay:', error);
       toast({
         title: 'Error',
         description: 'Failed to update autoplay settings',
@@ -180,8 +242,14 @@ export default function BackgroundMusicManager() {
 
     try {
       setIsSaving(true);
+      console.log('[MUSIC_MANAGER] Toggling loop:', { current: settings.loopMusic });
+      
       const updated: MusicSettings = { ...settings, loopMusic: !settings.loopMusic };
+      
+      console.log('[MUSIC_MANAGER] Saving loop toggle to CMS:', { _id: updated._id, loopMusic: updated.loopMusic });
       await adminCms.update('musicsettings', updated);
+      console.log('[MUSIC_MANAGER] Successfully toggled loop');
+      
       setSettings(updated);
 
       toast({
@@ -189,7 +257,7 @@ export default function BackgroundMusicManager() {
         description: `Loop ${updated.loopMusic ? 'enabled' : 'disabled'}`,
       });
     } catch (error) {
-      console.error('Error toggling loop:', error);
+      console.error('[MUSIC_MANAGER] Error toggling loop:', error);
       toast({
         title: 'Error',
         description: 'Failed to update loop settings',
@@ -204,15 +272,21 @@ export default function BackgroundMusicManager() {
     if (!settings) return;
 
     try {
+      console.log('[MUSIC_MANAGER] Changing volume:', { current: settings.volume, new: newVolume });
+      
       const updated: MusicSettings = { ...settings, volume: newVolume };
+      
+      console.log('[MUSIC_MANAGER] Saving volume to CMS:', { _id: updated._id, volume: updated.volume });
       await adminCms.update('musicsettings', updated);
+      console.log('[MUSIC_MANAGER] Successfully updated volume');
+      
       setSettings(updated);
 
       if (audioRef) {
         audioRef.volume = newVolume / 100;
       }
     } catch (error) {
-      console.error('Error updating volume:', error);
+      console.error('[MUSIC_MANAGER] Error updating volume:', error);
     }
   };
 

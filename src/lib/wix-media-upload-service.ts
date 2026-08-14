@@ -85,22 +85,37 @@ async function generateUploadUrl(
  * Unlike images, audio does NOT need wix:image:// URLs - it needs direct HTTPS URLs.
  */
 function buildWixAudioUrl(response: any, file: File): string | undefined {
-  console.log('[WIX_MEDIA] buildWixAudioUrl - upload response:', response);
+  console.log('[WIX_MEDIA] buildWixAudioUrl - full upload response:', JSON.stringify(response, null, 2));
   
   const f = response?.file;
   if (!f) {
-    console.error('[WIX_MEDIA] buildWixAudioUrl - no file in response');
+    console.error('[WIX_MEDIA] buildWixAudioUrl - no file in response', {
+      responseKeys: Object.keys(response || {}),
+      response
+    });
     return undefined;
   }
+
+  console.log('[WIX_MEDIA] buildWixAudioUrl - file object:', {
+    fileKeys: Object.keys(f),
+    file: f
+  });
 
   // For audio, we want the direct HTTPS URL from the response
   const staticUrl = f?.url;
   if (!staticUrl) {
-    console.error('[WIX_MEDIA] buildWixAudioUrl - no URL in response');
+    console.error('[WIX_MEDIA] buildWixAudioUrl - no URL in response', {
+      fileKeys: Object.keys(f),
+      file: f
+    });
     return undefined;
   }
 
-  console.log('[WIX_MEDIA] buildWixAudioUrl - returning HTTPS audio URL', { staticUrl });
+  console.log('[WIX_MEDIA] buildWixAudioUrl - returning HTTPS audio URL', { 
+    staticUrl,
+    isHttps: staticUrl.startsWith('https://'),
+    domain: new URL(staticUrl).hostname
+  });
   return staticUrl;
 }
 

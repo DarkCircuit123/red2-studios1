@@ -4,7 +4,7 @@ import { Settings, X, Edit2, Music, Calendar, LogOut, Trash2, Upload } from 'luc
 import { useMember } from '@/integrations';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
-import MusicManager from './MusicManager';
+import BackgroundMusicManager from './AdminPanel/sections/BackgroundMusicManager';
 import BookingManagerPro from './BookingManagerPro';
 import RubberBandPhotosManager from './AdminPanel/sections/RubberBandPhotosManager';
 import SplashpageManager from './AdminPanel/sections/SplashpageManager';
@@ -16,15 +16,6 @@ import { playClickSound } from '@/lib/click-sound';
 interface AdminPanelProps {
   isOpen: boolean;
   onClose: () => void;
-}
-
-interface MusicSettings {
-  _id: string;
-  musicUrl?: string;
-  isEnabled?: boolean;
-  volume?: number;
-  loopMusic?: boolean;
-  musicTitle?: string;
 }
 
 interface AboutSettings extends AboutSection {}
@@ -42,7 +33,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState('photos');
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
-  const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
   const [aboutSettings, setAboutSettings] = useState<AboutSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingAbout, setIsSavingAbout] = useState(false);
