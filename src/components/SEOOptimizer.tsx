@@ -7,7 +7,7 @@ import { setupSemanticStructure } from '@/lib/semantic-html';
 import { initializeImageOptimizations } from '@/lib/image-optimization';
 import { initializeGPUAnimations } from '@/lib/gpu-animations';
 import { initializeInternalLinking } from '@/lib/internal-linking';
-import { SecurityHeadersManager, cspManager } from '@/lib/security-enhanced';
+import { SecurityHeadersManager } from '@/lib/security-enhanced';
 
 export function SEOOptimizer() {
   useEffect(() => {
@@ -17,7 +17,7 @@ export function SEOOptimizer() {
     initializeInternalLinking();
     setupSemanticStructure();
     SecurityHeadersManager.applyHeaders();
-    cspManager.applyToMeta();
+    // CSP is now defined in src/components/Head.tsx as the single source of truth
 
     const sitemap = generateSitemap(STATIC_ROUTES);
 

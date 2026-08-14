@@ -1,10 +1,15 @@
 /**
  * Enhanced security utilities for production applications
- * Implements: XSS prevention, CSRF protection, CSP, rate limiting
+ * Implements: XSS prevention, CSRF protection, rate limiting
+ * 
+ * NOTE: Content Security Policy is now defined in src/components/Head.tsx
+ * as the single source of truth for CSP configuration.
  */
 
 /**
  * Content Security Policy (CSP) helper
+ * DEPRECATED: CSP is now defined in src/components/Head.tsx as the single source of truth.
+ * This class is kept for backward compatibility but should not be used.
  */
 export class CSPManager {
   private directives: Map<string, string[]> = new Map();
@@ -39,12 +44,10 @@ export class CSPManager {
   }
 
   applyToMeta(): void {
+    // CSP is now defined in src/components/Head.tsx as the single source of truth
+    // This method is deprecated and does nothing
     if (typeof document === 'undefined') return;
-
-    const meta = document.createElement('meta');
-    meta.httpEquiv = 'Content-Security-Policy';
-    meta.content = this.getPolicy();
-    document.head.appendChild(meta);
+    // No-op: CSP is handled by Head.tsx meta tag
   }
 }
 
