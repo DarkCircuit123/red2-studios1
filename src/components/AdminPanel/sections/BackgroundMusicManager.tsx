@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,12 +17,20 @@ export default function BackgroundMusicManager() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [settings, setSettings] = useState<MusicSettings | null>(null);
-  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     loadSettings();
   }, []);
+
+  // Sync audio element volume when settings change
+  useEffect(() => {
+    if (audioRef.current && settings?.volume !== undefined) {
+      audioRef.current.volume = Math.min(1, settings.volume / 100);
+      console.log('[MUSIC_MANAGER] Synced audio volume:', { volume: audioRef.current.volume });
+    }
+  }, [settings?.volume]);
 
   const loadSettings = async () => {
     try {
@@ -334,20 +342,28 @@ export default function BackgroundMusicManager() {
       
       const updated: MusicSettings = { ...settings, volume: newVolume };
       
+      // Update audio element volume immediately
+      if (audioRef.current) {
+        audioRef.current.volume = newVolume / 100;
+        console.log('[MUSIC_MANAGER] Updated audio element volume:', { volume: audioRef.current.volume });
+      }
+      
+      // Update local state immediately for responsive UI
+      setSettings(updated);
+      
       // Only update CMS if record has been persisted
       if (settings._createdDate) {
         console.log('[MUSIC_MANAGER] Saving volume to CMS:', { _id: updated._id, volume: updated.volume });
         await adminCms.update('musicsettings', updated);
-        console.log('[MUSIC_MANAGER] Successfully updated volume');
-      }
-      
-      setSettings(updated);
-
-      if (audioRef) {
-        audioRef.volume = newVolume / 100;
+        console.log('[MUSIC_MANAGER] Successfully updated volume in CMS');
       }
     } catch (error) {
       console.error('[MUSIC_MANAGER] Error updating volume:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update volume',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -433,7 +449,7 @@ export default function BackgroundMusicManager() {
 
             {/* Audio Player */}
             <audio
-              ref={setAudioRef}
+              ref={audioRef}
               src={settings.musicUrl}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
