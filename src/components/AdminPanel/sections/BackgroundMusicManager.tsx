@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Music, Upload, Trash2, Play, Pause, Volume2, RotateCw, Zap } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
-import { HomePageSettings } from '@/entities';
+import { MusicSettings } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { MUSIC_UPLOAD_CONFIG } from '@/lib/upload-config';
@@ -16,7 +16,7 @@ export default function BackgroundMusicManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [settings, setSettings] = useState<HomePageSettings | null>(null);
+  const [settings, setSettings] = useState<MusicSettings | null>(null);
   const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -27,15 +27,27 @@ export default function BackgroundMusicManager() {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<HomePageSettings>('homepagesettings', {}, { limit: 1 });
+      const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
       if (result.items.length > 0) {
         setSettings(result.items[0]);
+      } else {
+        // Create a default music settings entry if none exists
+        const newSettings: MusicSettings = {
+          _id: crypto.randomUUID(),
+          musicTitle: 'Background Music',
+          isEnabled: false,
+          autoplayEnabled: false,
+          loopMusic: true,
+          volume: 50,
+        };
+        await adminCms.create('musicsettings', newSettings);
+        setSettings(newSettings);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load settings',
+        description: 'Failed to load music settings',
         variant: 'destructive',
       });
     } finally {
@@ -53,13 +65,15 @@ export default function BackgroundMusicManager() {
       // Use unified upload service with wix-media-upload-service
       const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
 
-      // Update settings
-      const updated = {
+      // Update settings with the uploaded music URL
+      const updated: MusicSettings = {
         ...settings,
-        backgroundMusicUrl: result.mediaUrl,
+        musicUrl: result.mediaUrl,
+        audio: result.mediaUrl,
         musicTitle: file.name.replace(/\.[^/.]+$/, ''),
+        isEnabled: true,
       };
-      await adminCms.update('homepagesettings', updated);
+      await adminCms.update('musicsettings', updated);
       setSettings(updated);
 
       toast({
@@ -83,12 +97,14 @@ export default function BackgroundMusicManager() {
 
     try {
       setIsSaving(true);
-      const updated = {
+      const updated: MusicSettings = {
         ...settings,
-        backgroundMusicUrl: undefined,
+        musicUrl: undefined,
+        audio: undefined,
         musicTitle: undefined,
+        isEnabled: false,
       };
-      await adminCms.update('homepagesettings', updated);
+      await adminCms.update('musicsettings', updated);
       setSettings(updated);
       setIsPlaying(false);
 
@@ -113,13 +129,13 @@ export default function BackgroundMusicManager() {
 
     try {
       setIsSaving(true);
-      const updated = { ...settings, musicEnabled: !settings.musicEnabled };
-      await adminCms.update('homepagesettings', updated);
+      const updated: MusicSettings = { ...settings, isEnabled: !settings.isEnabled };
+      await adminCms.update('musicsettings', updated);
       setSettings(updated);
 
       toast({
         title: 'Success',
-        description: `Music ${updated.musicEnabled ? 'enabled' : 'disabled'}`,
+        description: `Music ${updated.isEnabled ? 'enabled' : 'disabled'}`,
       });
     } catch (error) {
       console.error('Error toggling music:', error);
@@ -138,8 +154,8 @@ export default function BackgroundMusicManager() {
 
     try {
       setIsSaving(true);
-      const updated = { ...settings, autoplayEnabled: !settings.autoplayEnabled };
-      await adminCms.update('homepagesettings', updated);
+      const updated: MusicSettings = { ...settings, autoplayEnabled: !settings.autoplayEnabled };
+      await adminCms.update('musicsettings', updated);
       setSettings(updated);
 
       toast({
@@ -163,8 +179,8 @@ export default function BackgroundMusicManager() {
 
     try {
       setIsSaving(true);
-      const updated = { ...settings, loopMusic: !settings.loopMusic };
-      await adminCms.update('homepagesettings', updated);
+      const updated: MusicSettings = { ...settings, loopMusic: !settings.loopMusic };
+      await adminCms.update('musicsettings', updated);
       setSettings(updated);
 
       toast({
@@ -187,8 +203,8 @@ export default function BackgroundMusicManager() {
     if (!settings) return;
 
     try {
-      const updated = { ...settings, volume: newVolume };
-      await adminCms.update('homepagesettings', updated);
+      const updated: MusicSettings = { ...settings, volume: newVolume };
+      await adminCms.update('musicsettings', updated);
       setSettings(updated);
 
       if (audioRef) {
@@ -221,7 +237,7 @@ export default function BackgroundMusicManager() {
           </div>
 
           {/* Current Music Info */}
-          {settings?.backgroundMusicUrl && (
+          {settings?.musicUrl && (
             <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
               <p className="text-sm font-medium text-slate-900">Current Music:</p>
               <p className="text-sm text-slate-600 mt-1">{settings.musicTitle || 'Untitled'}</p>
@@ -259,7 +275,7 @@ export default function BackgroundMusicManager() {
           </label>
 
           {/* Remove Button */}
-          {settings?.backgroundMusicUrl && (
+          {settings?.musicUrl && (
             <Button
               onClick={handleRemoveMusic}
               disabled={isSaving}
@@ -274,7 +290,7 @@ export default function BackgroundMusicManager() {
       </Card>
 
       {/* Audio Preview */}
-      {settings?.backgroundMusicUrl && (
+      {settings?.musicUrl && (
         <Card className="p-6 border border-slate-200">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-slate-900">Preview & Controls</h3>
@@ -282,7 +298,7 @@ export default function BackgroundMusicManager() {
             {/* Audio Player */}
             <audio
               ref={setAudioRef}
-              src={settings.backgroundMusicUrl}
+              src={settings.musicUrl}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               className="w-full"
@@ -317,19 +333,19 @@ export default function BackgroundMusicManager() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
               onClick={handleToggleMusicEnabled}
-              disabled={isSaving || !settings?.backgroundMusicUrl}
-              variant={settings?.musicEnabled ? 'default' : 'outline'}
+              disabled={isSaving || !settings?.musicUrl}
+              variant={settings?.isEnabled ? 'default' : 'outline'}
               className={`flex items-center justify-center gap-2 ${
-                settings?.musicEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
+                settings?.isEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
               }`}
             >
               <Music className="w-4 h-4" />
-              {settings?.musicEnabled ? 'Enabled' : 'Disabled'}
+              {settings?.isEnabled ? 'Enabled' : 'Disabled'}
             </Button>
 
             <Button
               onClick={handleToggleAutoplay}
-              disabled={isSaving || !settings?.backgroundMusicUrl}
+              disabled={isSaving || !settings?.musicUrl}
               variant={settings?.autoplayEnabled ? 'default' : 'outline'}
               className={`flex items-center justify-center gap-2 ${
                 settings?.autoplayEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
@@ -341,7 +357,7 @@ export default function BackgroundMusicManager() {
 
             <Button
               onClick={handleToggleLoop}
-              disabled={isSaving || !settings?.backgroundMusicUrl}
+              disabled={isSaving || !settings?.musicUrl}
               variant={settings?.loopMusic ? 'default' : 'outline'}
               className={`flex items-center justify-center gap-2 ${
                 settings?.loopMusic ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
