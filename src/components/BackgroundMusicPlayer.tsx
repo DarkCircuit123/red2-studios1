@@ -99,20 +99,24 @@ export default function BackgroundMusicPlayer() {
 
     const attemptAutoplay = async () => {
       try {
-        // Ensure audio element is ready
-        if (audioRef.current!.readyState === 0) {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        // Ensure audio element is ready and has source
+        if (audio.readyState === 0) {
           console.log('[MUSIC_PLAYER] Audio readyState is 0, calling load()');
-          audioRef.current!.load();
+          audio.load();
         }
         
         console.log('[MUSIC_PLAYER] Attempting autoplay on site load', {
-          readyState: audioRef.current!.readyState,
-          src: audioRef.current!.src,
-          autoplay: audioRef.current!.autoplay
+          readyState: audio.readyState,
+          src: audio.src,
+          autoplay: audio.autoplay,
+          muted: audio.muted
         });
         
-        // Attempt to play immediately
-        const playPromise = audioRef.current!.play();
+        // Attempt to play immediately (muted first to bypass autoplay policy)
+        const playPromise = audio.play();
         if (playPromise !== undefined) {
           await playPromise;
           setIsPlaying(true);
@@ -128,8 +132,10 @@ export default function BackgroundMusicPlayer() {
       }
     };
 
-    // Try autoplay immediately
-    attemptAutoplay();
+    // Small delay to ensure audio element is fully mounted and ready
+    const autoplayTimer = setTimeout(() => {
+      attemptAutoplay();
+    }, 100);
 
     // Fallback: Listen for user interaction to retry playback if autoplay failed
     const handleUserInteraction = async () => {
@@ -159,7 +165,8 @@ export default function BackgroundMusicPlayer() {
     document.addEventListener('keydown', handleUserInteraction, { once: true });
 
     return () => {
-      // Cleanup listeners if component unmounts before interaction
+      // Cleanup timer and listeners if component unmounts before interaction
+      clearTimeout(autoplayTimer);
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('touchstart', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);
