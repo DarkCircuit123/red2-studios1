@@ -85,6 +85,10 @@ export default function BackgroundMusicManager() {
       const result = await uploadMedia(file, 'music', MUSIC_UPLOAD_CONFIG);
       console.log('[MUSIC_MANAGER] Upload completed, received URL:', { mediaUrl: result.mediaUrl });
 
+      if (!result.mediaUrl) {
+        throw new Error('Upload returned empty media URL');
+      }
+
       // Check if this is a new record or an update
       let updated: MusicSettings;
       let isNewRecord = false;
@@ -114,6 +118,8 @@ export default function BackgroundMusicManager() {
       console.log('[MUSIC_MANAGER] Saving to CMS:', { 
         _id: updated._id,
         audio: updated.audio,
+        audioLength: updated.audio?.length,
+        audioIsHttps: updated.audio?.startsWith('https://'),
         musicTitle: updated.musicTitle,
         isEnabled: updated.isEnabled,
         isNewRecord
@@ -122,13 +128,27 @@ export default function BackgroundMusicManager() {
       if (isNewRecord) {
         // Create new record
         const created = await adminCms.create('musicsettings', updated);
-        console.log('[MUSIC_MANAGER] Successfully created new MusicSettings record:', created);
-        setSettings(updated);
+        console.log('[MUSIC_MANAGER] Successfully created new MusicSettings record:', {
+          _id: created._id,
+          audio: created.audio,
+          audioLength: created.audio?.length,
+          audioIsHttps: created.audio?.startsWith('https://'),
+          musicTitle: created.musicTitle,
+          isEnabled: created.isEnabled
+        });
+        setSettings(created);
       } else {
         // Update existing record
-        await adminCms.update('musicsettings', updated);
-        console.log('[MUSIC_MANAGER] Successfully updated MusicSettings record');
-        setSettings(updated);
+        const updateResult = await adminCms.update('musicsettings', updated);
+        console.log('[MUSIC_MANAGER] Successfully updated MusicSettings record:', {
+          _id: updateResult._id,
+          audio: updateResult.audio,
+          audioLength: updateResult.audio?.length,
+          audioIsHttps: updateResult.audio?.startsWith('https://'),
+          musicTitle: updateResult.musicTitle,
+          isEnabled: updateResult.isEnabled
+        });
+        setSettings(updateResult);
       }
 
       toast({

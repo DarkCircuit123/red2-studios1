@@ -26,10 +26,23 @@ export async function mutate(request: MutationRequest): Promise<MutationResponse
         if (!request.itemData || !request.collectionId) {
           return { success: false, error: 'Missing itemData or collectionId' };
         }
+        console.log('[CMS_MUTATE] Creating item in collection:', {
+          collectionId: request.collectionId,
+          itemDataKeys: Object.keys(request.itemData),
+          audio: request.itemData.audio,
+          audioLength: request.itemData.audio?.length,
+          audioIsHttps: request.itemData.audio?.startsWith('https://')
+        });
         const result = await elevatedInsert(
           request.collectionId,
           request.itemData
         );
+        console.log('[CMS_MUTATE] Create result:', {
+          _id: result._id,
+          audio: result.audio,
+          audioLength: result.audio?.length,
+          audioIsHttps: result.audio?.startsWith('https://')
+        });
         return { success: true, data: result };
       }
 
@@ -53,8 +66,30 @@ export async function mutate(request: MutationRequest): Promise<MutationResponse
           return { success: false, error: 'Item not found' };
         }
 
+        console.log('[CMS_MUTATE] Updating item in collection:', {
+          collectionId: request.collectionId,
+          itemId,
+          currentAudio: current.audio,
+          currentAudioLength: current.audio?.length,
+          incomingAudio: request.itemData.audio,
+          incomingAudioLength: request.itemData.audio?.length,
+          incomingAudioIsHttps: request.itemData.audio?.startsWith('https://')
+        });
+
         const merged = { ...current, ...request.itemData, _id: itemId };
+        console.log('[CMS_MUTATE] Merged payload:', {
+          audio: merged.audio,
+          audioLength: merged.audio?.length,
+          audioIsHttps: merged.audio?.startsWith('https://')
+        });
+        
         const result = await elevatedUpdate(request.collectionId, merged);
+        console.log('[CMS_MUTATE] Update result:', {
+          _id: result._id,
+          audio: result.audio,
+          audioLength: result.audio?.length,
+          audioIsHttps: result.audio?.startsWith('https://')
+        });
         return { success: true, data: result };
       }
 

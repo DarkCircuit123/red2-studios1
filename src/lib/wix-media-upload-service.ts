@@ -114,7 +114,8 @@ function buildWixAudioUrl(response: any, file: File): string | undefined {
   console.log('[WIX_MEDIA] buildWixAudioUrl - returning HTTPS audio URL', { 
     staticUrl,
     isHttps: staticUrl.startsWith('https://'),
-    domain: new URL(staticUrl).hostname
+    domain: new URL(staticUrl).hostname,
+    urlLength: staticUrl.length
   });
   return staticUrl;
 }
@@ -323,12 +324,20 @@ export async function uploadMedia(
   try {
     // Step 1: Request signed upload URL from backend
     const { uploadUrl, fileName } = await generateUploadUrl(file, kind);
+    console.log(`[WIX_MEDIA] Received upload URL for ${kind}:`, {
+      uploadUrlDomain: new URL(uploadUrl).hostname,
+      fileName
+    });
 
     // Step 2: Upload file directly to Wix and get media URL from response
     // Pass 'kind' to uploadToWix so it uses the correct URL builder
     const mediaUrl = await uploadToWix(file, uploadUrl, kind, onProgress);
-
-    console.log(`[WIX_MEDIA] ${kind} upload complete:`, { mediaUrl, fileName });
+    console.log(`[WIX_MEDIA] ${kind} upload complete:`, { 
+      mediaUrl, 
+      fileName,
+      mediaUrlLength: mediaUrl.length,
+      mediaUrlIsHttps: mediaUrl.startsWith('https://')
+    });
 
     return {
       mediaUrl,

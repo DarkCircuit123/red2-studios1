@@ -98,6 +98,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         fileName,
         mimeType: fileType
       });
+      console.log(`[GENERATE_URL] Request ${requestId} generateFileUploadUrl response:`, {
+        hasUploadUrl: !!uploadUrlResponse?.uploadUrl,
+        uploadUrlDomain: uploadUrlResponse?.uploadUrl ? new URL(uploadUrlResponse.uploadUrl).hostname : 'N/A'
+      });
     } catch (apiError) {
       console.error(`[GENERATE_URL] Request ${requestId} generateFileUploadUrl failed`, {
         error: apiError instanceof Error ? apiError.message : String(apiError),

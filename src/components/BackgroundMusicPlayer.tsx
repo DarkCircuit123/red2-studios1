@@ -47,6 +47,9 @@ export default function BackgroundMusicPlayer() {
             title: track.musicTitle,
             isEnabled,
             hasAudio,
+            audioValue: track.audio,
+            audioLength: track.audio?.length,
+            audioIsHttps: track.audio?.startsWith('https://'),
             included: isEnabled && hasAudio
           });
           return isEnabled && hasAudio;
@@ -96,6 +99,8 @@ export default function BackgroundMusicPlayer() {
     console.log('[MUSIC_PLAYER] Resolved playable URL:', {
       trackTitle: currentTrack.musicTitle,
       audio: currentTrack.audio,
+      audioLength: currentTrack.audio?.length,
+      audioIsHttps: currentTrack.audio?.startsWith('https://'),
       playableUrl: url
     });
     
