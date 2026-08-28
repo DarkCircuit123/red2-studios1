@@ -10,40 +10,6 @@ interface RSSStory {
   videoUrl?: string;
 }
 
-// Fallback stories to show if RSS feeds fail
-const FALLBACK_STORIES: RSSStory[] = [
-  {
-    title: 'Fashion Week Highlights: Spring/Summer 2025 Collections',
-    link: 'https://www.vogue.com',
-    source: 'Vogue',
-    pubDate: new Date().toISOString(),
-  },
-  {
-    title: 'Photography Trends: Mastering Natural Light',
-    link: 'https://www.sonyalpharumors.com',
-    source: 'Sony Alpha',
-    pubDate: new Date().toISOString(),
-  },
-  {
-    title: 'Sustainable Fashion: The Future of the Industry',
-    link: 'https://www.fashionnetwork.com',
-    source: 'Fashion Network',
-    pubDate: new Date().toISOString(),
-  },
-  {
-    title: 'Celebrity Style: Red Carpet Moments',
-    link: 'https://www.thefashionspot.com',
-    source: 'The Fashion Spot',
-    pubDate: new Date().toISOString(),
-  },
-  {
-    title: 'New Camera Gear: Latest Releases',
-    link: 'https://www.sonyalpharumors.com',
-    source: 'Sony Alpha',
-    pubDate: new Date().toISOString(),
-  },
-];
-
 export default function LiveTickerSection() {
   const [stories, setStories] = useState<RSSStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,19 +73,20 @@ export default function LiveTickerSection() {
           }
         }
 
-        // If we got some stories, use them; otherwise use fallback
-        let finalStories = allStories;
-        if (allStories.length === 0) {
-          console.warn('No RSS feeds succeeded, using fallback stories');
-          finalStories = FALLBACK_STORIES;
+        // Only use stories if we successfully fetched them
+        if (allStories.length > 0) {
+          // Shuffle and limit to 20 stories
+          const shuffled = allStories.sort(() => Math.random() - 0.5).slice(0, 20);
+          setStories(shuffled);
+        } else {
+          // No stories fetched - ticker will hide
+          console.warn('No RSS feeds succeeded, ticker will be hidden');
+          setStories([]);
         }
-
-        // Shuffle and limit to 20 stories
-        const shuffled = finalStories.sort(() => Math.random() - 0.5).slice(0, 20);
-        setStories(shuffled);
       } catch (err) {
         console.error('Error fetching RSS feeds:', err);
-        setStories(FALLBACK_STORIES);
+        // Hide ticker on error - no fallback
+        setStories([]);
       } finally {
         setIsLoading(false);
       }
@@ -159,9 +126,7 @@ export default function LiveTickerSection() {
     setIsPaused(!isPaused);
   };
 
-  // ... keep existing code (handleWatchVideo and handleStoryClick removed - using anchor tags instead) ...
-
-  // Always show if we have stories (even during loading or with fallback)
+  // Hide ticker if no stories are available (RSS fetch failed)
   if (stories.length === 0) {
     return null;
   }
