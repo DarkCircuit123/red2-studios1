@@ -2,7 +2,6 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { lazy, Suspense } from 'react';
-import { AdminAuthProvider } from '@/components/AdminAuthProvider';
 
 // Lazy load all pages to prevent circular dependencies
 // Use dynamic imports with error handling
@@ -246,8 +245,6 @@ const router = createBrowserRouter([
 
 export default function AppRouter() {
   return (
-    <AdminAuthProvider>
-      <RouterProvider router={router} />
-    </AdminAuthProvider>
+    <RouterProvider router={router} />
   );
 }
