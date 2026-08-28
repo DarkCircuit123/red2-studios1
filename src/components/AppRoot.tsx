@@ -3,6 +3,7 @@ import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
 import SplashScreen from '@/components/SplashScreen';
 import LogoSplash from '@/components/LogoSplash';
+import SplashDiagnostics from '@/components/SplashDiagnostics';
 import { AdminAuthProvider, useAdminAuth } from '@/components/AdminAuthProvider';
 import { MemberProvider } from '@/integrations/members/providers';
 
@@ -50,29 +51,38 @@ function AppRootContent() {
 
   // Check if splash was already shown in this session
   useEffect(() => {
+    console.log('[AppRoot] Checking splash state...');
     const splashShown = sessionStorage.getItem('splashScreenShown') === 'true';
+    console.log('[AppRoot] Splash already shown:', splashShown);
+    
     if (splashShown) {
+      console.log('[AppRoot] Splash was already shown, completing immediately');
       setSplashComplete(true);
       return;
     }
     
     // CRITICAL: Fallback timeout to prevent infinite loading
-    // If splash doesn't complete within 3 seconds, force it to complete
+    // If splash doesn't complete within 5 seconds, force it to complete
     const fallbackTimer = setTimeout(() => {
+      console.log('[AppRoot] Fallback timeout triggered, forcing splash completion');
       setSplashComplete(true);
       sessionStorage.setItem('splashScreenShown', 'true');
-    }, 3000);
+    }, 5000);
     
     return () => clearTimeout(fallbackTimer);
   }, []);
 
   const handleSplashComplete = () => {
+    console.log('[AppRoot] Splash completed, showing homepage');
     setSplashComplete(true);
     sessionStorage.setItem('splashScreenShown', 'true');
   };
 
+  console.log('[AppRoot] Rendering - splashComplete:', splashComplete);
+
   return (
     <MemberProvider>
+      <SplashDiagnostics />
       {!splashComplete && <LogoSplash />}
       {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
       {splashComplete && (

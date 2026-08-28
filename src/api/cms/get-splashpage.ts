@@ -11,8 +11,8 @@ export const GET: APIRoute = async () => {
   try {
     const result = await BaseCrudService.getAll<Splashpage>('splashpage', {}, { limit: 50 });
 
-    // Filter for active items and map to only required fields
-    const filteredItems = result.items
+    // First try to find active items
+    const activeItems = result.items
       .filter((item) => item.isActive === true)
       .map((item) => ({
         logoName: item.logoName || '',
@@ -20,7 +20,25 @@ export const GET: APIRoute = async () => {
         altText: item.altText || '',
       }));
 
-    return new Response(JSON.stringify({ items: filteredItems }), {
+    // If active items exist, return them
+    if (activeItems.length > 0) {
+      return new Response(JSON.stringify({ items: activeItems }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
+    // Fallback: return all items if no active ones found
+    const allItems = result.items
+      .map((item) => ({
+        logoName: item.logoName || '',
+        logoImage: item.logoImage || '',
+        altText: item.altText || '',
+      }));
+
+    return new Response(JSON.stringify({ items: allItems }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

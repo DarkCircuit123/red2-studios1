@@ -13,12 +13,15 @@ export default function LogoSplash() {
   useEffect(() => {
     const loadActiveLogo = async () => {
       try {
+        console.log('[LogoSplash] Starting logo fetch...');
         // CRITICAL: Use fetch to call API endpoint, not direct BaseCrudService
         // BaseCrudService is server-side only and causes WDE0053 when called from client
         const response = await fetch('/api/cms/get-splashpage', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
+        
+        console.log('[LogoSplash] API response status:', response.status);
         
         if (!response.ok) {
           console.warn('[LogoSplash] API returned status:', response.status);
@@ -27,30 +30,27 @@ export default function LogoSplash() {
         }
         
         const result = await response.json();
+        console.log('[LogoSplash] API result:', result);
          
          if (!result.items || result.items.length === 0) {
            // No items in collection
+           console.log('[LogoSplash] No items found in collection');
            setIsLoadingLogo(false);
            return;
          }
          
-         // First try to find an active logo
-         const activeLogo = result.items.find((item: Splashpage) => item.isActive);
-         if (activeLogo?.logoImage) {
-           const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
-           setLogoImage(convertedUrl);
-           setIsLoadingLogo(false);
-           return;
-         }
-         
-         // Fallback: use first logo with an image if no active one found
-         const firstLogoWithImage = result.items.find((item: Splashpage) => item.logoImage);
+         // Use first logo with an image (API already filters/returns appropriate items)
+         const firstLogoWithImage = result.items.find((item: any) => item.logoImage);
          if (firstLogoWithImage?.logoImage) {
+           console.log('[LogoSplash] Found logo image:', firstLogoWithImage.logoImage);
            const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
+           console.log('[LogoSplash] Converted URL:', convertedUrl);
            setLogoImage(convertedUrl);
            setIsLoadingLogo(false);
            return;
          }
+         
+         console.log('[LogoSplash] No logo image found in items');
       } catch (err) {
         console.error('[LogoSplash] API fetch error:', err);
       } finally {
