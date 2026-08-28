@@ -13,14 +13,16 @@
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    background-color: #ffffff !important;
   }
 
   body {
-    @apply bg-white dark:bg-slate-950 text-foreground dark:text-white transition-colors duration-300;
+    @apply text-foreground dark:text-white transition-colors duration-300;
     /* CRITICAL: Ensure body is always visible - prevents black screen issues */
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    background-color: #ffffff !important;
   }
 
   #root {
@@ -30,6 +32,7 @@
     opacity: 1 !important;
     width: 100% !important;
     height: 100% !important;
+    background-color: #ffffff !important;
   }
 
   /* DSLR-like focus mark cursor - red box without crosshairs, smaller */

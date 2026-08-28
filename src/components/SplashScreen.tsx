@@ -16,6 +16,32 @@ const markSplashAsShown = (): void => {
   }
 };
 
+// Force black background on document
+const forceBlackBackground = (): void => {
+  if (typeof document === 'undefined') return;
+  
+  // Force html and body to black
+  document.documentElement.style.backgroundColor = '#000000';
+  document.documentElement.style.display = 'block';
+  document.documentElement.style.visibility = 'visible';
+  document.documentElement.style.opacity = '1';
+  
+  document.body.style.backgroundColor = '#000000';
+  document.body.style.display = 'block';
+  document.body.style.visibility = 'visible';
+  document.body.style.opacity = '1';
+  document.body.style.margin = '0';
+  document.body.style.padding = '0';
+  
+  const root = document.getElementById('root');
+  if (root) {
+    root.style.backgroundColor = '#000000';
+    root.style.display = 'block';
+    root.style.visibility = 'visible';
+    root.style.opacity = '1';
+  }
+};
+
 interface SplashScreenProps {
   onComplete?: () => void;
 }
@@ -28,6 +54,11 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [showWithoutLogo, setShowWithoutLogo] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>('');
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
+
+  // Force black background on mount
+  useEffect(() => {
+    forceBlackBackground();
+  }, []);
 
   // Load active logo from Splashpage CMS via API
   useEffect(() => {
@@ -53,6 +84,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         
         const result = await response.json();
         console.log('[SplashScreen] API result:', result);
+        console.log('[SplashScreen] Full result object:', JSON.stringify(result, null, 2));
         setDebugInfo(`API returned ${result?.items?.length || 0} items`);
         
         if (result?.items && result.items.length > 0) {
@@ -61,10 +93,12 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           
           if (firstLogoWithImage?.logoImage) {
             console.log('[SplashScreen] Found logo image:', firstLogoWithImage.logoImage);
-            setDebugInfo(`Found logo: ${firstLogoWithImage.logoImage.substring(0, 50)}...`);
+            console.log('[SplashScreen] Logo image type:', typeof firstLogoWithImage.logoImage);
+            setDebugInfo(`Found logo: ${String(firstLogoWithImage.logoImage).substring(0, 50)}...`);
             
             const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
             console.log('[SplashScreen] Converted URL:', convertedUrl);
+            console.log('[SplashScreen] Converted URL type:', typeof convertedUrl);
             setDebugInfo(`Converted URL: ${convertedUrl?.substring(0, 50)}...`);
             
             if (convertedUrl) {
@@ -74,11 +108,12 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               setDebugInfo('Logo loaded successfully');
               return;
             } else {
-              console.warn('[SplashScreen] URL conversion failed');
+              console.warn('[SplashScreen] URL conversion failed - convertedUrl is null/undefined');
               setDebugInfo('URL conversion failed');
             }
           } else {
             console.warn('[SplashScreen] No item with logoImage found');
+            console.log('[SplashScreen] Items:', result.items);
             setDebugInfo('No logoImage in items');
           }
         } else {
@@ -92,6 +127,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         setIsLoadingLogo(false);
       } catch (err) {
         console.error('[SplashScreen] Error loading logo:', err);
+        console.error('[SplashScreen] Error stack:', err instanceof Error ? err.stack : 'No stack');
         setDebugInfo(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
         setShowWithoutLogo(true);
         setIsLoadingLogo(false);
@@ -135,10 +171,19 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       <div 
         className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
         style={{ 
-          backgroundColor: '#000000',
-          display: 'flex',
+          backgroundColor: '#000000 !important',
+          display: 'flex !important',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          margin: 0,
+          padding: 0
         }}
       >
         {/* Debug info - remove in production */}
@@ -162,10 +207,19 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       }}
       style={{ 
         pointerEvents: isFadingOut ? 'none' : 'auto',
-        backgroundColor: '#000000',
-        display: 'flex',
+        backgroundColor: '#000000 !important',
+        display: 'flex !important',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        margin: 0,
+        padding: 0
       }}
     >
       {/* Logo container with premium fade-in animation */}
@@ -187,11 +241,17 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             loading="eager"
             onError={(e) => {
               console.error('[SplashScreen] Image failed to load:', logoImage);
+              console.error('[SplashScreen] Image element:', e.currentTarget);
+              console.error('[SplashScreen] Image src:', e.currentTarget.src);
               e.currentTarget.style.display = 'none';
               setDebugInfo('Image failed to load');
             }}
             onLoad={() => {
               console.log('[SplashScreen] Image loaded successfully');
+              console.log('[SplashScreen] Image dimensions:', {
+                width: (event?.target as HTMLImageElement)?.width,
+                height: (event?.target as HTMLImageElement)?.height
+              });
               setDebugInfo('Image loaded');
             }}
           />
