@@ -3,9 +3,8 @@ import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
 import SplashScreen from '@/components/SplashScreen';
 import LogoSplash from '@/components/LogoSplash';
-import { AdminAuthProvider } from '@/components/AdminAuthProvider';
+import { AdminAuthProvider, useAdminAuth } from '@/components/AdminAuthProvider';
 import { MemberProvider } from '@/integrations/members/providers';
-import { useAdminAuth } from '@/lib/adminAuthStore';
 
 // DEV ONLY. Lets Vite's dependency scanner find every third-party package in
 // its initial crawl so it pre-bundles them in one pass. Without this, packages
@@ -44,20 +43,18 @@ class RouterErrorBoundary extends React.Component<
   }
 }
 
-export default function AppRoot() {
+// Inner component that uses useAdminAuth hook (must be inside AdminAuthProvider)
+function AppRootContent() {
   const [splashComplete, setSplashComplete] = useState(false);
-  const { checkSession } = useAdminAuth();
+  const { isLoading } = useAdminAuth();
 
-  // Check if splash was already shown in this session and verify admin session
+  // Check if splash was already shown in this session
   useEffect(() => {
     const splashShown = sessionStorage.getItem('splashScreenShown') === 'true';
     if (splashShown) {
       setSplashComplete(true);
       return;
     }
-    
-    // Check admin session on app load
-    checkSession();
     
     // CRITICAL: Fallback timeout to prevent infinite loading
     // If splash doesn't complete within 3 seconds, force it to complete
@@ -67,7 +64,7 @@ export default function AppRoot() {
     }, 3000);
     
     return () => clearTimeout(fallbackTimer);
-  }, [checkSession]);
+  }, []);
 
   const handleSplashComplete = () => {
     setSplashComplete(true);
@@ -75,18 +72,24 @@ export default function AppRoot() {
   };
 
   return (
+    <MemberProvider>
+      <LogoSplash />
+      {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
+      {splashComplete && (
+        <RouterErrorBoundary>
+          <Suspense fallback={<RouterFallback />}>
+            <AppRouter />
+          </Suspense>
+        </RouterErrorBoundary>
+      )}
+    </MemberProvider>
+  );
+}
+
+export default function AppRoot() {
+  return (
     <AdminAuthProvider>
-      <MemberProvider>
-        <LogoSplash />
-        {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
-        {splashComplete && (
-          <RouterErrorBoundary>
-            <Suspense fallback={<RouterFallback />}>
-              <AppRouter />
-            </Suspense>
-          </RouterErrorBoundary>
-        )}
-      </MemberProvider>
+      <AppRootContent />
     </AdminAuthProvider>
   );
 }
