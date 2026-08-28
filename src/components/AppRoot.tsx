@@ -1,7 +1,6 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
-import SplashScreen from '@/components/SplashScreen';
 import { AdminAuthProvider, useAdminAuth } from '@/components/AdminAuthProvider';
 import { MemberProvider } from '@/integrations/members/providers';
 
@@ -54,44 +53,21 @@ class RouterErrorBoundary extends React.Component<
 
 // Inner component that uses useAdminAuth hook (must be inside AdminAuthProvider)
 function AppRootContent() {
-  const [splashComplete, setSplashComplete] = useState(false);
   const { isLoading } = useAdminAuth();
 
-  // Check if splash was already shown in this session
+  // Add fade-in animation to root element on mount
   useEffect(() => {
-    const splashShown = sessionStorage.getItem('splashScreenShown') === 'true';
-    
-    if (splashShown) {
-      setSplashComplete(true);
-      sessionStorage.setItem('splashScreenShown', 'true');
-      return;
-    }
-    
-    // CRITICAL: Fallback timeout to prevent infinite loading
-    // If splash doesn't complete within 3 seconds, force it to complete
-    const fallbackTimer = setTimeout(() => {
-      setSplashComplete(true);
-      sessionStorage.setItem('splashScreenShown', 'true');
-    }, 3000);
-    
-    return () => clearTimeout(fallbackTimer);
+    const root = document.documentElement;
+    root.style.animation = 'fadeInFromBlack 1s ease-out forwards';
   }, []);
-
-  const handleSplashComplete = () => {
-    setSplashComplete(true);
-    sessionStorage.setItem('splashScreenShown', 'true');
-  };
 
   return (
     <MemberProvider>
-      {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
-      {splashComplete && (
-        <RouterErrorBoundary>
-          <Suspense fallback={<RouterFallback />}>
-            <AppRouter />
-          </Suspense>
-        </RouterErrorBoundary>
-      )}
+      <RouterErrorBoundary>
+        <Suspense fallback={<RouterFallback />}>
+          <AppRouter />
+        </Suspense>
+      </RouterErrorBoundary>
     </MemberProvider>
   );
 }
