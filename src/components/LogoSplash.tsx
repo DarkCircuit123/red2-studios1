@@ -83,6 +83,11 @@ export default function LogoSplash() {
     };
   }, [isLoadingLogo]);
 
+  // If logo is still loading, show nothing (don't block with black screen)
+  if (isLoadingLogo) {
+    return null;
+  }
+
   // Don't render if no logo is available
   if (!logoImage) {
     return null;

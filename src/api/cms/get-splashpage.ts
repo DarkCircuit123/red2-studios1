@@ -20,7 +20,7 @@ export const GET: APIRoute = async () => {
         altText: item.altText || '',
       }));
 
-    return new Response(JSON.stringify(filteredItems), {
+    return new Response(JSON.stringify({ items: filteredItems }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -28,7 +28,7 @@ export const GET: APIRoute = async () => {
     });
   } catch (error) {
     console.error('[API] Error fetching splashpage:', error);
-    return new Response(JSON.stringify({ error: 'Failed to fetch splashpage data' }), {
+    return new Response(JSON.stringify({ items: [], error: 'Failed to fetch splashpage data' }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',

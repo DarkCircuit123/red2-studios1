@@ -73,7 +73,7 @@ function AppRootContent() {
 
   return (
     <MemberProvider>
-      <LogoSplash />
+      {!splashComplete && <LogoSplash />}
       {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
       {splashComplete && (
         <RouterErrorBoundary>
