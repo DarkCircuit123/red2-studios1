@@ -25,6 +25,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [logoImage, setLogoImage] = useState<string | null>(null);
   const [isLoadingLogo, setIsLoadingLogo] = useState(true);
+  const [showWithoutLogo, setShowWithoutLogo] = useState(false);
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
   // Load active logo from Splashpage CMS via API
@@ -37,12 +38,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         });
         
         if (!response.ok) {
+          console.warn('[SplashScreen] API response not ok:', response.status);
           setIsLoadingLogo(false);
+          setShowWithoutLogo(true);
           return;
         }
         
         const result = await response.json();
-         
+        
         if (result?.items && result.items.length > 0) {
           const firstLogoWithImage = result.items.find((item: any) => item.logoImage);
           if (firstLogoWithImage?.logoImage) {
@@ -52,9 +55,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             return;
           }
         }
+        
+        // No logo found, show splash without logo
+        setShowWithoutLogo(true);
+        setIsLoadingLogo(false);
       } catch (err) {
-        // Silently fail - splash will skip if no logo
-      } finally {
+        console.warn('[SplashScreen] Error loading logo:', err);
+        setShowWithoutLogo(true);
         setIsLoadingLogo(false);
       }
     };
@@ -90,16 +97,11 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     return null;
   }
 
-  // Don't render if logo is still loading
-  if (isLoadingLogo) {
-    return null;
-  }
-
-  // If no logo image available, skip splash entirely
-  if (!logoImage) {
-    markSplashAsShown();
-    onComplete?.();
-    return null;
+  // Show black splash screen while loading
+  if (isLoadingLogo && !showWithoutLogo) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden" />
+    );
   }
 
   return (
@@ -114,23 +116,25 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       style={{ pointerEvents: isFadingOut ? 'none' : 'auto' }}
     >
       {/* Logo container with premium fade-in animation */}
-      <motion.div
-        className="relative z-10 flex items-center justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{
-          duration: prefersReducedMotion ? 0 : 0.8,
-          ease: 'easeOut',
-          delay: prefersReducedMotion ? 0 : 0.3
-        }}
-      >
-        <img
-          src={logoImage}
-          alt="Logo"
-          className="w-48 h-auto sm:w-56 md:w-72 lg:w-80 max-w-full"
-          loading="eager"
-        />
-      </motion.div>
+      {logoImage && (
+        <motion.div
+          className="relative z-10 flex items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{
+            duration: prefersReducedMotion ? 0 : 0.8,
+            ease: 'easeOut',
+            delay: prefersReducedMotion ? 0 : 0.3
+          }}
+        >
+          <img
+            src={logoImage}
+            alt="Logo"
+            className="w-48 h-auto sm:w-56 md:w-72 lg:w-80 max-w-full"
+            loading="eager"
+          />
+        </motion.div>
+      )}
     </motion.div>
   );
 }
