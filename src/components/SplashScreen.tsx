@@ -45,22 +45,28 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         }
         
         const result = await response.json();
+        console.log('[SplashScreen] API result:', result);
         
         if (result?.items && result.items.length > 0) {
           const firstLogoWithImage = result.items.find((item: any) => item.logoImage);
           if (firstLogoWithImage?.logoImage) {
+            console.log('[SplashScreen] Found logo image:', firstLogoWithImage.logoImage);
             const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
-            setLogoImage(convertedUrl);
-            setIsLoadingLogo(false);
-            return;
+            console.log('[SplashScreen] Converted URL:', convertedUrl);
+            if (convertedUrl) {
+              setLogoImage(convertedUrl);
+              setIsLoadingLogo(false);
+              return;
+            }
           }
         }
         
         // No logo found, show splash without logo
+        console.warn('[SplashScreen] No logo image found in CMS');
         setShowWithoutLogo(true);
         setIsLoadingLogo(false);
       } catch (err) {
-        console.warn('[SplashScreen] Error loading logo:', err);
+        console.error('[SplashScreen] Error loading logo:', err);
         setShowWithoutLogo(true);
         setIsLoadingLogo(false);
       }
@@ -100,20 +106,26 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   // Show black splash screen while loading
   if (isLoadingLogo && !showWithoutLogo) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden" />
+      <div 
+        className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
+        style={{ backgroundColor: '#000000' }}
+      />
     );
   }
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
       initial={{ opacity: 1 }}
       animate={{ opacity: isFadingOut ? 0 : 1 }}
       transition={{ 
         duration: 0.5,
         ease: 'easeInOut'
       }}
-      style={{ pointerEvents: isFadingOut ? 'none' : 'auto' }}
+      style={{ 
+        pointerEvents: isFadingOut ? 'none' : 'auto',
+        backgroundColor: '#000000'
+      }}
     >
       {/* Logo container with premium fade-in animation */}
       {logoImage && (
@@ -132,6 +144,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             alt="Logo"
             className="w-48 h-auto sm:w-56 md:w-72 lg:w-80 max-w-full"
             loading="eager"
+            onError={(e) => {
+              console.error('[SplashScreen] Image failed to load:', logoImage);
+              e.currentTarget.style.display = 'none';
+            }}
+            onLoad={() => {
+              console.log('[SplashScreen] Image loaded successfully');
+            }}
           />
         </motion.div>
       )}
