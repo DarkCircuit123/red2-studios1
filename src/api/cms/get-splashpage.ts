@@ -9,8 +9,6 @@ import type { Splashpage } from '@entities';
 
 export const GET: APIRoute = async () => {
   try {
-    console.log('[API] GET /api/cms/get-splashpage - Fetching splashpage collection');
-
     const result = await BaseCrudService.getAll<Splashpage>('splashpage', {}, { limit: 50 });
 
     // Filter for active items and map to only required fields
