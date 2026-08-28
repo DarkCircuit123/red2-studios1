@@ -1,7 +1,7 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
-import { AdminAuthProvider, useAdminAuth } from '@/components/AdminAuthProvider';
+import { AdminAuthProvider } from '@/components/AdminAuthProvider';
 import { MemberProvider } from '@/integrations/members/providers';
 
 // DEV ONLY. Lets Vite's dependency scanner find every third-party package in
@@ -13,16 +13,6 @@ import { MemberProvider } from '@/integrations/members/providers';
 // See src/lib/vite-dep-preload.ts.
 if (import.meta.env.DEV) {
   import('@/lib/vite-dep-preload');
-}
-
-// Detect if we're in preview/development environment
-function isPreviewEnvironment(): boolean {
-  if (typeof window === 'undefined') return false;
-  // Check for Framewire preview environment
-  const url = new URL(window.location.href);
-  const isFramewire = url.searchParams.has('framewire') || url.searchParams.has('preview');
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  return isFramewire || isLocalhost;
 }
 
 class RouterErrorBoundary extends React.Component<
@@ -51,31 +41,17 @@ class RouterErrorBoundary extends React.Component<
   }
 }
 
-// Inner component that uses useAdminAuth hook (must be inside AdminAuthProvider)
-function AppRootContent() {
-  const { isLoading } = useAdminAuth();
-
-  // Add fade-in animation to root element on mount
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.animation = 'fadeInFromBlack 1s ease-out forwards';
-  }, []);
-
-  return (
-    <MemberProvider>
-      <RouterErrorBoundary>
-        <Suspense fallback={<RouterFallback />}>
-          <AppRouter />
-        </Suspense>
-      </RouterErrorBoundary>
-    </MemberProvider>
-  );
-}
-
+// Simplified AppRoot - no splash screen, direct app rendering
 export default function AppRoot() {
   return (
     <AdminAuthProvider>
-      <AppRootContent />
+      <MemberProvider>
+        <RouterErrorBoundary>
+          <Suspense fallback={<RouterFallback />}>
+            <AppRouter />
+          </Suspense>
+        </RouterErrorBoundary>
+      </MemberProvider>
     </AdminAuthProvider>
   );
 }
