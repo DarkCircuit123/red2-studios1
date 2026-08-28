@@ -12,15 +12,5 @@
 
                   const result = await BaseCrudService.getAll<Splashpage>('splashpage', {}, { limit: 50 });
 
-                          // Filter only active items and map to safe fields only
-                              const items = result?.items
-                                    ? result.items.filter((item) => item.isActive === true)
-                                          : [];
-
-                                                  const safeData = items.map((item) => ({
-                                                        logoName: item.logoName,
-                                                              logoImage: item.logoImage,
-                                                                    altText: item.altText,
-                                                                        }));
-                                                                            
+                          // Filter
  */
