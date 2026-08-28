@@ -22,25 +22,5 @@
                                                               logoImage: item.logoImage,
                                                                     altText: item.altText,
                                                                         }));
-
-                                                                            console.log('[API] Splashpage fetch successful, active items:', safeData.length);
-
-                                                                                    return new Response(
-                                                                                          JSON.stringify({ items: safeData }),
-                                                                                                {
-                                                                                                        status: 200,
-                                                                                                                headers: { 'Content-Type': 'application/json' },
-                                                                                                                      }
-                                                                                                                          );
-                                                                                                                            } catch (error) {
-                                                                                                                                console.error('[API] Error fetching splashpage:', error);
-
-                                                                                                                                        return new Response(
-                                                                                                                                              JSON.stringify({
-                                                                                                                                                      error: 'Failed to fetch splashpage data',
-                                                                                                                                                              items: [],
-                                                                                                                                                                    }),
-                                                                                                                                                                          {
-                                                                                                                                                                                  status: 500,
-                                                                                                                                                                                          headers: { 'Content-Type': 'application/json' },
+                                                                            
  */
