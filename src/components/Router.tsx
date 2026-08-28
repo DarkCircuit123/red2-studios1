@@ -3,7 +3,6 @@ import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { lazy, Suspense } from 'react';
 import { AdminAuthProvider } from '@/components/AdminAuthProvider';
-import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 
 // Lazy load all pages to prevent circular dependencies
 // Use dynamic imports with error handling
@@ -28,13 +27,9 @@ const StoriesIndexPage = lazy(() => import('./pages/StoriesIndexPage').catch(() 
 const StoriesDetailPage = lazy(() => import('./pages/StoriesDetailPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const WatchPage = lazy(() => import('./pages/WatchPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const ChatPage = lazy(() => import('./pages/ChatPage').catch(() => ({ default: () => <div>Error loading page</div> })));
-const DataExportPage = lazy(() => import('./pages/DataExportPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const Red2TerminalPage = lazy(() => import('./pages/Red2TerminalPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage').catch(() => ({ default: () => <div>Error loading page</div> })));
-const UploadTestPage = lazy(() => import('./pages/UploadTestPage').catch(() => ({ default: () => <div>Error loading page</div> })));
-const AuditPlaceholderDataPage = lazy(() => import('./pages/AuditPlaceholderDataPage').catch(() => ({ default: () => <div>Error loading page</div> })));
-const DataCleanupVerificationPage = lazy(() => import('./pages/DataCleanupVerificationPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
@@ -192,16 +187,6 @@ const router = createBrowserRouter([
         ),
       },
       {
-        // DataExportPage wraps itself in MemberProtectedRoute internally,
-        // so it doesn't need to be wrapped again here.
-        path: "data-export",
-        element: (
-          <Suspense fallback={<div />}>
-            <DataExportPage />
-          </Suspense>
-        ),
-      },
-      {
         path: "terminal",
         element: (
           <Suspense fallback={<div />}>
@@ -242,39 +227,11 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "upload-test",
-        element: (
-          <Suspense fallback={<div />}>
-            <UploadTestPage />
-          </Suspense>
-        ),
-      },
-      {
         path: "admin",
         element: (
           <Suspense fallback={<div />}>
             <AdminPage />
           </Suspense>
-        ),
-      },
-      {
-        path: "audit-placeholder-data",
-        element: (
-          <MemberProtectedRoute messageToSignIn="Sign in to access the placeholder data audit">
-            <Suspense fallback={<div />}>
-              <AuditPlaceholderDataPage />
-            </Suspense>
-          </MemberProtectedRoute>
-        ),
-      },
-      {
-        path: "data-cleanup-verification",
-        element: (
-          <MemberProtectedRoute messageToSignIn="Sign in to access the data cleanup verification">
-            <Suspense fallback={<div />}>
-              <DataCleanupVerificationPage />
-            </Suspense>
-          </MemberProtectedRoute>
         ),
       },
       {
