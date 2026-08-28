@@ -46,35 +46,26 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         }
         
         const result = await response.json();
-        console.log('[SplashScreen] API result:', result);
-        
-        if (result?.items && result.items.length > 0) {
-          console.log('[SplashScreen] Found items:', result.items);
-          
-          // First try to find an active logo
-          const activeLogo = result.items.find((item: Splashpage) => item.isActive);
-          if (activeLogo?.logoImage) {
-            const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
-            console.log('[SplashScreen] Using active logo:', convertedUrl);
-            setLogoImage(convertedUrl);
-            setIsLoadingLogo(false);
-            return;
-          }
-          
-          // Fallback: use first logo with an image if no active one found
-          const firstLogoWithImage = result.items.find((item: Splashpage) => item.logoImage);
-          if (firstLogoWithImage?.logoImage) {
-            const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
-            console.log('[SplashScreen] Using first available logo:', convertedUrl);
-            setLogoImage(convertedUrl);
-            setIsLoadingLogo(false);
-            return;
-          }
-          
-          console.log('[SplashScreen] No items with logoImage found');
-        } else {
-          console.log('[SplashScreen] No items in collection');
-        }
+         
+         if (result?.items && result.items.length > 0) {
+           // First try to find an active logo
+           const activeLogo = result.items.find((item: Splashpage) => item.isActive);
+           if (activeLogo?.logoImage) {
+             const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
+             setLogoImage(convertedUrl);
+             setIsLoadingLogo(false);
+             return;
+           }
+           
+           // Fallback: use first logo with an image if no active one found
+           const firstLogoWithImage = result.items.find((item: Splashpage) => item.logoImage);
+           if (firstLogoWithImage?.logoImage) {
+             const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
+             setLogoImage(convertedUrl);
+             setIsLoadingLogo(false);
+             return;
+           }
+         }
       } catch (err) {
         console.error('[SplashScreen] API fetch error:', err);
       } finally {

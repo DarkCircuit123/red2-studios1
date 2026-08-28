@@ -63,6 +63,7 @@ const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
       onLoad={handleImageLoad}
       width={1920}
       height={1080}
+      loading="lazy"
       className="w-full h-full"
       style={imageStyle}
     />

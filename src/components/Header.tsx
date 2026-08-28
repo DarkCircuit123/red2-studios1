@@ -19,11 +19,6 @@ export default function Header() {
   const { isAuthenticated, isLoading, logout } = useAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
 
-  // Diagnostic logging
-  useEffect(() => {
-    console.log('[Header] Auth State:', { isAuthenticated, isLoading });
-  }, [isAuthenticated, isLoading]);
-
   // Close admin panel when user logs out
   useEffect(() => {
     if (!isAuthenticated && isAdminOpen) {

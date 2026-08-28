@@ -16,27 +16,9 @@ export default function MusicDiagnostics() {
   useEffect(() => {
     const loadDiagnostics = async () => {
       try {
-        console.log('[MUSIC_DIAGNOSTICS] Loading music settings...');
         const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 100 });
-        
-        console.log('[MUSIC_DIAGNOSTICS] Raw data:', result.items);
-        
-        // Log detailed info for each track
-        result.items?.forEach((track, index) => {
-          const playableUrl = getPlayableAudioUrl(track.musicUrl, track.audio);
-          console.log(`[MUSIC_DIAGNOSTICS] Track ${index}:`, {
-            _id: track._id,
-            musicTitle: track.musicTitle,
-            isEnabled: track.isEnabled,
-            musicUrl: track.musicUrl,
-            audio: track.audio,
-            playableUrl,
-            volume: track.volume,
-            loopMusic: track.loopMusic
-          });
-        });
-        
-        setMusicData(result.items || []);
+         
+         setMusicData(result.items || []);
       } catch (error) {
         console.error('[MUSIC_DIAGNOSTICS] Error loading:', error);
       } finally {

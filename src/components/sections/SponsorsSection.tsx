@@ -19,7 +19,7 @@ export default function SponsorsSection() {
         if (clientsData.items && clientsData.items.length > 0) {
           setSponsors(clientsData.items);
         } else {
-          console.warn('[SponsorsSection] No sponsors found in collection');
+          console.error('Error loading sponsors: no items found');
           setSponsors([]);
         }
       } catch (error) {
@@ -87,6 +87,9 @@ export default function SponsorsSection() {
                     <Image
                       src={sponsor.clientLogo}
                       alt={sponsor.clientName || 'Sponsor'}
+                      width={320}
+                      height={160}
+                      loading="lazy"
                       className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                     />
                   ) : (

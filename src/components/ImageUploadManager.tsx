@@ -120,15 +120,12 @@ export default function ImageUploadManager({
       // This is memory-efficient and doesn't bloat the CMS
       const localPreviewUrl = createPreviewUrl(file);
       setPreviewUrl(localPreviewUrl);
-      console.log('[ImageUploadManager] Created preview URL');
 
       // Upload to Wix Media Manager
       // Returns a Wix media URL (wix:image:// or https://static.wixstatic.com/)
-      console.log('[ImageUploadManager] Calling uploadMedia...');
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG, (progress: MediaUploadProgress) => {
         setUploadProgress(progress.percentage);
       });
-      console.log('[ImageUploadManager] Upload service returned:', { mediaUrl: result.mediaUrl, mediaId: result.mediaId });
 
       // Validate that we got a proper Wix media URL (not base64)
       // This prevents WDE0009 errors
@@ -139,7 +136,6 @@ export default function ImageUploadManager({
 
       // Use WixImageResolver to validate the URL format
       const resolved = WixImageResolver.resolve(result.mediaUrl);
-      console.log('[ImageUploadManager] WixImageResolver result:', { isValid: resolved.isValid, isFallback: resolved.isFallback });
       if (!resolved.isValid || resolved.isFallback) {
         console.error('[ImageUploadManager] ERROR: Invalid URL format from resolver');
         throw new Error('Image upload failed: invalid URL format returned. Please retry the upload.');
@@ -148,7 +144,6 @@ export default function ImageUploadManager({
       // FINAL HARDENING: Validate image storage before CMS update
       try {
         validateImageStorage(result.mediaUrl, fieldName || 'image');
-        console.log('[ImageUploadManager] Image storage validation passed');
       } catch (validationError) {
         console.error('[ImageUploadManager] ERROR: Image storage validation failed:', validationError);
         throw new Error('Image upload failed: this file could not be stored. Please retry the upload.');
@@ -160,7 +155,6 @@ export default function ImageUploadManager({
       // image that was never stored, so it looked saved until you refreshed.
       try {
         await saveImageToCms({ collectionId, itemId, fieldName }, result.mediaUrl);
-        console.log('[ImageUploadManager] CMS update verified');
         onImageUpload(result.mediaUrl);
         setUploadStatus('success');
         setTimeout(() => setUploadStatus('idle'), 3000);

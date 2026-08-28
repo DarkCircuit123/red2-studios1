@@ -21,59 +21,23 @@ export default function BackgroundMusicPlayer() {
   useEffect(() => {
     const loadMusicTracks = async () => {
       try {
-        console.log('[MUSIC_PLAYER] Starting to load music tracks from CMS...');
         const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 100 });
-        
-        console.log('[MUSIC_PLAYER] Query result:', {
-          totalCount: result.totalCount,
-          itemCount: result.items?.length,
-          items: result.items?.map(t => ({
-            _id: t._id,
-            musicTitle: t.musicTitle,
-            isEnabled: t.isEnabled,
-            musicUrl: t.musicUrl ? '✓ (present)' : '✗ (missing)',
-            volume: t.volume,
-            loopMusic: t.loopMusic,
-            autoplayEnabled: t.autoplayEnabled
-          }))
-        });
-        
-        // Filter for enabled tracks with musicUrl field
-        const enabledTracks = result.items?.filter(track => {
-          const isEnabled = track.isEnabled === true;
-          // Use musicUrl field for playable URL
-          const hasMusicUrl = !!track.musicUrl;
-          console.log('[MUSIC_PLAYER] Filtering track:', {
-            title: track.musicTitle,
-            isEnabled,
-            hasMusicUrl,
-            musicUrlValue: track.musicUrl,
-            musicUrlLength: track.musicUrl?.length,
-            musicUrlIsHttps: track.musicUrl?.startsWith('https://'),
-            included: isEnabled && hasMusicUrl
-          });
-          return isEnabled && hasMusicUrl;
-        }) || [];
-        
-        if (enabledTracks.length > 0) {
-          console.log('[MUSIC_PLAYER] Found enabled tracks:', enabledTracks.length);
-          console.log('[MUSIC_PLAYER] First track details:', {
-            title: enabledTracks[0].musicTitle,
-            musicUrl: enabledTracks[0].musicUrl,
-            volume: enabledTracks[0].volume,
-            loop: enabledTracks[0].loopMusic,
-            autoplay: enabledTracks[0].autoplayEnabled
-          });
-          
-          setMusicTracks(enabledTracks);
-          // Get volume from first track if available
-          if (enabledTracks[0]?.volume) {
-            setVolume(enabledTracks[0].volume);
-          }
-          console.log('[MUSIC_PLAYER] Loaded enabled music tracks:', enabledTracks.length);
-        } else {
-          console.log('[MUSIC_PLAYER] No enabled music tracks found');
-        }
+         
+         // Filter for enabled tracks with musicUrl field
+         const enabledTracks = result.items?.filter(track => {
+           const isEnabled = track.isEnabled === true;
+           // Use musicUrl field for playable URL
+           const hasMusicUrl = !!track.musicUrl;
+           return isEnabled && hasMusicUrl;
+         }) || [];
+         
+         if (enabledTracks.length > 0) {
+           setMusicTracks(enabledTracks);
+           // Get volume from first track if available
+           if (enabledTracks[0]?.volume) {
+             setVolume(enabledTracks[0].volume);
+           }
+         }
       } catch (error) {
         // Silently fail - music is optional
         console.error('[MUSIC_PLAYER] Error loading music tracks:', error);
@@ -95,15 +59,6 @@ export default function BackgroundMusicPlayer() {
     const currentTrack = musicTracks[currentTrackIndex];
     // Use musicUrl field for playable URL
     const url = getPlayableAudioUrl(currentTrack.musicUrl, undefined);
-    
-    console.log('[MUSIC_PLAYER] Resolved playable URL:', {
-      trackTitle: currentTrack.musicTitle,
-      musicUrl: currentTrack.musicUrl,
-      musicUrlLength: currentTrack.musicUrl?.length,
-      musicUrlIsHttps: currentTrack.musicUrl?.startsWith('https://'),
-      playableUrl: url
-    });
-    
     setPlayableUrl(url);
   }, [musicTracks, currentTrackIndex]);
 
@@ -118,12 +73,6 @@ export default function BackgroundMusicPlayer() {
   // If browser autoplay policy blocks audible playback, initialize on first user interaction
   useEffect(() => {
     if (isLoadingSettings || musicTracks.length === 0 || !audioRef.current || !playableUrl) {
-      console.log('[MUSIC_PLAYER] Skipping autoplay setup:', {
-        isLoadingSettings,
-        tracksCount: musicTracks.length,
-        hasAudioRef: !!audioRef.current,
-        hasPlayableUrl: !!playableUrl
-      });
       return;
     }
 
@@ -134,17 +83,9 @@ export default function BackgroundMusicPlayer() {
 
         // Ensure audio element is ready and has source
         if (audio.readyState === 0) {
-          console.log('[MUSIC_PLAYER] Audio readyState is 0, calling load()');
           audio.load();
         }
-        
-        console.log('[MUSIC_PLAYER] Attempting autoplay on site load', {
-          readyState: audio.readyState,
-          src: audio.src,
-          autoplay: audio.autoplay,
-          muted: audio.muted
-        });
-        
+         
         // Attempt to play immediately (muted first to bypass autoplay policy)
         const playPromise = audio.play();
         if (playPromise !== undefined) {
@@ -152,13 +93,9 @@ export default function BackgroundMusicPlayer() {
           // isPlaying will be set to true by handleAudioPlay event listener
           setAudioError(false);
           setHasInteracted(true);
-          console.log('[MUSIC_PLAYER] Autoplay succeeded');
         }
       } catch (err) {
         // Autoplay was blocked by browser policy, will retry on first user interaction
-        console.log('[MUSIC_PLAYER] Autoplay blocked by browser policy, waiting for user interaction', {
-          error: err instanceof Error ? err.message : String(err)
-        });
         setAudioError(true);
       }
     };
@@ -171,16 +108,14 @@ export default function BackgroundMusicPlayer() {
     // Fallback: Listen for user interaction to retry playback if autoplay failed
     const handleUserInteraction = async () => {
       if (!hasInteracted && audioRef.current && !isPlaying) {
-        console.log('[MUSIC_PLAYER] User interaction detected, attempting playback');
         setHasInteracted(true);
-        
+         
         try {
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
             await playPromise;
             // isPlaying will be set to true by handleAudioPlay event listener
             setAudioError(false);
-            console.log('[MUSIC_PLAYER] Playback started on user interaction');
           }
         } catch (err) {
           console.error('[MUSIC_PLAYER] Playback failed on user interaction:', err);
@@ -210,7 +145,7 @@ export default function BackgroundMusicPlayer() {
       const newMutedState = !isMuted;
       audioRef.current.muted = newMutedState;
       setIsMuted(newMutedState);
-      
+       
       // If unmuting and not playing, try to play
       if (!newMutedState && !isPlaying && musicTracks.length > 0) {
         const playPromise = audioRef.current.play();
@@ -230,13 +165,11 @@ export default function BackgroundMusicPlayer() {
   };
 
   const handleAudioPlay = () => {
-    console.log('[MUSIC_PLAYER] Audio started playing');
     setIsPlaying(true);
     setAudioError(false);
   };
 
   const handleAudioPause = () => {
-    console.log('[MUSIC_PLAYER] Audio paused');
     setIsPlaying(false);
   };
 
@@ -244,7 +177,7 @@ export default function BackgroundMusicPlayer() {
     const audio = event.target as HTMLAudioElement;
     const errorCode = audio.error?.code;
     const errorMessage = audio.error?.message;
-    
+     
     console.error('[MUSIC_PLAYER] Audio playback error:', {
       errorCode,
       errorMessage,
@@ -258,10 +191,6 @@ export default function BackgroundMusicPlayer() {
 
   // Don't render if music is disabled or settings not loaded
   if (isLoadingSettings || musicTracks.length === 0) {
-    console.log('[MUSIC_PLAYER] Not rendering - music disabled or not loaded:', {
-      isLoadingSettings,
-      tracksCount: musicTracks.length
-    });
     return null;
   }
 
@@ -270,20 +199,8 @@ export default function BackgroundMusicPlayer() {
 
   // Validate playable URL is available
   if (!playableUrl) {
-    console.log('[MUSIC_PLAYER] Not rendering - no playable URL:', {
-      trackIndex: currentTrackIndex,
-      trackTitle: currentTrack?.musicTitle,
-      musicUrlField: currentTrack?.musicUrl
-    });
     return null;
   }
-
-  console.log('[MUSIC_PLAYER] Rendering with track:', {
-    title: currentTrack.musicTitle,
-    playableUrl,
-    isPlaying,
-    isMuted
-  });
 
   return (
     <>

@@ -30,7 +30,7 @@ export default function BehindTheScenesSection() {
         const sorted = result.items.sort((a, b) => (a.order || 0) - (b.order || 0));
         setItems(sorted.slice(0, 3));
       } else {
-        console.warn('[BehindTheScenesSection] No items found in collection');
+        console.error('Failed to load behind-the-scenes items: no items found');
         setItems([]);
       }
     } catch (error) {
@@ -93,6 +93,7 @@ export default function BehindTheScenesSection() {
                     alt={item.title || 'Behind the scenes'}
                     width={400}
                     height={400}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (

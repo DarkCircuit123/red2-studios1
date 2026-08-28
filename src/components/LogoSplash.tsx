@@ -27,42 +27,31 @@ export default function LogoSplash() {
         }
         
         const result = await response.json();
-        console.log('[LogoSplash] API result:', result);
-        
-        if (!result.items || result.items.length === 0) {
-          // No items in collection
-          console.log('[LogoSplash] No items in collection');
-          setIsLoadingLogo(false);
-          return;
-        }
-        
-        console.log('[LogoSplash] Found items:', result.items);
-        
-        // First try to find an active logo
-        const activeLogo = result.items.find((item: Splashpage) => item.isActive);
-        if (activeLogo?.logoImage) {
-          // Diagnostic: Active logo found with image
-          const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
-          console.log('[LogoSplash] Using active logo:', convertedUrl);
-          setLogoImage(convertedUrl);
-          setIsLoadingLogo(false);
-          return;
-        }
-        
-        // Fallback: use first logo with an image if no active one found
-        const firstLogoWithImage = result.items.find((item: Splashpage) => item.logoImage);
-        if (firstLogoWithImage?.logoImage) {
-          // Diagnostic: Using first available logo
-          const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
-          console.log('[LogoSplash] Using first available logo:', convertedUrl);
-          setLogoImage(convertedUrl);
-          setIsLoadingLogo(false);
-          return;
-        }
-        
-        console.log('[LogoSplash] No items with logoImage found');
+         
+         if (!result.items || result.items.length === 0) {
+           // No items in collection
+           setIsLoadingLogo(false);
+           return;
+         }
+         
+         // First try to find an active logo
+         const activeLogo = result.items.find((item: Splashpage) => item.isActive);
+         if (activeLogo?.logoImage) {
+           const convertedUrl = convertWixImageToHttps(activeLogo.logoImage);
+           setLogoImage(convertedUrl);
+           setIsLoadingLogo(false);
+           return;
+         }
+         
+         // Fallback: use first logo with an image if no active one found
+         const firstLogoWithImage = result.items.find((item: Splashpage) => item.logoImage);
+         if (firstLogoWithImage?.logoImage) {
+           const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
+           setLogoImage(convertedUrl);
+           setIsLoadingLogo(false);
+           return;
+         }
       } catch (err) {
-        // Diagnostic: Log error but don't display to user
         console.error('[LogoSplash] API fetch error:', err);
       } finally {
         setIsLoadingLogo(false);
