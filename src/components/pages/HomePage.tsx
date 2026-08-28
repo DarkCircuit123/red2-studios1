@@ -7,6 +7,7 @@ import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselS
 import BehindTheScenesSection from '@/components/sections/BehindTheScenesSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
+import SEOHead from '@/components/SEOHead';
 
 // Fallback component for sections
 function SectionFallback() {
@@ -29,14 +30,19 @@ function Section({ children }: { children: React.ReactNode }) {
 
 export default function HomePage() {
   return (
-    <main
-      className="min-h-screen bg-black text-white overflow-x-hidden"
-      style={{
-        scrollBehavior: 'smooth',
-        scrollSnapType: 'y mandatory',
-      }}
-    >
-      <Header />
+    <>
+      <SEOHead
+        title="RED2 Studios | Fashion & Editorial Photographer, Los Angeles"
+        description="Jordan Michael Zuniga - 25 years, 500+ projects. Fashion, editorial and campaign photography. Fully mobile across the US. Book a session."
+      />
+      <main
+        className="min-h-screen bg-black text-white overflow-x-hidden"
+        style={{
+          scrollBehavior: 'smooth',
+          scrollSnapType: 'y mandatory',
+        }}
+      >
+        <Header />
 
       <Suspense fallback={<SectionFallback />}>
         <Section><HeroSection /></Section>
@@ -63,6 +69,7 @@ export default function HomePage() {
       </Suspense>
 
       <Footer />
-    </main>
+      </main>
+    </>
   );
 }
