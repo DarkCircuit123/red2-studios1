@@ -175,7 +175,7 @@ export default function Footer() {
                 <Linkedin className="w-5 h-5" />
               </a>
               <a
-                href="mailto:hello@studio.com"
+                href="mailto:hello@red2studios.com"
                 className="p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
                 aria-label="Email"
               >
@@ -189,7 +189,7 @@ export default function Footer() {
         <div className="border-t border-white/10 pt-6 md:pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <p className="text-xs md:text-sm font-mono text-white/40">
-              © {currentYear} Studio. All rights reserved.
+              © {currentYear} RED2 Studios. All rights reserved.
             </p>
             <div className="flex gap-6 md:gap-8">
               <a
