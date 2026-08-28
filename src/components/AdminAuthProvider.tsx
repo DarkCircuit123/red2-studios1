@@ -22,9 +22,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        console.log('[AdminAuthProvider] Starting session check...');
         // Add timeout to prevent hanging if endpoint is unreachable
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => {
+          console.log('[AdminAuthProvider] Session check timeout');
+          controller.abort();
+        }, 3000); // 3 second timeout (reduced from 5)
         
         const response = await fetch('/api/auth/admin-verify', {
           method: 'POST',
@@ -35,6 +39,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         clearTimeout(timeoutId);
+        console.log('[AdminAuthProvider] Session check response:', response.status);
 
         if (response.ok) {
           const data = await response.json();
@@ -60,6 +65,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(false);
         setAdminUsername(null);
       } finally {
+        console.log('[AdminAuthProvider] Session check complete, setting isLoading to false');
         setIsLoading(false);
       }
     };

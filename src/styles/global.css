@@ -9,10 +9,27 @@
 @layer base {
   html {
     @apply scroll-smooth;
+    /* CRITICAL: Ensure HTML is always visible - prevents black screen issues */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   body {
     @apply bg-white dark:bg-slate-950 text-foreground dark:text-white transition-colors duration-300;
+    /* CRITICAL: Ensure body is always visible - prevents black screen issues */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  #root {
+    /* CRITICAL: Ensure root div is always visible */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 
   /* DSLR-like focus mark cursor - red box without crosshairs, smaller */

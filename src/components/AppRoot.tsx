@@ -18,6 +18,16 @@ if (import.meta.env.DEV) {
   import('@/lib/vite-dep-preload');
 }
 
+// Detect if we're in preview/development environment
+function isPreviewEnvironment(): boolean {
+  if (typeof window === 'undefined') return false;
+  // Check for Framewire preview environment
+  const url = new URL(window.location.href);
+  const isFramewire = url.searchParams.has('framewire') || url.searchParams.has('preview');
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  return isFramewire || isLocalhost;
+}
+
 class RouterErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean }
@@ -47,6 +57,7 @@ class RouterErrorBoundary extends React.Component<
 // Inner component that uses useAdminAuth hook (must be inside AdminAuthProvider)
 function AppRootContent() {
   const [splashComplete, setSplashComplete] = useState(false);
+  const [forceShowApp, setForceShowApp] = useState(false);
   const { isLoading } = useAdminAuth();
 
   // Check if splash was already shown in this session
@@ -55,19 +66,25 @@ function AppRootContent() {
     const splashShown = sessionStorage.getItem('splashScreenShown') === 'true';
     console.log('[AppRoot] Splash already shown:', splashShown);
     
-    if (splashShown) {
-      console.log('[AppRoot] Splash was already shown, completing immediately');
+    // In preview environment, skip splash entirely
+    const inPreview = isPreviewEnvironment();
+    console.log('[AppRoot] In preview environment:', inPreview);
+    
+    if (splashShown || inPreview) {
+      console.log('[AppRoot] Splash was already shown or in preview, completing immediately');
       setSplashComplete(true);
+      sessionStorage.setItem('splashScreenShown', 'true');
       return;
     }
     
     // CRITICAL: Fallback timeout to prevent infinite loading
-    // If splash doesn't complete within 5 seconds, force it to complete
+    // If splash doesn't complete within 3 seconds, force it to complete
     const fallbackTimer = setTimeout(() => {
       console.log('[AppRoot] Fallback timeout triggered, forcing splash completion');
       setSplashComplete(true);
+      setForceShowApp(true);
       sessionStorage.setItem('splashScreenShown', 'true');
-    }, 5000);
+    }, 3000);
     
     return () => clearTimeout(fallbackTimer);
   }, []);
@@ -78,7 +95,21 @@ function AppRootContent() {
     sessionStorage.setItem('splashScreenShown', 'true');
   };
 
-  console.log('[AppRoot] Rendering - splashComplete:', splashComplete);
+  console.log('[AppRoot] Rendering - splashComplete:', splashComplete, 'forceShowApp:', forceShowApp);
+
+  // If splash is taking too long, show the app anyway
+  if (forceShowApp) {
+    console.log('[AppRoot] Force showing app due to timeout');
+    return (
+      <MemberProvider>
+        <RouterErrorBoundary>
+          <Suspense fallback={<RouterFallback />}>
+            <AppRouter />
+          </Suspense>
+        </RouterErrorBoundary>
+      </MemberProvider>
+    );
+  }
 
   return (
     <MemberProvider>
