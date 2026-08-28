@@ -61,10 +61,7 @@ function AppRootContent() {
   useEffect(() => {
     const splashShown = sessionStorage.getItem('splashScreenShown') === 'true';
     
-    // In preview environment, skip splash entirely
-    const inPreview = isPreviewEnvironment();
-    
-    if (splashShown || inPreview) {
+    if (splashShown) {
       setSplashComplete(true);
       sessionStorage.setItem('splashScreenShown', 'true');
       return;
