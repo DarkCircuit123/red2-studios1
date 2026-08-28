@@ -2,8 +2,6 @@ import React, { Suspense, useState, useEffect } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
 import SplashScreen from '@/components/SplashScreen';
-import LogoSplash from '@/components/LogoSplash';
-import SplashDiagnostics from '@/components/SplashDiagnostics';
 import { AdminAuthProvider, useAdminAuth } from '@/components/AdminAuthProvider';
 import { MemberProvider } from '@/integrations/members/providers';
 
@@ -57,21 +55,16 @@ class RouterErrorBoundary extends React.Component<
 // Inner component that uses useAdminAuth hook (must be inside AdminAuthProvider)
 function AppRootContent() {
   const [splashComplete, setSplashComplete] = useState(false);
-  const [forceShowApp, setForceShowApp] = useState(false);
   const { isLoading } = useAdminAuth();
 
   // Check if splash was already shown in this session
   useEffect(() => {
-    console.log('[AppRoot] Checking splash state...');
     const splashShown = sessionStorage.getItem('splashScreenShown') === 'true';
-    console.log('[AppRoot] Splash already shown:', splashShown);
     
     // In preview environment, skip splash entirely
     const inPreview = isPreviewEnvironment();
-    console.log('[AppRoot] In preview environment:', inPreview);
     
     if (splashShown || inPreview) {
-      console.log('[AppRoot] Splash was already shown or in preview, completing immediately');
       setSplashComplete(true);
       sessionStorage.setItem('splashScreenShown', 'true');
       return;
@@ -80,9 +73,7 @@ function AppRootContent() {
     // CRITICAL: Fallback timeout to prevent infinite loading
     // If splash doesn't complete within 3 seconds, force it to complete
     const fallbackTimer = setTimeout(() => {
-      console.log('[AppRoot] Fallback timeout triggered, forcing splash completion');
       setSplashComplete(true);
-      setForceShowApp(true);
       sessionStorage.setItem('splashScreenShown', 'true');
     }, 3000);
     
@@ -90,31 +81,12 @@ function AppRootContent() {
   }, []);
 
   const handleSplashComplete = () => {
-    console.log('[AppRoot] Splash completed, showing homepage');
     setSplashComplete(true);
     sessionStorage.setItem('splashScreenShown', 'true');
   };
 
-  console.log('[AppRoot] Rendering - splashComplete:', splashComplete, 'forceShowApp:', forceShowApp);
-
-  // If splash is taking too long, show the app anyway
-  if (forceShowApp) {
-    console.log('[AppRoot] Force showing app due to timeout');
-    return (
-      <MemberProvider>
-        <RouterErrorBoundary>
-          <Suspense fallback={<RouterFallback />}>
-            <AppRouter />
-          </Suspense>
-        </RouterErrorBoundary>
-      </MemberProvider>
-    );
-  }
-
   return (
     <MemberProvider>
-      <SplashDiagnostics />
-      {!splashComplete && <LogoSplash />}
       {!splashComplete && <SplashScreen onComplete={handleSplashComplete} />}
       {splashComplete && (
         <RouterErrorBoundary>

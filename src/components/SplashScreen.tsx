@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
-import type { Splashpage } from '@/entities';
 
 // Check if splash has already been shown in this session
 const hasSplashBeenShown = (): boolean => {
@@ -32,41 +31,29 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     const loadActiveLogo = async () => {
       try {
-        console.log('[SplashScreen] Starting logo fetch...');
-        // CRITICAL: Use fetch to call API endpoint, not direct BaseCrudService
-        // BaseCrudService is server-side only and causes WDE0053 when called from client
         const response = await fetch('/api/cms/get-splashpage', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
         
-        console.log('[SplashScreen] API response status:', response.status);
-        
         if (!response.ok) {
-          console.warn('[SplashScreen] API returned status:', response.status);
           setIsLoadingLogo(false);
           return;
         }
         
         const result = await response.json();
-        console.log('[SplashScreen] API result:', result);
          
-         if (result?.items && result.items.length > 0) {
-           // Use first logo with an image (API already filters/returns appropriate items)
-           const firstLogoWithImage = result.items.find((item: any) => item.logoImage);
-           if (firstLogoWithImage?.logoImage) {
-             console.log('[SplashScreen] Found logo image:', firstLogoWithImage.logoImage);
-             const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
-             console.log('[SplashScreen] Converted URL:', convertedUrl);
-             setLogoImage(convertedUrl);
-             setIsLoadingLogo(false);
-             return;
-           }
-         }
-         
-         console.log('[SplashScreen] No logo image found in items');
+        if (result?.items && result.items.length > 0) {
+          const firstLogoWithImage = result.items.find((item: any) => item.logoImage);
+          if (firstLogoWithImage?.logoImage) {
+            const convertedUrl = convertWixImageToHttps(firstLogoWithImage.logoImage);
+            setLogoImage(convertedUrl);
+            setIsLoadingLogo(false);
+            return;
+          }
+        }
       } catch (err) {
-        console.error('[SplashScreen] API fetch error:', err);
+        // Silently fail - splash will skip if no logo
       } finally {
         setIsLoadingLogo(false);
       }
@@ -92,19 +79,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       markSplashAsShown();
       onComplete?.();
     }, 2200); // 1.7s + 0.5s fade duration
-    
-    // CRITICAL: Fallback timeout to prevent infinite loading
-    // If splash doesn't complete within 4 seconds, force completion
-    const fallbackTimer = setTimeout(() => {
-      setIsVisible(false);
-      markSplashAsShown();
-      onComplete?.();
-    }, 4000);
 
     return () => {
       clearTimeout(fadeOutTimer);
       clearTimeout(completeTimer);
-      clearTimeout(fallbackTimer);
     };
   }, [isVisible, onComplete]);
 

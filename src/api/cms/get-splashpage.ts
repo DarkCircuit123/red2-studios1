@@ -4,8 +4,8 @@
  * Returns only: logoName, logoImage, altText
  */
 import type { APIRoute } from 'astro';
-import { BaseCrudService } from '@integrations';
-import type { Splashpage } from '@entities';
+import { BaseCrudService } from '@/integrations';
+import type { Splashpage } from '@/entities';
 
 export const GET: APIRoute = async () => {
   try {
