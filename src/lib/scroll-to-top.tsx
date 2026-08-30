@@ -52,7 +52,7 @@ export function ScrollToTop() {
       timeoutIdsRef.current.forEach(id => clearTimeout(id));
       timeoutIdsRef.current = [];
     };
-  }, [location]);
+  }, [location.pathname, location.hash]);
 
   return null;
 }

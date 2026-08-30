@@ -24,7 +24,7 @@ export default function Header() {
     if (!isAuthenticated && isAdminOpen) {
       setIsAdminOpen(false);
     }
-  }, [isAuthenticated, isAdminOpen]);
+  }, [isAuthenticated]);
 
   // Optimized throttled scroll handler
   useEffect(() => {
