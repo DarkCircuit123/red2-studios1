@@ -15,9 +15,9 @@ function sanitizeFilename(filename: string): string {
   const nameWithoutExt = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
   
   let sanitized = nameWithoutExt
-    .replace(/[()[\\]{}]/g, '_')
-    .replace(/\\s+/g, '_')
-    .replace(/[^a-zA-Z0-9_\\-]/g, '_')
+    .replace(/[()[\]{}]/g, '_')
+    .replace(/\s+/g, '_')
+    .replace(/[^a-zA-Z0-9_\-]/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
   
@@ -26,6 +26,40 @@ function sanitizeFilename(filename: string): string {
   }
   
   return sanitized + ext;
+}
+
+/**
+ * Detect MIME type from file extension
+ */
+function detectMimeType(filename: string): string {
+  const lower = filename.toLowerCase();
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  return 'image/jpeg'; // default
+}
+
+/**
+ * Ensure filename has correct extension for MIME type
+ */
+function ensureCorrectExtension(filename: string, mimeType: string): string {
+  const lower = filename.toLowerCase();
+  
+  if (mimeType === 'image/jpeg' && !lower.endsWith('.jpg') && !lower.endsWith('.jpeg')) {
+    return filename.replace(/\.[^/.]+$/, '') + '.jpg';
+  }
+  if (mimeType === 'image/png' && !lower.endsWith('.png')) {
+    return filename.replace(/\.[^/.]+$/, '') + '.png';
+  }
+  if (mimeType === 'image/webp' && !lower.endsWith('.webp')) {
+    return filename.replace(/\.[^/.]+$/, '') + '.webp';
+  }
+  if (mimeType === 'image/gif' && !lower.endsWith('.gif')) {
+    return filename.replace(/\.[^/.]+$/, '') + '.gif';
+  }
+  
+  return filename;
 }
 
 interface GalleryPhoto {
@@ -197,23 +231,30 @@ export default function WorkGalleryManagerV2() {
       uploaderRef.current = new MultiThreadedUploader({
         maxConcurrent: MAX_CONCURRENT,
         uploadFn: async (file: File, onProgress: (percent: number) => void) => {
-          let fileToUpload = file;
-
-          // Ensure correct MIME type
-          if (fileToUpload.type !== 'image/jpeg') {
-            const blob = fileToUpload.slice(0, fileToUpload.size, 'image/jpeg');
-            const filename = fileToUpload.name.toLowerCase().endsWith('.jpg') || 
-                           fileToUpload.name.toLowerCase().endsWith('.jpeg')
-              ? fileToUpload.name
-              : fileToUpload.name.replace(/\\.[^/.]+$/, '') + '.jpg';
-            fileToUpload = new File([blob], filename, { type: 'image/jpeg', lastModified: Date.now() });
+          // Detect MIME type from filename
+          let mimeType = detectMimeType(file.name);
+          
+          // If file has no type or wrong type, use detected type
+          if (!file.type || !file.type.startsWith('image/')) {
+            mimeType = detectMimeType(file.name);
+          } else {
+            mimeType = file.type;
           }
 
-          const sanitizedFilename = sanitizeFilename(fileToUpload.name);
-          const finalFileToUpload = new File([fileToUpload], sanitizedFilename, { 
-            type: fileToUpload.type, 
+          // Ensure filename has correct extension matching MIME type
+          let finalFilename = ensureCorrectExtension(file.name, mimeType);
+          
+          // Sanitize the filename
+          finalFilename = sanitizeFilename(finalFilename);
+          
+          // Create a new File with correct MIME type and filename
+          const blob = new Blob([file], { type: mimeType });
+          const finalFileToUpload = new File([blob], finalFilename, { 
+            type: mimeType, 
             lastModified: Date.now() 
           });
+
+          console.log(`[UPLOAD] File: ${file.name} -> ${finalFilename}, MIME: ${mimeType}`);
 
           const formDataForUpload = new FormData();
           formDataForUpload.append('file', finalFileToUpload, finalFileToUpload.name);
@@ -268,7 +309,7 @@ export default function WorkGalleryManagerV2() {
             gallerySlug: 'work-gallery',
             category: 'Work',
             subCategory: 'Portfolio',
-            title: fileItem.original.name.replace(/\\.[^/.]+$/, ''),
+            title: fileItem.original.name.replace(/\.[^/.]+$/, ''),
             image: imageUrl,
             description: '',
             displayOrder: photos.length + 1,
@@ -331,18 +372,20 @@ export default function WorkGalleryManagerV2() {
       const compressionResults = await compressImages([file]);
       let fileToUpload = compressionResults.length > 0 ? compressionResults[0].file : file;
 
-      if (fileToUpload.type !== 'image/jpeg') {
-        const blob = fileToUpload.slice(0, fileToUpload.size, 'image/jpeg');
-        const filename = fileToUpload.name.toLowerCase().endsWith('.jpg') || 
-                       fileToUpload.name.toLowerCase().endsWith('.jpeg')
-          ? fileToUpload.name
-          : fileToUpload.name.replace(/\\.[^/.]+$/, '') + '.jpg';
-        fileToUpload = new File([blob], filename, { type: 'image/jpeg', lastModified: Date.now() });
+      // Detect MIME type from filename
+      let mimeType = detectMimeType(fileToUpload.name);
+      if (fileToUpload.type && fileToUpload.type.startsWith('image/')) {
+        mimeType = fileToUpload.type;
       }
 
-      const sanitizedFilename = sanitizeFilename(fileToUpload.name);
-      const finalFileToUpload = new File([fileToUpload], sanitizedFilename, { 
-        type: fileToUpload.type, 
+      // Ensure filename has correct extension
+      let finalFilename = ensureCorrectExtension(fileToUpload.name, mimeType);
+      finalFilename = sanitizeFilename(finalFilename);
+
+      // Create new File with correct MIME type
+      const blob = new Blob([fileToUpload], { type: mimeType });
+      const finalFileToUpload = new File([blob], finalFilename, { 
+        type: mimeType, 
         lastModified: Date.now() 
       });
 
