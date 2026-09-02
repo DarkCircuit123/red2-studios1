@@ -96,8 +96,6 @@ export default function GalleryPhotoManager() {
     setCategories(uniqueCats as string[]);
   }, [photos]);
 
-  // ... keep existing code (state and useEffect hooks) ...
-
   const MAX_SLOTS = 80;
 
   const loadPhotos = async () => {
@@ -180,7 +178,11 @@ export default function GalleryPhotoManager() {
       }
 
       const uploadedData = await uploadResponse.json();
-      const imageUrl = uploadedData.url;
+      const imageUrl = uploadedData.mediaUrl || uploadedData.url;
+
+      if (!imageUrl) {
+        throw new Error('No image URL returned from upload');
+      }
 
       // Create gallery slug from category and subcategory
       const gallerySlug = `${formData.category.toLowerCase()}-${formData.subCategory.toLowerCase()}`.replace(/\s+/g, '-');
@@ -246,7 +248,11 @@ export default function GalleryPhotoManager() {
       }
 
       const uploadedData = await uploadResponse.json();
-      const imageUrl = uploadedData.url;
+      const imageUrl = uploadedData.mediaUrl || uploadedData.url;
+
+      if (!imageUrl) {
+        throw new Error('No image URL returned from upload');
+      }
 
       // Update the photo with new image URL
       const photoToUpdate = photos.find(p => p._id === photoId);
@@ -291,7 +297,11 @@ export default function GalleryPhotoManager() {
         }
 
         const uploadedData = await uploadResponse.json();
-        const imageUrl = uploadedData.url;
+        const imageUrl = uploadedData.mediaUrl || uploadedData.url;
+
+        if (!imageUrl) {
+          throw new Error(`No image URL returned for ${file.name}`);
+        }
 
         // Create gallery slug from category and subcategory
         const gallerySlug = `${formData.category.toLowerCase()}-${formData.subCategory.toLowerCase()}`.replace(/\s+/g, '-');
