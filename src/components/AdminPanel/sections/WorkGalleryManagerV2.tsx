@@ -528,11 +528,13 @@ export default function WorkGalleryManagerV2() {
       const compressionResults = await compressImages([file]);
       let fileToUpload = compressionResults.length > 0 ? compressionResults[0].file : file;
 
-      // CRITICAL: Force MIME type to image/jpeg
+      // CRITICAL: Detect MIME type with strict mapping (prefer browser type, fall back to extension map)
       let mimeType = 'image/jpeg';
-      const detectedMime = detectMimeType(fileToUpload.name);
-      if (detectedMime && detectedMime !== 'image/jpeg') {
-        mimeType = detectedMime;
+      try {
+        const mimeTypeInfo = detectMimeType(fileToUpload);
+        mimeType = mimeTypeInfo.mimeType;
+      } catch (typeError) {
+        console.warn('MIME type detection failed, defaulting to image/jpeg:', typeError);
       }
 
       // Ensure filename has correct extension
