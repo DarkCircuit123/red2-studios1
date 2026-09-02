@@ -9,23 +9,44 @@ import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { compressImages, formatBytes } from '@/lib/image-compression';
 import { MultiThreadedUploader, UploadProgress } from '@/lib/multi-threaded-upload';
 
+/**
+ * Sanitize filename for Wix Media API
+ * CRITICAL: Wix API is extremely strict about filenames
+ * - Must use lowercase extension (.jpg, not .JPG)
+ * - Must not have hidden characters or BOM
+ * - Must not have multiple dots
+ * - Must not have special characters
+ */
 function sanitizeFilename(filename: string): string {
-  const lastDotIndex = filename.lastIndexOf('.');
-  const ext = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '.jpg';
-  const nameWithoutExt = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+  // Remove BOM and hidden characters
+  let cleaned = filename.replace(/^\uFEFF/, '').trim();
   
+  // Extract extension and convert to lowercase
+  const lastDotIndex = cleaned.lastIndexOf('.');
+  let ext = lastDotIndex > 0 ? cleaned.substring(lastDotIndex).toLowerCase() : '.jpg';
+  const nameWithoutExt = lastDotIndex > 0 ? cleaned.substring(0, lastDotIndex) : cleaned;
+  
+  // Ensure extension is strictly lowercase
+  if (ext === '.jpeg') ext = '.jpg';
+  if (!ext.match(/^\.(jpg|jpeg|png|webp|gif)$/i)) {
+    ext = '.jpg';
+  }
+  
+  // Sanitize name part
   let sanitized = nameWithoutExt
-    .replace(/[()[\]{}]/g, '_')
-    .replace(/\s+/g, '_')
-    .replace(/[^a-zA-Z0-9_\-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '');
+    .replace(/[()[\]{}]/g, '_')      // Replace brackets/parens
+    .replace(/\s+/g, '_')             // Replace spaces
+    .replace(/[^a-zA-Z0-9_\-]/g, '_') // Replace special chars
+    .replace(/_+/g, '_')               // Collapse multiple underscores
+    .replace(/^_+|_+$/g, '');          // Remove leading/trailing underscores
   
   if (!sanitized) {
     sanitized = `image_${Date.now()}`;
   }
   
-  return sanitized + ext;
+  // Ensure lowercase extension
+  const finalExt = ext.toLowerCase();
+  return sanitized + finalExt;
 }
 
 /**
@@ -231,30 +252,29 @@ export default function WorkGalleryManagerV2() {
       uploaderRef.current = new MultiThreadedUploader({
         maxConcurrent: MAX_CONCURRENT,
         uploadFn: async (file: File, onProgress: (percent: number) => void) => {
-          // Detect MIME type from filename
-          let mimeType = detectMimeType(file.name);
+          // CRITICAL: Force MIME type to image/jpeg for all files
+          let mimeType = 'image/jpeg';
           
-          // If file has no type or wrong type, use detected type
-          if (!file.type || !file.type.startsWith('image/')) {
-            mimeType = detectMimeType(file.name);
-          } else {
-            mimeType = file.type;
+          // Detect from filename if possible
+          const detectedMime = detectMimeType(file.name);
+          if (detectedMime && detectedMime !== 'image/jpeg') {
+            mimeType = detectedMime;
           }
 
           // Ensure filename has correct extension matching MIME type
           let finalFilename = ensureCorrectExtension(file.name, mimeType);
           
-          // Sanitize the filename
+          // Sanitize the filename (CRITICAL: removes hidden chars, ensures lowercase ext)
           finalFilename = sanitizeFilename(finalFilename);
           
-          // Create a new File with correct MIME type and filename
+          // CRITICAL: Re-create File object with forced MIME type and sanitized name
           const blob = new Blob([file], { type: mimeType });
           const finalFileToUpload = new File([blob], finalFilename, { 
             type: mimeType, 
             lastModified: Date.now() 
           });
 
-          console.log(`[UPLOAD] File: ${file.name} -> ${finalFilename}, MIME: ${mimeType}`);
+          console.log(`[UPLOAD_CRITICAL] File: ${file.name} -> ${finalFilename}, MIME: ${mimeType}, Size: ${finalFileToUpload.size}`);
 
           const formDataForUpload = new FormData();
           formDataForUpload.append('file', finalFileToUpload, finalFileToUpload.name);
@@ -372,17 +392,18 @@ export default function WorkGalleryManagerV2() {
       const compressionResults = await compressImages([file]);
       let fileToUpload = compressionResults.length > 0 ? compressionResults[0].file : file;
 
-      // Detect MIME type from filename
-      let mimeType = detectMimeType(fileToUpload.name);
-      if (fileToUpload.type && fileToUpload.type.startsWith('image/')) {
-        mimeType = fileToUpload.type;
+      // CRITICAL: Force MIME type to image/jpeg
+      let mimeType = 'image/jpeg';
+      const detectedMime = detectMimeType(fileToUpload.name);
+      if (detectedMime && detectedMime !== 'image/jpeg') {
+        mimeType = detectedMime;
       }
 
       // Ensure filename has correct extension
       let finalFilename = ensureCorrectExtension(fileToUpload.name, mimeType);
       finalFilename = sanitizeFilename(finalFilename);
 
-      // Create new File with correct MIME type
+      // CRITICAL: Re-create File with forced MIME type
       const blob = new Blob([fileToUpload], { type: mimeType });
       const finalFileToUpload = new File([blob], finalFilename, { 
         type: mimeType, 
