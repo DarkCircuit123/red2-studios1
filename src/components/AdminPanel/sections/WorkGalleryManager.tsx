@@ -398,9 +398,10 @@ export default function WorkGalleryManager() {
   const canUpload = photos.length < MAX_SLOTS;
   const slotsRemaining = MAX_SLOTS - photos.length;
 
-  // Create array of 90 slots
+  // Create array of 90 slots - ensure all slots are rendered
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => {
-    return photos[i] || null;
+    const photo = photos.find(p => p.displayOrder === i + 1);
+    return photo || null;
   });
 
   return (
