@@ -41,17 +41,13 @@ function sanitizeFilename(filename: string): string {
   return sanitized + ext;
 }
 
-interface GalleryPhoto {
+interface PortfolioImage {
   _id: string;
-  gallerySlug?: string;
-  category?: string;
-  subCategory?: string;
-  title?: string;
-  image?: string;
-  thumbnail?: string;
-  description?: string;
+  portfolioItemId?: string;
   displayOrder?: number;
-  featured?: boolean;
+  caption?: string;
+  altText?: string;
+  image?: string;
   _createdDate?: Date;
 }
 
@@ -72,7 +68,7 @@ interface SelectedFileWithCompression {
 const MAX_SLOTS = 80;
 
 export default function WorkGalleryManager() {
-  const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
+  const [photos, setPhotos] = useState<PortfolioImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [isReplacing, setIsReplacing] = useState(false);
@@ -94,8 +90,8 @@ export default function WorkGalleryManager() {
   const loadPhotos = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<GalleryPhoto>(
-        'galleryphotos',
+      const result = await BaseCrudService.getAll<PortfolioImage>(
+        'portfolioimages',
         {},
         { limit: 1000 }
       );
@@ -227,7 +223,7 @@ export default function WorkGalleryManager() {
 
           console.log(`[UPLOAD] Uploading ${finalFileToUpload.name} (type: ${finalFileToUpload.type}, size: ${finalFileToUpload.size})`);
 
-          const uploadResponse = await fetch('/api/media/upload-hero', {
+          const uploadResponse = await fetch('/api/media/upload-gallery', {
             method: 'POST',
             body: formDataForUpload,
           });
@@ -258,20 +254,17 @@ export default function WorkGalleryManager() {
           console.log(`[UPLOAD] Success: ${fileItem.original.name} -> ${imageUrl}`);
 
           // Create new CMS record for this photo
-          const newPhoto: GalleryPhoto = {
+          const newPhoto: PortfolioImage = {
             _id: crypto.randomUUID(),
-            gallerySlug: 'work-gallery',
-            category: 'Work',
-            subCategory: 'Portfolio',
-            title: fileItem.original.name.replace(/\.[^/.]+$/, ''),
+            portfolioItemId: 'work-gallery',
+            caption: fileItem.original.name.replace(/\.[^/.]+$/, ''),
+            altText: fileItem.original.name.replace(/\.[^/.]+$/, ''),
             image: imageUrl,
-            description: '',
             displayOrder: photos.length + successfulUploads.length + 1,
-            featured: false,
           };
 
           // Insert into CMS
-          await BaseCrudService.create('galleryphotos', newPhoto);
+          await BaseCrudService.create('portfolioimages', newPhoto);
           successfulUploads.push(fileItem.original.name);
         } catch (fileError) {
           const errorMsg = fileError instanceof Error ? fileError.message : 'Unknown error';
@@ -342,7 +335,7 @@ export default function WorkGalleryManager() {
       const formDataForUpload = new FormData();
       formDataForUpload.append('file', finalFileToUpload, finalFileToUpload.name);
 
-      const uploadResponse = await fetch('/api/media/upload-hero', {
+      const uploadResponse = await fetch('/api/media/upload-gallery', {
         method: 'POST',
         body: formDataForUpload,
       });
@@ -362,12 +355,12 @@ export default function WorkGalleryManager() {
       // Update the photo with new image URL
       const photoToUpdate = photos.find(p => p._id === photoId);
       if (photoToUpdate) {
-        const updatedPhoto: GalleryPhoto = {
+        const updatedPhoto: PortfolioImage = {
           ...photoToUpdate,
           image: imageUrl,
         };
 
-        await BaseCrudService.update('galleryphotos', updatedPhoto);
+        await BaseCrudService.update('portfolioimages', updatedPhoto);
         
         // Update local state
         setPhotos(photos.map(p => p._id === photoId ? updatedPhoto : p));
@@ -388,7 +381,7 @@ export default function WorkGalleryManager() {
 
     try {
       setIsDeleting(true);
-      await BaseCrudService.delete('galleryphotos', photoId);
+      await BaseCrudService.delete('portfolioimages', photoId);
       await loadPhotos();
     } catch (error) {
       console.error('Error deleting photo:', error);
