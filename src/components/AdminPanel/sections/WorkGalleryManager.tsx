@@ -103,42 +103,61 @@ export default function WorkGalleryManager() {
     try {
       setIsUploading(true);
 
+      const successfulUploads: string[] = [];
+      const failedUploads: { name: string; reason: string }[] = [];
+
       for (const file of selectedFiles) {
-        // Upload image to Wix Media Manager
-        const formDataForUpload = new FormData();
-        formDataForUpload.append('file', file);
+        try {
+          // Upload image to Wix Media Manager
+          const formDataForUpload = new FormData();
+          formDataForUpload.append('file', file);
 
-        const uploadResponse = await fetch('/api/media/upload-hero', {
-          method: 'POST',
-          body: formDataForUpload,
-        });
+          const uploadResponse = await fetch('/api/media/upload-hero', {
+            method: 'POST',
+            body: formDataForUpload,
+          });
 
-        if (!uploadResponse.ok) {
-          throw new Error(`Failed to upload ${file.name}`);
+          if (!uploadResponse.ok) {
+            failedUploads.push({
+              name: file.name,
+              reason: `Upload failed (${uploadResponse.status})`,
+            });
+            continue;
+          }
+
+          const uploadedData = await uploadResponse.json();
+          const imageUrl = uploadedData.mediaUrl || uploadedData.url;
+
+          if (!imageUrl) {
+            failedUploads.push({
+              name: file.name,
+              reason: 'No image URL returned',
+            });
+            continue;
+          }
+
+          // Create new CMS record for this photo
+          const newPhoto: GalleryPhoto = {
+            _id: crypto.randomUUID(),
+            gallerySlug: 'work-gallery',
+            category: 'Work',
+            subCategory: 'Portfolio',
+            title: file.name.replace(/\.[^/.]+$/, ''),
+            image: imageUrl,
+            description: '',
+            displayOrder: photos.length + successfulUploads.length + 1,
+            featured: false,
+          };
+
+          // Insert into CMS
+          await BaseCrudService.create('galleryphotos', newPhoto);
+          successfulUploads.push(file.name);
+        } catch (fileError) {
+          failedUploads.push({
+            name: file.name,
+            reason: fileError instanceof Error ? fileError.message : 'Unknown error',
+          });
         }
-
-        const uploadedData = await uploadResponse.json();
-        const imageUrl = uploadedData.mediaUrl || uploadedData.url;
-
-        if (!imageUrl) {
-          throw new Error(`No image URL returned for ${file.name}`);
-        }
-
-        // Create new CMS record for this photo
-        const newPhoto: GalleryPhoto = {
-          _id: crypto.randomUUID(),
-          gallerySlug: 'work-gallery',
-          category: 'Work',
-          subCategory: 'Portfolio',
-          title: file.name.replace(/\.[^/.]+$/, ''),
-          image: imageUrl,
-          description: '',
-          displayOrder: photos.length + 1,
-          featured: false,
-        };
-
-        // Insert into CMS
-        await BaseCrudService.create('galleryphotos', newPhoto);
       }
 
       // Reload photos
@@ -150,10 +169,21 @@ export default function WorkGalleryManager() {
         fileInputRef.current.value = '';
       }
 
-      alert(`Successfully uploaded ${selectedFiles.length} photo${selectedFiles.length !== 1 ? 's' : ''}`);
+      // Show results
+      if (successfulUploads.length > 0 && failedUploads.length === 0) {
+        alert(`✓ Successfully uploaded ${successfulUploads.length} photo${successfulUploads.length !== 1 ? 's' : ''}`);
+      } else if (successfulUploads.length > 0 && failedUploads.length > 0) {
+        const failedList = failedUploads.map(f => `• ${f.name} (${f.reason})`).join('\n');
+        alert(
+          `✓ Uploaded ${successfulUploads.length} photo${successfulUploads.length !== 1 ? 's' : ''}\n\n✗ Failed to upload ${failedUploads.length}:\n${failedList}`
+        );
+      } else if (failedUploads.length > 0) {
+        const failedList = failedUploads.map(f => `• ${f.name} (${f.reason})`).join('\n');
+        alert(`✗ Failed to upload ${failedUploads.length} photo${failedUploads.length !== 1 ? 's' : ''}:\n${failedList}`);
+      }
     } catch (error) {
       console.error('Error uploading photos:', error);
-      alert('Failed to upload some photos. Please try again.');
+      alert('An unexpected error occurred during upload. Please try again.');
     } finally {
       setIsUploading(false);
     }
