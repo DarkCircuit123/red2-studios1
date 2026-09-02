@@ -9,6 +9,7 @@ import BackgroundMusicManager from './AdminPanel/sections/BackgroundMusicManager
 import BookingManagerPro from './BookingManagerPro';
 import RubberBandPhotosManager from './AdminPanel/sections/RubberBandPhotosManager';
 import SplashpageManager from './AdminPanel/sections/SplashpageManager';
+import WorkGalleryManager from './AdminPanel/sections/WorkGalleryManager';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages, ClientsPress, AboutSection, Portfolio, MusicSettings } from '@/entities/index';
@@ -270,140 +271,9 @@ export default function AdminPanel({ isOpen, onClose, initialTab = 'photos' }: A
                 </div>
               )}
 
-              {/* Work Tab - 30-Slot Gallery Management */}
+              {/* Work Tab - 80-Slot Gallery Management */}
               {activeTab === 'work' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      Work Gallery (30 Slots)
-                    </h3>
-                    <p className="text-xs text-black/60">Manage your portfolio with a deterministic 30-image gallery</p>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <p className="text-xs text-blue-700">
-                      Click any slot to upload an image. Empty slots are automatically created and maintained. Gallery order persists (Slot 1-30).
-                    </p>
-                  </div>
-
-                  {isInitializingGallery && (
-                    <div className="text-center py-8">
-                      <p className="text-xs text-black/60">Initializing gallery...</p>
-                    </div>
-                  )}
-
-                  {!isInitializingGallery && gallerySlots.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-5 gap-3">
-                        {gallerySlots.map((slot) => (
-                          <div
-                            key={slot.slotNumber}
-                            className="relative group"
-                          >
-                            <div className="aspect-square border-2 border-dashed border-black/20 rounded-lg overflow-hidden bg-black/2 hover:border-black/40 transition-colors cursor-pointer relative"
-                              onClick={() => setUploadingSlot(slot.slotNumber)}
-                            >
-                              {slot.image ? (
-                                <>
-                                  <img
-                                    src={slot.image}
-                                    alt={`Slot ${slot.slotNumber}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                    <span className="text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                                      Replace
-                                    </span>
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center">
-                                  <Upload className="w-4 h-4 text-black/40 mb-1" />
-                                  <span className="text-xs text-black/40 font-bold">Slot {slot.slotNumber}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {uploadingSlot === slot.slotNumber && (
-                              <div className="absolute inset-0 z-50">
-                                <ImageUploadManager
-                                  label={`Upload to Slot ${slot.slotNumber}`}
-                                  currentImage={slot.image}
-                                  collectionId="portfolioimages"
-                                  itemId={slot.itemId}
-                                  fieldName="image"
-                                  onImageUpload={async (url) => {
-                                    try {
-                                      // Update the CMS item with the new image
-                                      await BaseCrudService.update('portfolioimages', {
-                                        _id: slot.itemId,
-                                        image: url,
-                                      });
-                                      // Update local state
-                                      const updatedSlots = gallerySlots.map(s =>
-                                        s.slotNumber === slot.slotNumber
-                                          ? { ...s, image: url }
-                                          : s
-                                      );
-                                      setGallerySlots(updatedSlots);
-                                      setUploadingSlot(null);
-                                    } catch (error) {
-                                      console.error(`Failed to update slot ${slot.slotNumber}:`, error);
-                                    }
-                                  }}
-                                  onImageDelete={async () => {
-                                    try {
-                                      // Clear the image from the CMS item
-                                      await BaseCrudService.update('portfolioimages', {
-                                        _id: slot.itemId,
-                                        image: undefined,
-                                      });
-                                      // Update local state
-                                      const updatedSlots = gallerySlots.map(s =>
-                                        s.slotNumber === slot.slotNumber
-                                          ? { ...s, image: undefined }
-                                          : s
-                                      );
-                                      setGallerySlots(updatedSlots);
-                                      setUploadingSlot(null);
-                                    } catch (error) {
-                                      console.error(`Failed to delete image from slot ${slot.slotNumber}:`, error);
-                                    }
-                                  }}
-                                />
-                              </div>
-                            )}
-
-                            {slot.image && (
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  try {
-                                    await BaseCrudService.update('portfolioimages', {
-                                      _id: slot.itemId,
-                                      image: undefined,
-                                    });
-                                    const updatedSlots = gallerySlots.map(s =>
-                                      s.slotNumber === slot.slotNumber
-                                        ? { ...s, image: undefined }
-                                        : s
-                                    );
-                                    setGallerySlots(updatedSlots);
-                                  } catch (error) {
-                                    console.error(`Failed to delete image from slot ${slot.slotNumber}:`, error);
-                                  }
-                                }}
-                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <WorkGalleryManager />
               )}
 
               {/* Photos Tab */}
