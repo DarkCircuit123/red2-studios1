@@ -1,32 +1,32 @@
 import type { APIRoute } from 'astro';
-import { files } from '@wix/media';
-import { auth } from '@wix/essentials';
+import { mediaManager } from 'wix-media-backend';
 import { requireAdmin } from '@/lib/auth-security';
 
 /**
  * Gallery Image Upload API - For Work Gallery and other portfolio galleries
  * 
- * CRITICAL FIXES:
- * 1. Use explicit MIME type map (jpg -> image/jpeg, NOT image/jpg)
- * 2. Prefer browser-provided File.type when present and non-empty
- * 3. Fall back to extension map only when File.type is blank
- * 4. Reject unsupported extensions in UI BEFORE calling Wix
- * 5. Structured logging for debugging 406 errors
- * 6. Pass filename WITH extension to Wix Media API
- * 7. Return detailed error messages instead of generic 500
+ * BACKEND-ONLY UPLOAD using mediaManager.upload()
  * 
- * This endpoint:
- * 1. Validates the file using strict MIME type mapping
- * 2. Generates a signed upload URL from Wix Media Manager with auth.elevate()
- * 3. Receives the file bytes and uploads to Wix
- * 4. Returns { success, mediaUrl, fileId, error }
- * 5. Enforces admin authentication
+ * Contract:
+ * mediaManager.upload(
+ *   '/portfolio',                    // 1: destination folder (with leading slash)
+ *   buffer,                          // 2: Buffer (NOT base64 string)
+ *   fileName,                        // 3: filename WITH extension
+ *   {                                // 4: options
+ *     mediaOptions: {
+ *       mimeType: mimeType,          // MUST be nested here
+ *       mediaType: 'image'
+ *     },
+ *     metadataOptions: { 
+ *       isPrivate: false, 
+ *       isVisitorUpload: false 
+ *     }
+ *   }
+ * )
+ * 
+ * Returns: { fileUrl: 'wix:image://...' }
  */
 
-/**
- * STRICT MIME TYPE MAP - No concatenation, no guessing
- * Maps file extensions to valid MIME types
- */
 const MIME_TYPE_MAP: Record<string, string> = {
   'jpg': 'image/jpeg',
   'jpeg': 'image/jpeg',
@@ -44,7 +44,7 @@ const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 interface UploadGalleryResponse {
   success: true;
   mediaUrl: string;
-  fileId: string;
+  fileId?: string;
 }
 
 interface ErrorResponse {
@@ -97,9 +97,9 @@ function sanitizeFilename(filename: string): string {
   
   // Remove/replace problematic characters
   let sanitized = nameWithoutExt
-    .replace(/[()[\\]{}]/g, '_')  // Replace brackets/parens with underscore
-    .replace(/\\s+/g, '_')         // Replace spaces with underscore
-    .replace(/[^a-zA-Z0-9_\\-]/g, '_')  // Replace other special chars with underscore
+    .replace(/[()[\]{}]/g, '_')  // Replace brackets/parens with underscore
+    .replace(/\s+/g, '_')         // Replace spaces with underscore
+    .replace(/[^a-zA-Z0-9_\-]/g, '_')  // Replace other special chars with underscore
     .replace(/_+/g, '_')          // Collapse multiple underscores
     .replace(/^_+|_+$/g, '');     // Remove leading/trailing underscores
   
@@ -220,66 +220,73 @@ export const POST: APIRoute = async (context) => {
       timestamp: new Date().toISOString(),
     });
 
-    // Generate upload URL with elevated permissions
-    console.log(`[UPLOAD_GALLERY] Request ${requestId} calling generateFileUploadUrl with auth.elevate()`, {
-      fileName: sanitizedFileName,
-      mimeType: mimeType,
-      timestamp: new Date().toISOString(),
-    });
+    // Convert file to Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    // ===== STEP 1: INSTRUMENT BEFORE UPLOAD CALL =====
-    console.log(`[UPLOAD_GALLERY_CRITICAL_ARGS] Request ${requestId} - EXACT ARGUMENTS TO generateFileUploadUrl:`, {
-      functionName: 'files.generateFileUploadUrl (elevated)',
-      arg1_mimeType: {
-        value: mimeType,
-        type: typeof mimeType,
-        length: mimeType.length,
-        isEmpty: mimeType === '',
-        isNull: mimeType === null,
-        isUndefined: mimeType === undefined,
+    // ===== CRITICAL LOGGING BEFORE UPLOAD =====
+    console.log(`[UPLOAD_GALLERY_CRITICAL_ARGS] Request ${requestId} - EXACT ARGUMENTS TO mediaManager.upload:`, {
+      arg1_folder: {
+        value: '/portfolio',
+        type: 'string',
+        hasLeadingSlash: true,
       },
-      arg2_options: {
-        value: JSON.stringify({ fileName: sanitizedFileName }),
-        type: typeof { fileName: sanitizedFileName },
-        fileName: {
-          value: sanitizedFileName,
-          type: typeof sanitizedFileName,
-          length: sanitizedFileName.length,
-          isEmpty: sanitizedFileName === '',
-          isNull: sanitizedFileName === null,
-          isUndefined: sanitizedFileName === undefined,
-          hasExtension: sanitizedFileName.includes('.'),
-          lastDotIndex: sanitizedFileName.lastIndexOf('.'),
-          extension: sanitizedFileName.substring(sanitizedFileName.lastIndexOf('.')),
+      arg2_buffer: {
+        type: 'Buffer',
+        length: buffer.length,
+        isBuffer: Buffer.isBuffer(buffer),
+      },
+      arg3_fileName: {
+        value: sanitizedFileName,
+        type: typeof sanitizedFileName,
+        length: sanitizedFileName.length,
+        hasExtension: sanitizedFileName.includes('.'),
+        extension: sanitizedFileName.substring(sanitizedFileName.lastIndexOf('.')),
+      },
+      arg4_options: {
+        mediaOptions: {
+          mimeType: mimeType,
+          mediaType: 'image',
+        },
+        metadataOptions: {
+          isPrivate: false,
+          isVisitorUpload: false,
         },
       },
-      originalFileName: {
-        value: file.name,
-        type: typeof file.name,
-        length: file.name.length,
-      },
-      fileObject: {
-        type: file.constructor.name,
-        size: file.size,
-        browserMimeType: file.type,
-        name: file.name,
-      },
       timestamp: new Date().toISOString(),
     });
 
-    let uploadUrlResponse;
+    let uploadResult;
     try {
-      // Use auth.elevate to get elevated permissions for file operations
-      const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
-      uploadUrlResponse = await elevatedGenerateUrl(mimeType, {
+      console.log(`[UPLOAD_GALLERY] Request ${requestId} calling mediaManager.upload`, {
         fileName: sanitizedFileName,
-      });
-    } catch (apiError) {
-      // ===== STEP 3: MAKE FAILURE LOUD - FULL ERROR OBJECT =====
-      console.error(`[UPLOAD_GALLERY_ERROR_CRITICAL] Request ${requestId} generateFileUploadUrl FAILED - FULL ERROR OBJECT:`, {
-        fileName: file.name,
         mimeType: mimeType,
+        bufferLength: buffer.length,
+        timestamp: new Date().toISOString(),
+      });
+
+      uploadResult = await mediaManager.upload(
+        '/portfolio',                 // 1: destination folder, leading slash
+        buffer,                       // 2: Buffer, NOT base64 string
+        sanitizedFileName,            // 3: filename WITH extension
+        {                             // 4: options
+          mediaOptions: {
+            mimeType: mimeType,       // MUST be nested here
+            mediaType: 'image'
+          },
+          metadataOptions: { 
+            isPrivate: false, 
+            isVisitorUpload: false 
+          }
+        }
+      );
+    } catch (apiError) {
+      // ===== MAKE FAILURE LOUD - FULL ERROR OBJECT =====
+      console.error(`[UPLOAD_GALLERY_ERROR_CRITICAL] Request ${requestId} mediaManager.upload FAILED - FULL ERROR OBJECT:`, {
+        fileName: file.name,
         sanitizedFileName: sanitizedFileName,
+        mimeType: mimeType,
+        bufferLength: buffer.length,
         errorObject: apiError,
         errorType: apiError instanceof Error ? apiError.constructor.name : typeof apiError,
         errorMessage: apiError instanceof Error ? apiError.message : String(apiError),
@@ -288,128 +295,39 @@ export const POST: APIRoute = async (context) => {
         errorStringified: JSON.stringify(apiError, null, 2),
         timestamp: new Date().toISOString(),
       });
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} generateFileUploadUrl failed`, {
+
+      const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} mediaManager.upload failed`, {
         fileName: file.name,
         mimeType: mimeType,
-        error: apiError instanceof Error ? apiError.message : String(apiError),
-        stack: apiError instanceof Error ? apiError.stack : undefined,
+        error: errorMessage,
         timestamp: new Date().toISOString(),
       });
-      throw new Error(`Failed to generate upload URL: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
-    }
 
-    if (!uploadUrlResponse.uploadUrl) {
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} no uploadUrl in response`, {
-        fileName: file.name,
-        response: uploadUrlResponse,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error('Failed to generate upload URL from Wix Media Manager');
-    }
-
-    // Verify upload URL is a real Wix domain
-    const uploadUrlObj = new URL(uploadUrlResponse.uploadUrl);
-    const isValidWixDomain = 
-      uploadUrlObj.hostname.includes('wix') ||
-      uploadUrlObj.hostname.includes('files') ||
-      uploadUrlObj.hostname.includes('media');
-
-    if (!isValidWixDomain) {
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} invalid upload URL domain`, {
-        uploadUrl: uploadUrlResponse.uploadUrl,
-        hostname: uploadUrlObj.hostname,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Invalid upload URL domain: ${uploadUrlObj.hostname}`);
-    }
-
-    console.log(`[UPLOAD_GALLERY] Request ${requestId} upload URL generated`, {
-      fileName: file.name,
-      uploadUrlDomain: uploadUrlObj.hostname,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Upload file to Wix
-    console.log(`[UPLOAD_GALLERY] Request ${requestId} uploading file to Wix`, {
-      fileName: file.name,
-      fileSizeBytes: file.size,
-      mimeType: mimeType,
-      timestamp: new Date().toISOString(),
-    });
-
-    const buffer = await file.arrayBuffer();
-    let uploadResponse;
-    try {
-      uploadResponse = await fetch(
-        `${uploadUrlResponse.uploadUrl}?filename=${encodeURIComponent(sanitizedFileName)}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': mimeType },
-          body: buffer,
-        }
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Upload failed: ${errorMessage}` 
+        } as ErrorResponse),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
-    } catch (fetchError) {
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} fetch to upload URL failed`, {
-        fileName: file.name,
-        uploadUrlDomain: uploadUrlObj.hostname,
-        error: fetchError instanceof Error ? fetchError.message : String(fetchError),
-        stack: fetchError instanceof Error ? fetchError.stack : undefined,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Upload failed: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
     }
 
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text().catch(() => '');
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} upload HTTP error`, {
-        fileName: file.name,
-        status: uploadResponse.status,
-        statusText: uploadResponse.statusText,
-        errorText: errorText.substring(0, 500),
-        mimeType: mimeType,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText} - ${errorText}`);
-    }
-
-    let uploadResult;
-    try {
-      uploadResult = await uploadResponse.json();
-    } catch (parseError) {
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} failed to parse upload response`, {
-        fileName: file.name,
-        error: parseError instanceof Error ? parseError.message : String(parseError),
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error('Failed to parse upload response');
-    }
-
-    const mediaUrl = uploadResult?.file?.url;
-    const fileId = uploadResult?.file?.id;
+    const mediaUrl = uploadResult?.fileUrl;
 
     if (!mediaUrl) {
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} no media URL in response`, {
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} no fileUrl in response`, {
         fileName: file.name,
         response: uploadResult,
         timestamp: new Date().toISOString(),
       });
-      throw new Error('No media URL returned from Wix Media Manager');
-    }
-
-    // Verify media URL is a real Wix domain
-    const mediaUrlObj = new URL(mediaUrl);
-    const isValidMediaDomain = 
-      mediaUrlObj.hostname.includes('wix') ||
-      mediaUrlObj.hostname.includes('files') ||
-      mediaUrlObj.hostname.includes('media');
-
-    if (!isValidMediaDomain) {
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} invalid media URL domain`, {
-        mediaUrl,
-        hostname: mediaUrlObj.hostname,
-        timestamp: new Date().toISOString(),
-      });
-      throw new Error(`Invalid media URL domain: ${mediaUrlObj.hostname}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'No media URL returned from Wix Media Manager' 
+        } as ErrorResponse),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     const duration = Date.now() - startTime;
@@ -417,10 +335,10 @@ export const POST: APIRoute = async (context) => {
     // Structured logging: success
     console.log(`[UPLOAD_GALLERY] Request ${requestId} completed successfully`, {
       fileName: file.name,
+      sanitizedFileName: sanitizedFileName,
       fileSizeBytes: file.size,
       mimeType: mimeType,
-      fileId: fileId || 'unknown',
-      mediaUrlDomain: mediaUrlObj.hostname,
+      mediaUrl: mediaUrl,
       duration: `${duration}ms`,
       timestamp: new Date().toISOString(),
     });
@@ -429,7 +347,6 @@ export const POST: APIRoute = async (context) => {
       JSON.stringify({
         success: true,
         mediaUrl,
-        fileId: fileId || '',
       } as UploadGalleryResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
