@@ -557,7 +557,7 @@ export default function WorkGalleryManager() {
             <LoadingSpinner className="w-6 h-6" />
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px', width: '100%' }}>
             {slots.map((photo, index) => (
               <motion.div
                 key={index}
