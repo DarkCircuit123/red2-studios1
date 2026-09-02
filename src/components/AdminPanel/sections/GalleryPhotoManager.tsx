@@ -510,11 +510,11 @@ export default function GalleryPhotoManager() {
 
                   {/* Image Container */}
                   <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
-                    {displayImageUrl ? (
+                    {displayImageUrl && photo ? (
                       <>
                         <img
                           src={displayImageUrl}
-                          alt={photo?.title || 'Gallery photo'}
+                          alt={photo.title || 'Gallery photo'}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             console.warn('Failed to load image:', displayImageUrl);
@@ -526,7 +526,9 @@ export default function GalleryPhotoManager() {
                           <button
                             type="button"
                             onClick={() => {
-                              setFullImagePreview({ photoId: photo!._id, imageUrl: displayImageUrl });
+                              if (photo) {
+                                setFullImagePreview({ photoId: photo._id, imageUrl: displayImageUrl });
+                              }
                             }}
                             className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                             title="Preview full image"
@@ -543,7 +545,11 @@ export default function GalleryPhotoManager() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => deletePhoto(photo!._id)}
+                            onClick={() => {
+                              if (photo) {
+                                deletePhoto(photo._id);
+                              }
+                            }}
                             className="p-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                             title="Delete this photo"
                           >
