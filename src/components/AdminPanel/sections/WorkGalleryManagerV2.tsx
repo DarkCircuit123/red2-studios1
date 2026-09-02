@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Upload, Trash2, Eye, X, RefreshCw, Maximize2, Image as ImageIcon, Zap } from 'lucide-react';
+import { Upload, Trash2, Eye, X, RefreshCw, Maximize2, Image as ImageIcon, Zap, AlertCircle, CheckCircle } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { compressImages, formatBytes } from '@/lib/image-compression';
 import { MultiThreadedUploader, UploadProgress } from '@/lib/multi-threaded-upload';
+import { savePortfolioImage, cleanupOrphanedPortfolioImages } from '@/lib/portfolio-image-save-handler';
 
 /**
  * Sanitize filename for Wix Media API
@@ -113,6 +114,15 @@ interface UploadFileItem {
   uploadProgress?: number;
   uploadStatus?: 'pending' | 'uploading' | 'completed' | 'failed';
   uploadError?: string;
+  cmsStatus?: 'pending' | 'saving' | 'saved' | 'failed';
+  cmsSaveError?: string;
+  mediaUrl?: string;
+}
+
+interface StatusMessage {
+  type: 'info' | 'success' | 'error' | 'warning';
+  message: string;
+  duration?: number;
 }
 
 const MAX_SLOTS = 80;
@@ -137,6 +147,8 @@ export default function WorkGalleryManagerV2() {
     pending: 0,
     overallProgress: 0,
   });
+  const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragOverRef = useRef(false);
@@ -147,11 +159,21 @@ export default function WorkGalleryManagerV2() {
     loadPhotos();
   }, []);
 
+  const addStatusMessage = (type: StatusMessage['type'], message: string, duration = 5000) => {
+    const id = crypto.randomUUID();
+    setStatusMessages(prev => [...prev, { type, message, duration }]);
+    if (duration > 0) {
+      setTimeout(() => {
+        setStatusMessages(prev => prev.filter(m => m.message !== message));
+      }, duration);
+    }
+  };
+
   const loadPhotos = async () => {
     try {
       setIsLoading(true);
       const result = await BaseCrudService.getAll<GalleryPhoto>(
-        'galleryphotos',
+        'portfolioimages',
         {},
         { limit: 1000 }
       );
@@ -324,19 +346,63 @@ export default function WorkGalleryManagerV2() {
           const fileItem = selectedFiles.find(f => f.id === taskId);
           if (!fileItem) return;
 
-          const newPhoto: GalleryPhoto = {
-            _id: crypto.randomUUID(),
-            gallerySlug: 'work-gallery',
-            category: 'Work',
-            subCategory: 'Portfolio',
-            title: fileItem.original.name.replace(/\.[^/.]+$/, ''),
-            image: imageUrl,
-            description: '',
-            displayOrder: photos.length + 1,
-            featured: false,
-          };
+          // CRITICAL: Update file item to show CMS save is starting
+          setSelectedFiles(prev => {
+            const updated = [...prev];
+            const fileIndex = prev.findIndex(f => f.id === taskId);
+            if (fileIndex !== -1) {
+              updated[fileIndex] = {
+                ...prev[fileIndex],
+                mediaUrl: imageUrl,
+                cmsStatus: 'saving',
+              };
+            }
+            return updated;
+          });
 
-          await BaseCrudService.create('galleryphotos', newPhoto);
+          try {
+            // ATOMIC: Save to CMS with upload-first flow
+            const saveResult = await savePortfolioImage(imageUrl, {
+              displayOrder: photos.length + 1,
+              caption: fileItem.original.name.replace(/\.[^/.]+$/, ''),
+              altText: fileItem.original.name.replace(/\.[^/.]+$/, ''),
+              portfolioItemId: crypto.randomUUID(), // Link to parent work item
+            });
+
+            // Mark as successfully saved
+            setSelectedFiles(prev => {
+              const updated = [...prev];
+              const fileIndex = prev.findIndex(f => f.id === taskId);
+              if (fileIndex !== -1) {
+                updated[fileIndex] = {
+                  ...prev[fileIndex],
+                  cmsStatus: 'saved',
+                };
+              }
+              return updated;
+            });
+
+            console.log(`[UPLOAD_COMPLETE] File ${fileItem.original.name} saved to CMS:`, saveResult);
+          } catch (saveError) {
+            const errorMsg = saveError instanceof Error ? saveError.message : String(saveError);
+
+            // Mark as failed
+            setSelectedFiles(prev => {
+              const updated = [...prev];
+              const fileIndex = prev.findIndex(f => f.id === taskId);
+              if (fileIndex !== -1) {
+                updated[fileIndex] = {
+                  ...prev[fileIndex],
+                  cmsStatus: 'failed',
+                  cmsSaveError: errorMsg,
+                };
+              }
+              return updated;
+            });
+
+            console.error(`[UPLOAD_COMPLETE] CMS save failed for ${fileItem.original.name}:`, errorMsg);
+            addStatusMessage('error', `Failed to save ${fileItem.original.name}: ${errorMsg}`);
+          }
         },
         onError: (taskId: string, error: string) => {
           console.error(`Upload error for task ${taskId}:`, error);
@@ -350,37 +416,71 @@ export default function WorkGalleryManagerV2() {
       });
 
       // Wait for all uploads to complete
-      const checkComplete = setInterval(() => {
-        const stats = uploaderRef.current?.getStats();
-        if (stats && stats.uploading === 0 && stats.pending === 0) {
-          clearInterval(checkComplete);
-          
-          // Reload photos
-          loadPhotos();
-          
-          // Show results
-          const failedCount = stats.failed;
-          const successCount = stats.completed;
-          
-          if (successCount > 0 && failedCount === 0) {
-            alert(`✓ Successfully uploaded ${successCount} photo${successCount !== 1 ? 's' : ''}`);
-          } else if (successCount > 0 && failedCount > 0) {
-            alert(`✓ Uploaded ${successCount} photo${successCount !== 1 ? 's' : ''}\n✗ Failed: ${failedCount}`);
-          } else if (failedCount > 0) {
-            alert(`✗ Failed to upload ${failedCount} photo${failedCount !== 1 ? 's' : ''}`);
-          }
-          
-          // Reset
-          setSelectedFiles([]);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-          uploaderRef.current = null;
-        }
-      }, 500);
+       const checkComplete = setInterval(() => {
+         const stats = uploaderRef.current?.getStats();
+         if (stats && stats.uploading === 0 && stats.pending === 0) {
+           clearInterval(checkComplete);
+           
+           // Reload photos
+           loadPhotos();
+           
+           // Show results
+           const failedCount = stats.failed;
+           const successCount = stats.completed;
+           
+           if (successCount > 0 && failedCount === 0) {
+             addStatusMessage('success', `✓ Successfully uploaded and saved ${successCount} photo${successCount !== 1 ? 's' : ''}`);
+           } else if (successCount > 0 && failedCount > 0) {
+             addStatusMessage('warning', `✓ Uploaded ${successCount} photo${successCount !== 1 ? 's' : ''} • ✗ Failed: ${failedCount}`);
+           } else if (failedCount > 0) {
+             addStatusMessage('error', `✗ Failed to upload ${failedCount} photo${failedCount !== 1 ? 's' : ''}`);
+           }
+           
+           // Reset
+           setSelectedFiles([]);
+           if (fileInputRef.current) {
+             fileInputRef.current.value = '';
+           }
+           uploaderRef.current = null;
+         }
+       }, 500);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       console.error('Error uploading photos:', error);
-      alert('An unexpected error occurred during upload. Please try again.');
+      addStatusMessage('error', `Upload error: ${errorMsg}`);
+    }
+  };
+
+  const handleCleanupOrphans = async () => {
+    if (!confirm('This will delete all portfolio images with empty image fields. Continue?')) {
+      return;
+    }
+
+    try {
+      setIsCleaningUp(true);
+      addStatusMessage('info', 'Cleaning up orphaned rows...');
+
+      const result = await cleanupOrphanedPortfolioImages();
+
+      if (result.deleted > 0) {
+        addStatusMessage('success', `Deleted ${result.deleted} orphaned row${result.deleted !== 1 ? 's' : ''}`);
+      } else {
+        addStatusMessage('info', 'No orphaned rows found');
+      }
+
+      if (result.errors.length > 0) {
+        addStatusMessage('warning', `${result.errors.length} error${result.errors.length !== 1 ? 's' : ''} during cleanup`);
+        result.errors.forEach(err => console.warn(err));
+      }
+
+      // Reload photos
+      await loadPhotos();
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('Cleanup error:', error);
+      addStatusMessage('error', `Cleanup failed: ${errorMsg}`);
+    } finally {
+      setIsCleaningUp(false);
     }
   };
 
@@ -388,6 +488,7 @@ export default function WorkGalleryManagerV2() {
     try {
       setReplacingId(photoId);
       setIsReplacing(true);
+      addStatusMessage('info', `Uploading replacement for ${file.name}...`);
 
       const compressionResults = await compressImages([file]);
       let fileToUpload = compressionResults.length > 0 ? compressionResults[0].file : file;
@@ -430,20 +531,23 @@ export default function WorkGalleryManagerV2() {
         throw new Error('No image URL returned from upload');
       }
 
+      // ATOMIC: Save to CMS with upload-first flow
       const photoToUpdate = photos.find(p => p._id === photoId);
       if (photoToUpdate) {
-        const updatedPhoto: GalleryPhoto = {
-          ...photoToUpdate,
-          image: imageUrl,
-        };
+        const saveResult = await savePortfolioImage(imageUrl, {
+          displayOrder: photoToUpdate.displayOrder || 0,
+          caption: photoToUpdate.title || '',
+          altText: photoToUpdate.title || '',
+          portfolioItemId: photoToUpdate.portfolioItemId,
+        }, photoId);
 
-        await BaseCrudService.update('galleryphotos', updatedPhoto);
-        setPhotos(photos.map(p => p._id === photoId ? updatedPhoto : p));
-        alert('Photo replaced successfully');
+        setPhotos(photos.map(p => p._id === photoId ? { ...p, image: imageUrl } : p));
+        addStatusMessage('success', `Photo replaced successfully`);
       }
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       console.error('Replace error:', error);
-      alert('Failed to replace photo');
+      addStatusMessage('error', `Failed to replace photo: ${errorMsg}`);
     } finally {
       setReplacingId(null);
       setIsReplacing(false);
@@ -455,11 +559,13 @@ export default function WorkGalleryManagerV2() {
 
     try {
       setIsDeleting(true);
-      await BaseCrudService.delete('galleryphotos', photoId);
+      await BaseCrudService.delete('portfolioimages', photoId);
       await loadPhotos();
+      addStatusMessage('success', 'Photo deleted successfully');
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       console.error('Error deleting photo:', error);
-      alert('Failed to delete photo.');
+      addStatusMessage('error', `Failed to delete photo: ${errorMsg}`);
     } finally {
       setIsDeleting(false);
     }
@@ -479,6 +585,56 @@ export default function WorkGalleryManagerV2() {
 
   return (
     <div className="space-y-8">
+      {/* Status Messages */}
+      <AnimatePresence>
+        {statusMessages.map((msg, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className={`p-4 rounded-lg flex items-center gap-3 ${
+              msg.type === 'success' ? 'bg-green-50 border border-green-200 text-green-900' :
+              msg.type === 'error' ? 'bg-red-50 border border-red-200 text-red-900' :
+              msg.type === 'warning' ? 'bg-amber-50 border border-amber-200 text-amber-900' :
+              'bg-blue-50 border border-blue-200 text-blue-900'
+            }`}
+          >
+            {msg.type === 'success' && <CheckCircle className="w-5 h-5 flex-shrink-0" />}
+            {msg.type === 'error' && <AlertCircle className="w-5 h-5 flex-shrink-0" />}
+            {msg.type === 'warning' && <AlertCircle className="w-5 h-5 flex-shrink-0" />}
+            {msg.type === 'info' && <LoadingSpinner className="w-5 h-5 flex-shrink-0" />}
+            <span className="text-sm font-medium">{msg.message}</span>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+
+      {/* Cleanup Button */}
+      <Card className="p-4 border border-amber-200 bg-amber-50">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold text-amber-900">Cleanup Orphaned Rows</p>
+            <p className="text-xs text-amber-700 mt-1">Delete portfolio images with empty image fields</p>
+          </div>
+          <Button
+            onClick={handleCleanupOrphans}
+            disabled={isCleaningUp}
+            className="bg-amber-600 hover:bg-amber-700 text-white"
+          >
+            {isCleaningUp ? (
+              <>
+                <LoadingSpinner className="w-4 h-4 mr-2" />
+                Cleaning...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Cleanup
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
       {/* Batch Upload Section */}
       <Card className="p-6 border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100">
         <div className="space-y-4">
