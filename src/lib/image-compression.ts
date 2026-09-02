@@ -93,10 +93,15 @@ export async function compressImage(
 
           // Sanitize filename and ensure .jpg extension
           const sanitizedName = sanitizeFilename(file.name);
-          const finalFilename = sanitizedName.toLowerCase().endsWith('.jpg') || 
+          let finalFilename = sanitizedName.toLowerCase().endsWith('.jpg') || 
                                 sanitizedName.toLowerCase().endsWith('.jpeg')
             ? sanitizedName
             : sanitizedName.replace(/\.[^/.]+$/, '') + '.jpg';
+          
+          // CRITICAL: Double-check .jpg extension for Wix Media API
+          if (!finalFilename.toLowerCase().endsWith('.jpg') && !finalFilename.toLowerCase().endsWith('.jpeg')) {
+            finalFilename = finalFilename.replace(/\.[^/.]+$/, '') + '.jpg';
+          }
 
           // Convert to blob with quality setting
           canvas.toBlob(

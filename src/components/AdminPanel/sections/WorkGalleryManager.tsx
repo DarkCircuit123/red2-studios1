@@ -165,12 +165,27 @@ export default function WorkGalleryManager() {
       for (const fileItem of selectedFiles) {
         try {
           // Use compressed file if available, otherwise use original
-          const fileToUpload = fileItem.compressed || fileItem.original;
+          let fileToUpload = fileItem.compressed || fileItem.original;
+
+          // CRITICAL FIX: Ensure the file has the correct MIME type and .jpg extension
+          // The Wix API is strict about file types - it must be image/jpeg
+          if (fileToUpload.type !== 'image/jpeg') {
+            console.warn(`[UPLOAD] File ${fileToUpload.name} has type ${fileToUpload.type}, converting to image/jpeg`);
+            const blob = fileToUpload.slice(0, fileToUpload.size, 'image/jpeg');
+            const filename = fileToUpload.name.toLowerCase().endsWith('.jpg') || 
+                           fileToUpload.name.toLowerCase().endsWith('.jpeg')
+              ? fileToUpload.name
+              : fileToUpload.name.replace(/\.[^/.]+$/, '') + '.jpg';
+            fileToUpload = new File([blob], filename, { type: 'image/jpeg', lastModified: Date.now() });
+            console.log(`[UPLOAD] Recreated file: ${filename} with type image/jpeg`);
+          }
 
           // Upload image to Wix Media Manager
           const formDataForUpload = new FormData();
           // Explicitly append with filename and ensure proper MIME type
           formDataForUpload.append('file', fileToUpload, fileToUpload.name);
+
+          console.log(`[UPLOAD] Uploading ${fileToUpload.name} (type: ${fileToUpload.type}, size: ${fileToUpload.size})`);
 
           const uploadResponse = await fetch('/api/media/upload-hero', {
             method: 'POST',
@@ -180,6 +195,7 @@ export default function WorkGalleryManager() {
           if (!uploadResponse.ok) {
             const errorData = await uploadResponse.json().catch(() => ({}));
             const errorMessage = errorData.error || `Upload failed (${uploadResponse.status})`;
+            console.error(`[UPLOAD] Failed: ${fileItem.original.name} - ${errorMessage}`);
             failedUploads.push({
               name: fileItem.original.name,
               reason: errorMessage,
@@ -191,12 +207,15 @@ export default function WorkGalleryManager() {
           const imageUrl = uploadedData.mediaUrl || uploadedData.url;
 
           if (!imageUrl) {
+            console.error(`[UPLOAD] No image URL returned for ${fileItem.original.name}`);
             failedUploads.push({
               name: fileItem.original.name,
               reason: 'No image URL returned',
             });
             continue;
           }
+
+          console.log(`[UPLOAD] Success: ${fileItem.original.name} -> ${imageUrl}`);
 
           // Create new CMS record for this photo
           const newPhoto: GalleryPhoto = {
@@ -215,9 +234,11 @@ export default function WorkGalleryManager() {
           await BaseCrudService.create('galleryphotos', newPhoto);
           successfulUploads.push(fileItem.original.name);
         } catch (fileError) {
+          const errorMsg = fileError instanceof Error ? fileError.message : 'Unknown error';
+          console.error(`[UPLOAD] Exception for ${fileItem.original.name}:`, errorMsg);
           failedUploads.push({
             name: fileItem.original.name,
-            reason: fileError instanceof Error ? fileError.message : 'Unknown error',
+            reason: errorMsg,
           });
         }
       }
@@ -258,11 +279,20 @@ export default function WorkGalleryManager() {
 
       // Compress the file first
       const compressionResults = await compressImages([file]);
-      const fileToUpload = compressionResults.length > 0 ? compressionResults[0].file : file;
+      let fileToUpload = compressionResults.length > 0 ? compressionResults[0].file : file;
+
+      // CRITICAL FIX: Ensure the file has the correct MIME type and .jpg extension
+      if (fileToUpload.type !== 'image/jpeg') {
+        const blob = fileToUpload.slice(0, fileToUpload.size, 'image/jpeg');
+        const filename = fileToUpload.name.toLowerCase().endsWith('.jpg') || 
+                       fileToUpload.name.toLowerCase().endsWith('.jpeg')
+          ? fileToUpload.name
+          : fileToUpload.name.replace(/\.[^/.]+$/, '') + '.jpg';
+        fileToUpload = new File([blob], filename, { type: 'image/jpeg', lastModified: Date.now() });
+      }
 
       // Upload the new image
       const formDataForUpload = new FormData();
-      // Explicitly append with filename and ensure proper MIME type
       formDataForUpload.append('file', fileToUpload, fileToUpload.name);
 
       const uploadResponse = await fetch('/api/media/upload-hero', {
