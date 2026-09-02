@@ -492,6 +492,9 @@ export default function GalleryPhotoManager() {
             {/* Render all 80 slots */}
             {Array.from({ length: MAX_SLOTS }).map((_, slotIndex) => {
               const photo = photos[slotIndex];
+              const hasImage = photo?.image && convertWixImageToHttps(photo.image);
+              const displayImageUrl = hasImage ? convertWixImageToHttps(photo.image) : null;
+              
               return (
                 <motion.div
                   key={slotIndex}
@@ -507,19 +510,23 @@ export default function GalleryPhotoManager() {
 
                   {/* Image Container */}
                   <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
-                    {photo?.image ? (
+                    {displayImageUrl ? (
                       <>
                         <img
-                          src={convertWixImageToHttps(photo.image) || photo.image}
-                          alt={photo.title || 'Gallery photo'}
+                          src={displayImageUrl}
+                          alt={photo?.title || 'Gallery photo'}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            console.warn('Failed to load image:', displayImageUrl);
+                            (e.target as HTMLImageElement).src = '';
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
                         />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             type="button"
                             onClick={() => {
-                              const imageUrl = convertWixImageToHttps(photo.image) || photo.image;
-                              setFullImagePreview({ photoId: photo._id, imageUrl });
+                              setFullImagePreview({ photoId: photo!._id, imageUrl: displayImageUrl });
                             }}
                             className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                             title="Preview full image"
@@ -528,7 +535,7 @@ export default function GalleryPhotoManager() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => window.open(convertWixImageToHttps(photo.image) || photo.image, '_blank')}
+                            onClick={() => window.open(displayImageUrl, '_blank')}
                             className="p-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                             title="View full image in new tab"
                           >
@@ -536,7 +543,7 @@ export default function GalleryPhotoManager() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => deletePhoto(photo._id)}
+                            onClick={() => deletePhoto(photo!._id)}
                             className="p-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                             title="Delete this photo"
                           >

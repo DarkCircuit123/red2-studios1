@@ -247,14 +247,15 @@ export default function RubberBandPhotosManager() {
                     </div>
 
                     {/* Photo Thumbnail Preview */}
-                    {displayImageUrl && (
-                      <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
+                    <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
+                      {displayImageUrl && displayImageUrl.trim().length > 0 ? (
                         <img
                           src={displayImageUrl}
                           alt={photo.imageName || 'Carousel photo'}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             console.warn('Failed to load image:', displayImageUrl);
+                            (e.target as HTMLImageElement).src = '';
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
@@ -307,8 +308,15 @@ export default function RubberBandPhotosManager() {
                             )}
                           </button>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+                          <div className="text-center">
+                            <ImageIcon className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                            <p className="text-xs text-slate-500">No image</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Photo Info */}
                     <div className="p-3 space-y-2 bg-white">
