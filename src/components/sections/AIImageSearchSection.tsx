@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Sparkles, Tag, Filter } from 'lucide-react';
 import { Image } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities/index';
 
 export default function AIImageSearchSection() {
@@ -17,7 +16,11 @@ export default function AIImageSearchSection() {
   useEffect(() => {
     const loadPortfolio = async () => {
       try {
-        const data = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 50 });
+        // Use API endpoint instead of BaseCrudService (client-side safe)
+        const response = await fetch('/api/cms/get-splashpage');
+        if (!response.ok) throw new Error('Failed to fetch portfolio');
+        
+        const data = await response.json();
         setPortfolioItems(data.items || []);
         setFilteredItems(data.items || []);
       } catch (error) {

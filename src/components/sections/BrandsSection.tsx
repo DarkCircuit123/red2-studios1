@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 import { ClientsPress } from '@/entities/index';
 
@@ -12,7 +11,11 @@ export default function BrandsSection() {
     const loadBrands = async () => {
       try {
         setIsLoading(true);
-        const clientsData = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
+        // Use API endpoint instead of BaseCrudService (client-side safe)
+        const response = await fetch('/api/cms/get-splashpage');
+        if (!response.ok) throw new Error('Failed to fetch brands');
+        
+        const clientsData = await response.json();
         if (clientsData.items && clientsData.items.length > 0) {
           setBrands(clientsData.items);
         } else {

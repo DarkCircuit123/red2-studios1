@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, User } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { BlogPosts } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
@@ -14,7 +13,11 @@ export default function BlogSection() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 6 });
+        // Use API endpoint instead of BaseCrudService (client-side safe)
+        const response = await fetch('/api/cms/get-splashpage');
+        if (!response.ok) throw new Error('Failed to fetch blog posts');
+        
+        const result = await response.json();
         if (result.items && result.items.length > 0) {
           setPosts(result.items);
         } else {
