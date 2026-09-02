@@ -169,7 +169,8 @@ export default function WorkGalleryManager() {
 
           // Upload image to Wix Media Manager
           const formDataForUpload = new FormData();
-          formDataForUpload.append('file', fileToUpload);
+          // Explicitly append with filename and ensure proper MIME type
+          formDataForUpload.append('file', fileToUpload, fileToUpload.name);
 
           const uploadResponse = await fetch('/api/media/upload-hero', {
             method: 'POST',
@@ -261,7 +262,8 @@ export default function WorkGalleryManager() {
 
       // Upload the new image
       const formDataForUpload = new FormData();
-      formDataForUpload.append('file', fileToUpload);
+      // Explicitly append with filename and ensure proper MIME type
+      formDataForUpload.append('file', fileToUpload, fileToUpload.name);
 
       const uploadResponse = await fetch('/api/media/upload-hero', {
         method: 'POST',

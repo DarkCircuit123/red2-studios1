@@ -27,6 +27,31 @@ const DEFAULT_OPTIONS: CompressionOptions = {
 };
 
 /**
+ * Sanitize filename to remove special characters that might confuse the API
+ * Replaces special characters with underscores, keeps only alphanumeric, dots, hyphens, underscores
+ */
+function sanitizeFilename(filename: string): string {
+  // Remove path separators and null bytes
+  let sanitized = filename.replace(/[\/\\:\*\?"<>|]/g, '_');
+  
+  // Replace parentheses and other special chars with underscores
+  sanitized = sanitized.replace(/[\(\)\[\]\{\}]/g, '_');
+  
+  // Replace multiple consecutive underscores with single underscore
+  sanitized = sanitized.replace(/_+/g, '_');
+  
+  // Remove leading/trailing underscores
+  sanitized = sanitized.replace(/^_+|_+$/g, '');
+  
+  // Ensure we have a valid filename
+  if (!sanitized || sanitized.length === 0) {
+    sanitized = 'image';
+  }
+  
+  return sanitized;
+}
+
+/**
  * Compress a single image file
  */
 export async function compressImage(
@@ -66,6 +91,13 @@ export async function compressImage(
 
           ctx.drawImage(img, 0, 0, width, height);
 
+          // Sanitize filename and ensure .jpg extension
+          const sanitizedName = sanitizeFilename(file.name);
+          const finalFilename = sanitizedName.toLowerCase().endsWith('.jpg') || 
+                                sanitizedName.toLowerCase().endsWith('.jpeg')
+            ? sanitizedName
+            : sanitizedName.replace(/\.[^/.]+$/, '') + '.jpg';
+
           // Convert to blob with quality setting
           canvas.toBlob(
             (blob) => {
@@ -82,7 +114,7 @@ export async function compressImage(
                       throw new Error('Failed to create blob with reduced quality');
                     }
 
-                    const compressedFile = new File([retryBlob], file.name, {
+                    const compressedFile = new File([retryBlob], finalFilename, {
                       type: 'image/jpeg',
                       lastModified: Date.now(),
                     });
@@ -100,7 +132,7 @@ export async function compressImage(
                   quality
                 );
               } else {
-                const compressedFile = new File([blob], file.name, {
+                const compressedFile = new File([blob], finalFilename, {
                   type: 'image/jpeg',
                   lastModified: Date.now(),
                 });
