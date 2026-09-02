@@ -5,6 +5,7 @@ import { playClickSound } from '@/lib/click-sound';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import { BaseCrudService } from '@/integrations';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 export default function ContactSection() {
@@ -27,11 +28,7 @@ export default function ContactSection() {
 
   const loadContactBackground = async () => {
     try {
-      // Use API endpoint instead of BaseCrudService (client-side safe)
-      const response = await fetch('/api/cms/get-homepageimages');
-      if (!response.ok) throw new Error('Failed to fetch contact background');
-      
-      const result = await response.json();
+      const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
       if (result?.items && result.items.length > 0) {
         const images = result.items[0] as any;
         if (images?.contactBackgroundImage && typeof images.contactBackgroundImage === 'string') {

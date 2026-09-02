@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo, memo, useLayo
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
+import { BaseCrudService } from '@/integrations';
 import { HomepageImages } from '@/entities';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
@@ -90,14 +91,10 @@ const RubberBandCarouselSection: React.FC = () => {
   // Load carousel images from CMS
   const loadCarouselImages = useCallback(async () => {
     try {
-      // Use API endpoint instead of BaseCrudService (client-side safe)
-      const response = await fetch('/api/cms/get-homepageimages');
-      if (!response.ok) throw new Error('Failed to fetch carousel images');
-      
-      const data = await response.json();
+      const data = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
       const collected: CarouselImage[] = [];
 
-      data.items?.forEach((item: HomepageImages) => {
+      data.items?.forEach((item) => {
         if (item.heroImage) {
           // Convert wix:image:// URLs to HTTPS for browser rendering
           const httpsUrl = convertWixImageToHttps(item.heroImage);

@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { PortfolioImages } from '@/entities';
@@ -9,11 +9,6 @@ import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-s
 import WixImageResolver from '@/lib/wix-image-resolver';
 import { STATIC_MEDIA_URL } from '@wix/image-kit';
 import { Image } from '@/components/ui/image';
-import { useAdminAuth } from '@/components/AdminAuthProvider';
-import { Upload } from 'lucide-react';
-
-// Lazy load AdminPanel to prevent loading upload code on every page
-const AdminPanel = lazy(() => import('@/components/AdminPanel'));
 
 interface ImageWithAspectRatio extends PortfolioImages {
   aspectRatio?: number;
@@ -53,8 +48,6 @@ const convertWixImageToHttps = (url: string): string => {
 export default function PortfolioPage() {
   const [allImages, setAllImages] = useState<ImageWithAspectRatio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const { isAuthenticated } = useAdminAuth();
 
   // Determine grid span based on aspect ratio
   const getGridSpan = (aspectRatio: number): 'vertical' | 'horizontal' | 'square' => {
@@ -112,17 +105,7 @@ export default function PortfolioPage() {
             (image) =>
               new Promise<ImageWithAspectRatio>((resolve) => {
                 const img = new window.Image();
-                let timeoutId: NodeJS.Timeout;
-                
-                const cleanup = () => {
-                  clearTimeout(timeoutId);
-                  img.onload = null;
-                  img.onerror = null;
-                  img.src = '';
-                };
-                
                 img.onload = () => {
-                  cleanup();
                   const aspectRatio = img.naturalWidth / img.naturalHeight;
                   resolve({
                     ...image,
@@ -131,7 +114,6 @@ export default function PortfolioPage() {
                   });
                 };
                 img.onerror = () => {
-                  cleanup();
                   console.warn('Failed to load image:', image.image);
                   resolve({
                     ...image,
@@ -139,18 +121,6 @@ export default function PortfolioPage() {
                     gridSpan: 'square',
                   });
                 };
-                
-                // Set a 5-second timeout to prevent hanging
-                timeoutId = setTimeout(() => {
-                  cleanup();
-                  console.warn('Image load timeout:', image.image);
-                  resolve({
-                    ...image,
-                    aspectRatio: 1,
-                    gridSpan: 'square',
-                  });
-                }, 5000);
-                
                 // Resolve wix:image:// URLs to HTTPS before setting as src
                 // This ensures the browser can load the image without CSP violations
                 const resolved = WixImageResolver.resolve(image.image);
@@ -177,32 +147,17 @@ export default function PortfolioPage() {
       <Header />
 
       <main className="max-w-[120rem] mx-auto px-8 py-24 md:py-32">
-        {/* Page Header with Upload Button */}
-        <div className="flex items-start justify-between gap-8 mb-20">
-          <ScrollReveal direction="up" duration={800}>
-            <h1 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
-              All Photos
-            </h1>
-            <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
-              A comprehensive collection of {allImages.length} photography work showcasing precision and creative excellence.
-            </p>
-          </ScrollReveal>
+        {/* Page Header */}
+        <ScrollReveal direction="up" duration={800} className="mb-20">
+          <h1 className="text-6xl md:text-7xl font-heading font-bold text-white mb-6 tracking-tighter">
+            All Photos
+          </h1>
+          <p className="text-base font-paragraph text-white/50 max-w-xl leading-relaxed">
+            A comprehensive collection of {allImages.length} photography work showcasing precision and creative excellence.
+          </p>
+        </ScrollReveal>
 
-          {/* Upload Button - Only visible to authenticated admins */}
-          {isAuthenticated && (
-            <motion.button
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              onClick={() => setIsAdminOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 whitespace-nowrap mt-2"
-              title="Upload photos to the gallery"
-            >
-              <Upload className="w-5 h-5" />
-              <span>Upload Photos</span>
-            </motion.button>
-          )}
-        </div>
+
 
         {/* Scrolling Photos Grid */}
         {!isLoading && allImages.length > 0 && (
@@ -252,28 +207,9 @@ export default function PortfolioPage() {
             <p className="text-base font-paragraph text-white/50 mb-8">
               No images found yet
             </p>
-            {isAuthenticated && (
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                onClick={() => setIsAdminOpen(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50"
-              >
-                <Upload className="w-5 h-5" />
-                Upload Your First Photo
-              </motion.button>
-            )}
           </motion.div>
         )}
       </main>
-
-      {/* Admin Panel - Lazy loaded */}
-      {isAdminOpen && (
-        <Suspense fallback={null}>
-          <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} initialTab="work" />
-        </Suspense>
-      )}
 
       <Footer />
     </div>

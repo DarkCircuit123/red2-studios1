@@ -1,5 +1,6 @@
 import { Image } from '@/components/ui/image';
 import { useState, useEffect, useRef } from 'react';
+import { BaseCrudService } from '@/integrations';
 import { useImageFitting } from '@/hooks/useImageFitting';
 
 interface HomepageImage {
@@ -29,11 +30,7 @@ export default function HeroSection() {
 
   const loadHeroImage = async () => {
     try {
-      // Use API endpoint instead of BaseCrudService (client-side safe)
-      const response = await fetch('/api/cms/get-homepageimages');
-      if (!response.ok) throw new Error('Failed to fetch hero image');
-      
-      const result = await response.json();
+      const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
       if (result?.items && result.items.length > 0) {
         const images = result.items[0] as HomepageImage;
         if (images?.heroImage && typeof images.heroImage === 'string' && images.heroImage.trim()) {

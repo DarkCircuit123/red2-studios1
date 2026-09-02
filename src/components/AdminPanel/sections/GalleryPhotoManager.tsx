@@ -8,7 +8,6 @@ import { Upload, Trash2, Eye, Plus, X, RefreshCw, Maximize2 } from 'lucide-react
 import { BaseCrudService } from '@/integrations';
 import { motion } from 'framer-motion';
 import ImageThumbnailPreview from './ImageThumbnailPreview';
-import MultiPhotoUploader from './MultiPhotoUploader';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 interface GalleryPhoto {
@@ -43,9 +42,6 @@ export default function GalleryPhotoManager() {
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [isReplacing, setIsReplacing] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [replacingId, setReplacingId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [fullImagePreview, setFullImagePreview] = useState<PreviewState>({
@@ -95,6 +91,8 @@ export default function GalleryPhotoManager() {
     const uniqueCats = Array.from(new Set(cats));
     setCategories(uniqueCats as string[]);
   }, [photos]);
+
+  // ... keep existing code (state and useEffect hooks) ...
 
   const MAX_SLOTS = 80;
 
@@ -178,11 +176,7 @@ export default function GalleryPhotoManager() {
       }
 
       const uploadedData = await uploadResponse.json();
-      const imageUrl = uploadedData.mediaUrl || uploadedData.url;
-
-      if (!imageUrl) {
-        throw new Error('No image URL returned from upload');
-      }
+      const imageUrl = uploadedData.url;
 
       // Create gallery slug from category and subcategory
       const gallerySlug = `${formData.category.toLowerCase()}-${formData.subCategory.toLowerCase()}`.replace(/\s+/g, '-');
@@ -229,124 +223,15 @@ export default function GalleryPhotoManager() {
     }
   };
 
-  const handleReplacePhoto = async (photoId: string, file: File) => {
-    try {
-      setReplacingId(photoId);
-      setIsReplacing(true);
-
-      // Upload the new image
-      const formDataForUpload = new FormData();
-      formDataForUpload.append('file', file);
-
-      const uploadResponse = await fetch('/api/media/upload-hero', {
-        method: 'POST',
-        body: formDataForUpload,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
-      }
-
-      const uploadedData = await uploadResponse.json();
-      const imageUrl = uploadedData.mediaUrl || uploadedData.url;
-
-      if (!imageUrl) {
-        throw new Error('No image URL returned from upload');
-      }
-
-      // Update the photo with new image URL
-      const photoToUpdate = photos.find(p => p._id === photoId);
-      if (photoToUpdate) {
-        const updatedPhoto: GalleryPhoto = {
-          ...photoToUpdate,
-          image: imageUrl,
-        };
-
-        await BaseCrudService.update('galleryphotos', updatedPhoto);
-        
-        // Update local state
-        setPhotos(photos.map(p => p._id === photoId ? updatedPhoto : p));
-
-        alert('Photo replaced successfully');
-      }
-    } catch (error) {
-      console.error('Replace error:', error);
-      alert('Failed to replace photo');
-    } finally {
-      setReplacingId(null);
-      setIsReplacing(false);
-    }
-  };
-
-  const handleMultiPhotoUpload = async (files: File[]) => {
-    try {
-      setIsUploading(true);
-
-      for (const file of files) {
-        // Upload image to Wix Media Manager
-        const formDataForUpload = new FormData();
-        formDataForUpload.append('file', file);
-
-        const uploadResponse = await fetch('/api/media/upload-hero', {
-          method: 'POST',
-          body: formDataForUpload,
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error(`Failed to upload ${file.name}`);
-        }
-
-        const uploadedData = await uploadResponse.json();
-        const imageUrl = uploadedData.mediaUrl || uploadedData.url;
-
-        if (!imageUrl) {
-          throw new Error(`No image URL returned for ${file.name}`);
-        }
-
-        // Create gallery slug from category and subcategory
-        const gallerySlug = `${formData.category.toLowerCase()}-${formData.subCategory.toLowerCase()}`.replace(/\s+/g, '-');
-
-        // Create new CMS record for this photo
-        const newPhoto: GalleryPhoto = {
-          _id: crypto.randomUUID(),
-          gallerySlug,
-          category: formData.category,
-          subCategory: formData.subCategory,
-          title: file.name.replace(/\.[^/.]+$/, ''),
-          image: imageUrl,
-          description: '',
-          displayOrder: (formData.displayOrder || 0) + 1,
-          featured: false,
-        };
-
-        // Insert into CMS
-        await BaseCrudService.create('galleryphotos', newPhoto);
-      }
-
-      // Reload photos
-      await loadPhotos();
-
-      alert(`Successfully uploaded ${files.length} photo${files.length !== 1 ? 's' : ''}`);
-    } catch (error) {
-      console.error('Error uploading photos:', error);
-      alert('Failed to upload some photos. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const deletePhoto = async (photoId: string) => {
     if (!confirm('Are you sure you want to delete this photo?')) return;
 
     try {
-      setIsDeleting(true);
       await BaseCrudService.delete('galleryphotos', photoId);
       await loadPhotos();
     } catch (error) {
       console.error('Error deleting photo:', error);
       alert('Failed to delete photo.');
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -368,37 +253,6 @@ export default function GalleryPhotoManager() {
 
   return (
     <div className="space-y-8">
-      {/* Multi Photo Upload Section */}
-      <Card className="p-6 border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Upload className="w-5 h-5 text-blue-600" />
-              Batch Upload Photos
-            </h3>
-            <p className="text-sm text-slate-600 mt-1">Upload multiple photos at once to your gallery</p>
-          </div>
-          <MultiPhotoUploader
-            photos={photos.map(p => ({
-              _id: p._id,
-              imageUrl: convertWixImageToHttps(p.image) || p.image || '',
-              name: p.title,
-            }))}
-            onUpload={handleMultiPhotoUpload}
-            onReplace={handleReplacePhoto}
-            onDelete={deletePhoto}
-            isUploading={isUploading}
-            isReplacing={isReplacing}
-            isDeleting={isDeleting}
-            replacingId={replacingId}
-            label="Upload Multiple Photos"
-            description="Drag and drop multiple images or click to select"
-            maxSlots={MAX_SLOTS}
-            allowMultiple={true}
-          />
-        </div>
-      </Card>
-
       {/* Upload Section */}
       <Card className="p-6 border border-slate-200">
         <div className="flex items-start justify-between mb-6">

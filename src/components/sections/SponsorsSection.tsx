@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
+import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 import { ClientsPress } from '@/entities/index';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -14,11 +15,7 @@ export default function SponsorsSection() {
     const loadSponsors = async () => {
       try {
         setIsLoading(true);
-        // Use API endpoint instead of BaseCrudService (client-side safe)
-        const response = await fetch('/api/cms/get-splashpage');
-        if (!response.ok) throw new Error('Failed to fetch sponsors');
-        
-        const clientsData = await response.json();
+        const clientsData = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
         if (clientsData.items && clientsData.items.length > 0) {
           setSponsors(clientsData.items);
         } else {
