@@ -43,14 +43,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
         if (response.ok) {
           const data = await response.json();
+          console.log('[AdminAuthProvider] Session check data:', data);
           if (data.valid) {
+            console.log('[AdminAuthProvider] Session is valid, setting authenticated');
             setIsAuthenticated(true);
             setAdminUsername(data.username || 'Admin');
           } else {
+            console.log('[AdminAuthProvider] Session is not valid');
             setIsAuthenticated(false);
             setAdminUsername(null);
           }
         } else {
+          console.log('[AdminAuthProvider] Session check failed with status:', response.status);
           setIsAuthenticated(false);
           setAdminUsername(null);
         }
@@ -77,6 +81,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+      console.log('[AdminAuthProvider] Attempting login for:', username);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
       
@@ -89,13 +94,16 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       clearTimeout(timeoutId);
+      console.log('[AdminAuthProvider] Login response status:', response.status);
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
+        console.error('[AdminAuthProvider] Login failed:', data);
         throw new Error(data.message || 'Login failed');
       }
 
       const data = await response.json();
+      console.log('[AdminAuthProvider] Login successful, setting authenticated state');
       
       // Store the token from response for header-based fallback
       if (data.token) {
@@ -112,8 +120,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       
       setIsAuthenticated(true);
       setAdminUsername(data.username);
+      console.log('[AdminAuthProvider] Authentication state updated');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
+      console.error('[AdminAuthProvider] Login error:', message);
       setError(message);
       setIsAuthenticated(false);
       setAdminUsername(null);
