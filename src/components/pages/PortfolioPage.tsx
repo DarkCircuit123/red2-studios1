@@ -112,7 +112,17 @@ export default function PortfolioPage() {
             (image) =>
               new Promise<ImageWithAspectRatio>((resolve) => {
                 const img = new window.Image();
+                let timeoutId: NodeJS.Timeout;
+                
+                const cleanup = () => {
+                  clearTimeout(timeoutId);
+                  img.onload = null;
+                  img.onerror = null;
+                  img.src = '';
+                };
+                
                 img.onload = () => {
+                  cleanup();
                   const aspectRatio = img.naturalWidth / img.naturalHeight;
                   resolve({
                     ...image,
@@ -121,6 +131,7 @@ export default function PortfolioPage() {
                   });
                 };
                 img.onerror = () => {
+                  cleanup();
                   console.warn('Failed to load image:', image.image);
                   resolve({
                     ...image,
@@ -128,6 +139,18 @@ export default function PortfolioPage() {
                     gridSpan: 'square',
                   });
                 };
+                
+                // Set a 5-second timeout to prevent hanging
+                timeoutId = setTimeout(() => {
+                  cleanup();
+                  console.warn('Image load timeout:', image.image);
+                  resolve({
+                    ...image,
+                    aspectRatio: 1,
+                    gridSpan: 'square',
+                  });
+                }, 5000);
+                
                 // Resolve wix:image:// URLs to HTTPS before setting as src
                 // This ensures the browser can load the image without CSP violations
                 const resolved = WixImageResolver.resolve(image.image);
