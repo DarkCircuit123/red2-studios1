@@ -29,6 +29,39 @@ interface ErrorResponse {
   error: string;
 }
 
+/**
+ * Sanitize filename for Wix Media API
+ * The Wix API is very strict about filenames - it rejects:
+ * - Special characters like (), [], {}, etc.
+ * - Spaces (should be hyphens)
+ * - Non-ASCII characters
+ * - Multiple dots
+ * 
+ * This function converts filenames to a safe format:
+ * "01_2023-12-11(101).jpg" → "01_2023-12-11_101.jpg"
+ */
+function sanitizeFilename(filename: string): string {
+  // Extract extension
+  const lastDotIndex = filename.lastIndexOf('.');
+  const ext = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '.jpg';
+  const nameWithoutExt = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+  
+  // Remove/replace problematic characters
+  let sanitized = nameWithoutExt
+    .replace(/[()[\]{}]/g, '_')  // Replace brackets/parens with underscore
+    .replace(/\s+/g, '_')         // Replace spaces with underscore
+    .replace(/[^a-zA-Z0-9_\-]/g, '_')  // Replace other special chars with underscore
+    .replace(/_+/g, '_')          // Collapse multiple underscores
+    .replace(/^_+|_+$/g, '');     // Remove leading/trailing underscores
+  
+  // Ensure we have a valid name
+  if (!sanitized) {
+    sanitized = `image_${Date.now()}`;
+  }
+  
+  return sanitized + ext;
+}
+
 export const POST: APIRoute = async (context) => {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
@@ -100,9 +133,17 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
+    // Sanitize filename for Wix API compatibility
+    const sanitizedFileName = sanitizeFilename(file.name);
+    console.log(`[UPLOAD_HERO] Request ${requestId} filename sanitized`, {
+      originalFileName: file.name,
+      sanitizedFileName: sanitizedFileName,
+      timestamp: new Date().toISOString(),
+    });
+
     // Generate upload URL with elevated permissions
     console.log(`[UPLOAD_HERO] Request ${requestId} calling generateFileUploadUrl with auth.elevate()`, {
-      fileName: file.name,
+      fileName: sanitizedFileName,
       mimeType: file.type,
       timestamp: new Date().toISOString(),
     });
@@ -112,7 +153,7 @@ export const POST: APIRoute = async (context) => {
       // Use auth.elevate to get elevated permissions for file operations
       const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
       uploadUrlResponse = await elevatedGenerateUrl(file.type, {
-        fileName: file.name,
+        fileName: sanitizedFileName,
       });
     } catch (apiError) {
       console.error(`[UPLOAD_HERO] Request ${requestId} generateFileUploadUrl failed`, {

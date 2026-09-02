@@ -8,6 +8,39 @@ import { motion } from 'framer-motion';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { compressImages, formatBytes } from '@/lib/image-compression';
 
+/**
+ * Sanitize filename for Wix Media API
+ * The Wix API is very strict about filenames - it rejects:
+ * - Special characters like (), [], {}, etc.
+ * - Spaces (should be hyphens)
+ * - Non-ASCII characters
+ * - Multiple dots
+ * 
+ * This function converts filenames to a safe format:
+ * "01_2023-12-11(101).jpg" → "01_2023-12-11_101.jpg"
+ */
+function sanitizeFilename(filename: string): string {
+  // Extract extension
+  const lastDotIndex = filename.lastIndexOf('.');
+  const ext = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '.jpg';
+  const nameWithoutExt = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+  
+  // Remove/replace problematic characters
+  let sanitized = nameWithoutExt
+    .replace(/[()[\]{}]/g, '_')  // Replace brackets/parens with underscore
+    .replace(/\s+/g, '_')         // Replace spaces with underscore
+    .replace(/[^a-zA-Z0-9_\-]/g, '_')  // Replace other special chars with underscore
+    .replace(/_+/g, '_')          // Collapse multiple underscores
+    .replace(/^_+|_+$/g, '');     // Remove leading/trailing underscores
+  
+  // Ensure we have a valid name
+  if (!sanitized) {
+    sanitized = `image_${Date.now()}`;
+  }
+  
+  return sanitized + ext;
+}
+
 interface GalleryPhoto {
   _id: string;
   gallerySlug?: string;
@@ -180,12 +213,19 @@ export default function WorkGalleryManager() {
             console.log(`[UPLOAD] Recreated file: ${filename} with type image/jpeg`);
           }
 
+          // Sanitize filename for Wix API compatibility
+          const sanitizedFilename = sanitizeFilename(fileToUpload.name);
+          const finalFileToUpload = new File([fileToUpload], sanitizedFilename, { 
+            type: fileToUpload.type, 
+            lastModified: Date.now() 
+          });
+
           // Upload image to Wix Media Manager
           const formDataForUpload = new FormData();
           // Explicitly append with filename and ensure proper MIME type
-          formDataForUpload.append('file', fileToUpload, fileToUpload.name);
+          formDataForUpload.append('file', finalFileToUpload, finalFileToUpload.name);
 
-          console.log(`[UPLOAD] Uploading ${fileToUpload.name} (type: ${fileToUpload.type}, size: ${fileToUpload.size})`);
+          console.log(`[UPLOAD] Uploading ${finalFileToUpload.name} (type: ${finalFileToUpload.type}, size: ${finalFileToUpload.size})`);
 
           const uploadResponse = await fetch('/api/media/upload-hero', {
             method: 'POST',
@@ -291,9 +331,16 @@ export default function WorkGalleryManager() {
         fileToUpload = new File([blob], filename, { type: 'image/jpeg', lastModified: Date.now() });
       }
 
+      // Sanitize filename for Wix API compatibility
+      const sanitizedFilename = sanitizeFilename(fileToUpload.name);
+      const finalFileToUpload = new File([fileToUpload], sanitizedFilename, { 
+        type: fileToUpload.type, 
+        lastModified: Date.now() 
+      });
+
       // Upload the new image
       const formDataForUpload = new FormData();
-      formDataForUpload.append('file', fileToUpload, fileToUpload.name);
+      formDataForUpload.append('file', finalFileToUpload, finalFileToUpload.name);
 
       const uploadResponse = await fetch('/api/media/upload-hero', {
         method: 'POST',
