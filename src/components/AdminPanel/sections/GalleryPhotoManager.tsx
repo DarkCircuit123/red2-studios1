@@ -92,6 +92,10 @@ export default function GalleryPhotoManager() {
     setCategories(uniqueCats as string[]);
   }, [photos]);
 
+  // ... keep existing code (state and useEffect hooks) ...
+
+  const MAX_SLOTS = 80;
+
   const loadPhotos = async () => {
     try {
       setIsLoading(true);
@@ -251,7 +255,22 @@ export default function GalleryPhotoManager() {
     <div className="space-y-8">
       {/* Upload Section */}
       <Card className="p-6 border border-slate-200">
-        <h3 className="text-lg font-bold text-slate-900 mb-6">Upload New Photo</h3>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Upload New Photo</h3>
+            <p className="text-sm text-slate-500 mt-1">
+              {photos.length} / {MAX_SLOTS} slots used
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="w-24 h-24 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{photos.length}</p>
+                <p className="text-xs text-blue-600 font-medium">/ {MAX_SLOTS}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Upload Area */}
@@ -422,13 +441,18 @@ export default function GalleryPhotoManager() {
             <div className="flex gap-3 pt-4">
               <Button
                 onClick={uploadPhoto}
-                disabled={!selectedFile || isUploading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={!selectedFile || isUploading || photos.length >= MAX_SLOTS}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading ? (
                   <>
                     <LoadingSpinner className="w-4 h-4 mr-2" />
                     Uploading...
+                  </>
+                ) : photos.length >= MAX_SLOTS ? (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Slots Full
                   </>
                 ) : (
                   <>
@@ -451,9 +475,16 @@ export default function GalleryPhotoManager() {
 
       {/* Photos List */}
       <Card className="p-6 border border-slate-200">
-        <h3 className="text-lg font-bold text-slate-900 mb-6">
-          Gallery Photos ({photos.length})
-        </h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-slate-900">
+            Work Photos ({photos.length}/{MAX_SLOTS})
+          </h3>
+          {photos.length >= MAX_SLOTS && (
+            <div className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
+              All slots filled
+            </div>
+          )}
+        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -471,18 +502,23 @@ export default function GalleryPhotoManager() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300 transition-colors"
+                className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300 transition-colors group"
               >
+                {/* Slot Number Badge */}
+                <div className="absolute top-2 left-2 z-10 bg-slate-900 text-white px-2 py-1 rounded text-xs font-bold">
+                  #{index + 1}
+                </div>
+
                 {/* Image */}
                 <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
                   {photo.image && (
                     <img
                       src={convertWixImageToHttps(photo.image) || photo.image}
                       alt={photo.title || 'Gallery photo'}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   )}
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
                       onClick={() => {
