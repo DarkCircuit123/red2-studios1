@@ -4,10 +4,9 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Upload, Trash2, Eye, Plus, X, RefreshCw, Maximize2 } from 'lucide-react';
+import { Upload, Trash2, Eye, Plus, X, RefreshCw, Maximize2, Image as ImageIcon } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { motion } from 'framer-motion';
-import ImageThumbnailPreview from './ImageThumbnailPreview';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 interface GalleryPhoto {
@@ -91,8 +90,6 @@ export default function GalleryPhotoManager() {
     const uniqueCats = Array.from(new Set(cats));
     setCategories(uniqueCats as string[]);
   }, [photos]);
-
-  // ... keep existing code (state and useEffect hooks) ...
 
   const MAX_SLOTS = 80;
 
@@ -473,7 +470,7 @@ export default function GalleryPhotoManager() {
         </div>
       </Card>
 
-      {/* Photos List */}
+      {/* Photos Grid - 80 Slots */}
       <Card className="p-6 border border-slate-200">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-slate-900">
@@ -490,91 +487,84 @@ export default function GalleryPhotoManager() {
           <div className="flex items-center justify-center py-12">
             <LoadingSpinner className="w-6 h-6" />
           </div>
-        ) : photos.length === 0 ? (
-          <p className="text-center text-slate-500 py-12">
-            No photos uploaded yet. Start by uploading your first photo above.
-          </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {photos.map((photo, index) => (
-              <motion.div
-                key={photo._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300 transition-colors group"
-              >
-                {/* Slot Number Badge */}
-                <div className="absolute top-2 left-2 z-10 bg-slate-900 text-white px-2 py-1 rounded text-xs font-bold">
-                  #{index + 1}
-                </div>
-
-                {/* Image */}
-                <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
-                  {photo.image && (
-                    <img
-                      src={convertWixImageToHttps(photo.image) || photo.image}
-                      alt={photo.title || 'Gallery photo'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const imageUrl = convertWixImageToHttps(photo.image) || photo.image;
-                        setFullImagePreview({ photoId: photo._id, imageUrl });
-                      }}
-                      className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                      title="Preview full image"
-                    >
-                      <Maximize2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => window.open(convertWixImageToHttps(photo.image) || photo.image, '_blank')}
-                      className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                      title="View full image in new tab"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deletePhoto(photo._id)}
-                      className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                      title="Delete this photo"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {/* Render all 80 slots */}
+            {Array.from({ length: MAX_SLOTS }).map((_, slotIndex) => {
+              const photo = photos[slotIndex];
+              return (
+                <motion.div
+                  key={slotIndex}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: slotIndex * 0.01 }}
+                  className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-slate-300 transition-colors group"
+                >
+                  {/* Slot Number Badge */}
+                  <div className="absolute top-1 left-1 z-10 bg-slate-900 text-white px-1.5 py-0.5 rounded text-xs font-bold">
+                    #{slotIndex + 1}
                   </div>
-                </div>
 
-                {/* Info */}
-                <div className="p-3 space-y-2">
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                      {photo.category} / {photo.subCategory}
-                    </p>
-                    <p className="text-sm font-medium text-slate-900 truncate">
-                      {photo.title || 'Untitled'}
-                    </p>
-                  </div>
-                  {photo.description && (
-                    <p className="text-xs text-slate-600 line-clamp-2">
-                      {photo.description}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-200">
-                    <span>Order: {photo.displayOrder ?? 'N/A'}</span>
-                    {photo.featured && (
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">
-                        Featured
-                      </span>
+                  {/* Image Container */}
+                  <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
+                    {photo?.image ? (
+                      <>
+                        <img
+                          src={convertWixImageToHttps(photo.image) || photo.image}
+                          alt={photo.title || 'Gallery photo'}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const imageUrl = convertWixImageToHttps(photo.image) || photo.image;
+                              setFullImagePreview({ photoId: photo._id, imageUrl });
+                            }}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                            title="Preview full image"
+                          >
+                            <Maximize2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => window.open(convertWixImageToHttps(photo.image) || photo.image, '_blank')}
+                            className="p-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                            title="View full image in new tab"
+                          >
+                            <Eye className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deletePhoto(photo._id)}
+                            className="p-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                            title="Delete this photo"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+                        <ImageIcon className="w-6 h-6 text-slate-400" />
+                      </div>
                     )}
                   </div>
-                </div>
-              </motion.div>
-            ))}
+
+                  {/* Info */}
+                  {photo && (
+                    <div className="p-2 space-y-1 bg-white text-xs">
+                      <p className="font-medium text-slate-900 truncate">
+                        {photo.title || 'Untitled'}
+                      </p>
+                      <p className="text-slate-500 truncate">
+                        {photo.category} / {photo.subCategory}
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </Card>
