@@ -65,7 +65,7 @@ interface SelectedFileWithCompression {
   compressedSize?: number;
 }
 
-const MAX_SLOTS = 80;
+const MAX_SLOTS = 90;
 
 export default function WorkGalleryManager() {
   const [photos, setPhotos] = useState<PortfolioImage[]>([]);
@@ -398,7 +398,7 @@ export default function WorkGalleryManager() {
   const canUpload = photos.length < MAX_SLOTS;
   const slotsRemaining = MAX_SLOTS - photos.length;
 
-  // Create array of 80 slots
+  // Create array of 90 slots
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => {
     return photos[i] || null;
   });
@@ -443,7 +443,7 @@ export default function WorkGalleryManager() {
 
           {!canUpload && (
             <div className="w-full p-4 rounded-lg bg-amber-50 border border-amber-200">
-              <p className="text-sm font-medium text-amber-900">All 80 slots are full. Delete some photos to upload more.</p>
+              <p className="text-sm font-medium text-amber-900">All 90 slots are full. Delete some photos to upload more.</p>
             </div>
           )}
 
