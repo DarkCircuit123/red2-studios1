@@ -229,7 +229,11 @@ export default function WorkPage() {
                   style={{ y: yOffset }}
                   className={getGridClasses(image)}
                   onClick={() => {
-                    playClickSound();
+                    try {
+                      playClickSound();
+                    } catch (error) {
+                      console.warn('Failed to play click sound:', error);
+                    }
                     setSelectedImage(image.image || '');
                   }}
                 >

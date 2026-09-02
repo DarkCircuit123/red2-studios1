@@ -184,7 +184,13 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
                 {item && (
                   <Link
                     to={`/portfolio/${item._id}`}
-                    onClick={playClickSound}
+                    onClick={() => {
+                      try {
+                        playClickSound();
+                      } catch (error) {
+                        console.warn('Failed to play click sound:', error);
+                      }
+                    }}
                     className="absolute inset-0"
                     aria-label={`View ${item.projectName}`}
                   />
