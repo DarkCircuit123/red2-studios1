@@ -94,7 +94,7 @@ export default function GalleryPhotoManager() {
 
   // ... keep existing code (state and useEffect hooks) ...
 
-  const MAX_SLOTS = 80;
+  const MAX_SLOTS = 90;
 
   const loadPhotos = async () => {
     try {
