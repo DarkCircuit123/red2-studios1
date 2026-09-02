@@ -6,6 +6,7 @@ import { Upload, Trash2, Eye, Plus, X, RefreshCw, Maximize2, Image as ImageIcon 
 import { BaseCrudService } from '@/integrations';
 import { motion } from 'framer-motion';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
+import { compressImages, formatBytes } from '@/lib/image-compression';
 
 interface GalleryPhoto {
   _id: string;
@@ -26,6 +27,15 @@ interface PreviewState {
   imageUrl: string | null;
 }
 
+interface SelectedFileWithCompression {
+  original: File;
+  compressed?: File;
+  isCompressing?: boolean;
+  compressionError?: string;
+  originalSize?: number;
+  compressedSize?: number;
+}
+
 const MAX_SLOTS = 80;
 
 export default function WorkGalleryManager() {
@@ -35,7 +45,7 @@ export default function WorkGalleryManager() {
   const [isReplacing, setIsReplacing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFileWithCompression[]>([])
   const [fullImagePreview, setFullImagePreview] = useState<PreviewState>({
     photoId: null,
     imageUrl: null,
@@ -74,7 +84,53 @@ export default function WorkGalleryManager() {
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
     const newFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
-    setSelectedFiles(prev => [...prev, ...newFiles]);
+    
+    // Create SelectedFileWithCompression objects and start compression
+    const newSelectedFiles: SelectedFileWithCompression[] = newFiles.map(file => ({
+      original: file,
+      isCompressing: true,
+    }));
+    
+    setSelectedFiles(prev => [...prev, ...newSelectedFiles]);
+    
+    // Compress all new files
+    newSelectedFiles.forEach((item) => {
+      compressImages([item.original])
+        .then(results => {
+          if (results.length > 0) {
+            const result = results[0];
+            setSelectedFiles(prev => {
+              const updated = [...prev];
+              const fileIndex = prev.findIndex(f => f.original === item.original);
+              if (fileIndex !== -1) {
+                updated[fileIndex] = {
+                  original: item.original,
+                  compressed: result.file,
+                  isCompressing: false,
+                  originalSize: result.originalSize,
+                  compressedSize: result.compressedSize,
+                };
+              }
+              return updated;
+            });
+          }
+        })
+        .catch(error => {
+          console.error(`Compression failed for ${item.original.name}:`, error);
+          setSelectedFiles(prev => {
+            const updated = [...prev];
+            const fileIndex = prev.findIndex(f => f.original === item.original);
+            if (fileIndex !== -1) {
+              updated[fileIndex] = {
+                original: item.original,
+                isCompressing: false,
+                compressionError: 'Compression failed, will upload original',
+              };
+            }
+            return updated;
+          });
+        });
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,11 +162,14 @@ export default function WorkGalleryManager() {
       const successfulUploads: string[] = [];
       const failedUploads: { name: string; reason: string }[] = [];
 
-      for (const file of selectedFiles) {
+      for (const fileItem of selectedFiles) {
         try {
+          // Use compressed file if available, otherwise use original
+          const fileToUpload = fileItem.compressed || fileItem.original;
+
           // Upload image to Wix Media Manager
           const formDataForUpload = new FormData();
-          formDataForUpload.append('file', file);
+          formDataForUpload.append('file', fileToUpload);
 
           const uploadResponse = await fetch('/api/media/upload-hero', {
             method: 'POST',
@@ -118,9 +177,11 @@ export default function WorkGalleryManager() {
           });
 
           if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json().catch(() => ({}));
+            const errorMessage = errorData.error || `Upload failed (${uploadResponse.status})`;
             failedUploads.push({
-              name: file.name,
-              reason: `Upload failed (${uploadResponse.status})`,
+              name: fileItem.original.name,
+              reason: errorMessage,
             });
             continue;
           }
@@ -130,7 +191,7 @@ export default function WorkGalleryManager() {
 
           if (!imageUrl) {
             failedUploads.push({
-              name: file.name,
+              name: fileItem.original.name,
               reason: 'No image URL returned',
             });
             continue;
@@ -142,7 +203,7 @@ export default function WorkGalleryManager() {
             gallerySlug: 'work-gallery',
             category: 'Work',
             subCategory: 'Portfolio',
-            title: file.name.replace(/\.[^/.]+$/, ''),
+            title: fileItem.original.name.replace(/\.[^/.]+$/, ''),
             image: imageUrl,
             description: '',
             displayOrder: photos.length + successfulUploads.length + 1,
@@ -151,10 +212,10 @@ export default function WorkGalleryManager() {
 
           // Insert into CMS
           await BaseCrudService.create('galleryphotos', newPhoto);
-          successfulUploads.push(file.name);
+          successfulUploads.push(fileItem.original.name);
         } catch (fileError) {
           failedUploads.push({
-            name: file.name,
+            name: fileItem.original.name,
             reason: fileError instanceof Error ? fileError.message : 'Unknown error',
           });
         }
@@ -194,9 +255,13 @@ export default function WorkGalleryManager() {
       setReplacingId(photoId);
       setIsReplacing(true);
 
+      // Compress the file first
+      const compressionResults = await compressImages([file]);
+      const fileToUpload = compressionResults.length > 0 ? compressionResults[0].file : file;
+
       // Upload the new image
       const formDataForUpload = new FormData();
-      formDataForUpload.append('file', file);
+      formDataForUpload.append('file', fileToUpload);
 
       const uploadResponse = await fetch('/api/media/upload-hero', {
         method: 'POST',
@@ -204,7 +269,8 @@ export default function WorkGalleryManager() {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload image');
       }
 
       const uploadedData = await uploadResponse.json();
@@ -339,13 +405,17 @@ export default function WorkGalleryManager() {
                 </button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {selectedFiles.map((file, index) => (
+                {selectedFiles.map((fileItem, index) => (
                   <div
-                    key={`${file.name}-${index}`}
+                    key={`${fileItem.original.name}-${index}`}
                     className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50 group"
                   >
-                    <div className="w-full h-20 bg-slate-100 flex items-center justify-center">
-                      <ImageIcon className="w-4 h-4 text-slate-400" />
+                    <div className="w-full h-20 bg-slate-100 flex items-center justify-center flex-col">
+                      {fileItem.isCompressing ? (
+                        <LoadingSpinner className="w-4 h-4 text-slate-400" />
+                      ) : (
+                        <ImageIcon className="w-4 h-4 text-slate-400" />
+                      )}
                     </div>
                     <button
                       onClick={() => handleRemoveSelected(index)}
@@ -353,8 +423,19 @@ export default function WorkGalleryManager() {
                     >
                       <X className="w-3 h-3" />
                     </button>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-xs p-1 truncate">
-                      {file.name}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1 space-y-0.5">
+                      <div className="truncate font-medium">{fileItem.original.name}</div>
+                      {fileItem.isCompressing && (
+                        <div className="text-xs opacity-80">Compressing...</div>
+                      )}
+                      {fileItem.compressed && !fileItem.isCompressing && (
+                        <div className="text-xs opacity-80">
+                          {formatBytes(fileItem.originalSize || 0)} → {formatBytes(fileItem.compressedSize || 0)}
+                        </div>
+                      )}
+                      {fileItem.compressionError && (
+                        <div className="text-xs opacity-80 text-amber-300">{fileItem.compressionError}</div>
+                      )}
                     </div>
                   </div>
                 ))}
