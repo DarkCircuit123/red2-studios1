@@ -42,32 +42,20 @@ export default function Header() {
   }, []);
 
   const handleLinkClick = useCallback(() => {
-    try {
-      playClickSound();
-    } catch (error) {
-      console.warn('Failed to play click sound:', error);
-    }
+    playClickSound();
   }, []);
 
   const handleAdminClick = useCallback(() => {
-    try {
-      playClickSound();
-    } catch (error) {
-      console.warn('Failed to play click sound:', error);
-    }
-    if (isAuthenticated && !isLoading) {
+    playClickSound();
+    if (isAuthenticated) {
       setIsAdminOpen(true);
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated]);
 
   const handleLoginClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    try {
-      playClickSound();
-    } catch (error) {
-      console.warn('Failed to play click sound:', error);
-    }
+    playClickSound();
     setIsLoginModalOpen(true);
   }, []);
 
@@ -82,36 +70,24 @@ export default function Header() {
   }, []);
 
   const handleLogoutClick = useCallback(async () => {
-    try {
-      playClickSound();
-    } catch (error) {
-      console.warn('Failed to play click sound:', error);
-    }
+    playClickSound();
     try {
       await logout();
       setIsOpen(false);
       setIsAdminOpen(false);
     } catch (error) {
-      console.error('Logout error:', error);
+      // Silently handle logout errors
     }
   }, [logout]);
 
   const handleMobileMenuClick = useCallback(() => {
-    try {
-      playClickSound();
-    } catch (error) {
-      console.warn('Failed to play click sound:', error);
-    }
+    playClickSound();
     setIsOpen(prev => !prev);
   }, []);
 
   const handleAnchorClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
     e.preventDefault();
-    try {
-      playClickSound();
-    } catch (error) {
-      console.warn('Failed to play click sound:', error);
-    }
+    playClickSound();
     
     const scrollToElement = () => {
       const element = document.querySelector(hash);

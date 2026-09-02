@@ -167,14 +167,10 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     };
     
     loadData();
-  }, [isOpen, activeTab]);
+  }, [isOpen, activeTab, initializeGallery]);
 
   const handleLogout = useCallback(async () => {
-    try {
-      playClickSound();
-    } catch (error) {
-      console.warn('Failed to play click sound:', error);
-    }
+    playClickSound();
     try {
       console.log('[ADMIN PANEL] Logout button clicked');
       await memberActions.logout();

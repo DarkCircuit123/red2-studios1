@@ -22,11 +22,7 @@ export default function ProfilePage() {
   }, [member?.profile?.nickname, member?.contact?.firstName]);
 
   const handleLogout = () => {
-    try {
-      playClickSound();
-    } catch (error) {
-      console.warn('Failed to play click sound:', error);
-    }
+    playClickSound();
     actions.logout();
   };
 

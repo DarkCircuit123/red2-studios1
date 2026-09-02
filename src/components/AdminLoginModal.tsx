@@ -29,21 +29,17 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }: Adm
         return;
       }
 
-      console.log('[AdminLoginModal] Submitting login form');
       await login(username, password);
-      console.log('[AdminLoginModal] Login successful');
       
       // Clear form and close modal on success
       setUsername('');
       setPassword('');
       setTimeout(() => {
-        console.log('[AdminLoginModal] Closing modal and calling onLoginSuccess');
         onClose();
         onLoginSuccess?.();
       }, 100);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
-      console.error('[AdminLoginModal] Login error:', message);
       setError(message);
     } finally {
       setIsLoading(false);
