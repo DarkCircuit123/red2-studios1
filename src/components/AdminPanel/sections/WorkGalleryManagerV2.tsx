@@ -158,7 +158,7 @@ interface StatusMessage {
   duration?: number;
 }
 
-const MAX_SLOTS = 140;
+const MAX_SLOTS = 170;
 const MAX_CONCURRENT = 3;
 
 export default function WorkGalleryManagerV2() {
@@ -750,7 +750,7 @@ export default function WorkGalleryManagerV2() {
 
           {!canUpload && (
             <div className="w-full p-4 rounded-lg bg-amber-50 border border-amber-200">
-              <p className="text-sm font-medium text-amber-900">All 80 slots are full. Delete some photos to upload more.</p>
+              <p className="text-sm font-medium text-amber-900">All {MAX_SLOTS} slots are full. Delete some photos to upload more.</p>
             </div>
           )}
 
