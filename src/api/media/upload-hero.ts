@@ -225,6 +225,46 @@ export const POST: APIRoute = async (context) => {
       timestamp: new Date().toISOString(),
     });
 
+    // ===== STEP 1: INSTRUMENT BEFORE UPLOAD CALL =====
+    console.log(`[UPLOAD_HERO_CRITICAL_ARGS] Request ${requestId} - EXACT ARGUMENTS TO generateFileUploadUrl:`, {
+      functionName: 'files.generateFileUploadUrl (elevated)',
+      arg1_mimeType: {
+        value: mimeType,
+        type: typeof mimeType,
+        length: mimeType.length,
+        isEmpty: mimeType === '',
+        isNull: mimeType === null,
+        isUndefined: mimeType === undefined,
+      },
+      arg2_options: {
+        value: JSON.stringify({ fileName: sanitizedFileName }),
+        type: typeof { fileName: sanitizedFileName },
+        fileName: {
+          value: sanitizedFileName,
+          type: typeof sanitizedFileName,
+          length: sanitizedFileName.length,
+          isEmpty: sanitizedFileName === '',
+          isNull: sanitizedFileName === null,
+          isUndefined: sanitizedFileName === undefined,
+          hasExtension: sanitizedFileName.includes('.'),
+          lastDotIndex: sanitizedFileName.lastIndexOf('.'),
+          extension: sanitizedFileName.substring(sanitizedFileName.lastIndexOf('.')),
+        },
+      },
+      originalFileName: {
+        value: file.name,
+        type: typeof file.name,
+        length: file.name.length,
+      },
+      fileObject: {
+        type: file.constructor.name,
+        size: file.size,
+        browserMimeType: file.type,
+        name: file.name,
+      },
+      timestamp: new Date().toISOString(),
+    });
+
     let uploadUrlResponse;
     try {
       // Use auth.elevate to get elevated permissions for file operations
@@ -233,6 +273,19 @@ export const POST: APIRoute = async (context) => {
         fileName: sanitizedFileName,
       });
     } catch (apiError) {
+      // ===== STEP 3: MAKE FAILURE LOUD - FULL ERROR OBJECT =====
+      console.error(`[UPLOAD_HERO_ERROR_CRITICAL] Request ${requestId} generateFileUploadUrl FAILED - FULL ERROR OBJECT:`, {
+        fileName: file.name,
+        mimeType: mimeType,
+        sanitizedFileName: sanitizedFileName,
+        errorObject: apiError,
+        errorType: apiError instanceof Error ? apiError.constructor.name : typeof apiError,
+        errorMessage: apiError instanceof Error ? apiError.message : String(apiError),
+        errorStack: apiError instanceof Error ? apiError.stack : undefined,
+        errorKeys: apiError instanceof Object ? Object.keys(apiError) : [],
+        errorStringified: JSON.stringify(apiError, null, 2),
+        timestamp: new Date().toISOString(),
+      });
       console.error(`[UPLOAD_HERO] Request ${requestId} generateFileUploadUrl failed`, {
         fileName: file.name,
         mimeType: mimeType,
