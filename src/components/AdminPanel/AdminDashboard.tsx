@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import HomePageTab from './tabs/HomePageTab';
 import SplashpageTab from './tabs/SplashpageTab';
-import GalleryPhotoManager from './sections/GalleryPhotoManager';
+import WorkGalleryManager from './sections/WorkGalleryManager';
 import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="gallery" className="m-0">
-                <GalleryPhotoManager />
+                <WorkGalleryManager />
               </TabsContent>
 
               {/* Disabled tabs placeholder */}
