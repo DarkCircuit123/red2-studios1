@@ -4,18 +4,39 @@ import { auth } from '@wix/essentials';
 import { requireAdmin } from '@/lib/auth-security';
 
 /**
- * Hero Image Upload API - Clean, reliable upload flow
+ * Hero Image Upload API - FIXED: Strict MIME type mapping
+ * 
+ * CRITICAL FIXES:
+ * 1. Use explicit MIME type map (jpg -> image/jpeg, NOT image/jpg)
+ * 2. Prefer browser-provided File.type when present and non-empty
+ * 3. Fall back to extension map only when File.type is blank
+ * 4. Reject unsupported extensions in UI BEFORE calling Wix
+ * 5. Structured logging for debugging 406 errors
  * 
  * This endpoint:
- * 1. Validates the file (JPEG, PNG, WebP only; max 10MB)
+ * 1. Validates the file using strict MIME type mapping
  * 2. Generates a signed upload URL from Wix Media Manager with auth.elevate()
  * 3. Receives the file bytes and uploads to Wix
  * 4. Returns { success, mediaUrl, fileId, error }
  * 5. Enforces admin authentication
- * 6. Includes structured logging for debugging
  */
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+/**
+ * STRICT MIME TYPE MAP - No concatenation, no guessing
+ * Maps file extensions to valid MIME types
+ */
+const MIME_TYPE_MAP: Record<string, string> = {
+  'jpg': 'image/jpeg',
+  'jpeg': 'image/jpeg',
+  'png': 'image/png',
+  'webp': 'image/webp',
+  'gif': 'image/gif',
+  'tif': 'image/tiff',
+  'tiff': 'image/tiff',
+  'heic': 'image/heic',
+};
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/tiff', 'image/heic'];
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 interface UploadHeroResponse {
@@ -27,6 +48,32 @@ interface UploadHeroResponse {
 interface ErrorResponse {
   success: false;
   error: string;
+}
+
+/**
+ * Detect MIME type from file
+ * CRITICAL: Prefer browser-provided File.type, fall back to extension map
+ */
+function detectMimeType(file: File): { mimeType: string; source: 'browser' | 'extension-map' } {
+  // FIRST: Try browser-provided type
+  if (file.type && file.type.trim() !== '') {
+    console.log(`[UPLOAD_HERO] Using browser-provided MIME type: ${file.type}`);
+    return { mimeType: file.type, source: 'browser' };
+  }
+
+  // FALLBACK: Use extension map
+  const lastDotIndex = file.name.lastIndexOf('.');
+  if (lastDotIndex > 0) {
+    const ext = file.name.substring(lastDotIndex + 1).toLowerCase();
+    const mappedType = MIME_TYPE_MAP[ext];
+    if (mappedType) {
+      console.log(`[UPLOAD_HERO] Using extension map for .${ext}: ${mappedType}`);
+      return { mimeType: mappedType, source: 'extension-map' };
+    }
+  }
+
+  // REJECT: Unknown extension
+  throw new Error(`Unsupported file extension. Allowed: ${Object.keys(MIME_TYPE_MAP).join(', ')}`);
 }
 
 /**
@@ -59,7 +106,7 @@ function sanitizeFilename(filename: string): string {
     sanitized = `image_${Date.now()}`;
   }
   
-  return sanitized + ext;
+  return sanitized + ext.toLowerCase();
 }
 
 export const POST: APIRoute = async (context) => {
@@ -92,24 +139,54 @@ export const POST: APIRoute = async (context) => {
     // Structured logging: file info
     console.log(`[UPLOAD_HERO] Request ${requestId} file received`, {
       fileName: file.name,
-      mimeType: file.type,
+      browserMimeType: file.type,
       fileSizeBytes: file.size,
       fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
       timestamp: new Date().toISOString(),
     });
 
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      console.warn(`[UPLOAD_HERO] Request ${requestId} invalid file type`, {
+    // CRITICAL: Detect MIME type with strict mapping
+    let mimeTypeInfo;
+    try {
+      mimeTypeInfo = detectMimeType(file);
+    } catch (typeError) {
+      const errorMsg = typeError instanceof Error ? typeError.message : String(typeError);
+      console.warn(`[UPLOAD_HERO] Request ${requestId} MIME type detection failed`, {
         fileName: file.name,
-        mimeType: file.type,
+        browserMimeType: file.type,
+        error: errorMsg,
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: errorMsg
+        } as ErrorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { mimeType, source } = mimeTypeInfo;
+
+    console.log(`[UPLOAD_HERO] Request ${requestId} MIME type resolved`, {
+      fileName: file.name,
+      mimeType,
+      source,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Validate MIME type is in allowed list
+    if (!ALLOWED_TYPES.includes(mimeType)) {
+      console.warn(`[UPLOAD_HERO] Request ${requestId} MIME type not allowed`, {
+        fileName: file.name,
+        mimeType,
         allowedTypes: ALLOWED_TYPES,
         timestamp: new Date().toISOString(),
       });
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: `File type not supported. Allowed: JPEG, PNG, WebP. Received: ${file.type}` 
+          error: `File type not supported. Allowed: ${Object.keys(MIME_TYPE_MAP).join(', ')}. Received: ${mimeType}` 
         } as ErrorResponse),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
@@ -144,7 +221,7 @@ export const POST: APIRoute = async (context) => {
     // Generate upload URL with elevated permissions
     console.log(`[UPLOAD_HERO] Request ${requestId} calling generateFileUploadUrl with auth.elevate()`, {
       fileName: sanitizedFileName,
-      mimeType: file.type,
+      mimeType: mimeType,
       timestamp: new Date().toISOString(),
     });
 
@@ -152,13 +229,13 @@ export const POST: APIRoute = async (context) => {
     try {
       // Use auth.elevate to get elevated permissions for file operations
       const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
-      uploadUrlResponse = await elevatedGenerateUrl(file.type, {
+      uploadUrlResponse = await elevatedGenerateUrl(mimeType, {
         fileName: sanitizedFileName,
       });
     } catch (apiError) {
       console.error(`[UPLOAD_HERO] Request ${requestId} generateFileUploadUrl failed`, {
         fileName: file.name,
-        mimeType: file.type,
+        mimeType: mimeType,
         error: apiError instanceof Error ? apiError.message : String(apiError),
         stack: apiError instanceof Error ? apiError.stack : undefined,
         timestamp: new Date().toISOString(),
@@ -201,6 +278,7 @@ export const POST: APIRoute = async (context) => {
     console.log(`[UPLOAD_HERO] Request ${requestId} uploading file to Wix`, {
       fileName: file.name,
       fileSizeBytes: file.size,
+      mimeType: mimeType,
       timestamp: new Date().toISOString(),
     });
 
@@ -208,10 +286,10 @@ export const POST: APIRoute = async (context) => {
     let uploadResponse;
     try {
       uploadResponse = await fetch(
-        `${uploadUrlResponse.uploadUrl}?filename=${encodeURIComponent(file.name)}`,
+        `${uploadUrlResponse.uploadUrl}?filename=${encodeURIComponent(sanitizedFileName)}`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': file.type },
+          headers: { 'Content-Type': mimeType },
           body: buffer,
         }
       );
@@ -233,9 +311,10 @@ export const POST: APIRoute = async (context) => {
         status: uploadResponse.status,
         statusText: uploadResponse.statusText,
         errorText: errorText.substring(0, 500),
+        mimeType: mimeType,
         timestamp: new Date().toISOString(),
       });
-      throw new Error(`Upload failed: ${uploadResponse.status} ${errorText}`);
+      throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText} - ${errorText}`);
     }
 
     let uploadResult;
@@ -284,6 +363,7 @@ export const POST: APIRoute = async (context) => {
     console.log(`[UPLOAD_HERO] Request ${requestId} completed successfully`, {
       fileName: file.name,
       fileSizeBytes: file.size,
+      mimeType: mimeType,
       fileId: fileId || 'unknown',
       mediaUrlDomain: mediaUrlObj.hostname,
       duration: `${duration}ms`,

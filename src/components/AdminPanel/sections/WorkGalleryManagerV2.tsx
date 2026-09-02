@@ -51,15 +51,42 @@ function sanitizeFilename(filename: string): string {
 }
 
 /**
- * Detect MIME type from file extension
+ * STRICT MIME TYPE MAP - No concatenation, no guessing
+ * Maps file extensions to valid MIME types
  */
-function detectMimeType(filename: string): string {
-  const lower = filename.toLowerCase();
-  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
-  if (lower.endsWith('.png')) return 'image/png';
-  if (lower.endsWith('.webp')) return 'image/webp';
-  if (lower.endsWith('.gif')) return 'image/gif';
-  return 'image/jpeg'; // default
+const MIME_TYPE_MAP: Record<string, string> = {
+  'jpg': 'image/jpeg',
+  'jpeg': 'image/jpeg',
+  'png': 'image/png',
+  'webp': 'image/webp',
+  'gif': 'image/gif',
+  'tif': 'image/tiff',
+  'tiff': 'image/tiff',
+  'heic': 'image/heic',
+};
+
+/**
+ * Detect MIME type from file
+ * CRITICAL: Prefer browser-provided File.type, fall back to extension map
+ */
+function detectMimeType(file: File): { mimeType: string; source: 'browser' | 'extension-map' } {
+  // FIRST: Try browser-provided type
+  if (file.type && file.type.trim() !== '') {
+    return { mimeType: file.type, source: 'browser' };
+  }
+
+  // FALLBACK: Use extension map
+  const lastDotIndex = file.name.lastIndexOf('.');
+  if (lastDotIndex > 0) {
+    const ext = file.name.substring(lastDotIndex + 1).toLowerCase();
+    const mappedType = MIME_TYPE_MAP[ext];
+    if (mappedType) {
+      return { mimeType: mappedType, source: 'extension-map' };
+    }
+  }
+
+  // REJECT: Unknown extension
+  throw new Error(`Unsupported file extension. Allowed: ${Object.keys(MIME_TYPE_MAP).join(', ')}`);
 }
 
 /**
@@ -79,6 +106,12 @@ function ensureCorrectExtension(filename: string, mimeType: string): string {
   }
   if (mimeType === 'image/gif' && !lower.endsWith('.gif')) {
     return filename.replace(/\.[^/.]+$/, '') + '.gif';
+  }
+  if (mimeType === 'image/tiff' && !lower.endsWith('.tif') && !lower.endsWith('.tiff')) {
+    return filename.replace(/\.[^/.]+$/, '') + '.tif';
+  }
+  if (mimeType === 'image/heic' && !lower.endsWith('.heic')) {
+    return filename.replace(/\.[^/.]+$/, '') + '.heic';
   }
   
   return filename;
@@ -274,14 +307,16 @@ export default function WorkGalleryManagerV2() {
       uploaderRef.current = new MultiThreadedUploader({
         maxConcurrent: MAX_CONCURRENT,
         uploadFn: async (file: File, onProgress: (percent: number) => void) => {
-          // CRITICAL: Force MIME type to image/jpeg for all files
-          let mimeType = 'image/jpeg';
-          
-          // Detect from filename if possible
-          const detectedMime = detectMimeType(file.name);
-          if (detectedMime && detectedMime !== 'image/jpeg') {
-            mimeType = detectedMime;
+          // CRITICAL: Detect MIME type with strict mapping (prefer browser type, fall back to extension map)
+          let mimeTypeInfo;
+          try {
+            mimeTypeInfo = detectMimeType(file);
+          } catch (typeError) {
+            const errorMsg = typeError instanceof Error ? typeError.message : String(typeError);
+            throw new Error(`File type validation failed: ${errorMsg}`);
           }
+
+          const { mimeType, source } = mimeTypeInfo;
 
           // Ensure filename has correct extension matching MIME type
           let finalFilename = ensureCorrectExtension(file.name, mimeType);
@@ -289,14 +324,14 @@ export default function WorkGalleryManagerV2() {
           // Sanitize the filename (CRITICAL: removes hidden chars, ensures lowercase ext)
           finalFilename = sanitizeFilename(finalFilename);
           
-          // CRITICAL: Re-create File object with forced MIME type and sanitized name
+          // CRITICAL: Re-create File object with strict MIME type and sanitized name
           const blob = new Blob([file], { type: mimeType });
           const finalFileToUpload = new File([blob], finalFilename, { 
             type: mimeType, 
             lastModified: Date.now() 
           });
 
-          console.log(`[UPLOAD_CRITICAL] File: ${file.name} -> ${finalFilename}, MIME: ${mimeType}, Size: ${finalFileToUpload.size}`);
+          console.log(`[UPLOAD_CRITICAL] File: ${file.name} -> ${finalFilename}, MIME: ${mimeType} (${source}), Size: ${finalFileToUpload.size}`);
 
           const formDataForUpload = new FormData();
           formDataForUpload.append('file', finalFileToUpload, finalFileToUpload.name);
