@@ -248,7 +248,7 @@ export default function PortfolioPage() {
       {/* Admin Panel - Lazy loaded */}
       {isAdminOpen && (
         <Suspense fallback={null}>
-          <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+          <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} initialTab="work" />
         </Suspense>
       )}
 

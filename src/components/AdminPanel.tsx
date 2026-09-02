@@ -17,6 +17,7 @@ import { playClickSound } from '@/lib/click-sound';
 interface AdminPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: string;
 }
 
 interface AboutSettings extends AboutSection {}
@@ -29,9 +30,9 @@ interface GallerySlot {
   altText?: string;
 }
 
-export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
+export default function AdminPanel({ isOpen, onClose, initialTab = 'photos' }: AdminPanelProps) {
   const { member, actions: memberActions } = useMember();
-  const [activeTab, setActiveTab] = useState('photos');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
   const [musicSettings, setMusicSettings] = useState<MusicSettings | null>(null);
