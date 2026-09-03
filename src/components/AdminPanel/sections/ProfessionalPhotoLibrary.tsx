@@ -100,6 +100,7 @@ export default function ProfessionalPhotoLibrary() {
 
   // Load photos on mount
   useEffect(() => {
+    console.log('[ProfessionalPhotoLibrary] Component mounted, loading photos');
     loadPhotos();
   }, []);
 
@@ -108,12 +109,32 @@ export default function ProfessionalPhotoLibrary() {
     setIsLoading(true);
     setError(null);
     try {
+      console.log('[ProfessionalPhotoLibrary] Loading photos from /api/cms/get-portfolio');
       const response = await fetch('/api/cms/get-portfolio');
-      if (!response.ok) throw new Error('Failed to load photos');
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[ProfessionalPhotoLibrary] API error:', response.status, errorText);
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+      
       const data = await response.json();
-      setPhotos(Array.isArray(data) ? data : data.items || []);
+      console.log('[ProfessionalPhotoLibrary] API response:', data);
+      
+      // Handle both array and object responses
+      let photos: PhotoFile[] = [];
+      if (Array.isArray(data)) {
+        photos = data;
+      } else if (data && typeof data === 'object') {
+        photos = data.items || [];
+      }
+      
+      console.log('[ProfessionalPhotoLibrary] Loaded photos:', photos.length);
+      setPhotos(photos);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load photos');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load photos';
+      console.error('[ProfessionalPhotoLibrary] Error loading photos:', errorMsg);
+      setError(errorMsg);
       setPhotos([]); // Remain functional with empty state
     } finally {
       setIsLoading(false);
@@ -155,23 +176,45 @@ export default function ProfessionalPhotoLibrary() {
 
   // Add files to upload queue
   const addFilesToQueue = useCallback((files: File[]) => {
-    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    console.log('[ProfessionalPhotoLibrary] Adding files to queue:', files.length);
+    const imageFiles = files.filter(f => {
+      const isImage = f.type.startsWith('image/');
+      console.log(`[ProfessionalPhotoLibrary] File: ${f.name}, type: ${f.type}, isImage: ${isImage}`);
+      return isImage;
+    });
+    
+    console.log('[ProfessionalPhotoLibrary] Filtered image files:', imageFiles.length);
+    
     const newItems: UploadQueueItem[] = imageFiles.map(file => ({
       id: `${Date.now()}-${Math.random()}`,
       file,
       progress: 0,
       status: 'pending',
     }));
-    setUploadQueue(prev => [...prev, ...newItems]);
+    
+    setUploadQueue(prev => {
+      const updated = [...prev, ...newItems];
+      console.log('[ProfessionalPhotoLibrary] Upload queue updated:', updated.length);
+      return updated;
+    });
+    
+    // Process the new queue immediately
     processQueue([...uploadQueue, ...newItems]);
-  }, [uploadQueue]);
+  }, [uploadQueue, processQueue]);
 
   // Process upload queue
   const processQueue = useCallback(async (queue: UploadQueueItem[]) => {
+    console.log('[ProfessionalPhotoLibrary] Processing queue:', queue.length);
+    
     for (const item of queue) {
-      if (item.status !== 'pending') continue;
+      if (item.status !== 'pending') {
+        console.log(`[ProfessionalPhotoLibrary] Skipping item ${item.id}, status: ${item.status}`);
+        continue;
+      }
 
       try {
+        console.log(`[ProfessionalPhotoLibrary] Starting upload for ${item.file.name}`);
+        
         // Update status to uploading
         setUploadQueue(prev =>
           prev.map(q =>
@@ -195,19 +238,57 @@ export default function ProfessionalPhotoLibrary() {
 
         const uploadPromise = new Promise<PhotoFile>((resolve, reject) => {
           xhr.addEventListener('load', () => {
+            console.log(`[ProfessionalPhotoLibrary] Upload complete for ${item.file.name}, status: ${xhr.status}`);
+            
             if (xhr.status >= 200 && xhr.status < 300) {
               try {
-                const result = JSON.parse(xhr.responseText);
-                resolve(result);
-              } catch {
+                const response = JSON.parse(xhr.responseText);
+                console.log(`[ProfessionalPhotoLibrary] Upload response:`, response);
+                
+                // Handle both direct PhotoFile response and mediaUrl response
+                let photoFile: PhotoFile;
+                if (response._id) {
+                  // Direct PhotoFile response
+                  photoFile = response;
+                } else if (response.mediaUrl || response.success) {
+                  // mediaUrl response - create PhotoFile object
+                  photoFile = {
+                    _id: `${Date.now()}-${Math.random()}`,
+                    image: response.mediaUrl,
+                    caption: item.file.name.replace(/\.[^/.]+$/, ''),
+                    altText: item.file.name,
+                    displayOrder: 0,
+                    portfolioItemId: 'gallery',
+                    _createdDate: new Date(),
+                    _updatedDate: new Date(),
+                  };
+                } else {
+                  throw new Error('Invalid response format: missing _id or mediaUrl');
+                }
+                
+                console.log(`[ProfessionalPhotoLibrary] Resolved PhotoFile:`, photoFile);
+                resolve(photoFile);
+              } catch (parseErr) {
+                console.error(`[ProfessionalPhotoLibrary] Failed to parse response:`, xhr.responseText);
                 reject(new Error('Invalid response format'));
               }
             } else {
+              console.error(`[ProfessionalPhotoLibrary] Upload failed with status ${xhr.status}: ${xhr.statusText}`);
               reject(new Error(`Upload failed: ${xhr.statusText}`));
             }
           });
-          xhr.addEventListener('error', () => reject(new Error('Network error')));
-          xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
+          
+          xhr.addEventListener('error', () => {
+            console.error(`[ProfessionalPhotoLibrary] Network error during upload`);
+            reject(new Error('Network error'));
+          });
+          
+          xhr.addEventListener('abort', () => {
+            console.warn(`[ProfessionalPhotoLibrary] Upload cancelled`);
+            reject(new Error('Upload cancelled'));
+          });
+          
+          console.log(`[ProfessionalPhotoLibrary] Sending upload request to /api/media/upload-gallery`);
           xhr.open('POST', '/api/media/upload-gallery');
           xhr.send(formData);
         });
@@ -237,8 +318,11 @@ export default function ProfessionalPhotoLibrary() {
 
         // Add to photos list
         setPhotos(prev => [result, ...prev]);
+        console.log(`[ProfessionalPhotoLibrary] Upload successful for ${item.file.name}`);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Upload failed';
+        console.error(`[ProfessionalPhotoLibrary] Upload error for ${item.file.name}:`, errorMsg);
+        
         setUploadQueue(prev =>
           prev.map(q =>
             q.id === item.id
@@ -248,7 +332,7 @@ export default function ProfessionalPhotoLibrary() {
         );
       }
     }
-  }, [uploadQueue]);
+  }, []);
 
   // Retry failed upload
   const retryUpload = useCallback((itemId: string) => {
@@ -289,9 +373,13 @@ export default function ProfessionalPhotoLibrary() {
     if (!confirmAction.type) return;
 
     try {
+      console.log(`[ProfessionalPhotoLibrary] Executing action: ${confirmAction.type}, items: ${confirmAction.items.length}`);
+      
       if (confirmAction.type === 'delete' || confirmAction.type === 'bulk-delete') {
         for (const photoId of confirmAction.items) {
-          await fetch(`/api/cms/mutate`, {
+          console.log(`[ProfessionalPhotoLibrary] Deleting photo: ${photoId}`);
+          
+          const response = await fetch(`/api/cms/mutate`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -299,14 +387,26 @@ export default function ProfessionalPhotoLibrary() {
               itemId: photoId,
             }),
           });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[ProfessionalPhotoLibrary] Delete failed for ${photoId}:`, response.status, errorText);
+            throw new Error(`Failed to delete photo: ${response.statusText}`);
+          }
+          
+          console.log(`[ProfessionalPhotoLibrary] Successfully deleted photo: ${photoId}`);
         }
+        
         setPhotos(prev =>
           prev.filter(p => !confirmAction.items.includes(p._id))
         );
         setSelectedPhotos(new Set());
+        console.log(`[ProfessionalPhotoLibrary] Delete action completed`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Action failed');
+      const errorMsg = err instanceof Error ? err.message : 'Action failed';
+      console.error(`[ProfessionalPhotoLibrary] Action error:`, errorMsg);
+      setError(errorMsg);
     } finally {
       setConfirmAction({ type: null, items: [], message: '' });
     }
@@ -1079,16 +1179,32 @@ function PhotoEditModal({
   });
 
   const handleSave = async () => {
-    const updated = { ...photo, ...formData };
-    await fetch(`/api/cms/mutate`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        collection: 'portfolioimages',
-        item: updated,
-      }),
-    });
-    onSave(updated);
+    try {
+      console.log(`[PhotoEditModal] Saving photo: ${photo._id}`);
+      const updated = { ...photo, ...formData };
+      
+      const response = await fetch(`/api/cms/mutate`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          collection: 'portfolioimages',
+          item: updated,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[PhotoEditModal] Save failed:`, response.status, errorText);
+        throw new Error(`Failed to save photo: ${response.statusText}`);
+      }
+      
+      console.log(`[PhotoEditModal] Photo saved successfully`);
+      onSave(updated);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to save';
+      console.error(`[PhotoEditModal] Error:`, errorMsg);
+      alert(errorMsg);
+    }
   };
 
   return (
