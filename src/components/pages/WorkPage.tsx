@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
 import { X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
-import { PortfolioImages } from '@/entities';
+import { Portfolio } from '@/entities';
 import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
 import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
 
-interface ImageWithLayout extends PortfolioImages {
+interface ImageWithLayout extends Portfolio {
   layoutSize: 'small' | 'medium' | 'large';
   layoutOrientation: 'portrait' | 'landscape' | 'square';
 }
@@ -27,7 +27,7 @@ export default function WorkPage() {
     const fetchAllImages = async () => {
       setIsLoading(true);
       try {
-        const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
+        const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 1000 });
         const allImages = result.items || [];
         
         // Filter out items with broken/placeholder URLs using sanitizer

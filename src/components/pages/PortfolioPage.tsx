@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { PortfolioImages } from '@/entities';
+import { Portfolio } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ScrollReveal } from '@/components/ScrollReveal';
@@ -10,7 +10,7 @@ import WixImageResolver from '@/lib/wix-image-resolver';
 import { STATIC_MEDIA_URL } from '@wix/image-kit';
 import { Image } from '@/components/ui/image';
 
-interface ImageWithAspectRatio extends PortfolioImages {
+interface ImageWithAspectRatio extends Portfolio {
   aspectRatio?: number;
   gridSpan?: 'vertical' | 'horizontal' | 'square';
 }
@@ -61,7 +61,7 @@ export default function PortfolioPage() {
     const fetchAllImages = async () => {
       setIsLoading(true);
       try {
-        const result = await BaseCrudService.getAll<PortfolioImages>('portfolioimages', {}, { limit: 1000 });
+        const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 1000 });
         
         // Filter out items with broken/placeholder URLs using sanitizer
         const allItems = result.items || [];
