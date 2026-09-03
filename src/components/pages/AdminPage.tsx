@@ -3,8 +3,8 @@ import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import AdminAccessGate from '@/components/AdminAccessGate';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-// Lazy load AdminPanel
-const AdminPanel = lazy(() => import('@/components/AdminPanel'));
+// Lazy load AdminDashboard (new tabbed interface with WorkGalleryManagerV4)
+const AdminDashboard = lazy(() => import('@/components/AdminPanel/AdminDashboard'));
 
 /**
  * Admin Page - Protected route for admin dashboard
@@ -25,7 +25,7 @@ export default function AdminPage() {
             </div>
           }
         >
-          <AdminPanel isOpen={true} onClose={() => window.history.back()} />
+          <AdminDashboard />
         </Suspense>
       </AdminAccessGate>
     </MemberProtectedRoute>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import HomePageTab from './tabs/HomePageTab';
@@ -9,6 +9,10 @@ import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Librar
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('home');
+
+  useEffect(() => {
+    console.log('[AdminDashboard] Component mounted, activeTab:', activeTab);
+  }, [activeTab]);
 
   const tabs = [
     { id: 'home', label: 'Home Page', icon: Home, enabled: true },

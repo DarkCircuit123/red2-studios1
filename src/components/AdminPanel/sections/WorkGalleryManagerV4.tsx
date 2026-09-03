@@ -33,14 +33,18 @@ interface StatusMessage {
 }
 
 export default function WorkGalleryManagerV4() {
+  console.log('[WorkGalleryManagerV4] Component rendering');
+  
   // HARDCODED SLOTS - Proves UI can render
   const [slots, setSlots] = useState<SlotData[]>(() => {
-    return Array.from({ length: MAX_SLOTS }, (_, i) => ({
+    const initialSlots = Array.from({ length: MAX_SLOTS }, (_, i) => ({
       slotNumber: i + 1,
       image: undefined,
       caption: '',
       altText: '',
     }));
+    console.log('[WorkGalleryManagerV4] Initial state created with', initialSlots.length, 'slots');
+    return initialSlots;
   });
 
   const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
@@ -52,6 +56,13 @@ export default function WorkGalleryManagerV4() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragOverRef = useRef(false);
+
+  React.useEffect(() => {
+    console.log('[WorkGalleryManagerV4] Component mounted, slots count:', slots.length);
+    return () => {
+      console.log('[WorkGalleryManagerV4] Component unmounting');
+    };
+  }, []);
 
   const addStatusMessage = (type: StatusMessage['type'], message: string) => {
     const id = crypto.randomUUID();
@@ -185,6 +196,8 @@ export default function WorkGalleryManagerV4() {
   };
 
   const filledSlots = slots.filter(s => s.image).length;
+
+  console.log('[WorkGalleryManagerV4] Rendering with', slots.length, 'slots, filled:', filledSlots);
 
   return (
     <div className="space-y-8">
