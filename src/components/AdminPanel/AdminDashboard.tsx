@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/card';
 import HomePageTab from './tabs/HomePageTab';
 import SplashpageTab from './tabs/SplashpageTab';
 import WorkGalleryManagerV2 from './sections/WorkGalleryManagerV2';
-import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image } from 'lucide-react';
+import ProfessionalPhotoLibrary from './sections/ProfessionalPhotoLibrary';
+import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Library } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('home');
@@ -13,6 +14,7 @@ export default function AdminDashboard() {
     { id: 'home', label: 'Home Page', icon: Home, enabled: true },
     { id: 'splashpage', label: 'Splash Page', icon: Image, enabled: true },
     { id: 'gallery', label: 'Work Gallery', icon: Briefcase, enabled: true },
+    { id: 'photo-library', label: 'Photo Library', icon: Library, enabled: true },
     { id: 'about', label: 'About Page', icon: FileText, enabled: false },
     { id: 'services', label: 'Services', icon: Settings, enabled: false },
     { id: 'booking', label: 'Booking', icon: Calendar, enabled: false },
@@ -83,7 +85,11 @@ export default function AdminDashboard() {
                 <WorkGalleryManagerV2 />
               </TabsContent>
 
-              {/* Disabled tabs placeholder */}
+              <TabsContent value="photo-library" className="m-0">
+                <ProfessionalPhotoLibrary />
+              </TabsContent>
+
+              {/* ... keep existing code (disabled tabs placeholder) ... */}
               {['about', 'services', 'booking', 'contact', 'settings'].map((tabId) => (
                 <TabsContent key={tabId} value={tabId} className="m-0">
                   <div className="text-center py-12">
