@@ -67,10 +67,17 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         console.log('[SplashScreen] Starting logo load...');
         setDebugInfo('Fetching logo from API...');
         
+        // Set a timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
         const response = await fetch('/api/cms/get-splashpage', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
         
         console.log('[SplashScreen] API response status:', response.status);
         
@@ -128,7 +135,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       } catch (err) {
         console.error('[SplashScreen] Error loading logo:', err);
         console.error('[SplashScreen] Error stack:', err instanceof Error ? err.stack : 'No stack');
-        setDebugInfo(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        
+        // Handle abort error specifically
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.error('[SplashScreen] API request timed out');
+          setDebugInfo('API request timed out');
+        } else {
+          setDebugInfo(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+        
         setShowWithoutLogo(true);
         setIsLoadingLogo(false);
       }
@@ -143,29 +158,34 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       return;
     }
 
-    // Hold splash for 1.5-2 seconds, then fade out
+    // If logo is loaded, wait 1.5-2 seconds before fading out
+    // If no logo or error, fade out faster (500ms)
+    const holdDuration = isLoadingLogo ? 500 : 1700;
+    
     const fadeOutTimer = setTimeout(() => {
+      console.log('[SplashScreen] Starting fade out');
       setIsFadingOut(true);
-    }, 1700); // 1.7 seconds - middle of the 1.5-2 second range
+    }, holdDuration);
 
     // Complete splash after fade out animation
     const completeTimer = setTimeout(() => {
+      console.log('[SplashScreen] Splash complete, showing app');
       setIsVisible(false);
       markSplashAsShown();
       onComplete?.();
-    }, 2200); // 1.7s + 0.5s fade duration
+    }, holdDuration + 500); // hold duration + 0.5s fade
 
     return () => {
       clearTimeout(fadeOutTimer);
       clearTimeout(completeTimer);
     };
-  }, [isVisible, onComplete]);
+  }, [isVisible, onComplete, isLoadingLogo]);
 
   if (!isVisible) {
     return null;
   }
 
-  // Show black splash screen while loading
+  // Show black splash screen while loading (with timeout protection)
   if (isLoadingLogo && !showWithoutLogo) {
     return (
       <div 
@@ -186,12 +206,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           padding: 0
         }}
       >
-        {/* Debug info - remove in production */}
-        {debugInfo && (
-          <div className="text-white text-xs text-center px-4 max-w-xs">
-            <p>{debugInfo}</p>
-          </div>
-        )}
+        {/* Loading spinner */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
+          {/* Debug info - remove in production */}
+          {debugInfo && (
+            <div className="text-white text-xs text-center px-4 max-w-xs">
+              <p>{debugInfo}</p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
