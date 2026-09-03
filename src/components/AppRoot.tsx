@@ -1,7 +1,6 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import AppRouter from '@/components/Router';
 import RouterFallback from '@/components/RouterFallback';
-import SplashScreen from '@/components/SplashScreen';
 import { AdminAuthProvider } from '@/components/AdminAuthProvider';
 import { MemberProvider } from '@/integrations/members/providers';
 
@@ -42,61 +41,15 @@ class RouterErrorBoundary extends React.Component<
   }
 }
 
-// AppRoot with integrated splash screen
+// Simplified AppRoot - no splash screen, direct app rendering
 export default function AppRoot() {
-  const [splashComplete, setSplashComplete] = useState(false);
-
-  // Force black background on mount
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    
-    document.documentElement.style.backgroundColor = '#000000';
-    document.documentElement.style.display = 'block';
-    document.documentElement.style.visibility = 'visible';
-    document.documentElement.style.opacity = '1';
-    
-    document.body.style.backgroundColor = '#000000';
-    document.body.style.display = 'block';
-    document.body.style.visibility = 'visible';
-    document.body.style.opacity = '1';
-    document.body.style.margin = '0';
-    document.body.style.padding = '0';
-    
-    const root = document.getElementById('root');
-    if (root) {
-      root.style.backgroundColor = '#000000';
-      root.style.display = 'block';
-      root.style.visibility = 'visible';
-      root.style.opacity = '1';
-    }
-  }, []);
-
-  const handleSplashComplete = () => {
-    console.log('[AppRoot] Splash screen complete');
-    setSplashComplete(true);
-    
-    // Reset background to white for main app
-    if (typeof document !== 'undefined') {
-      document.documentElement.style.backgroundColor = '#ffffff';
-      document.body.style.backgroundColor = '#ffffff';
-    }
-  };
-
   return (
     <AdminAuthProvider>
       <MemberProvider>
         <RouterErrorBoundary>
-          {/* Show splash screen until complete */}
-          {!splashComplete && (
-            <SplashScreen onComplete={handleSplashComplete} />
-          )}
-          
-          {/* Show app content after splash completes */}
-          {splashComplete && (
-            <Suspense fallback={<RouterFallback />}>
-              <AppRouter />
-            </Suspense>
-          )}
+          <Suspense fallback={<RouterFallback />}>
+            <AppRouter />
+          </Suspense>
         </RouterErrorBoundary>
       </MemberProvider>
     </AdminAuthProvider>

@@ -22,14 +22,12 @@ interface AdminPanelProps {
 interface AboutSettings extends AboutSection {}
 
 interface GallerySlot {
-  slotNumber: number; // 1-90
+  slotNumber: number; // 1-30
   itemId: string; // CMS item _id
   image?: string; // Image URL
   caption?: string;
   altText?: string;
 }
-
-const MAX_GALLERY_SLOTS = 90;
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { member, actions: memberActions } = useMember();
@@ -45,25 +43,25 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [isInitializingGallery, setIsInitializingGallery] = useState(false);
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
 
-  // Initialize 90-slot gallery with self-healing
+  // Initialize 30-slot gallery with self-healing
   const initializeGallery = useCallback(async () => {
     setIsInitializingGallery(true);
     try {
       // Fetch all existing portfolio items
-      const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 200 });
+      const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 100 });
       const existingItems = result?.items || [];
       
       // Create a map of existing items by displayOrder
       const itemsByOrder = new Map<number, Portfolio>();
       existingItems.forEach(item => {
-        if (item.displayOrder && item.displayOrder >= 1 && item.displayOrder <= MAX_GALLERY_SLOTS) {
+        if (item.displayOrder && item.displayOrder >= 1 && item.displayOrder <= 30) {
           itemsByOrder.set(item.displayOrder, item);
         }
       });
 
       // Self-heal: Create missing slots
       const slots: GallerySlot[] = [];
-      for (let i = 1; i <= MAX_GALLERY_SLOTS; i++) {
+      for (let i = 1; i <= 30; i++) {
         const existing = itemsByOrder.get(i);
         if (existing) {
           slots.push({
@@ -271,19 +269,19 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Work Tab - 90-Slot Gallery Management */}
+              {/* Work Tab - 30-Slot Gallery Management */}
               {activeTab === 'work' && (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      Work Gallery (90 Slots)
+                      Work Gallery (30 Slots)
                     </h3>
-                    <p className="text-xs text-black/60">Manage your portfolio with a deterministic 90-image gallery</p>
+                    <p className="text-xs text-black/60">Manage your portfolio with a deterministic 30-image gallery</p>
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <p className="text-xs text-blue-700">
-                      Click any slot to upload an image. Empty slots are automatically created and maintained. Gallery order persists (Slot 1-90).
+                      Click any slot to upload an image. Empty slots are automatically created and maintained. Gallery order persists (Slot 1-30).
                     </p>
                   </div>
 

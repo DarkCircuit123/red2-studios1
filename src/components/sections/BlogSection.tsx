@@ -1,16 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, User } from 'lucide-react';
+import { BaseCrudService } from '@/integrations';
 import { BlogPosts } from '@/entities/index';
 import { Image } from '@/components/ui/image';
 import { Link } from 'react-router-dom';
 import { playClickSound } from '@/lib/click-sound';
-
-interface BlogResponse {
-  success: boolean;
-  items?: BlogPosts[];
-  error?: string;
-}
 
 export default function BlogSection() {
   const [posts, setPosts] = useState<BlogPosts[]>([]);
@@ -19,14 +14,9 @@ export default function BlogSection() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const response = await fetch('/api/cms/get-blog-posts');
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-        const data: BlogResponse = await response.json();
-        
-        if (data.success && data.items && data.items.length > 0) {
-          setPosts(data.items);
+        const result = await BaseCrudService.getAll<BlogPosts>('blogposts', {}, { limit: 6 });
+        if (result.items && result.items.length > 0) {
+          setPosts(result.items);
         } else {
           console.warn('[BlogSection] No blog posts found in collection');
           setPosts([]);

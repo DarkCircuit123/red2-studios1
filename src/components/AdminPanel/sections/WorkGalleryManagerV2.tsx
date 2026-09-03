@@ -396,16 +396,13 @@ export default function WorkGalleryManagerV2() {
           });
 
           try {
-            // CRITICAL: Generate itemId BEFORE attempting save to ensure CMS row is created with known ID
-            const itemId = crypto.randomUUID();
-            
             // ATOMIC: Save to CMS with upload-first flow
             const saveResult = await savePortfolioImage(imageUrl, {
               displayOrder: photos.length + 1,
               caption: fileItem.original.name.replace(/\.[^/.]+$/, ''),
               altText: fileItem.original.name.replace(/\.[^/.]+$/, ''),
               portfolioItemId: crypto.randomUUID(), // Link to parent work item
-            }, itemId); // Pass itemId as third parameter to ensure deterministic CMS row creation
+            });
 
             // Mark as successfully saved
             setSelectedFiles(prev => {

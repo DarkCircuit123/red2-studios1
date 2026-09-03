@@ -27,17 +27,29 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // Load active logo on mount
+  useEffect(() => {
+    loadActiveLogo();
+  }, []);
+
   const loadActiveLogo = async () => {
     try {
       setIsLoading(true);
+      // Diagnostic: CMS query initiated
       const result = await BaseCrudService.getAll<Splashpage>('splashpage');
       
+      console.log('[SplashpageManager] CMS query result:', result);
+      
       if (!result.items || result.items.length === 0) {
+        console.log('[SplashpageManager] No items in collection');
         setActiveLogo(null);
         return;
       }
       
+      console.log('[SplashpageManager] Found items:', result.items);
+      
       const active = result.items.find((item) => item.isActive);
+      console.log('[SplashpageManager] Active logo:', active);
       setActiveLogo(active || null);
     } catch (error) {
       console.error('[SplashpageManager] Error loading active logo:', error);
@@ -46,11 +58,6 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
       setIsLoading(false);
     }
   };
-
-  // Load active logo on mount
-  useEffect(() => {
-    loadActiveLogo();
-  }, []);
 
   const showNotification = (
     type: 'success' | 'error' | 'info',
@@ -99,10 +106,13 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
       // Use shared uploadMedia service
       const result = await uploadMedia(selectedFile, 'image', IMAGE_UPLOAD_CONFIG);
 
+      console.log('[SplashpageManager] Upload result:', result);
+
       setIsUploading(false);
 
       // Deactivate previous active logo
       if (activeLogo) {
+        console.log('[SplashpageManager] Deactivating previous logo:', activeLogo._id);
         await adminCms.update<Splashpage>('splashpage', {
           _id: activeLogo._id,
           isActive: false,
@@ -119,7 +129,11 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
         isActive: true,
       };
 
+      console.log('[SplashpageManager] Creating new logo:', newLogo);
+
       await adminCms.create<Splashpage>('splashpage', newLogo);
+
+      console.log('[SplashpageManager] Logo created successfully');
 
       setActiveLogo(newLogo);
       setSelectedFile(null);

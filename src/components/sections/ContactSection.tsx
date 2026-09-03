@@ -5,12 +5,8 @@ import { playClickSound } from '@/lib/click-sound';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
-
-interface ContactBackgroundResponse {
-  success: boolean;
-  contactBackgroundImage?: string | null;
-  error?: string;
-}
+import { BaseCrudService } from '@/integrations';
+import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -32,14 +28,16 @@ export default function ContactSection() {
 
   const loadContactBackground = async () => {
     try {
-      const response = await fetch('/api/cms/get-contact-background');
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-      const data: ContactBackgroundResponse = await response.json();
-      
-      if (data.success && data.contactBackgroundImage) {
-        setContactBackgroundImage(data.contactBackgroundImage);
+      const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+      if (result?.items && result.items.length > 0) {
+        const images = result.items[0] as any;
+        if (images?.contactBackgroundImage && typeof images.contactBackgroundImage === 'string') {
+          // Convert wix:image:// to HTTPS URL for browser rendering
+          const httpsUrl = convertWixImageToHttps(images.contactBackgroundImage);
+          if (httpsUrl) {
+            setContactBackgroundImage(httpsUrl);
+          }
+        }
       }
       // Reset retry count on success
       retryCountRef.current = 0;
