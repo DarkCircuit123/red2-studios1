@@ -19,9 +19,14 @@ interface CacheEntry<T> {
   timestamp: number;
 }
 
-const requestCache = new Map<string, Promise<any>>();
-const resultCache = new Map<string, CacheEntry<any>>();
-const CACHE_TTL_MS = 60000; // 60 seconds
+// Separate caches for server and client to prevent data leakage
+const serverRequestCache = new Map<string, Promise<any>>();
+const serverResultCache = new Map<string, CacheEntry<any>>();
+const clientRequestCache = new Map<string, Promise<any>>();
+const clientResultCache = new Map<string, CacheEntry<any>>();
+
+const CACHE_TTL_MS = 300000; // 5 minutes (increased from 60s)
+const REQUEST_TIMEOUT_MS = 30000; // 30 second timeout for requests
 const isBrowser = typeof window !== 'undefined';
 
 function getCacheKey(
@@ -50,6 +55,10 @@ const dedupedGetAll = async function<T>(
   }
 
   const cacheKey = getCacheKey(collectionId, refs, options);
+  
+  // Use client-side caches
+  const requestCache = clientRequestCache;
+  const resultCache = clientResultCache;
 
   // Check if we have a valid cached result
   const cachedResult = resultCache.get(cacheKey);
@@ -62,12 +71,21 @@ const dedupedGetAll = async function<T>(
     return requestCache.get(cacheKey);
   }
 
-  // Create a new request promise
+  // Create a new request promise with timeout
   const requestPromise = (async () => {
     try {
       const refsParam = refs || {};
       const optionsParam = options || { limit: 50 };
-      const result = await originalGetAll<T>(collectionId, refsParam, optionsParam);
+      
+      // Add timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('CMS request timeout')), REQUEST_TIMEOUT_MS)
+      );
+      
+      const result = await Promise.race([
+        originalGetAll<T>(collectionId, refsParam, optionsParam),
+        timeoutPromise
+      ]);
       
       // Cache the result
       resultCache.set(cacheKey, {

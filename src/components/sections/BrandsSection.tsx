@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 import { ClientsPress } from '@/entities/index';
 
@@ -12,9 +11,12 @@ export default function BrandsSection() {
     const loadBrands = async () => {
       try {
         setIsLoading(true);
-        const clientsData = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
-        if (clientsData.items && clientsData.items.length > 0) {
-          setBrands(clientsData.items);
+        // Use API endpoint instead of direct BaseCrudService (client-side safe)
+        const response = await fetch('/api/cms/get-sponsors');
+        if (!response.ok) throw new Error('Failed to fetch brands');
+        const data = await response.json();
+        if (data.items && data.items.length > 0) {
+          setBrands(data.items);
         } else {
           console.warn('[BrandsSection] No brands found in collection');
           setBrands([]);

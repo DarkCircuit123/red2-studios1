@@ -117,42 +117,39 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
       
       setIsLoading(true);
       try {
-        try {
-          const homepageImagesResult = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
-          if (homepageImagesResult?.items && homepageImagesResult.items.length > 0) {
-            setHomepageImages(homepageImagesResult.items[0]);
-          }
-        } catch (error) {
+        // Load data in parallel with Promise.allSettled to avoid rate limiting
+        const results = await Promise.allSettled([
+          BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 }),
+          BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 }),
+          BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 }),
+          BaseCrudService.getAll<AboutSection>('about', {}, { limit: 1 }),
+        ]);
+
+        // Handle homepage images
+        if (results[0].status === 'fulfilled' && results[0].value?.items?.length > 0) {
+          setHomepageImages(results[0].value.items[0]);
+        } else {
           setHomepageImages(null);
         }
 
-        try {
-          const sponsorsResult = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
-          if (sponsorsResult?.items) {
-            setSponsors(sponsorsResult.items);
-          } else {
-            setSponsors([]);
-          }
-        } catch (error) {
+        // Handle sponsors
+        if (results[1].status === 'fulfilled' && results[1].value?.items) {
+          setSponsors(results[1].value.items);
+        } else {
           setSponsors([]);
         }
 
-        try {
-          const musicResult = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 });
-          if (musicResult?.items && musicResult.items.length > 0) {
-            setMusicSettings(musicResult.items[0]);
-          }
-        } catch (error) {
-          console.error('Failed to load music settings:', error);
+        // Handle music settings
+        if (results[2].status === 'fulfilled' && results[2].value?.items?.length > 0) {
+          setMusicSettings(results[2].value.items[0]);
+        } else {
           setMusicSettings(null);
         }
 
-        try {
-          const aboutResult = await BaseCrudService.getAll<AboutSection>('about', {}, { limit: 1 });
-          if (aboutResult?.items && aboutResult.items.length > 0) {
-            setAboutSettings(aboutResult.items[0]);
-          }
-        } catch (error) {
+        // Handle about settings
+        if (results[3].status === 'fulfilled' && results[3].value?.items?.length > 0) {
+          setAboutSettings(results[3].value.items[0]);
+        } else {
           setAboutSettings(null);
         }
 

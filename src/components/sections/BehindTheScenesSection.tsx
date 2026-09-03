@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { BaseCrudService } from '@/integrations';
 import { Image } from '@/components/ui/image';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
@@ -25,9 +24,12 @@ export default function BehindTheScenesSection() {
   const loadItems = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<BehindTheScenesItem>('behindthescenes', [], { limit: 100 });
-      if (result?.items && result.items.length > 0) {
-        const sorted = result.items.sort((a, b) => (a.order || 0) - (b.order || 0));
+      // Use API endpoint instead of direct BaseCrudService (client-side safe)
+      const response = await fetch('/api/cms/get-behind-the-scenes');
+      if (!response.ok) throw new Error('Failed to fetch behind-the-scenes items');
+      const data = await response.json();
+      if (data.items && data.items.length > 0) {
+        const sorted = data.items.sort((a: BehindTheScenesItem, b: BehindTheScenesItem) => (a.order || 0) - (b.order || 0));
         setItems(sorted.slice(0, 3));
       } else {
         console.error('Failed to load behind-the-scenes items: no items found');
