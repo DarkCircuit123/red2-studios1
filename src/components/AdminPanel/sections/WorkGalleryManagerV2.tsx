@@ -621,7 +621,7 @@ export default function WorkGalleryManagerV2() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="w-full space-y-8">
       {/* Status Messages */}
       <AnimatePresence>
         {statusMessages.map((msg, idx) => (
@@ -630,7 +630,7 @@ export default function WorkGalleryManagerV2() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className={`p-4 rounded-lg flex items-center gap-3 ${
+            className={`w-full p-4 rounded-lg flex items-center gap-3 ${
               msg.type === 'success' ? 'bg-green-50 border border-green-200 text-green-900' :
               msg.type === 'error' ? 'bg-red-50 border border-red-200 text-red-900' :
               msg.type === 'warning' ? 'bg-amber-50 border border-amber-200 text-amber-900' :
@@ -673,17 +673,17 @@ export default function WorkGalleryManagerV2() {
         </div>
       </Card>
       {/* Batch Upload Section */}
-      <Card className="p-6 border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
+      <Card className="w-full p-6 border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100">
+        <div className="w-full space-y-4">
+          <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Zap className="w-5 h-5 text-blue-600" />
                 Multi-Threaded Upload
               </h3>
               <p className="text-sm text-slate-600 mt-1">Upload multiple photos with {MAX_CONCURRENT} concurrent threads</p>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0">
               <p className="text-2xl font-bold text-blue-600">{photos.length}</p>
               <p className="text-xs text-blue-600 font-medium">/ {MAX_SLOTS} slots</p>
             </div>
@@ -735,15 +735,15 @@ export default function WorkGalleryManagerV2() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`w-full h-40 rounded-lg border-2 border-dashed transition-colors ${
+              className={`w-full h-48 rounded-lg border-2 border-dashed transition-colors ${
                 dragOverRef.current ? 'border-blue-500 bg-blue-100' : 'border-blue-300 bg-blue-50'
               } flex items-center justify-center cursor-pointer`}
               onClick={() => fileInputRef.current?.click()}
             >
               <div className="text-center">
-                <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-slate-900">Click to upload or drag and drop</p>
-                <p className="text-xs text-slate-600 mt-1">PNG, JPG, GIF up to 10MB • {slotsRemaining} slots remaining</p>
+                <Upload className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                <p className="text-base font-semibold text-slate-900">Click to upload or drag and drop</p>
+                <p className="text-sm text-slate-600 mt-2">PNG, JPG, GIF up to 10MB • {slotsRemaining} slots remaining</p>
               </div>
             </div>
           )}
@@ -875,24 +875,24 @@ export default function WorkGalleryManagerV2() {
       </Card>
 
       {/* Slots Grid */}
-      <Card className="p-6 border border-slate-200">
-        <div className="flex items-center justify-between mb-6">
+      <Card className="w-full p-6 border border-slate-200">
+        <div className="w-full flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-slate-900">
             Work Gallery Slots ({photos.length}/{MAX_SLOTS})
           </h3>
           {photos.length >= MAX_SLOTS && (
-            <div className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
+            <div className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium flex-shrink-0">
               All slots filled
             </div>
           )}
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="w-full flex items-center justify-center py-12">
             <LoadingSpinner className="w-6 h-6" />
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {slots.map((photo, index) => (
               <motion.div
                 key={index}
