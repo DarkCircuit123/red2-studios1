@@ -717,6 +717,7 @@ export default function WorkGalleryManagerV2() {
           </div>
         </Card>
       </div>
+
       {/* Batch Upload Section */}
       <Card className="w-full p-6 border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100">
         <div className="w-full space-y-4">
@@ -919,12 +920,17 @@ export default function WorkGalleryManagerV2() {
         </div>
       </Card>
 
-      {/* Slots Grid */}
+      {/* Slots Grid - 90 Slots in Compact 9-Column Layout */}
       <Card className="w-full p-6 border border-slate-200">
         <div className="w-full flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-slate-900">
-            Work Gallery Slots ({photos.length}/{MAX_SLOTS})
-          </h3>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">
+              Work Gallery Slots ({photos.length}/{MAX_SLOTS})
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              {slotsRemaining} empty slots • Compact 9-column layout for all 90 slots
+            </p>
+          </div>
           {photos.length >= MAX_SLOTS && (
             <div className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium flex-shrink-0">
               All slots filled
@@ -937,45 +943,48 @@ export default function WorkGalleryManagerV2() {
             <LoadingSpinner className="w-6 h-6" />
           </div>
         ) : (
-          <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          <div className="w-full grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-9 gap-2">
             {slots.map((photo, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.02 }}
+                transition={{ delay: Math.min(index * 0.01, 0.3) }}
                 className={`relative rounded-lg overflow-hidden border-2 transition-all ${
                   photo
-                    ? 'border-slate-200 bg-slate-50 hover:border-slate-300 group'
-                    : 'border-dashed border-slate-300 bg-slate-50 hover:border-slate-400'
+                    ? 'border-slate-200 bg-slate-50 hover:border-blue-400 group shadow-sm'
+                    : 'border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100 hover:border-slate-400'
                 }`}
               >
-                <div className="absolute top-1 left-1 z-10 bg-slate-900 text-white px-1.5 py-0.5 rounded text-xs font-bold">
-                  #{index + 1}
+                {/* Slot Number Badge */}
+                <div className="absolute top-0.5 left-0.5 z-20 bg-slate-900/80 text-white px-1 py-0.5 rounded text-xs font-bold leading-none">
+                  {index + 1}
                 </div>
 
-                {photo ? (
+                {photo && photo.image ? (
                   <>
+                    {/* Image Preview */}
                     <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
-                      {photo.image && (
-                        <img
-                          src={convertWixImageToHttps(photo.image) || photo.image}
-                          alt={photo.title || 'Gallery photo'}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            console.warn('Failed to load image:', photo.image);
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <img
+                        src={convertWixImageToHttps(photo.image) || photo.image}
+                        alt={photo.title || `Gallery photo ${index + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        loading="lazy"
+                        onError={(e) => {
+                          console.warn('Failed to load image:', photo.image);
+                          (e.target as HTMLImageElement).src = '';
+                        }}
+                      />
+                      
+                      {/* Hover Overlay with Actions */}
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1">
                         <button
                           type="button"
                           onClick={() => {
                             const imageUrl = convertWixImageToHttps(photo.image) || photo.image;
                             setFullImagePreview({ photoId: photo._id, imageUrl });
                           }}
-                          className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                          className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex-shrink-0"
                           title="Preview full image"
                         >
                           <Maximize2 className="w-3 h-3" />
@@ -983,12 +992,12 @@ export default function WorkGalleryManagerV2() {
                         <button
                           type="button"
                           onClick={() => window.open(convertWixImageToHttps(photo.image) || photo.image, '_blank')}
-                          className="p-1.5 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                          className="p-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors flex-shrink-0"
                           title="View full image in new tab"
                         >
                           <Eye className="w-3 h-3" />
                         </button>
-                        <label className="cursor-pointer">
+                        <label className="cursor-pointer flex-shrink-0">
                           <input
                             type="file"
                             accept="image/*"
@@ -1002,11 +1011,12 @@ export default function WorkGalleryManagerV2() {
                             className="hidden"
                           />
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.currentTarget.parentElement?.querySelector('input')?.click();
                             }}
                             disabled={replacingId === photo._id}
-                            className="p-1.5 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors disabled:opacity-50"
+                            className="p-1 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors disabled:opacity-50"
                             title="Replace this image"
                           >
                             {replacingId === photo._id ? (
@@ -1019,7 +1029,7 @@ export default function WorkGalleryManagerV2() {
                         <button
                           type="button"
                           onClick={() => deletePhoto(photo._id)}
-                          className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                          className="p-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors flex-shrink-0"
                           title="Delete this photo"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -1029,8 +1039,9 @@ export default function WorkGalleryManagerV2() {
                   </>
                 ) : (
                   <>
+                    {/* Empty Slot */}
                     <div className="w-full aspect-square bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center">
-                      <ImageIcon className="w-6 h-6 text-slate-300" />
+                      <ImageIcon className="w-5 h-5 text-slate-300" />
                     </div>
                   </>
                 )}
