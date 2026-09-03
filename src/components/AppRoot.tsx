@@ -12,7 +12,7 @@ import { MemberProvider } from '@/integrations/members/providers';
 // and astro-island hydration failures. Tree-shaken out of production builds.
 // See src/lib/vite-dep-preload.ts.
 if (import.meta.env.DEV) {
-  import('@/lib/vite-dep-preload');
+  void import('@/lib/vite-dep-preload');
 }
 
 class RouterErrorBoundary extends React.Component<
