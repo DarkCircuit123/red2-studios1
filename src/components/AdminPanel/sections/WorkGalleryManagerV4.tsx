@@ -44,15 +44,30 @@ export default function WorkGalleryManagerV4() {
   
   // 30 SLOTS WITH METADATA
   const [slots, setSlots] = useState<SlotData[]>(() => {
-    const initialSlots = Array.from({ length: MAX_SLOTS }, (_, i) => ({
-      id: `slot-${i + 1}-${crypto.randomUUID()}`,
-      slotNumber: i + 1,
-      image: undefined,
-      filename: '',
-      caption: '',
-      altText: '',
-      uploadedAt: undefined,
-    }));
+    const initialSlots = Array.from({ length: MAX_SLOTS }, (_, i) => {
+      const slotNumber = i + 1;
+      // Initialize slot 1 with the provided image
+      if (slotNumber === 1) {
+        return {
+          id: `slot-${slotNumber}-${crypto.randomUUID()}`,
+          slotNumber,
+          image: 'https://static.wixstatic.com/media/e9d727_de5a851c7e5e418283cf7003d4da815a~mv2.jpg',
+          filename: 'portrait-image-1.jpg',
+          caption: 'Portrait Image 1',
+          altText: 'Professional portrait photograph',
+          uploadedAt: new Date().toISOString(),
+        };
+      }
+      return {
+        id: `slot-${slotNumber}-${crypto.randomUUID()}`,
+        slotNumber,
+        image: undefined,
+        filename: '',
+        caption: '',
+        altText: '',
+        uploadedAt: undefined,
+      };
+    });
     console.log('[WorkGalleryManagerV4] Initial state created with', initialSlots.length, 'slots');
     return initialSlots;
   });
