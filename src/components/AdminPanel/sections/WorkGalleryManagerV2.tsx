@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Upload, Trash2, Eye, X, RefreshCw, Maximize2, Image as ImageIcon, Zap, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, Trash2, Eye, X, RefreshCw, Maximize2, Image as ImageIcon, Zap, AlertCircle, CheckCircle, Wrench } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { compressImages, formatBytes } from '@/lib/image-compression';
 import { MultiThreadedUploader, UploadProgress } from '@/lib/multi-threaded-upload';
 import { savePortfolioImage, cleanupOrphanedPortfolioImages } from '@/lib/portfolio-image-save-handler';
+import { runFullImageRecovery, scanPortfolioImages } from '@/lib/portfolio-image-recovery';
 
 /**
  * Sanitize filename for Wix Media API
@@ -182,6 +183,7 @@ export default function WorkGalleryManagerV2() {
   });
   const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragOverRef = useRef(false);
@@ -646,32 +648,75 @@ export default function WorkGalleryManagerV2() {
         ))}
       </AnimatePresence>
 
-      {/* Cleanup Button */}
-      <Card className="p-4 border border-amber-200 bg-amber-50">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-bold text-amber-900">Cleanup Orphaned Rows</p>
-            <p className="text-xs text-amber-700 mt-1">Delete portfolio images with empty image fields</p>
+      {/* Recovery & Cleanup Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Image Recovery Button */}
+        <Card className="p-4 border border-purple-200 bg-purple-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-purple-900">Recover Existing Photos</p>
+              <p className="text-xs text-purple-700 mt-1">Find, fix links, and validate all uploaded images</p>
+            </div>
+            <Button
+              onClick={async () => {
+                try {
+                  setIsRecovering(true);
+                  addStatusMessage('info', 'Starting image recovery...');
+                  const result = await runFullImageRecovery();
+                  addStatusMessage('success', result.summary);
+                  await loadPhotos();
+                } catch (error) {
+                  const errorMsg = error instanceof Error ? error.message : String(error);
+                  addStatusMessage('error', `Recovery failed: ${errorMsg}`);
+                } finally {
+                  setIsRecovering(false);
+                }
+              }}
+              disabled={isRecovering}
+              className="bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0"
+            >
+              {isRecovering ? (
+                <>
+                  <LoadingSpinner className="w-4 h-4 mr-2" />
+                  Recovering...
+                </>
+              ) : (
+                <>
+                  <Wrench className="w-4 h-4 mr-2" />
+                  Recover
+                </>
+              )}
+            </Button>
           </div>
-          <Button
-            onClick={handleCleanupOrphans}
-            disabled={isCleaningUp}
-            className="bg-amber-600 hover:bg-amber-700 text-white"
-          >
-            {isCleaningUp ? (
-              <>
-                <LoadingSpinner className="w-4 h-4 mr-2" />
-                Cleaning...
-              </>
-            ) : (
-              <>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Cleanup
-              </>
-            )}
-          </Button>
-        </div>
-      </Card>
+        </Card>
+
+        {/* Cleanup Button */}
+        <Card className="p-4 border border-amber-200 bg-amber-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-amber-900">Cleanup Orphaned Rows</p>
+              <p className="text-xs text-amber-700 mt-1">Delete portfolio images with empty image fields</p>
+            </div>
+            <Button
+              onClick={handleCleanupOrphans}
+              disabled={isCleaningUp}
+              className="bg-amber-600 hover:bg-amber-700 text-white flex-shrink-0"
+            >
+              {isCleaningUp ? (
+                <>
+                  <LoadingSpinner className="w-4 h-4 mr-2" />
+                  Cleaning...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Cleanup
+                </>
+              )}
+            </Button>
+          </div>
+        </Card>
+      </div>
       {/* Batch Upload Section */}
       <Card className="w-full p-6 border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100">
         <div className="w-full space-y-4">
