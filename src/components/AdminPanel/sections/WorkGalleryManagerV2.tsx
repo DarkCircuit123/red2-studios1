@@ -158,7 +158,7 @@ interface StatusMessage {
   duration?: number;
 }
 
-const MAX_SLOTS = 170;
+const MAX_SLOTS = 90;
 const MAX_CONCURRENT = 3;
 
 export default function WorkGalleryManagerV2() {
