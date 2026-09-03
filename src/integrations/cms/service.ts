@@ -22,6 +22,7 @@ interface CacheEntry<T> {
 const requestCache = new Map<string, Promise<any>>();
 const resultCache = new Map<string, CacheEntry<any>>();
 const CACHE_TTL_MS = 60000; // 60 seconds
+const isBrowser = typeof window !== 'undefined';
 
 function getCacheKey(
   collectionId: string,
@@ -43,6 +44,11 @@ const dedupedGetAll = async function<T>(
   refs?: { singleRef?: string[]; multiRef?: string[] },
   options?: { limit?: number; skip?: number; suppressAuth?: boolean }
 ) {
+  // On the server, skip caching entirely to prevent cross-visitor data leakage
+  if (!isBrowser) {
+    return originalGetAll<T>(collectionId, refs || {}, options || { limit: 50 });
+  }
+
   const cacheKey = getCacheKey(collectionId, refs, options);
 
   // Check if we have a valid cached result
@@ -82,11 +88,15 @@ const dedupedGetAll = async function<T>(
   return requestPromise;
 };
 
-// Re-export BaseCrudService with deduped getAll
-export const BaseCrudService = {
-  ...WixBaseCrudService,
-  getAll: dedupedGetAll,
-};
+// Preserve every method on WixBaseCrudService (they live on its prototype,
+// so object spread silently drops them) and override only getAll.
+export const BaseCrudService = new Proxy(WixBaseCrudService as any, {
+  get(target, prop, receiver) {
+    if (prop === 'getAll') return dedupedGetAll;
+    const value = Reflect.get(target, prop, receiver);
+    return typeof value === 'function' ? value.bind(target) : value;
+  },
+}) as typeof WixBaseCrudService;
 
 export const cmsService = {
   /**
