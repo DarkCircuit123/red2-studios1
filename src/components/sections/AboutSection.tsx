@@ -1,5 +1,4 @@
 import { Image } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
 import { AboutSection as AboutSectionType } from '@/entities/index';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
@@ -20,25 +19,39 @@ export default function AboutSection() {
 
   const loadAboutData = async () => {
     try {
-      // Load from HomepageImages collection first
-      const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-      if (result?.items && result.items.length > 0) {
-        const images = result.items[0] as any;
-        if (images?.aboutSectionImage) {
-          setAboutImage(images.aboutSectionImage);
+      // Load from HomepageImages collection first using API endpoint
+      const response = await fetch('/api/cms/get-homepageimages', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result?.items && result.items.length > 0) {
+          const images = result.items[0] as any;
+          if (images?.aboutSectionImage) {
+            setAboutImage(images.aboutSectionImage);
+          }
         }
       }
 
-      // Load about settings
+      // Load about settings using API endpoint
       try {
-        const aboutResult = await BaseCrudService.getAll('about', {}, { limit: 1 });
-        if (aboutResult?.items && aboutResult.items.length > 0) {
-          const about = aboutResult.items[0] as any;
-          if (about?.aboutText) {
-            setAboutText(about.aboutText);
-          }
-          if (about?.fontFamily) {
-            setFontFamily(about.fontFamily);
+        const aboutResponse = await fetch('/api/cms/get-about-data', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (aboutResponse.ok) {
+          const aboutResult = await aboutResponse.json();
+          if (aboutResult?.items && aboutResult.items.length > 0) {
+            const about = aboutResult.items[0] as any;
+            if (about?.aboutText) {
+              setAboutText(about.aboutText);
+            }
+            if (about?.fontFamily) {
+              setFontFamily(about.fontFamily);
+            }
           }
         }
       } catch (error) {

@@ -2,28 +2,27 @@ import type { APIRoute } from 'astro';
 import { BaseCrudService } from '@/integrations';
 
 /**
- * Get About Data API
- * Fetches about section text and settings from the about collection
+ * Get Homepage Images API
+ * Fetches hero and about section images from the homepageimages collection
  * Public endpoint - no authentication required
  */
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async (context) => {
   try {
-    console.log('[GET_ABOUT_DATA] Request started');
+    console.log('[GET_HOMEPAGE_IMAGES] Request started');
 
-    // Fetch about section data
-    const aboutResult = await BaseCrudService.getAll('about', {}, { limit: 1 });
+    const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
 
-    console.log('[GET_ABOUT_DATA] Successfully fetched about data', {
-      itemCount: aboutResult.items?.length || 0,
+    console.log('[GET_HOMEPAGE_IMAGES] Successfully fetched homepage images', {
+      itemCount: result.items?.length || 0,
       timestamp: new Date().toISOString(),
     });
 
     return new Response(
       JSON.stringify({
         success: true,
-        items: aboutResult.items || [],
-        totalCount: aboutResult.totalCount || 0,
+        items: result.items || [],
+        totalCount: result.totalCount || 0,
       }),
       {
         status: 200,
@@ -31,7 +30,7 @@ export const GET: APIRoute = async () => {
       }
     );
   } catch (error) {
-    console.error('[GET_ABOUT_DATA] Failed to fetch about data', {
+    console.error('[GET_HOMEPAGE_IMAGES] Failed to fetch homepage images', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString(),
@@ -40,7 +39,7 @@ export const GET: APIRoute = async () => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch about data',
+        error: error instanceof Error ? error.message : 'Failed to fetch homepage images',
         items: [],
       }),
       {
@@ -50,4 +49,3 @@ export const GET: APIRoute = async () => {
     );
   }
 };
-
