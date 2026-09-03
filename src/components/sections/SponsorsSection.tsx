@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 import { ClientsPress } from '@/entities/index';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -15,11 +14,21 @@ export default function SponsorsSection() {
     const loadSponsors = async () => {
       try {
         setIsLoading(true);
-        const clientsData = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
-        if (clientsData.items && clientsData.items.length > 0) {
-          setSponsors(clientsData.items);
+        const response = await fetch('/api/cms/get-sponsors', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result?.items && result.items.length > 0) {
+            setSponsors(result.items);
+          } else {
+            console.error('Error loading sponsors: no items found');
+            setSponsors([]);
+          }
         } else {
-          console.error('Error loading sponsors: no items found');
+          console.error('Error loading sponsors: API returned', response.status);
           setSponsors([]);
         }
       } catch (error) {
@@ -83,7 +92,7 @@ export default function SponsorsSection() {
                 className="group relative flex items-center justify-center p-8 md:p-12 bg-white/5 border border-white/10 hover:border-white/30 transition-all duration-300 hover:bg-white/10"
               >
                 <div className="relative w-full h-32 md:h-40 flex items-center justify-center">
-                  {sponsor.clientLogo ? (
+                  {sponsor.clientLogo && (
                     <Image
                       src={sponsor.clientLogo}
                       alt={sponsor.clientName || 'Sponsor'}
@@ -92,17 +101,17 @@ export default function SponsorsSection() {
                       loading="lazy"
                       className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                     />
-                  ) : (
-                    <p className="text-white/40 text-sm">No image</p>
                   )}
                 </div>
                 
-                {/* Hover overlay with name */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <p className="text-white font-heading font-semibold text-center px-4">
-                    {sponsor.clientName || 'Sponsor'}
-                  </p>
-                </div>
+                {/* Hover overlay with name - only show if clientName exists */}
+                {sponsor.clientName && (
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <p className="text-white font-heading font-semibold text-center px-4">
+                      {sponsor.clientName}
+                    </p>
+                  </div>
+                )}
               </motion.a>
             ))
           )}

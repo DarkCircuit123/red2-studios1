@@ -41,22 +41,22 @@ function parseRSSFeed(xmlText: string): any[] {
   
   try {
     // Parse XML using regex (simple approach)
-    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+    const itemRegex = /<item>([\\s\\S]*?)<\\/item>/g;
     let match;
     
     while ((match = itemRegex.exec(xmlText)) !== null) {
       const itemXml = match[1];
       
       // Extract title
-      const titleMatch = /<title[^>]*>([\s\S]*?)<\/title>/.exec(itemXml);
+      const titleMatch = /<title[^>]*>([\\s\\S]*?)<\\/title>/.exec(itemXml);
       const title = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : 'Untitled';
       
       // Extract link
-      const linkMatch = /<link[^>]*>([\s\S]*?)<\/link>/.exec(itemXml);
+      const linkMatch = /<link[^>]*>([\\s\\S]*?)<\\/link>/.exec(itemXml);
       const link = linkMatch ? linkMatch[1].trim() : '#';
       
       // Extract pubDate
-      const pubDateMatch = /<pubDate[^>]*>([\s\S]*?)<\/pubDate>/.exec(itemXml);
+      const pubDateMatch = /<pubDate[^>]*>([\\s\\S]*?)<\\/pubDate>/.exec(itemXml);
       const pubDate = pubDateMatch ? pubDateMatch[1].trim() : new Date().toISOString();
       
       items.push({
@@ -70,6 +70,29 @@ function parseRSSFeed(xmlText: string): any[] {
   }
   
   return items;
+}
+
+// Filter Sony Alpha feed items - remove irrelevant content
+function filterSonyAlphaFeed(items: any[]): any[] {
+  const blockedKeywords = [
+    'deal', 'price', 'discount', 'sale', 'battery', 'power bank', 'kickstarter', 'firmware', 'update'
+  ];
+  
+  return items.filter(item => {
+    const title = (item.title || '').toLowerCase();
+    
+    // Drop items with blocked keywords
+    if (blockedKeywords.some(keyword => title.includes(keyword))) {
+      return false;
+    }
+    
+    // Drop titles under 25 characters
+    if (title.length < 25) {
+      return false;
+    }
+    
+    return true;
+  });
 }
 
 export const GET: APIRoute = async ({ url }) => {
@@ -132,7 +155,12 @@ export const GET: APIRoute = async ({ url }) => {
     }
     
     const text = await response.text();
-    const items = parseRSSFeed(text);
+    let items = parseRSSFeed(text);
+    
+    // Apply Sony Alpha filter if this is a Sony Alpha feed
+    if (feedUrl.includes('sonyalpharumors') || feedUrl.includes('sony')) {
+      items = filterSonyAlphaFeed(items);
+    }
     
     // Return parsed items or fallback if empty
     return new Response(
