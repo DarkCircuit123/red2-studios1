@@ -129,7 +129,7 @@ const RubberBandCarouselSection: React.FC = () => {
 
   useEffect(() => {
     loadCarouselImages();
-  }, [loadCarouselImages]);
+  }, []);
 
   // Fallback used only until the CMS responds, or if it has no images yet.
   const fallbackImages: CarouselImage[] = useMemo(() => [

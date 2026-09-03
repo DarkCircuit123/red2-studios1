@@ -309,8 +309,39 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
     }
     memberLoadInitiatedRef.current = true;
     
-    actions.loadCurrentMember();
-  }, [actions]);
+    // Call loadCurrentMember directly instead of through actions to avoid dependency issues
+    (async () => {
+      try {
+        console.log('[MEMBER PROVIDER] Loading current member on mount...');
+        updateState({ isLoading: true, error: null });
+
+        const member = await getCurrentMember();
+
+        if (member) {
+          console.log('[MEMBER PROVIDER] Member loaded:', member._id);
+          updateState({
+            member,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } else {
+          console.log('[MEMBER PROVIDER] No member found (anonymous user)');
+          updateState({
+            member: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        }
+      } catch (err) {
+        console.error('[MEMBER PROVIDER] Unexpected error:', err);
+        updateState({
+          member: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+      }
+    })();
+  }, [updateState]);
 
   return (
     <MemberContext.Provider value={{ ...state, actions }}>
