@@ -1,0 +1,465 @@
+/**
+ * Work Gallery Manager V4 - HARDCODED PROOF OF CONCEPT
+ * 
+ * This version proves the UI can render 90 slots with visible controls.
+ * It uses hardcoded data to eliminate CMS/network as variables.
+ * 
+ * GOAL: Verify 90 slots render with Upload, Replace, Delete controls visible
+ */
+
+import React, { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import {
+  Upload, Trash2, Eye, X, RefreshCw, Maximize2, Image as ImageIcon,
+  AlertCircle, CheckCircle
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const MAX_SLOTS = 90;
+
+interface SlotData {
+  slotNumber: number;
+  image?: string;
+  caption?: string;
+  altText?: string;
+}
+
+interface StatusMessage {
+  id: string;
+  type: 'info' | 'success' | 'error' | 'warning';
+  message: string;
+}
+
+export default function WorkGalleryManagerV4() {
+  // HARDCODED SLOTS - Proves UI can render
+  const [slots, setSlots] = useState<SlotData[]>(() => {
+    return Array.from({ length: MAX_SLOTS }, (_, i) => ({
+      slotNumber: i + 1,
+      image: undefined,
+      caption: '',
+      altText: '',
+    }));
+  });
+
+  const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [replacingSlot, setReplacingSlot] = useState<number | null>(null);
+  const [deletingSlot, setDeletingSlot] = useState<number | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; slotNumber: number } | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragOverRef = useRef(false);
+
+  const addStatusMessage = (type: StatusMessage['type'], message: string) => {
+    const id = crypto.randomUUID();
+    setStatusMessages(prev => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setStatusMessages(prev => prev.filter(m => m.id !== id));
+    }, 5000);
+  };
+
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+    setSelectedFiles(prev => [...prev, ...newFiles]);
+    addStatusMessage('info', `Selected ${newFiles.length} file(s)`);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(e.target.files);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragOverRef.current = true;
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragOverRef.current = false;
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragOverRef.current = false;
+    handleFileSelect(e.dataTransfer.files);
+  };
+
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0) return;
+
+    try {
+      setIsUploading(true);
+      addStatusMessage('info', `Uploading ${selectedFiles.length} file(s)...`);
+
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Add files to first available slots
+      let filesAdded = 0;
+      const updatedSlots = [...slots];
+
+      for (const file of selectedFiles) {
+        const emptySlot = updatedSlots.find(s => !s.image);
+        if (emptySlot) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            emptySlot.image = e.target?.result as string;
+            emptySlot.caption = file.name.replace(/\.[^/.]+$/, '');
+            emptySlot.altText = file.name;
+            filesAdded++;
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      setSlots(updatedSlots);
+      setSelectedFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      addStatusMessage('success', `Successfully uploaded ${filesAdded} file(s)`);
+    } catch (error) {
+      addStatusMessage('error', 'Upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleReplacePhoto = async (slotNumber: number, file: File) => {
+    try {
+      setReplacingSlot(slotNumber);
+      addStatusMessage('info', `Replacing slot ${slotNumber}...`);
+
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const updatedSlots = [...slots];
+        const slot = updatedSlots.find(s => s.slotNumber === slotNumber);
+        if (slot) {
+          slot.image = e.target?.result as string;
+          slot.caption = file.name.replace(/\.[^/.]+$/, '');
+          slot.altText = file.name;
+          setSlots(updatedSlots);
+          addStatusMessage('success', `Slot ${slotNumber} replaced`);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      addStatusMessage('error', `Failed to replace slot ${slotNumber}`);
+    } finally {
+      setReplacingSlot(null);
+    }
+  };
+
+  const handleDeletePhoto = async (slotNumber: number) => {
+    if (!confirm(`Delete photo in slot ${slotNumber}?`)) return;
+
+    try {
+      setDeletingSlot(slotNumber);
+      addStatusMessage('info', `Deleting slot ${slotNumber}...`);
+
+      // Simulate delete delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const updatedSlots = [...slots];
+      const slot = updatedSlots.find(s => s.slotNumber === slotNumber);
+      if (slot) {
+        slot.image = undefined;
+        slot.caption = '';
+        slot.altText = '';
+        setSlots(updatedSlots);
+        addStatusMessage('success', `Slot ${slotNumber} deleted`);
+      }
+    } catch (error) {
+      addStatusMessage('error', `Failed to delete slot ${slotNumber}`);
+    } finally {
+      setDeletingSlot(null);
+    }
+  };
+
+  const filledSlots = slots.filter(s => s.image).length;
+
+  return (
+    <div className="space-y-8">
+      {/* Status Messages */}
+      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+        {statusMessages.map(msg => (
+          <motion.div
+            key={msg.id}
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            className={`p-3 rounded-lg flex items-center gap-2 text-sm font-medium ${
+              msg.type === 'success' ? 'bg-green-100 text-green-800' :
+              msg.type === 'error' ? 'bg-red-100 text-red-800' :
+              msg.type === 'warning' ? 'bg-amber-100 text-amber-800' :
+              'bg-blue-100 text-blue-800'
+            }`}
+          >
+            {msg.type === 'success' && <CheckCircle className="w-4 h-4" />}
+            {msg.type === 'error' && <AlertCircle className="w-4 h-4" />}
+            {msg.type === 'warning' && <AlertCircle className="w-4 h-4" />}
+            {msg.type === 'info' && <AlertCircle className="w-4 h-4" />}
+            {msg.message}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Upload Section */}
+      <Card className="p-6 border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Upload className="w-5 h-5 text-blue-600" />
+                Work Gallery Manager (V4 - Hardcoded Proof)
+              </h3>
+              <p className="text-sm text-slate-600 mt-1">Upload photos to your 90-slot gallery</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-blue-600">{filledSlots}</p>
+              <p className="text-xs text-blue-600 font-medium">/ {MAX_SLOTS} slots</p>
+            </div>
+          </div>
+
+          {/* Upload Area */}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`w-full h-40 rounded-lg border-2 border-dashed transition-colors ${
+              dragOverRef.current ? 'border-blue-500 bg-blue-100' : 'border-blue-300 bg-blue-50'
+            } flex items-center justify-center cursor-pointer`}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="text-center">
+              <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <p className="text-sm font-medium text-slate-900">Click to upload or drag and drop</p>
+              <p className="text-xs text-slate-600 mt-1">PNG, JPG, GIF up to 10MB</p>
+            </div>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleInputChange}
+            disabled={isUploading}
+            multiple
+            className="hidden"
+          />
+
+          {/* Selected Files */}
+          {selectedFiles.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-900">
+                  {selectedFiles.length} file(s) selected
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedFiles([]);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
+                  }}
+                  className="text-xs text-red-600 hover:text-red-700 font-medium"
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {selectedFiles.map((file, index) => (
+                  <div
+                    key={`${file.name}-${index}`}
+                    className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50"
+                  >
+                    <div className="w-full h-20 bg-slate-100 flex items-center justify-center">
+                      <ImageIcon className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1">
+                      <div className="truncate font-medium">{file.name}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upload Button */}
+          <Button
+            onClick={handleUpload}
+            disabled={selectedFiles.length === 0 || isUploading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+          >
+            {isUploading ? (
+              <>
+                <LoadingSpinner className="w-4 h-4 mr-2" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload {selectedFiles.length > 0 ? `(${selectedFiles.length})` : ''}
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Slots Grid */}
+      <Card className="p-6 border border-slate-200">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-slate-900">
+            90-Slot Gallery Grid ({filledSlots}/{MAX_SLOTS})
+          </h3>
+          <div className="text-xs text-slate-500">
+            Every slot should be visible with controls
+          </div>
+        </div>
+
+        {/* Grid - ALWAYS RENDERS */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+          gap: '12px',
+          width: '100%',
+          minHeight: '1200px'
+        }}>
+          {slots.map((slot) => (
+            <motion.div
+              key={slot.slotNumber}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: (slot.slotNumber - 1) * 0.01 }}
+              className={`relative rounded-lg overflow-hidden border-2 transition-all ${
+                slot.image
+                  ? 'border-slate-200 bg-slate-50 hover:border-slate-300 group'
+                  : 'border-dashed border-slate-300 bg-slate-50 hover:border-slate-400'
+              }`}
+            >
+              {/* Slot Number Badge */}
+              <div className="absolute top-1 left-1 z-10 bg-slate-900 text-white px-1.5 py-0.5 rounded text-xs font-bold">
+                #{slot.slotNumber}
+              </div>
+
+              {slot.image ? (
+                <>
+                  {/* Image */}
+                  <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
+                    <img
+                      src={slot.image}
+                      alt={slot.caption || 'Gallery photo'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {/* Controls Overlay */}
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage({ url: slot.image!, slotNumber: slot.slotNumber })}
+                        className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                        title="Preview"
+                      >
+                        <Maximize2 className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => window.open(slot.image, '_blank')}
+                        className="p-1.5 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                        title="View"
+                      >
+                        <Eye className="w-3 h-3" />
+                      </button>
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleReplacePhoto(slot.slotNumber, file);
+                            }
+                          }}
+                          disabled={replacingSlot === slot.slotNumber}
+                          className="hidden"
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.currentTarget.parentElement?.querySelector('input')?.click();
+                          }}
+                          disabled={replacingSlot === slot.slotNumber}
+                          className="p-1.5 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors disabled:opacity-50"
+                          title="Replace"
+                        >
+                          {replacingSlot === slot.slotNumber ? (
+                            <LoadingSpinner className="w-3 h-3" />
+                          ) : (
+                            <RefreshCw className="w-3 h-3" />
+                          )}
+                        </button>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePhoto(slot.slotNumber)}
+                        disabled={deletingSlot === slot.slotNumber}
+                        className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50"
+                        title="Delete"
+                      >
+                        {deletingSlot === slot.slotNumber ? (
+                          <LoadingSpinner className="w-3 h-3" />
+                        ) : (
+                          <Trash2 className="w-3 h-3" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Empty Slot */}
+                  <div className="w-full aspect-square bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center">
+                    <ImageIcon className="w-6 h-6 text-slate-300" />
+                  </div>
+                </>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={previewImage.url}
+              alt="Preview"
+              className="w-full h-full object-contain"
+            />
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
