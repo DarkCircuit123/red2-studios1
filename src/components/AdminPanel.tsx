@@ -13,6 +13,7 @@ import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages, ClientsPress, AboutSection, Portfolio, MusicSettings } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
+import { Image } from '@/components/ui/image';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -304,7 +305,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             >
                               {slot.image ? (
                                 <>
-                                  <img
+                                  <Image
                                     src={slot.image}
                                     alt={`Slot ${slot.slotNumber}`}
                                     className="w-full h-full object-cover"
