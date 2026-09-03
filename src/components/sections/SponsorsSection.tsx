@@ -1,10 +1,15 @@
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
 import { useState, useEffect } from 'react';
 import { ClientsPress } from '@/entities/index';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
+
+interface SponsorsResponse {
+  success: boolean;
+  items?: ClientsPress[];
+  error?: string;
+}
 
 export default function SponsorsSection() {
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
@@ -15,9 +20,14 @@ export default function SponsorsSection() {
     const loadSponsors = async () => {
       try {
         setIsLoading(true);
-        const clientsData = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
-        if (clientsData.items && clientsData.items.length > 0) {
-          setSponsors(clientsData.items);
+        const response = await fetch('/api/cms/get-sponsors');
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        const data: SponsorsResponse = await response.json();
+        
+        if (data.success && data.items && data.items.length > 0) {
+          setSponsors(data.items);
         } else {
           console.error('Error loading sponsors: no items found');
           setSponsors([]);

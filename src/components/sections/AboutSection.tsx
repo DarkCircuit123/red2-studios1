@@ -1,12 +1,18 @@
 import { Image } from '@/components/ui/image';
-import { BaseCrudService } from '@/integrations';
-import { AboutSection as AboutSectionType } from '@/entities/index';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import FashionTicker from '@/components/FashionTicker';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
+
+interface AboutDataResponse {
+  success: boolean;
+  aboutImage?: string | null;
+  aboutText?: string | null;
+  fontFamily?: string | null;
+  error?: string;
+}
 
 export default function AboutSection() {
   const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_b2c52e273a12463198e51100c1907f31~mv2.jpg');
@@ -20,29 +26,22 @@ export default function AboutSection() {
 
   const loadAboutData = async () => {
     try {
-      // Load from HomepageImages collection first
-      const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-      if (result?.items && result.items.length > 0) {
-        const images = result.items[0] as any;
-        if (images?.aboutSectionImage) {
-          setAboutImage(images.aboutSectionImage);
-        }
+      const response = await fetch('/api/cms/get-about-data');
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
-
-      // Load about settings
-      try {
-        const aboutResult = await BaseCrudService.getAll('about', {}, { limit: 1 });
-        if (aboutResult?.items && aboutResult.items.length > 0) {
-          const about = aboutResult.items[0] as any;
-          if (about?.aboutText) {
-            setAboutText(about.aboutText);
-          }
-          if (about?.fontFamily) {
-            setFontFamily(about.fontFamily);
-          }
+      const data: AboutDataResponse = await response.json();
+      
+      if (data.success) {
+        if (data.aboutImage && typeof data.aboutImage === 'string') {
+          setAboutImage(data.aboutImage);
         }
-      } catch (error) {
-        console.error('[AboutSection] Error loading about settings:', error);
+        if (data.aboutText && typeof data.aboutText === 'string') {
+          setAboutText(data.aboutText);
+        }
+        if (data.fontFamily && typeof data.fontFamily === 'string') {
+          setFontFamily(data.fontFamily);
+        }
       }
       // Reset retry count on success
       retryCountRef.current = 0;

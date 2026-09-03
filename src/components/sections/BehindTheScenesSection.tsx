@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { BaseCrudService } from '@/integrations';
 import { Image } from '@/components/ui/image';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
@@ -14,6 +13,12 @@ interface BehindTheScenesItem {
   dateTaken?: string;
 }
 
+interface BehindScenesResponse {
+  success: boolean;
+  items?: BehindTheScenesItem[];
+  error?: string;
+}
+
 export default function BehindTheScenesSection() {
   const [items, setItems] = useState<BehindTheScenesItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,10 +30,14 @@ export default function BehindTheScenesSection() {
   const loadItems = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<BehindTheScenesItem>('behindthescenes', [], { limit: 100 });
-      if (result?.items && result.items.length > 0) {
-        const sorted = result.items.sort((a, b) => (a.order || 0) - (b.order || 0));
-        setItems(sorted.slice(0, 3));
+      const response = await fetch('/api/cms/get-behind-scenes');
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      const data: BehindScenesResponse = await response.json();
+      
+      if (data.success && data.items && data.items.length > 0) {
+        setItems(data.items);
       } else {
         console.error('Failed to load behind-the-scenes items: no items found');
         setItems([]);

@@ -1,12 +1,13 @@
 import { Image } from '@/components/ui/image';
 import { useState, useEffect, useRef } from 'react';
-import { BaseCrudService } from '@/integrations';
 import { useImageFitting } from '@/hooks/useImageFitting';
 
-interface HomepageImage {
-  heroImage?: string;
+interface HeroImageResponse {
+  success: boolean;
+  heroImage?: string | null;
   heroImageFocalPointX?: number;
   heroImageFocalPointY?: number;
+  error?: string;
 }
 
 export default function HeroSection() {
@@ -30,20 +31,20 @@ export default function HeroSection() {
 
   const loadHeroImage = async () => {
     try {
-      const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
-      if (result?.items && result.items.length > 0) {
-        const images = result.items[0] as HomepageImage;
-        if (images?.heroImage && typeof images.heroImage === 'string' && images.heroImage.trim()) {
-          setHeroImage(images.heroImage);
-          // Load focal point if available
-          if (images.heroImageFocalPointX !== undefined && images.heroImageFocalPointY !== undefined) {
-            setFocalPoint({
-              x: images.heroImageFocalPointX,
-              y: images.heroImageFocalPointY,
-            });
-          }
-        } else {
-          setHeroImage(null);
+      const response = await fetch('/api/cms/get-hero-image');
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      const data: HeroImageResponse = await response.json();
+      
+      if (data.success && data.heroImage && typeof data.heroImage === 'string' && data.heroImage.trim()) {
+        setHeroImage(data.heroImage);
+        // Load focal point if available
+        if (data.heroImageFocalPointX !== undefined && data.heroImageFocalPointY !== undefined) {
+          setFocalPoint({
+            x: data.heroImageFocalPointX,
+            y: data.heroImageFocalPointY,
+          });
         }
       } else {
         setHeroImage(null);

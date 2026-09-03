@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState, useCallback, useMemo, memo, useLayo
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
-import { BaseCrudService } from '@/integrations';
-import { HomepageImages } from '@/entities';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 interface CarouselImage {
@@ -16,6 +14,12 @@ interface CarouselImage {
 
 interface CarouselImageCardProps {
   image: CarouselImage;
+}
+
+interface CarouselResponse {
+  success: boolean;
+  items?: CarouselImage[];
+  error?: string;
 }
 
 // Extract CarouselImageCard outside the component to prevent recreation on every render
@@ -91,27 +95,18 @@ const RubberBandCarouselSection: React.FC = () => {
   // Load carousel images from CMS
   const loadCarouselImages = useCallback(async () => {
     try {
-      const data = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
-      const collected: CarouselImage[] = [];
-
-      data.items?.forEach((item) => {
-        if (item.heroImage) {
-          // Convert wix:image:// URLs to HTTPS for browser rendering
-          const httpsUrl = convertWixImageToHttps(item.heroImage);
-          if (httpsUrl) {
-            collected.push({
-              id: item._id,
-              url: httpsUrl,
-              alt: item.imageName || 'Carousel photo',
-            });
-          }
-        }
-      });
-
-      // Only take over when there is something to show, so an empty or
-      // failed read leaves the existing visuals in place rather than
-      // blanking the section.
-      setCmsImages(collected.length > 0 ? collected : null);
+      const response = await fetch('/api/cms/get-carousel-images');
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      const data: CarouselResponse = await response.json();
+      
+      if (data.success && data.items && data.items.length > 0) {
+        setCmsImages(data.items);
+      } else {
+        console.warn('[RubberBandCarousel] No carousel images found');
+        setCmsImages(null);
+      }
     } catch (error) {
       console.error('[RubberBandCarousel] Failed to load carousel images:', error);
       console.warn('[RubberBandCarousel] Using fallback images');
