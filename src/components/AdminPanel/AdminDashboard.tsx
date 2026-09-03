@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import HomePageTab from './tabs/HomePageTab';
 import SplashpageTab from './tabs/SplashpageTab';
-import WorkGalleryManagerV2 from './sections/WorkGalleryManagerV2';
+import WorkGalleryManagerV3 from './sections/WorkGalleryManagerV3';
 import ProfessionalPhotoLibrary from './sections/ProfessionalPhotoLibrary';
 import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Library } from 'lucide-react';
 
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="gallery" className="m-0">
-                <WorkGalleryManagerV2 />
+                <WorkGalleryManagerV3 />
               </TabsContent>
 
               <TabsContent value="photo-library" className="m-0">
