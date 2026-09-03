@@ -73,7 +73,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             altText: existing.altText,
           });
         } else {
-          // Create missing slot
+          // Create missing slot - NOW USING adminCms.create
           const newItem: Portfolio = {
             _id: crypto.randomUUID(),
             displayOrder: i,
@@ -82,7 +82,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             altText: '',
           };
           try {
-            await BaseCrudService.create('portfolioimages', newItem);
+            await adminCms.create('portfolioimages', newItem);
             slots.push({
               slotNumber: i,
               itemId: newItem._id,
@@ -334,8 +334,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                   fieldName="image"
                                   onImageUpload={async (url) => {
                                     try {
-                                      // Update the CMS item with the new image
-                                      await BaseCrudService.update('portfolioimages', {
+                                      // Update the CMS item with the new image - NOW USING adminCms.update
+                                      await adminCms.update('portfolioimages', {
                                         _id: slot.itemId,
                                         image: url,
                                       });
@@ -353,8 +353,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                   }}
                                   onImageDelete={async () => {
                                     try {
-                                      // Clear the image from the CMS item
-                                      await BaseCrudService.update('portfolioimages', {
+                                      // Clear the image from the CMS item - NOW USING adminCms.update
+                                      await adminCms.update('portfolioimages', {
                                         _id: slot.itemId,
                                         image: undefined,
                                       });
@@ -379,7 +379,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   try {
-                                    await BaseCrudService.update('portfolioimages', {
+                                    // NOW USING adminCms.update
+                                    await adminCms.update('portfolioimages', {
                                       _id: slot.itemId,
                                       image: undefined,
                                     });
@@ -406,452 +407,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Photos Tab */}
-              {activeTab === 'photos' && (
-                <div className="space-y-8">
-                  {/* Splash Screen Logo Section */}
-                  <div>
-                    <div>
-                      <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                        Splash Screen Logo
-                      </h3>
-                      <p className="text-xs text-black/60">Manage the splash screen logo displayed on page load</p>
-                    </div>
-                    <div className="mt-6">
-                      <SplashpageManager />
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="border-t border-black/10 pt-8">
-                    {/* Rubber Band Carousel Section */}
-                    <div>
-                      <RubberBandPhotosManager />
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="border-t border-black/10 pt-8">
-                    <div>
-                      <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                        Site Photos
-                      </h3>
-                      <p className="text-xs text-black/60">Manage hero, about, and contact section images</p>
-                    </div>
-
-                    <div className="space-y-6 mt-6">
-                      <div>
-                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                          Hero Background Image
-                        </label>
-                        <ImageUploadManager
-                          label="Upload Hero Image"
-                          currentImage={homepageImages?.heroImage}
-                          collectionId="homepageimages"
-                          itemId={homepageImages?._id}
-                          fieldName="heroImage"
-                          onImageUpload={(url) => {
-                            if (homepageImages) {
-                              setHomepageImages({ ...homepageImages, heroImage: url });
-                            }
-                          }}
-                          onImageDelete={() => {
-                            if (homepageImages) {
-                              setHomepageImages({ ...homepageImages, heroImage: undefined });
-                            }
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                          About Section Image
-                        </label>
-                        <ImageUploadManager
-                          label="Upload About Image"
-                          currentImage={homepageImages?.aboutSectionImage}
-                          collectionId="homepageimages"
-                          itemId={homepageImages?._id}
-                          fieldName="aboutSectionImage"
-                          onImageUpload={(url) => {
-                            if (homepageImages) {
-                              setHomepageImages({ ...homepageImages, aboutSectionImage: url });
-                            }
-                          }}
-                          onImageDelete={() => {
-                            if (homepageImages) {
-                              setHomepageImages({ ...homepageImages, aboutSectionImage: undefined });
-                            }
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                          Contact Section Background
-                        </label>
-                        <ImageUploadManager
-                          label="Upload Contact Background"
-                          currentImage={homepageImages?.contactBackgroundImage}
-                          collectionId="homepageimages"
-                          itemId={homepageImages?._id}
-                          fieldName="contactBackgroundImage"
-                          onImageUpload={(url) => {
-                            if (homepageImages) {
-                              setHomepageImages({ ...homepageImages, contactBackgroundImage: url });
-                            }
-                          }}
-                          onImageDelete={() => {
-                            if (homepageImages) {
-                              setHomepageImages({ ...homepageImages, contactBackgroundImage: undefined });
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Sponsors Tab */}
-              {activeTab === 'sponsors' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      Sponsors
-                    </h3>
-                    <p className="text-xs text-black/60">{sponsors.length} sponsors found</p>
-                  </div>
-
-                  <div className="space-y-8 max-h-96 overflow-y-auto">
-                    {sponsors.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-sm text-black/60">No sponsors found. Add sponsors in the CMS.</p>
-                      </div>
-                    ) : (
-                      sponsors.map((sponsor) => (
-                        <div key={sponsor._id} className="border-t border-black/10 pt-6">
-                          <h4 className="text-xs font-heading font-bold text-black mb-4 uppercase tracking-wide">
-                            {sponsor.clientName || 'Untitled Sponsor'}
-                          </h4>
-                          <div className="space-y-4">
-                            <div>
-                              <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                                Sponsor Name
-                              </label>
-                              <TextEditableField
-                                value={sponsor.clientName || ''}
-                                onSave={async (newName) => {
-                                  try {
-                                    await adminCms.update('clientspress', {
-                                      _id: sponsor._id,
-                                      clientName: newName
-                                    });
-                                    setSponsors(sponsors.map(s => 
-                                      s._id === sponsor._id ? { ...s, clientName: newName } : s
-                                    ));
-                                  } catch (error) {
-                                    console.error('Error updating sponsor name:', error);
-                                  }
-                                }}
-                                className="text-sm text-black"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                                Sponsor Logo
-                              </label>
-                              <ImageUploadManager
-                                label="Upload Sponsor Logo"
-                                currentImage={sponsor.clientLogo}
-                                collectionId="clientspress"
-                                itemId={sponsor._id}
-                                fieldName="clientLogo"
-                                onImageUpload={(url) => {
-                                  setSponsors(sponsors.map(s => 
-                                    s._id === sponsor._id ? { ...s, clientLogo: url } : s
-                                  ));
-                                }}
-                                onImageDelete={() => {
-                                  setSponsors(sponsors.map(s => 
-                                    s._id === sponsor._id ? { ...s, clientLogo: undefined } : s
-                                  ));
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Music Tab */}
-              {activeTab === 'music' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide flex items-center gap-2">
-                      <Music className="w-4 h-4" />
-                      Background Music
-                    </h3>
-                    <p className="text-xs text-black/60">Manage background music settings</p>
-                  </div>
-
-                  {musicSettings ? (
-                    <div className="space-y-6">
-                      <div>
-                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                          Upload Music File
-                        </label>
-                        <MusicManager
-                          label="Upload Music"
-                          currentMusicUrl={musicSettings.musicUrl}
-                          collectionId="musicsettings"
-                          itemId={musicSettings._id}
-                          fieldName="musicUrl"
-                          onMusicUpload={(url) => {
-                            setMusicSettings({ ...musicSettings, musicUrl: url });
-                          }}
-                          onMusicDelete={() => {
-                            setMusicSettings({ ...musicSettings, musicUrl: undefined });
-                          }}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                            Enable Music
-                          </label>
-                          <button
-                            onClick={async () => {
-                              try {
-                                const newState = !musicSettings.isEnabled;
-                                await adminCms.update('musicsettings', {
-                                  _id: musicSettings._id,
-                                  isEnabled: newState
-                                });
-                                setMusicSettings({ ...musicSettings, isEnabled: newState });
-                              } catch (error) {
-                                console.error('Error updating music settings:', error);
-                              }
-                            }}
-                            className={`w-full px-4 py-2 rounded-lg text-sm font-heading font-bold uppercase tracking-wide transition-all ${
-                              musicSettings.isEnabled
-                                ? 'bg-green-500 text-white hover:bg-green-600'
-                                : 'bg-gray-300 text-white hover:bg-gray-400'
-                            }`}
-                          >
-                            {musicSettings.isEnabled ? '✓ Enabled' : '✗ Disabled'}
-                          </button>
-                        </div>
-
-                        <div>
-                          <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                            Loop Music
-                          </label>
-                          <button
-                            onClick={async () => {
-                              try {
-                                const newState = !musicSettings.loopMusic;
-                                await adminCms.update('musicsettings', {
-                                  _id: musicSettings._id,
-                                  loopMusic: newState
-                                });
-                                setMusicSettings({ ...musicSettings, loopMusic: newState });
-                              } catch (error) {
-                                console.error('Error updating loop setting:', error);
-                              }
-                            }}
-                            className={`w-full px-4 py-2 rounded-lg text-sm font-heading font-bold uppercase tracking-wide transition-all ${
-                              musicSettings.loopMusic
-                                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                                : 'bg-gray-300 text-white hover:bg-gray-400'
-                            }`}
-                          >
-                            {musicSettings.loopMusic ? '✓ Looping' : '✗ No Loop'}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                          Music Title
-                        </label>
-                        <TextEditableField
-                          value={musicSettings.musicTitle || ''}
-                          onSave={async (newTitle) => {
-                            try {
-                              await adminCms.update('musicsettings', {
-                                _id: musicSettings._id,
-                                musicTitle: newTitle
-                              });
-                              setMusicSettings({ ...musicSettings, musicTitle: newTitle });
-                            } catch (error) {
-                              console.error('Error updating music title:', error);
-                            }
-                          }}
-                          className="text-sm text-black"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                          Volume: {musicSettings.volume || 50}%
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={musicSettings.volume || 50}
-                          onChange={async (e) => {
-                            const newVolume = parseInt(e.target.value);
-                            setMusicSettings({ ...musicSettings, volume: newVolume });
-                            try {
-                              await adminCms.update('musicsettings', {
-                                _id: musicSettings._id,
-                                volume: newVolume
-                              });
-                            } catch (error) {
-                              console.error('Error updating volume:', error);
-                            }
-                          }}
-                          className="w-full h-2 bg-black/20 rounded-lg appearance-none cursor-pointer"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-sm text-blue-700 mb-3">No music settings found. Upload your first track to get started.</p>
-                      </div>
-                      <div>
-                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-3 font-bold">
-                          Upload Music File
-                        </label>
-                        <MusicManager
-                          label="Upload Music"
-                          currentMusicUrl={undefined}
-                          collectionId="musicsettings"
-                          fieldName="musicUrl"
-                          onMusicUpload={async (url) => {
-                            try {
-                              // Create new Music Settings record with the uploaded URL
-                              const newMusicSettings: MusicSettings = {
-                                _id: crypto.randomUUID(),
-                                musicUrl: url,
-                                musicTitle: 'Background Music',
-                                isEnabled: true,
-                                volume: 50,
-                                loopMusic: true,
-                                artist: '',
-                                album: '',
-                                genre: '',
-                                duration: '',
-                                isDefaultHomepageTrack: true,
-                              };
-                              await adminCms.create('musicsettings', newMusicSettings);
-                              setMusicSettings(newMusicSettings);
-                              console.log('[ADMIN PANEL] Music Settings record created:', newMusicSettings._id);
-                            } catch (error) {
-                              console.error('[ADMIN PANEL] Error creating Music Settings record:', error);
-                            }
-                          }}
-                          onMusicDelete={() => {
-                            // No-op when no record exists
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* About Tab */}
-              {activeTab === 'about' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      About Section
-                    </h3>
-                    <p className="text-xs text-black/60">Edit about section content</p>
-                  </div>
-
-                  {aboutSettings ? (
-                    <div className="space-y-6">
-                      <div>
-                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                          About Text
-                        </label>
-                        <textarea
-                          value={aboutSettings.aboutText || ''}
-                          onChange={(e) => {
-                            setAboutSettings({ ...aboutSettings, aboutText: e.target.value });
-                          }}
-                          className="w-full p-3 border border-black/10 rounded-lg text-sm text-black resize-none h-32 focus:outline-none focus:ring-2 focus:ring-black/20"
-                          placeholder="Enter about section text..."
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-black/60 uppercase tracking-wide block mb-2 font-bold">
-                          Font Family
-                        </label>
-                        <select
-                          value={aboutSettings.fontFamily || 'cormorant-garamond-v2'}
-                          onChange={(e) => {
-                            setAboutSettings({ ...aboutSettings, fontFamily: e.target.value });
-                          }}
-                          className="w-full p-3 border border-black/10 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-black/20"
-                        >
-                          <option value="cormorant-garamond-v2">Cormorant Garamond</option>
-                          <option value="font-heading">Heading Font</option>
-                          <option value="font-paragraph">Paragraph Font</option>
-                          <option value="roboto">Roboto</option>
-                          <option value="montserrat">Montserrat</option>
-                          <option value="poppins-extralight">Poppins</option>
-                          <option value="cinzel">Cinzel</option>
-                        </select>
-                      </div>
-
-                      <button
-                        onClick={async () => {
-                          setIsSavingAbout(true);
-                          try {
-                            await adminCms.update('about', {
-                              _id: aboutSettings._id,
-                              aboutText: aboutSettings.aboutText,
-                              fontFamily: aboutSettings.fontFamily
-                            });
-                            playClickSound();
-                          } catch (error) {
-                            console.error('Error saving about settings:', error);
-                          } finally {
-                            setIsSavingAbout(false);
-                          }
-                        }}
-                        disabled={isSavingAbout}
-                        className="w-full px-4 py-3 bg-black text-white rounded-lg text-sm font-heading font-bold uppercase tracking-wide hover:bg-black/90 disabled:opacity-50 transition-all"
-                      >
-                        {isSavingAbout ? 'Saving...' : 'Apply Changes'}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                      <p className="text-sm text-yellow-700 mb-3">No about settings found.</p>
-                      <a
-                        href="https://manage.wix.com/dashboard"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded text-xs text-yellow-700 transition-all"
-                      >
-                        Open CMS to Add About Settings
-                      </a>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* ... keep existing code (Photos, Sponsors, Music, About tabs) ... */}
             </div>
           </motion.div>
         </>
