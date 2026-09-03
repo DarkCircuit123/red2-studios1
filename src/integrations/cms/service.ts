@@ -13,13 +13,88 @@ import { BaseCrudService as WixBaseCrudService } from '@wix/codegen-framework-pa
  * For client-side CMS access, use fetch() to call API endpoints
  */
 
-// Re-export BaseCrudService for direct use (server-side only)
-export const BaseCrudService = WixBaseCrudService;
+// Request deduplication and caching layer
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const requestCache = new Map<string, Promise<any>>();
+const resultCache = new Map<string, CacheEntry<any>>();
+const CACHE_TTL_MS = 60000; // 60 seconds
+
+function getCacheKey(
+  collectionId: string,
+  refs?: { singleRef?: string[]; multiRef?: string[] },
+  options?: { limit?: number; skip?: number; suppressAuth?: boolean }
+): string {
+  return JSON.stringify({ collectionId, refs, options });
+}
+
+function isCacheValid<T>(entry: CacheEntry<T>): boolean {
+  return Date.now() - entry.timestamp < CACHE_TTL_MS;
+}
+
+// Wrap the original BaseCrudService.getAll with deduplication and caching
+const originalGetAll = WixBaseCrudService.getAll.bind(WixBaseCrudService);
+
+const dedupedGetAll = async function<T>(
+  collectionId: string,
+  refs?: { singleRef?: string[]; multiRef?: string[] },
+  options?: { limit?: number; skip?: number; suppressAuth?: boolean }
+) {
+  const cacheKey = getCacheKey(collectionId, refs, options);
+
+  // Check if we have a valid cached result
+  const cachedResult = resultCache.get(cacheKey);
+  if (cachedResult && isCacheValid(cachedResult)) {
+    return cachedResult.data;
+  }
+
+  // Check if a request is already in flight for this key
+  if (requestCache.has(cacheKey)) {
+    return requestCache.get(cacheKey);
+  }
+
+  // Create a new request promise
+  const requestPromise = (async () => {
+    try {
+      const refsParam = refs || {};
+      const optionsParam = options || { limit: 50 };
+      const result = await originalGetAll<T>(collectionId, refsParam, optionsParam);
+      
+      // Cache the result
+      resultCache.set(cacheKey, {
+        data: result,
+        timestamp: Date.now(),
+      });
+      
+      return result;
+    } finally {
+      // Remove from in-flight requests
+      requestCache.delete(cacheKey);
+    }
+  })();
+
+  // Store the in-flight promise
+  requestCache.set(cacheKey, requestPromise);
+
+  return requestPromise;
+};
+
+// Re-export BaseCrudService with deduped getAll
+export const BaseCrudService = {
+  ...WixBaseCrudService,
+  getAll: dedupedGetAll,
+};
 
 export const cmsService = {
   /**
    * Get all items from a collection
    * SERVER-SIDE ONLY - Do not call from client components
+   * 
+   * Includes automatic request deduplication and 60-second result caching.
+   * Concurrent requests for the same collection+options will await the same promise.
    */
   getAll: async <T>(
     collectionId: string,
@@ -27,10 +102,7 @@ export const cmsService = {
     options?: { limit?: number; skip?: number; suppressAuth?: boolean }
   ) => {
     try {
-      // Ensure refs is always an object, never undefined
-      const refsParam = refs || {};
-      const optionsParam = options || { limit: 50 };
-      return await WixBaseCrudService.getAll<T>(collectionId, refsParam, optionsParam);
+      return await dedupedGetAll<T>(collectionId, refs, options);
     } catch (error) {
       console.error(`[CMS] Error fetching from ${collectionId}:`, error);
       throw error;

@@ -12,9 +12,6 @@ export default function AboutSection() {
   const [aboutText, setAboutText] = useState('Jordan Michael Zuñiga He does not shoot what you look like. He shoots what you actually are. Born into it. Father behind a lens for 40 years. Mother with paint on her hands. Los Angeles in his blood. Amsterdam sharpened what LA started. He came back different and never stopped moving. Miami made him known. Wynwood before it was cool. Runway. Editorial. Three years of Fashion Week for fashiontv reaching 100 million viewers worldwide. Elite Model Management. Ford. Next. Irene Marie. Stefano Versace Holdings. Warner Brothers. He was not knocking on doors. He was already inside. 2011 he shot Women in Cages for PETA. It went everywhere. HuffPost. People. Getty. The opening was packed. Hulk Hogan showed up, saw the work on the walls, and put Jordan in a choke hold. That is what happens when an image lands that hard. Same year. Art Basel. Haiti: Hope in Progress. 500 collectors and diplomats through the door. World Bank. American Red Cross. The photographs funded lives rebuilt. Started on Pentax film. Shoots Sony A1 II now. The camera changed. The eye did not. RED2 Studios has no address. It is a standard of work that travels. Fully mobile across the United States, shooting hotel suites, private estates, city streets and locations that cannot be planned in advance. He is already where the shot needs to happen. Right now he is looking for new faces. Not models who have a look. Models who have something underneath it. Presence. Realness. The thing the camera either finds or it does not. Twenty-five years in. 500 projects. Still hunting for the next frame that stops people cold. If that sounds like a shoot you want to be part of, it probably is.');
   const [fontFamily, setFontFamily] = useState('font-cormorant-garamond-v2');
   const [isLoading, setIsLoading] = useState(true);
-  const fetchedRef = useRef(false);
-  const retryCountRef = useRef(0);
-  const maxRetriesRef = useRef(3);
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
 
   const loadAboutData = async () => {
@@ -57,39 +54,15 @@ export default function AboutSection() {
       } catch (error) {
         console.error('[AboutSection] Error loading about settings:', error);
       }
-      // Reset retry count on success
-      retryCountRef.current = 0;
     } catch (error) {
       console.error('[AboutSection] Error loading about data:', error);
-      retryCountRef.current++;
-      // Don't retry indefinitely - set to max retries to stop polling
-      if (retryCountRef.current >= 3) {
-        retryCountRef.current = 999;
-      }
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    // Prevent duplicate fetches
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-
     loadAboutData();
-    
-    // Only poll if retries haven't been exhausted
-    // Use exponential backoff: 30s, 60s, 120s
-    const scheduleNextPoll = () => {
-      if (retryCountRef.current < maxRetriesRef.current) {
-        const delayMs = Math.min(30000 * Math.pow(2, retryCountRef.current), 120000);
-        const refreshInterval = setTimeout(loadAboutData, delayMs);
-        return () => clearTimeout(refreshInterval);
-      }
-      return () => {};
-    };
-    
-    return scheduleNextPoll();
   }, []);
 
   const statVariants = {

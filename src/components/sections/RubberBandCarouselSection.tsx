@@ -128,24 +128,7 @@ const RubberBandCarouselSection: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    // Load images immediately on mount
-    if (!cancelled) {
-      loadCarouselImages();
-    }
-
-    // Poll for new images every 3 seconds to catch admin uploads
-    const pollInterval = setInterval(() => {
-      if (!cancelled) {
-        loadCarouselImages();
-      }
-    }, 3000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(pollInterval);
-    };
+    loadCarouselImages();
   }, [loadCarouselImages]);
 
   // Fallback used only until the CMS responds, or if it has no images yet.
