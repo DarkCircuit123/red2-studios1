@@ -1,10 +1,14 @@
 /**
- * Work Gallery Manager V4 - HARDCODED PROOF OF CONCEPT
+ * Work Gallery Manager V4 - 30 SLOT GALLERY WITH METADATA
  * 
- * This version proves the UI can render 90 slots with visible controls.
- * It uses hardcoded data to eliminate CMS/network as variables.
+ * This version manages 30 slots with full metadata tracking:
+ * - Unique ID for each slot
+ * - Image URL/link
+ * - Filename
+ * - Caption and alt text
+ * - Upload timestamp
  * 
- * GOAL: Verify 90 slots render with Upload, Replace, Delete controls visible
+ * GOAL: Render 30 slots with complete metadata management
  */
 
 import React, { useState, useRef } from 'react';
@@ -13,17 +17,20 @@ import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
   Upload, Trash2, Eye, X, RefreshCw, Maximize2, Image as ImageIcon,
-  AlertCircle, CheckCircle
+  AlertCircle, CheckCircle, Copy, Info
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const MAX_SLOTS = 90;
+const MAX_SLOTS = 30;
 
 interface SlotData {
+  id: string;
   slotNumber: number;
   image?: string;
+  filename?: string;
   caption?: string;
   altText?: string;
+  uploadedAt?: string;
 }
 
 interface StatusMessage {
@@ -35,13 +42,16 @@ interface StatusMessage {
 export default function WorkGalleryManagerV4() {
   console.log('[WorkGalleryManagerV4] Component rendering');
   
-  // HARDCODED SLOTS - Proves UI can render
+  // 30 SLOTS WITH METADATA
   const [slots, setSlots] = useState<SlotData[]>(() => {
     const initialSlots = Array.from({ length: MAX_SLOTS }, (_, i) => ({
+      id: `slot-${i + 1}-${crypto.randomUUID()}`,
       slotNumber: i + 1,
       image: undefined,
+      filename: '',
       caption: '',
       altText: '',
+      uploadedAt: undefined,
     }));
     console.log('[WorkGalleryManagerV4] Initial state created with', initialSlots.length, 'slots');
     return initialSlots;
@@ -53,6 +63,7 @@ export default function WorkGalleryManagerV4() {
   const [replacingSlot, setReplacingSlot] = useState<number | null>(null);
   const [deletingSlot, setDeletingSlot] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState<{ url: string; slotNumber: number } | null>(null);
+  const [showMetadata, setShowMetadata] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragOverRef = useRef(false);
@@ -109,7 +120,7 @@ export default function WorkGalleryManagerV4() {
       // Simulate upload delay
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Add files to first available slots
+      // Add files to first available slots with full metadata
       let filesAdded = 0;
       const updatedSlots = [...slots];
 
@@ -118,9 +129,12 @@ export default function WorkGalleryManagerV4() {
         if (emptySlot) {
           const reader = new FileReader();
           reader.onload = (e) => {
+            const now = new Date().toISOString();
             emptySlot.image = e.target?.result as string;
+            emptySlot.filename = file.name;
             emptySlot.caption = file.name.replace(/\.[^/.]+$/, '');
             emptySlot.altText = file.name;
+            emptySlot.uploadedAt = now;
             filesAdded++;
           };
           reader.readAsDataURL(file);
@@ -154,9 +168,12 @@ export default function WorkGalleryManagerV4() {
         const updatedSlots = [...slots];
         const slot = updatedSlots.find(s => s.slotNumber === slotNumber);
         if (slot) {
+          const now = new Date().toISOString();
           slot.image = e.target?.result as string;
+          slot.filename = file.name;
           slot.caption = file.name.replace(/\.[^/.]+$/, '');
           slot.altText = file.name;
+          slot.uploadedAt = now;
           setSlots(updatedSlots);
           addStatusMessage('success', `Slot ${slotNumber} replaced`);
         }
@@ -183,8 +200,10 @@ export default function WorkGalleryManagerV4() {
       const slot = updatedSlots.find(s => s.slotNumber === slotNumber);
       if (slot) {
         slot.image = undefined;
+        slot.filename = '';
         slot.caption = '';
         slot.altText = '';
+        slot.uploadedAt = undefined;
         setSlots(updatedSlots);
         addStatusMessage('success', `Slot ${slotNumber} deleted`);
       }
@@ -193,6 +212,20 @@ export default function WorkGalleryManagerV4() {
     } finally {
       setDeletingSlot(null);
     }
+  };
+
+  const copySlotMetadata = (slot: SlotData) => {
+    const metadata = {
+      id: slot.id,
+      slotNumber: slot.slotNumber,
+      filename: slot.filename,
+      caption: slot.caption,
+      altText: slot.altText,
+      uploadedAt: slot.uploadedAt,
+      imageUrl: slot.image ? '[Base64 Image Data]' : 'No image',
+    };
+    navigator.clipboard.writeText(JSON.stringify(metadata, null, 2));
+    addStatusMessage('success', `Slot ${slot.slotNumber} metadata copied to clipboard`);
   };
 
   const filledSlots = slots.filter(s => s.image).length;
@@ -232,9 +265,9 @@ export default function WorkGalleryManagerV4() {
             <div>
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Upload className="w-5 h-5 text-blue-600" />
-                Work Gallery Manager (V4 - Hardcoded Proof)
+                Work Gallery Manager (30 Slots with Metadata)
               </h3>
-              <p className="text-sm text-slate-600 mt-1">Upload photos to your 90-slot gallery</p>
+              <p className="text-sm text-slate-600 mt-1">Upload photos to your 30-slot gallery with full metadata tracking</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-blue-600">{filledSlots}</p>
@@ -331,27 +364,28 @@ export default function WorkGalleryManagerV4() {
       <Card className="p-6 border border-slate-200">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-slate-900">
-            90-Slot Gallery Grid ({filledSlots}/{MAX_SLOTS})
+            30-Slot Gallery Grid ({filledSlots}/{MAX_SLOTS})
           </h3>
-          <div className="text-xs text-slate-500">
-            Every slot should be visible with controls
+          <div className="text-xs text-slate-500 flex items-center gap-1">
+            <Info className="w-3 h-3" />
+            Click info icon to view metadata
           </div>
         </div>
 
-        {/* Grid - ALWAYS RENDERS */}
+        {/* Grid - ALWAYS RENDERS 30 SLOTS */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
           gap: '12px',
           width: '100%',
-          minHeight: '1200px'
+          minHeight: '800px'
         }}>
           {slots.map((slot) => (
             <motion.div
-              key={slot.slotNumber}
+              key={slot.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: (slot.slotNumber - 1) * 0.01 }}
+              transition={{ delay: (slot.slotNumber - 1) * 0.02 }}
               className={`relative rounded-lg overflow-hidden border-2 transition-all ${
                 slot.image
                   ? 'border-slate-200 bg-slate-50 hover:border-slate-300 group'
@@ -362,6 +396,15 @@ export default function WorkGalleryManagerV4() {
               <div className="absolute top-1 left-1 z-10 bg-slate-900 text-white px-1.5 py-0.5 rounded text-xs font-bold">
                 #{slot.slotNumber}
               </div>
+
+              {/* Metadata Info Button */}
+              <button
+                onClick={() => setShowMetadata(showMetadata === slot.slotNumber ? null : slot.slotNumber)}
+                className="absolute top-1 right-1 z-10 p-1 bg-slate-700 text-white rounded hover:bg-slate-800 transition-colors"
+                title="View metadata"
+              >
+                <Info className="w-3 h-3" />
+              </button>
 
               {slot.image ? (
                 <>
@@ -431,6 +474,14 @@ export default function WorkGalleryManagerV4() {
                           <Trash2 className="w-3 h-3" />
                         )}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => copySlotMetadata(slot)}
+                        className="p-1.5 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+                        title="Copy metadata"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 </>
@@ -441,6 +492,29 @@ export default function WorkGalleryManagerV4() {
                     <ImageIcon className="w-6 h-6 text-slate-300" />
                   </div>
                 </>
+              )}
+
+              {/* Metadata Panel */}
+              {showMetadata === slot.slotNumber && slot.image && (
+                <div className="absolute inset-0 z-20 bg-black/90 text-white p-2 text-xs overflow-auto rounded-lg flex flex-col justify-between">
+                  <div className="space-y-1">
+                    <p><strong>ID:</strong> {slot.id.substring(0, 20)}...</p>
+                    <p><strong>Slot:</strong> {slot.slotNumber}</p>
+                    <p><strong>File:</strong> {slot.filename}</p>
+                    <p><strong>Caption:</strong> {slot.caption}</p>
+                    <p><strong>Alt:</strong> {slot.altText}</p>
+                    {slot.uploadedAt && (
+                      <p><strong>Uploaded:</strong> {new Date(slot.uploadedAt).toLocaleString()}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => copySlotMetadata(slot)}
+                    className="mt-2 w-full bg-purple-600 hover:bg-purple-700 px-2 py-1 rounded text-xs font-medium flex items-center justify-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" />
+                    Copy All
+                  </button>
+                </div>
               )}
             </motion.div>
           ))}
