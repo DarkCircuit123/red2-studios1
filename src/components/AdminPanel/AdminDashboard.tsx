@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import HomePageTab from './tabs/HomePageTab';
 import SplashpageTab from './tabs/SplashpageTab';
-import WorkGalleryManagerV4 from './sections/WorkGalleryManagerV4';
+import WorkGalleryManagerV4 from './sections/WorkGalleryManagerV4_FIXED';
 import ProfessionalPhotoLibrary from './sections/ProfessionalPhotoLibrary';
 import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Library } from 'lucide-react';
 
