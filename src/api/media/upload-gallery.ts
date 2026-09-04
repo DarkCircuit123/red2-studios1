@@ -1,29 +1,18 @@
 import type { APIRoute } from 'astro';
+import { files } from '@wix/media';
+import { auth } from '@wix/essentials';
 import { requireAdmin } from '@/lib/auth-security';
 
 /**
  * Gallery Image Upload API - For Work Gallery and other portfolio galleries
  * 
- * BACKEND-ONLY UPLOAD using mediaManager.upload()
- * 
- * Contract:
- * mediaManager.upload(
- *   '/portfolio',                    // 1: destination folder (with leading slash)
- *   buffer,                          // 2: Buffer (NOT base64 string)
- *   fileName,                        // 3: filename WITH extension
- *   {                                // 4: options
- *     mediaOptions: {
- *       mimeType: mimeType,          // MUST be nested here
- *       mediaType: 'image'
- *     },
- *     metadataOptions: { 
- *       isPrivate: false, 
- *       isVisitorUpload: false 
- *     }
- *   }
- * )
- * 
- * Returns: { fileUrl: 'wix:image://...' }
+ * Uses the same SDK flow as upload-hero.ts:
+ * 1. Validates the file (JPEG, PNG, WebP, GIF, TIFF, HEIC; max 10MB)
+ * 2. Generates a signed upload URL from Wix Media Manager with auth.elevate()
+ * 3. Receives the file bytes and uploads to Wix
+ * 4. Returns { success, mediaUrl, fileId, error }
+ * 5. Enforces admin authentication
+ * 6. Includes structured logging for debugging
  */
 
 const MIME_TYPE_MAP: Record<string, string> = {
@@ -219,74 +208,141 @@ export const POST: APIRoute = async (context) => {
       timestamp: new Date().toISOString(),
     });
 
-    // Convert file to Buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // ===== CRITICAL LOGGING BEFORE UPLOAD =====
-    console.log(`[UPLOAD_GALLERY_CRITICAL_ARGS] Request ${requestId} - EXACT ARGUMENTS TO mediaManager.upload:`, {
-      arg1_folder: {
-        value: '/portfolio',
-        type: 'string',
-        hasLeadingSlash: true,
-      },
-      arg2_buffer: {
-        type: 'Buffer',
-        length: buffer.length,
-        isBuffer: Buffer.isBuffer(buffer),
-      },
-      arg3_fileName: {
-        value: sanitizedFileName,
-        type: typeof sanitizedFileName,
-        length: sanitizedFileName.length,
-        hasExtension: sanitizedFileName.includes('.'),
-        extension: sanitizedFileName.substring(sanitizedFileName.lastIndexOf('.')),
-      },
-      arg4_options: {
-        mediaOptions: {
-          mimeType: mimeType,
-          mediaType: 'image',
-        },
-        metadataOptions: {
-          isPrivate: false,
-          isVisitorUpload: false,
-        },
-      },
-      timestamp: new Date().toISOString(),
-    });
-
-    // NOTE: wix-media-backend is a backend-only package not available in this build context.
-    // This endpoint requires proper Wix backend setup to function.
-    console.error(`[UPLOAD_GALLERY] Request ${requestId} mediaManager not available in build context`, {
-      fileName: file.name,
-      sanitizedFileName: sanitizedFileName,
+    // Generate upload URL with elevated permissions
+    console.log(`[UPLOAD_GALLERY] Request ${requestId} calling generateFileUploadUrl with auth.elevate()`, {
+      fileName: sanitizedFileName,
       mimeType: mimeType,
-      bufferLength: buffer.length,
       timestamp: new Date().toISOString(),
     });
 
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Media upload service not available in this environment' 
-      } as ErrorResponse),
-      { status: 503, headers: { 'Content-Type': 'application/json' } }
-    );
+    let uploadUrlResponse;
+    try {
+      // Use auth.elevate to get elevated permissions for file operations
+      const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
+      uploadUrlResponse = await elevatedGenerateUrl(mimeType, {
+        fileName: sanitizedFileName,
+      });
+    } catch (apiError) {
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} generateFileUploadUrl failed`, {
+        fileName: sanitizedFileName,
+        mimeType: mimeType,
+        error: apiError instanceof Error ? apiError.message : String(apiError),
+        stack: apiError instanceof Error ? apiError.stack : undefined,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Failed to generate upload URL: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+    }
 
-    // ... rest of code unreachable
+    if (!uploadUrlResponse.uploadUrl) {
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} no uploadUrl in response`, {
+        fileName: sanitizedFileName,
+        response: uploadUrlResponse,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error('Failed to generate upload URL from Wix Media Manager');
+    }
+
+    // Verify upload URL is a real Wix domain
+    const uploadUrlObj = new URL(uploadUrlResponse.uploadUrl);
+    const isValidWixDomain = 
+      uploadUrlObj.hostname.includes('wix') ||
+      uploadUrlObj.hostname.includes('files') ||
+      uploadUrlObj.hostname.includes('media');
+
+    if (!isValidWixDomain) {
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} invalid upload URL domain`, {
+        uploadUrl: uploadUrlResponse.uploadUrl,
+        hostname: uploadUrlObj.hostname,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Invalid upload URL domain: ${uploadUrlObj.hostname}`);
+    }
+
+    console.log(`[UPLOAD_GALLERY] Request ${requestId} upload URL generated`, {
+      fileName: sanitizedFileName,
+      uploadUrlDomain: uploadUrlObj.hostname,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Upload file to Wix
+    console.log(`[UPLOAD_GALLERY] Request ${requestId} uploading file to Wix`, {
+      fileName: sanitizedFileName,
+      fileSizeBytes: file.size,
+      timestamp: new Date().toISOString(),
+    });
+
+    const arrayBuffer = await file.arrayBuffer();
+    let uploadResponse;
+    try {
+      uploadResponse = await fetch(
+        `${uploadUrlResponse.uploadUrl}?filename=${encodeURIComponent(sanitizedFileName)}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': mimeType },
+          body: arrayBuffer,
+        }
+      );
+    } catch (fetchError) {
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} fetch to upload URL failed`, {
+        fileName: sanitizedFileName,
+        uploadUrlDomain: uploadUrlObj.hostname,
+        error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+        stack: fetchError instanceof Error ? fetchError.stack : undefined,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Upload failed: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
+    }
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text().catch(() => '');
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} upload HTTP error`, {
+        fileName: sanitizedFileName,
+        status: uploadResponse.status,
+        statusText: uploadResponse.statusText,
+        errorText: errorText.substring(0, 500),
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Upload failed: ${uploadResponse.status} ${errorText}`);
+    }
+
+    let uploadResult;
+    try {
+      uploadResult = await uploadResponse.json();
+    } catch (parseError) {
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} failed to parse upload response`, {
+        fileName: sanitizedFileName,
+        error: parseError instanceof Error ? parseError.message : String(parseError),
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error('Failed to parse upload response');
+    }
+
+    const mediaUrl = uploadResult?.file?.url;
+    const fileId = uploadResult?.file?.id;
+
     if (!mediaUrl) {
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} no fileUrl in response`, {
-        fileName: file.name,
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} no media URL in response`, {
+        fileName: sanitizedFileName,
         response: uploadResult,
         timestamp: new Date().toISOString(),
       });
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'No media URL returned from Wix Media Manager' 
-        } as ErrorResponse),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      throw new Error('No media URL returned from Wix Media Manager');
+    }
+
+    // Verify media URL is a real Wix domain
+    const mediaUrlObj = new URL(mediaUrl);
+    const isValidMediaDomain = 
+      mediaUrlObj.hostname.includes('wix') ||
+      mediaUrlObj.hostname.includes('files') ||
+      mediaUrlObj.hostname.includes('media');
+
+    if (!isValidMediaDomain) {
+      console.error(`[UPLOAD_GALLERY] Request ${requestId} invalid media URL domain`, {
+        mediaUrl,
+        hostname: mediaUrlObj.hostname,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Invalid media URL domain: ${mediaUrlObj.hostname}`);
     }
 
     const duration = Date.now() - startTime;
@@ -298,6 +354,8 @@ export const POST: APIRoute = async (context) => {
       fileSizeBytes: file.size,
       mimeType: mimeType,
       mediaUrl: mediaUrl,
+      fileId: fileId || 'unknown',
+      mediaUrlDomain: mediaUrlObj.hostname,
       duration: `${duration}ms`,
       timestamp: new Date().toISOString(),
     });
@@ -306,6 +364,7 @@ export const POST: APIRoute = async (context) => {
       JSON.stringify({
         success: true,
         mediaUrl,
+        fileId: fileId || '',
       } as UploadGalleryResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
