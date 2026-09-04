@@ -100,8 +100,11 @@ export function readAdminToken(cookies: { get?: (name: string) => { value?: stri
 /**
  * Admin gate for API routes.
  *
- * Returns null when the caller holds a valid admin session, or a ready-to-
- * return 401 Response when they don't.
+ * Returns null when the caller holds EITHER:
+ * 1. A valid admin_session token, OR
+ * 2. A signed-in Wix member resolved server-side from the request context
+ *
+ * Returns a ready-to-return 401 Response when neither condition is met.
  *
  * Use this on EVERY route that calls Wix Data with `suppressAuth: true`.
  * suppressAuth bypasses collection permissions completely, so such a route
@@ -116,21 +119,37 @@ export async function requireAdmin(
   request: Request,
   label = 'admin-only endpoint'
 ): Promise<Response | null> {
+  // Check for valid admin_session token
   const sessionToken = readAdminToken(cookies, request);
-  const validation = sessionToken
-    ? await verifyAdminToken(sessionToken)
-    : { valid: false as const };
-
-  if (!validation.valid) {
-    console.warn(
-      `[SECURITY] Unauthorized ${label} attempt from IP: ${getClientIP(request.headers)}`
-    );
-    return new Response(
-      JSON.stringify({ success: false, error: 'Unauthorized' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
+  if (sessionToken) {
+    const validation = await verifyAdminToken(sessionToken);
+    if (validation.valid) {
+      return null; // Valid admin token
+    }
   }
-  return null;
+
+  // Check for signed-in Wix member resolved server-side
+  try {
+    const { members } = await import('@wix/members');
+    const memberResult = await members.getCurrentMember({ fieldsets: ['FULL'] });
+    
+    if (memberResult && memberResult.member) {
+      console.log('[ADMIN-GATE] Wix member authenticated:', memberResult.member._id);
+      return null; // Valid Wix member session
+    }
+  } catch (error) {
+    // Expected error for unauthenticated requests
+    console.log('[ADMIN-GATE] No Wix member session found');
+  }
+
+  // Neither admin token nor Wix member session found
+  console.warn(
+    `[SECURITY] Unauthorized ${label} attempt from IP: ${getClientIP(request.headers)}`
+  );
+  return new Response(
+    JSON.stringify({ success: false, error: 'Unauthorized' }),
+    { status: 401, headers: { 'Content-Type': 'application/json' } }
+  );
 }
 
 /**
