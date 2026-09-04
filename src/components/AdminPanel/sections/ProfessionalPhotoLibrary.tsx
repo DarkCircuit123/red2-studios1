@@ -157,7 +157,52 @@ export default function ProfessionalPhotoLibrary() {
     }
   }, []);
 
-  // Process upload queue (declared first to avoid temporal dead zone)
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragOverRef.current) {
+      dragOverRef.current.classList.remove('border-primary', 'bg-primary/5');
+    }
+    const files = Array.from(e.dataTransfer.files);
+    addFilesToQueue(files);
+  }, []);
+
+  // Handle file selection
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    addFilesToQueue(files);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
+  // Add files to upload queue
+  const addFilesToQueue = useCallback((files: File[]) => {
+    console.log('[ProfessionalPhotoLibrary] Adding files to queue:', files.length);
+    const imageFiles = files.filter(f => {
+      const isImage = f.type.startsWith('image/');
+      console.log(`[ProfessionalPhotoLibrary] File: ${f.name}, type: ${f.type}, isImage: ${isImage}`);
+      return isImage;
+    });
+    
+    console.log('[ProfessionalPhotoLibrary] Filtered image files:', imageFiles.length);
+    
+    const newItems: UploadQueueItem[] = imageFiles.map(file => ({
+      id: `${Date.now()}-${Math.random()}`,
+      file,
+      progress: 0,
+      status: 'pending',
+    }));
+    
+    setUploadQueue(prev => {
+      const updated = [...prev, ...newItems];
+      console.log('[ProfessionalPhotoLibrary] Upload queue updated:', updated.length);
+      return updated;
+    });
+    
+    // Process the new queue immediately
+    processQueue([...uploadQueue, ...newItems]);
+  }, [uploadQueue, processQueue]);
+
+  // Process upload queue
   const processQueue = useCallback(async (queue: UploadQueueItem[]) => {
     console.log('[ProfessionalPhotoLibrary] Processing queue:', queue.length);
     
@@ -288,51 +333,6 @@ export default function ProfessionalPhotoLibrary() {
       }
     }
   }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (dragOverRef.current) {
-      dragOverRef.current.classList.remove('border-primary', 'bg-primary/5');
-    }
-    const files = Array.from(e.dataTransfer.files);
-    addFilesToQueue(files);
-  }, []);
-
-  // Handle file selection
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    addFilesToQueue(files);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }, []);
-
-  // Add files to upload queue
-  const addFilesToQueue = useCallback((files: File[]) => {
-    console.log('[ProfessionalPhotoLibrary] Adding files to queue:', files.length);
-    const imageFiles = files.filter(f => {
-      const isImage = f.type.startsWith('image/');
-      console.log(`[ProfessionalPhotoLibrary] File: ${f.name}, type: ${f.type}, isImage: ${isImage}`);
-      return isImage;
-    });
-    
-    console.log('[ProfessionalPhotoLibrary] Filtered image files:', imageFiles.length);
-    
-    const newItems: UploadQueueItem[] = imageFiles.map(file => ({
-      id: `${Date.now()}-${Math.random()}`,
-      file,
-      progress: 0,
-      status: 'pending',
-    }));
-    
-    setUploadQueue(prev => {
-      const updated = [...prev, ...newItems];
-      console.log('[ProfessionalPhotoLibrary] Upload queue updated:', updated.length);
-      return updated;
-    });
-    
-    // Process the new queue immediately
-    processQueue([...uploadQueue, ...newItems]);
-  }, [uploadQueue, processQueue]);
 
   // Retry failed upload
   const retryUpload = useCallback((itemId: string) => {

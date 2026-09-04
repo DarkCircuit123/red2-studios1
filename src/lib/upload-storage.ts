@@ -9,7 +9,6 @@
  * - Validation
  */
 
-import { BaseCrudService } from '@/integrations';
 import { adminCms } from './admin-cms';
 import type { UploadResult } from './upload-service';
 
