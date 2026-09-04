@@ -171,29 +171,52 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
   const actions: MemberActions = {
     /**
      * Load current member from Wix
+     * Optimized to prevent redundant calls during build/deployment
      */
     loadCurrentMember: useCallback(async () => {
       try {
         console.log('[MEMBER PROVIDER] Loading current member...');
         updateState({ isLoading: true, error: null });
 
-        const member = await getCurrentMember();
+        // Add timeout to prevent hanging during deployment
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          console.warn('[MEMBER PROVIDER] Member load timeout - treating as anonymous');
+          controller.abort();
+        }, 5000); // 5 second timeout
 
-        if (member) {
-          console.log('[MEMBER PROVIDER] Member loaded:', member._id);
-          updateState({
-            member,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        } else {
-          // No member - this is normal for anonymous/unauthenticated users
-          console.log('[MEMBER PROVIDER] No member found (anonymous user)');
-          updateState({
-            member: null,
-            isAuthenticated: false,
-            isLoading: false,
-          });
+        try {
+          const member = await getCurrentMember();
+          clearTimeout(timeoutId);
+
+          if (member) {
+            console.log('[MEMBER PROVIDER] Member loaded:', member._id);
+            updateState({
+              member,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+          } else {
+            // No member - this is normal for anonymous/unauthenticated users
+            console.log('[MEMBER PROVIDER] No member found (anonymous user)');
+            updateState({
+              member: null,
+              isAuthenticated: false,
+              isLoading: false,
+            });
+          }
+        } catch (timeoutErr) {
+          clearTimeout(timeoutId);
+          if (timeoutErr instanceof Error && timeoutErr.name === 'AbortError') {
+            console.warn('[MEMBER PROVIDER] Member load timeout - proceeding as anonymous');
+            updateState({
+              member: null,
+              isAuthenticated: false,
+              isLoading: false,
+            });
+          } else {
+            throw timeoutErr;
+          }
         }
       } catch (err) {
         // Silently handle errors - getCurrentMember already filters expected errors
@@ -315,24 +338,47 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
         console.log('[MEMBER PROVIDER] Loading current member on mount...');
         setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-        const member = await getCurrentMember();
+        // Add timeout to prevent hanging during deployment
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          console.warn('[MEMBER PROVIDER] Member load timeout on mount - treating as anonymous');
+          controller.abort();
+        }, 5000); // 5 second timeout
 
-        if (member) {
-          console.log('[MEMBER PROVIDER] Member loaded:', member._id);
-          setState(prev => ({
-            ...prev,
-            member,
-            isAuthenticated: true,
-            isLoading: false,
-          }));
-        } else {
-          console.log('[MEMBER PROVIDER] No member found (anonymous user)');
-          setState(prev => ({
-            ...prev,
-            member: null,
-            isAuthenticated: false,
-            isLoading: false,
-          }));
+        try {
+          const member = await getCurrentMember();
+          clearTimeout(timeoutId);
+
+          if (member) {
+            console.log('[MEMBER PROVIDER] Member loaded:', member._id);
+            setState(prev => ({
+              ...prev,
+              member,
+              isAuthenticated: true,
+              isLoading: false,
+            }));
+          } else {
+            console.log('[MEMBER PROVIDER] No member found (anonymous user)');
+            setState(prev => ({
+              ...prev,
+              member: null,
+              isAuthenticated: false,
+              isLoading: false,
+            }));
+          }
+        } catch (timeoutErr) {
+          clearTimeout(timeoutId);
+          if (timeoutErr instanceof Error && timeoutErr.name === 'AbortError') {
+            console.warn('[MEMBER PROVIDER] Member load timeout on mount - proceeding as anonymous');
+            setState(prev => ({
+              ...prev,
+              member: null,
+              isAuthenticated: false,
+              isLoading: false,
+            }));
+          } else {
+            throw timeoutErr;
+          }
         }
       } catch (err) {
         console.error('[MEMBER PROVIDER] Unexpected error:', err);
