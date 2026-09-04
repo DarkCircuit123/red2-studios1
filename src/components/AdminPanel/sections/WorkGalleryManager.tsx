@@ -651,6 +651,7 @@ export default function WorkGalleryManager() {
               )}
             </motion.div>
           ))}</div>
+        )}
       </Card>
 
       {/* Preview Modal */}
