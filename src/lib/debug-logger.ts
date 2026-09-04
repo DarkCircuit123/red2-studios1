@@ -111,3 +111,29 @@ export const createModuleLogger = (moduleName: string) => {
     perf: (label: string, duration: number) => debugPerf(`${moduleName}:${label}`, duration),
   };
 };
+
+/**
+ * Logger object with methods matching the signature used by callers
+ */
+export const logger = {
+  debug: (message: string, data?: any, context?: { module?: string }): void => {
+    const prefix = context?.module ? `[${context.module}] ` : '';
+    debugLog(`${prefix}${message}`, data);
+  },
+  log: (message: string, data?: any, context?: { module?: string }): void => {
+    const prefix = context?.module ? `[${context.module}] ` : '';
+    debugLog(`${prefix}${message}`, data);
+  },
+  info: (message: string, data?: any, context?: { module?: string }): void => {
+    const prefix = context?.module ? `[${context.module}] ` : '';
+    debugInfo(`${prefix}${message}`, data);
+  },
+  warn: (message: string, data?: any, context?: { module?: string }): void => {
+    const prefix = context?.module ? `[${context.module}] ` : '';
+    debugWarn(`${prefix}${message}`, data);
+  },
+  error: (message: string, data?: any, context?: { module?: string }): void => {
+    const prefix = context?.module ? `[${context.module}] ` : '';
+    debugError(`${prefix}${message}`, data);
+  },
+};
