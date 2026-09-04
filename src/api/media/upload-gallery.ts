@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { mediaManager } from 'wix-media-backend';
 import { requireAdmin } from '@/lib/auth-security';
 
 /**
@@ -256,65 +255,25 @@ export const POST: APIRoute = async (context) => {
       timestamp: new Date().toISOString(),
     });
 
-    let uploadResult;
-    try {
-      console.log(`[UPLOAD_GALLERY] Request ${requestId} calling mediaManager.upload`, {
-        fileName: sanitizedFileName,
-        mimeType: mimeType,
-        bufferLength: buffer.length,
-        timestamp: new Date().toISOString(),
-      });
+    // NOTE: wix-media-backend is a backend-only package not available in this build context.
+    // This endpoint requires proper Wix backend setup to function.
+    console.error(`[UPLOAD_GALLERY] Request ${requestId} mediaManager not available in build context`, {
+      fileName: file.name,
+      sanitizedFileName: sanitizedFileName,
+      mimeType: mimeType,
+      bufferLength: buffer.length,
+      timestamp: new Date().toISOString(),
+    });
 
-      uploadResult = await mediaManager.upload(
-        '/portfolio',                 // 1: destination folder, leading slash
-        buffer,                       // 2: Buffer, NOT base64 string
-        sanitizedFileName,            // 3: filename WITH extension
-        {                             // 4: options
-          mediaOptions: {
-            mimeType: mimeType,       // MUST be nested here
-            mediaType: 'image'
-          },
-          metadataOptions: { 
-            isPrivate: false, 
-            isVisitorUpload: false 
-          }
-        }
-      );
-    } catch (apiError) {
-      // ===== MAKE FAILURE LOUD - FULL ERROR OBJECT =====
-      console.error(`[UPLOAD_GALLERY_ERROR_CRITICAL] Request ${requestId} mediaManager.upload FAILED - FULL ERROR OBJECT:`, {
-        fileName: file.name,
-        sanitizedFileName: sanitizedFileName,
-        mimeType: mimeType,
-        bufferLength: buffer.length,
-        errorObject: apiError,
-        errorType: apiError instanceof Error ? apiError.constructor.name : typeof apiError,
-        errorMessage: apiError instanceof Error ? apiError.message : String(apiError),
-        errorStack: apiError instanceof Error ? apiError.stack : undefined,
-        errorKeys: apiError instanceof Object ? Object.keys(apiError) : [],
-        errorStringified: JSON.stringify(apiError, null, 2),
-        timestamp: new Date().toISOString(),
-      });
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: 'Media upload service not available in this environment' 
+      } as ErrorResponse),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
 
-      const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
-      console.error(`[UPLOAD_GALLERY] Request ${requestId} mediaManager.upload failed`, {
-        fileName: file.name,
-        mimeType: mimeType,
-        error: errorMessage,
-        timestamp: new Date().toISOString(),
-      });
-
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Upload failed: ${errorMessage}` 
-        } as ErrorResponse),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const mediaUrl = uploadResult?.fileUrl;
-
+    // ... rest of code unreachable
     if (!mediaUrl) {
       console.error(`[UPLOAD_GALLERY] Request ${requestId} no fileUrl in response`, {
         fileName: file.name,
