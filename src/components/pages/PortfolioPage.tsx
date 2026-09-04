@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities';
@@ -10,10 +10,40 @@ import WixImageResolver from '@/lib/wix-image-resolver';
 import { STATIC_MEDIA_URL } from '@wix/image-kit';
 import { Image } from '@/components/ui/image';
 
+const ROW_UNIT = 8; // pixels per row unit
+const GAP = 24; // gap in pixels (matches gap-6 = 1.5rem = 24px)
+
 interface ImageWithAspectRatio extends Portfolio {
   aspectRatio?: number;
   gridSpan?: 'vertical' | 'horizontal' | 'square';
+  originWidth?: number;
+  originHeight?: number;
+  gridRowSpan?: number;
 }
+
+/**
+ * Extract origin dimensions from wix:image:// URL fragment
+ * Format: wix:image://v1/{uri}/{filename}#originWidth={w}&originHeight={h}
+ */
+const extractOriginDimensions = (url: string): { width?: number; height?: number } => {
+  if (!url) return {};
+  
+  const wixImagePrefix = 'wix:image://v1/';
+  if (url.startsWith(wixImagePrefix)) {
+    const withoutPrefix = url.replace(wixImagePrefix, '');
+    const [, paramsString] = withoutPrefix.split('#');
+    if (paramsString) {
+      const params = new URLSearchParams(paramsString);
+      const width = params.get('originWidth');
+      const height = params.get('originHeight');
+      return {
+        width: width ? parseInt(width, 10) : undefined,
+        height: height ? parseInt(height, 10) : undefined,
+      };
+    }
+  }
+  return {};
+};
 
 /**
  * Convert wix:image:// URLs to HTTPS URLs for browser rendering
@@ -45,9 +75,21 @@ const convertWixImageToHttps = (url: string): string => {
   return url;
 };
 
+/**
+ * Calculate grid row span based on aspect ratio and column width
+ * Formula: (columnWidth * aspectRatio + gap) / ROW_UNIT, rounded up
+ */
+const calculateGridRowSpan = (aspectRatio: number, columnWidth: number): number => {
+  if (!aspectRatio || !columnWidth) return 1;
+  const height = columnWidth * aspectRatio + GAP;
+  return Math.ceil(height / ROW_UNIT);
+};
+
 export default function PortfolioPage() {
   const [allImages, setAllImages] = useState<ImageWithAspectRatio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [columnWidth, setColumnWidth] = useState(0);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   // Determine grid span based on aspect ratio
   const getGridSpan = (aspectRatio: number): 'vertical' | 'horizontal' | 'square' => {
@@ -55,6 +97,40 @@ export default function PortfolioPage() {
     if (aspectRatio > 1.3) return 'horizontal'; // Landscape: wider than tall
     return 'square'; // Near square
   };
+
+  // Set up ResizeObserver to track column width changes
+  useEffect(() => {
+    if (!gridRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (gridRef.current) {
+        const gridStyle = window.getComputedStyle(gridRef.current);
+        const gridTemplateColumns = gridStyle.gridTemplateColumns;
+        if (gridTemplateColumns && gridTemplateColumns !== 'none') {
+          const columns = gridTemplateColumns.split(' ');
+          const firstColWidth = parseFloat(columns[0]);
+          if (!isNaN(firstColWidth)) {
+            setColumnWidth(firstColWidth);
+          }
+        }
+      }
+    });
+
+    resizeObserver.observe(gridRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Recalculate grid row spans when column width changes
+  useEffect(() => {
+    if (columnWidth > 0 && allImages.length > 0) {
+      setAllImages(prevImages =>
+        prevImages.map(img => ({
+          ...img,
+          gridRowSpan: img.aspectRatio ? calculateGridRowSpan(img.aspectRatio, columnWidth) : 1,
+        }))
+      );
+    }
+  }, [columnWidth]);
 
   // Fetch all images from portfolioimages collection
   useEffect(() => {
@@ -104,28 +180,49 @@ export default function PortfolioPage() {
           sortedImages.map(
             (image) =>
               new Promise<ImageWithAspectRatio>((resolve) => {
-                const img = new window.Image();
-                img.onload = () => {
-                  const aspectRatio = img.naturalWidth / img.naturalHeight;
+                // Try to extract origin dimensions from URL first
+                const urlDims = extractOriginDimensions(image.image);
+                
+                if (urlDims.width && urlDims.height) {
+                  // Use extracted dimensions
+                  const aspectRatio = urlDims.width / urlDims.height;
                   resolve({
                     ...image,
+                    originWidth: urlDims.width,
+                    originHeight: urlDims.height,
                     aspectRatio,
                     gridSpan: getGridSpan(aspectRatio),
+                    gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : 1,
                   });
-                };
-                img.onerror = () => {
-                  console.warn('Failed to load image:', image.image);
-                  resolve({
-                    ...image,
-                    aspectRatio: 1,
-                    gridSpan: 'square',
-                  });
-                };
-                // Resolve wix:image:// URLs to HTTPS before setting as src
-                // This ensures the browser can load the image without CSP violations
-                const resolved = WixImageResolver.resolve(image.image);
-                const browserUrl = convertWixImageToHttps(resolved.url);
-                img.src = browserUrl || '';
+                } else {
+                  // Fall back to loading image to measure
+                  const img = new window.Image();
+                  img.onload = () => {
+                    const aspectRatio = img.naturalWidth / img.naturalHeight;
+                    resolve({
+                      ...image,
+                      originWidth: img.naturalWidth,
+                      originHeight: img.naturalHeight,
+                      aspectRatio,
+                      gridSpan: getGridSpan(aspectRatio),
+                      gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : 1,
+                    });
+                  };
+                  img.onerror = () => {
+                    console.warn('Failed to load image:', image.image);
+                    resolve({
+                      ...image,
+                      aspectRatio: 1,
+                      gridSpan: 'square',
+                      gridRowSpan: 1,
+                    });
+                  };
+                  // Resolve wix:image:// URLs to HTTPS before setting as src
+                  // This ensures the browser can load the image without CSP violations
+                  const resolved = WixImageResolver.resolve(image.image);
+                  const browserUrl = convertWixImageToHttps(resolved.url);
+                  img.src = browserUrl || '';
+                }
               })
           )
         );
@@ -162,10 +259,17 @@ export default function PortfolioPage() {
         {/* Scrolling Photos Grid */}
         {!isLoading && allImages.length > 0 && (
           <motion.div
+            ref={gridRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max items-start"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+              gridAutoRows: `${ROW_UNIT}px`,
+              gap: `${GAP}px`,
+              alignItems: 'start',
+            }}
           >
             {allImages.map((image, index) => (
               <motion.div
@@ -173,14 +277,16 @@ export default function PortfolioPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05, duration: 0.4 }}
-                className={`relative overflow-hidden rounded-lg bg-white/5 group cursor-pointer ${
-                  image.gridSpan === 'vertical' ? 'md:row-span-2' : ''
-                } ${image.gridSpan === 'horizontal' ? 'md:col-span-2' : ''}`}
+                style={{
+                  gridRowEnd: image.gridRowSpan ? `span ${image.gridRowSpan}` : 'auto',
+                }}
+                className="relative overflow-hidden rounded-lg bg-white/5 group cursor-pointer"
               >
                 <Image
                   src={WixImageResolver.resolve(image.image).url}
                   alt={image.altText || image.caption || 'Portfolio image'}
-                  className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                  fittingType="fit"
+                  className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                   width={400}
                   height={300}
                   loading="lazy"

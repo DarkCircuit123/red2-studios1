@@ -8,19 +8,97 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { playClickSound } from '@/lib/click-sound';
 import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
+import WixImageResolver from '@/lib/wix-image-resolver';
+
+const ROW_UNIT = 8; // pixels per row unit
+const GAP = 24; // gap in pixels (matches gap-6 = 1.5rem = 24px)
 
 interface ImageWithLayout extends Portfolio {
   layoutSize: 'small' | 'medium' | 'large';
   layoutOrientation: 'portrait' | 'landscape' | 'square';
+  aspectRatio?: number;
+  originWidth?: number;
+  originHeight?: number;
+  gridRowSpan?: number;
 }
+
+/**
+ * Extract origin dimensions from wix:image:// URL fragment
+ * Format: wix:image://v1/{uri}/{filename}#originWidth={w}&originHeight={h}
+ */
+const extractOriginDimensions = (url: string): { width?: number; height?: number } => {
+  if (!url) return {};
+  
+  const wixImagePrefix = 'wix:image://v1/';
+  if (url.startsWith(wixImagePrefix)) {
+    const withoutPrefix = url.replace(wixImagePrefix, '');
+    const [, paramsString] = withoutPrefix.split('#');
+    if (paramsString) {
+      const params = new URLSearchParams(paramsString);
+      const width = params.get('originWidth');
+      const height = params.get('originHeight');
+      return {
+        width: width ? parseInt(width, 10) : undefined,
+        height: height ? parseInt(height, 10) : undefined,
+      };
+    }
+  }
+  return {};
+};
+
+/**
+ * Calculate grid row span based on aspect ratio and column width
+ * Formula: (columnWidth * aspectRatio + gap) / ROW_UNIT, rounded up
+ */
+const calculateGridRowSpan = (aspectRatio: number, columnWidth: number): number => {
+  if (!aspectRatio || !columnWidth) return 1;
+  const height = columnWidth * aspectRatio + GAP;
+  return Math.ceil(height / ROW_UNIT);
+};
 
 export default function WorkPage() {
   const [allImages, setAllImages] = useState<ImageWithLayout[]>([])
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [columnWidth, setColumnWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
+
+  // Set up ResizeObserver to track column width changes
+  useEffect(() => {
+    if (!gridRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (gridRef.current) {
+        const gridStyle = window.getComputedStyle(gridRef.current);
+        const gridTemplateColumns = gridStyle.gridTemplateColumns;
+        if (gridTemplateColumns && gridTemplateColumns !== 'none') {
+          const columns = gridTemplateColumns.split(' ');
+          const firstColWidth = parseFloat(columns[0]);
+          if (!isNaN(firstColWidth)) {
+            setColumnWidth(firstColWidth);
+          }
+        }
+      }
+    });
+
+    resizeObserver.observe(gridRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Recalculate grid row spans when column width changes
+  useEffect(() => {
+    if (columnWidth > 0 && allImages.length > 0) {
+      setAllImages(prevImages =>
+        prevImages.map(img => ({
+          ...img,
+          gridRowSpan: img.aspectRatio ? calculateGridRowSpan(img.aspectRatio, columnWidth) : 1,
+        }))
+      );
+    }
+  }, [columnWidth]);
 
   // Fetch all images from portfolioimages collection
   useEffect(() => {
@@ -58,33 +136,75 @@ export default function WorkPage() {
           }));
         }
         
-        // Assign artful layout sizes and orientations
-        const layoutImages: ImageWithLayout[] = validImages.map((img, index) => {
-          const layoutPattern = index % 12;
-          let layoutSize: 'small' | 'medium' | 'large' = 'medium';
-          let layoutOrientation: 'portrait' | 'landscape' | 'square' = 'square';
+        // Assign artful layout sizes and orientations, load dimensions
+        const layoutImages: ImageWithLayout[] = await Promise.all(
+          validImages.map(async (img, index) => {
+            const layoutPattern = index % 12;
+            let layoutSize: 'small' | 'medium' | 'large' = 'medium';
+            let layoutOrientation: 'portrait' | 'landscape' | 'square' = 'square';
 
-          // Create an artful pattern
-          if (layoutPattern === 0 || layoutPattern === 7) {
-            layoutSize = 'large';
-            layoutOrientation = layoutPattern === 0 ? 'landscape' : 'portrait';
-          } else if (layoutPattern === 3 || layoutPattern === 9) {
-            layoutSize = 'large';
-            layoutOrientation = layoutPattern === 3 ? 'portrait' : 'landscape';
-          } else if (layoutPattern % 2 === 0) {
-            layoutSize = 'medium';
-            layoutOrientation = 'square';
-          } else {
-            layoutSize = 'small';
-            layoutOrientation = layoutPattern % 3 === 1 ? 'portrait' : 'landscape';
-          }
+            // Create an artful pattern
+            if (layoutPattern === 0 || layoutPattern === 7) {
+              layoutSize = 'large';
+              layoutOrientation = layoutPattern === 0 ? 'landscape' : 'portrait';
+            } else if (layoutPattern === 3 || layoutPattern === 9) {
+              layoutSize = 'large';
+              layoutOrientation = layoutPattern === 3 ? 'portrait' : 'landscape';
+            } else if (layoutPattern % 2 === 0) {
+              layoutSize = 'medium';
+              layoutOrientation = 'square';
+            } else {
+              layoutSize = 'small';
+              layoutOrientation = layoutPattern % 3 === 1 ? 'portrait' : 'landscape';
+            }
 
-          return {
-            ...img,
-            layoutSize,
-            layoutOrientation,
-          };
-        });
+            // Try to extract origin dimensions from URL first
+            const urlDims = extractOriginDimensions(img.image);
+            
+            if (urlDims.width && urlDims.height) {
+              // Use extracted dimensions
+              const aspectRatio = urlDims.width / urlDims.height;
+              return {
+                ...img,
+                layoutSize,
+                layoutOrientation,
+                originWidth: urlDims.width,
+                originHeight: urlDims.height,
+                aspectRatio,
+                gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : 1,
+              };
+            } else {
+              // Fall back to loading image to measure
+              return new Promise<ImageWithLayout>((resolve) => {
+                const image = new window.Image();
+                image.onload = () => {
+                  const aspectRatio = image.naturalWidth / image.naturalHeight;
+                  resolve({
+                    ...img,
+                    layoutSize,
+                    layoutOrientation,
+                    originWidth: image.naturalWidth,
+                    originHeight: image.naturalHeight,
+                    aspectRatio,
+                    gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : 1,
+                  });
+                };
+                image.onerror = () => {
+                  console.warn('Failed to load image:', img.image);
+                  resolve({
+                    ...img,
+                    layoutSize,
+                    layoutOrientation,
+                    aspectRatio: 1,
+                    gridRowSpan: 1,
+                  });
+                };
+                const resolved = WixImageResolver.resolve(img.image);
+                image.src = resolved.url || '';
+              });
+            }
+          })
+        );
 
         setAllImages(layoutImages);
       } catch (error) {
@@ -111,17 +231,6 @@ export default function WorkPage() {
     };
     img.src = selectedImage;
   }, [selectedImage]);
-
-  const getGridClasses = (image: ImageWithLayout) => {
-    const baseClasses = 'relative overflow-hidden group cursor-pointer';
-    
-    if (image.layoutSize === 'large') {
-      return `${baseClasses} md:col-span-2 md:row-span-2`;
-    } else if (image.layoutSize === 'medium') {
-      return `${baseClasses} md:col-span-2 md:row-span-1`;
-    }
-    return baseClasses;
-  };
 
   return (
     <div className="min-h-screen bg-black overflow-hidden">
@@ -182,7 +291,13 @@ export default function WorkPage() {
 
         {/* Masonry Grid - Pure Photos */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-max">
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+            gridAutoRows: `${ROW_UNIT}px`,
+            gap: `${GAP}px`,
+            alignItems: 'start',
+          }}>
             {Array(16)
               .fill(null)
               .map((_, i) => (
@@ -191,16 +306,24 @@ export default function WorkPage() {
                   initial={{ opacity: 0.5 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.6, delay: i * 0.05 }}
-                  className="bg-white/5 animate-pulse min-h-[300px] md:min-h-[400px]"
+                  className="bg-white/5 animate-pulse"
+                  style={{ gridRowEnd: 'span 50' }}
                 />
               ))}
           </div>
         ) : allImages.length > 0 ? (
           <motion.div
+            ref={gridRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-max"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+              gridAutoRows: `${ROW_UNIT}px`,
+              gap: `${GAP}px`,
+              alignItems: 'start',
+            }}
           >
             {allImages.map((image, index) => {
               const yOffset = useTransform(scrollY, [0, 1000], [0, index % 2 === 0 ? 30 : -30]);
@@ -217,8 +340,11 @@ export default function WorkPage() {
                     stiffness: 100,
                     damping: 15,
                   }}
-                  style={{ y: yOffset }}
-                  className={getGridClasses(image)}
+                  style={{
+                    y: yOffset,
+                    gridRowEnd: image.gridRowSpan ? `span ${image.gridRowSpan}` : 'auto',
+                  }}
+                  className="relative overflow-hidden group cursor-pointer"
                   onClick={() => {
                     playClickSound();
                     setSelectedImage(image.image || '');
@@ -226,7 +352,7 @@ export default function WorkPage() {
                 >
                   {/* Image Container with Parallax */}
                   <motion.div
-                    className="relative w-full h-auto overflow-hidden bg-black/30"
+                    className="relative w-full h-full overflow-hidden bg-black/30"
                     whileHover={{ scale: 1.02 }}
                     transition={{ duration: 0.4, type: 'spring', stiffness: 200 }}
                   >
@@ -234,10 +360,11 @@ export default function WorkPage() {
                     <Image
                       src={image.image || 'https://static.wixstatic.com/media/e9d727_9c9c4486a82b496ca6c48026f5bbed4d~mv2.png?originWidth=576&originHeight=384'}
                       alt={image.altText || 'Portfolio image'}
-                      className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-110"
+                      fittingType="fit"
+                      className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
                       data-field-name="image"
                       data-record-id={image._id}
-                       loading="lazy"
+                      loading="lazy"
                     />
 
                     {/* Subtle grain overlay */}
