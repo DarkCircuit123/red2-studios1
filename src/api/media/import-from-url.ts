@@ -3,6 +3,7 @@ import { files } from '@wix/media';
 import { auth } from '@wix/essentials';
 import { IMAGE_UPLOAD_CONFIG, MUSIC_UPLOAD_CONFIG, validateFileAgainstConfig } from '@/lib/upload-config';
 import { isSafeExternalUrl } from '@/lib/safe-external-url';
+import { requireAdmin } from '@/lib/auth-security';
 
 /**
  * Import from URL API - Lets the admin paste a link to an image or audio file
