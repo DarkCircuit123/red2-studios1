@@ -909,7 +909,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     </h3>
                     <p className="text-xs text-black/60">Edit about page content and image</p>
                   </div>
-                  {aboutSettings && (
+                  {aboutSettings ? (
                     <div className="space-y-4">
                       <TextEditableField
                         label="Heading"
@@ -969,37 +969,40 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         isSaving={isSavingAbout}
                         isTextarea
                       />
-                      {aboutSettings.mainImage && (
-                        <ImageUploadManager
-                          label="Main Image"
-                          currentImage={aboutSettings.mainImage}
-                          collectionId="about"
-                          itemId={aboutSettings._id}
-                          fieldName="mainImage"
-                          onImageUpload={async (url) => {
-                            try {
-                              await adminCms.update('about', {
-                                _id: aboutSettings._id,
-                                mainImage: url,
-                              });
-                              setAboutSettings({ ...aboutSettings, mainImage: url });
-                            } catch (error) {
-                              console.error('Failed to update main image:', error);
-                            }
-                          }}
-                          onImageDelete={async () => {
-                            try {
-                              await adminCms.update('about', {
-                                _id: aboutSettings._id,
-                                mainImage: undefined,
-                              });
-                              setAboutSettings({ ...aboutSettings, mainImage: undefined });
-                            } catch (error) {
-                              console.error('Failed to delete main image:', error);
-                            }
-                          }}
-                        />
-                      )}
+                      <ImageUploadManager
+                        label="Main Image"
+                        currentImage={aboutSettings.mainImage}
+                        collectionId="about"
+                        itemId={aboutSettings._id}
+                        fieldName="mainImage"
+                        onImageUpload={async (url) => {
+                          try {
+                            await adminCms.update('about', {
+                              _id: aboutSettings._id,
+                              mainImage: url,
+                            });
+                            setAboutSettings({ ...aboutSettings, mainImage: url });
+                          } catch (error) {
+                            console.error('Failed to update main image:', error);
+                          }
+                        }}
+                        onImageDelete={async () => {
+                          try {
+                            await adminCms.update('about', {
+                              _id: aboutSettings._id,
+                              mainImage: undefined,
+                            });
+                            setAboutSettings({ ...aboutSettings, mainImage: undefined });
+                          } catch (error) {
+                            console.error('Failed to delete main image:', error);
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                      <p className="text-sm text-red-700">About data failed to load. Please try refreshing the page.</p>
                     </div>
                   )}
                 </div>
