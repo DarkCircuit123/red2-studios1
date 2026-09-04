@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Edit2, Music, Calendar, LogOut, Trash2, Upload } from 'lucide-react';
+import { Settings, X, Edit2, Music, Calendar, LogOut, Trash2, Upload, Plus, AlertCircle } from 'lucide-react';
 import { useMember } from '@/integrations';
 import TextEditableField from './TextEditableField';
 import ImageUploadManager from './ImageUploadManager';
@@ -9,11 +9,14 @@ import BackgroundMusicManager from './AdminPanel/sections/BackgroundMusicManager
 import BookingManagerPro from './BookingManagerPro';
 import RubberBandPhotosManager from './AdminPanel/sections/RubberBandPhotosManager';
 import SplashpageManager from './AdminPanel/sections/SplashpageManager';
+import BehindTheScenesManager from './AdminPanel/sections/BehindTheScenesManager';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages, ClientsPress, AboutSection, Portfolio, MusicSettings } from '@/entities/index';
 import { playClickSound } from '@/lib/click-sound';
 import { Image } from '@/components/ui/image';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const MAX_GALLERY_SLOTS = 90;
 
@@ -32,6 +35,14 @@ interface GallerySlot {
   altText?: string;
 }
 
+interface SponsorEditState {
+  [key: string]: {
+    clientName: string;
+    category: string;
+    externalLink: string;
+  };
+}
+
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { member, actions: memberActions } = useMember();
   const [activeTab, setActiveTab] = useState('photos');
@@ -45,6 +56,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [gallerySlots, setGallerySlots] = useState<GallerySlot[]>([]);
   const [isInitializingGallery, setIsInitializingGallery] = useState(false);
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
+  const [sponsorEdits, setSponsorEdits] = useState<SponsorEditState>({});
+  const [uploadingSponsorId, setUploadingSponsorId] = useState<string | null>(null);
 
   // Initialize gallery with self-healing
   const initializeGallery = useCallback(async () => {
@@ -180,6 +193,79 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
       console.error('[ADMIN PANEL] Logout error:', error);
     }
   }, [memberActions, onClose]);
+
+  const handleSponsorFieldChange = (sponsorId: string, field: string, value: string) => {
+    setSponsorEdits(prev => ({
+      ...prev,
+      [sponsorId]: {
+        ...prev[sponsorId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSaveSponsor = async (sponsor: ClientsPress) => {
+    const edits = sponsorEdits[sponsor._id];
+    if (!edits) return;
+
+    try {
+      await adminCms.update('clientspress', {
+        _id: sponsor._id,
+        clientName: edits.clientName,
+        category: edits.category,
+        externalLink: edits.externalLink,
+      });
+      
+      // Update local state
+      setSponsors(sponsors.map(s => 
+        s._id === sponsor._id 
+          ? { ...s, clientName: edits.clientName, category: edits.category, externalLink: edits.externalLink }
+          : s
+      ));
+      
+      // Clear edits
+      setSponsorEdits(prev => {
+        const newEdits = { ...prev };
+        delete newEdits[sponsor._id];
+        return newEdits;
+      });
+    } catch (error) {
+      console.error('Failed to save sponsor:', error);
+    }
+  };
+
+  const handleDeleteSponsor = async (sponsorId: string) => {
+    try {
+      await adminCms.delete('clientspress', sponsorId);
+      setSponsors(sponsors.filter(s => s._id !== sponsorId));
+      setSponsorEdits(prev => {
+        const newEdits = { ...prev };
+        delete newEdits[sponsorId];
+        return newEdits;
+      });
+    } catch (error) {
+      console.error('Failed to delete sponsor:', error);
+    }
+  };
+
+  const handleAddSponsor = async () => {
+    try {
+      const newSponsor: ClientsPress = {
+        _id: crypto.randomUUID(),
+        clientName: '',
+        clientLogo: undefined,
+        externalLink: '',
+        highlightDescription: '',
+        dateOfFeature: undefined,
+        category: '',
+      };
+      
+      await adminCms.create('clientspress', newSponsor);
+      setSponsors([...sponsors, newSponsor]);
+    } catch (error) {
+      console.error('Failed to add sponsor:', error);
+    }
+  };
 
   if (!isOpen) {
     return null;
@@ -415,37 +501,122 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     </h3>
                     <p className="text-xs text-black/60">Manage hero, about, and contact section images</p>
                   </div>
-                  {homepageImages && (
-                    <ImageUploadManager
-                      label="Hero Image"
-                      currentImage={homepageImages.heroImage}
-                      collectionId="homepageimages"
-                      itemId={homepageImages._id}
-                      fieldName="heroImage"
-                      onImageUpload={async (url) => {
-                        try {
-                          await adminCms.update('homepageimages', {
-                            _id: homepageImages._id,
-                            heroImage: url,
-                          });
-                          setHomepageImages({ ...homepageImages, heroImage: url });
-                        } catch (error) {
-                          console.error('Failed to update hero image:', error);
-                        }
-                      }}
-                      onImageDelete={async () => {
-                        try {
-                          await adminCms.update('homepageimages', {
-                            _id: homepageImages._id,
-                            heroImage: undefined,
-                          });
-                          setHomepageImages({ ...homepageImages, heroImage: undefined });
-                        } catch (error) {
-                          console.error('Failed to delete hero image:', error);
-                        }
-                      }}
-                    />
+                  {homepageImages ? (
+                    <div className="space-y-6">
+                      <ImageUploadManager
+                        label="Hero Image"
+                        currentImage={homepageImages.heroImage}
+                        collectionId="homepageimages"
+                        itemId={homepageImages._id}
+                        fieldName="heroImage"
+                        onImageUpload={async (url) => {
+                          try {
+                            await adminCms.update('homepageimages', {
+                              _id: homepageImages._id,
+                              heroImage: url,
+                            });
+                            setHomepageImages({ ...homepageImages, heroImage: url });
+                          } catch (error) {
+                            console.error('Failed to update hero image:', error);
+                          }
+                        }}
+                        onImageDelete={async () => {
+                          try {
+                            await adminCms.update('homepageimages', {
+                              _id: homepageImages._id,
+                              heroImage: undefined,
+                            });
+                            setHomepageImages({ ...homepageImages, heroImage: undefined });
+                          } catch (error) {
+                            console.error('Failed to delete hero image:', error);
+                          }
+                        }}
+                      />
+                      <ImageUploadManager
+                        label="About Section Image"
+                        currentImage={homepageImages.aboutSectionImage}
+                        collectionId="homepageimages"
+                        itemId={homepageImages._id}
+                        fieldName="aboutSectionImage"
+                        onImageUpload={async (url) => {
+                          try {
+                            await adminCms.update('homepageimages', {
+                              _id: homepageImages._id,
+                              aboutSectionImage: url,
+                            });
+                            setHomepageImages({ ...homepageImages, aboutSectionImage: url });
+                          } catch (error) {
+                            console.error('Failed to update about section image:', error);
+                          }
+                        }}
+                        onImageDelete={async () => {
+                          try {
+                            await adminCms.update('homepageimages', {
+                              _id: homepageImages._id,
+                              aboutSectionImage: undefined,
+                            });
+                            setHomepageImages({ ...homepageImages, aboutSectionImage: undefined });
+                          } catch (error) {
+                            console.error('Failed to delete about section image:', error);
+                          }
+                        }}
+                      />
+                      <ImageUploadManager
+                        label="Contact Background Image"
+                        currentImage={homepageImages.contactBackgroundImage}
+                        collectionId="homepageimages"
+                        itemId={homepageImages._id}
+                        fieldName="contactBackgroundImage"
+                        onImageUpload={async (url) => {
+                          try {
+                            await adminCms.update('homepageimages', {
+                              _id: homepageImages._id,
+                              contactBackgroundImage: url,
+                            });
+                            setHomepageImages({ ...homepageImages, contactBackgroundImage: url });
+                          } catch (error) {
+                            console.error('Failed to update contact background image:', error);
+                          }
+                        }}
+                        onImageDelete={async () => {
+                          try {
+                            await adminCms.update('homepageimages', {
+                              _id: homepageImages._id,
+                              contactBackgroundImage: undefined,
+                            });
+                            setHomepageImages({ ...homepageImages, contactBackgroundImage: undefined });
+                          } catch (error) {
+                            console.error('Failed to delete contact background image:', error);
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-heading font-bold text-red-900">Data Failed to Load</p>
+                        <p className="text-xs text-red-700 mt-1">Unable to load homepage images. Please try refreshing the admin panel.</p>
+                      </div>
+                    </div>
                   )}
+                  
+                  <div className="border-t border-black/10 pt-6">
+                    <h4 className="text-sm font-heading font-bold text-black mb-4 uppercase tracking-wide">Splashpage</h4>
+                    <SplashpageManager />
+                  </div>
+                  
+                  <div className="border-t border-black/10 pt-6">
+                    <h4 className="text-sm font-heading font-bold text-black mb-4 uppercase tracking-wide">Behind The Scenes</h4>
+                    <BehindTheScenesManager />
+                  </div>
+                  
+                  <div className="border-t border-black/10 pt-6">
+                    <h4 className="text-sm font-heading font-bold text-black mb-4 uppercase tracking-wide">Carousel Images</h4>
+                    <div className="bg-gradient-to-b from-black to-black/95 border border-white/10 rounded-lg p-6">
+                      <RubberBandPhotosManager />
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -458,9 +629,152 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     </h3>
                     <p className="text-xs text-black/60">Manage client logos and press mentions</p>
                   </div>
-                  <div className="bg-gradient-to-b from-black to-black/95 border border-white/10 rounded-lg p-6">
-                    <RubberBandPhotosManager />
+                  
+                  <div className="space-y-4">
+                    {sponsors.map((sponsor) => {
+                      const edits = sponsorEdits[sponsor._id];
+                      const isEditing = !!edits;
+                      
+                      return (
+                        <div key={sponsor._id} className="border border-black/10 rounded-lg p-4 space-y-3">
+                          <div className="flex items-start gap-4">
+                            {sponsor.clientLogo && (
+                              <div className="flex-shrink-0">
+                                <Image
+                                  src={sponsor.clientLogo}
+                                  alt={sponsor.clientName || 'Sponsor'}
+                                  className="w-16 h-16 object-cover rounded"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Client Name"
+                                value={isEditing ? edits.clientName : (sponsor.clientName || '')}
+                                onChange={(e) => {
+                                  if (!isEditing) {
+                                    setSponsorEdits(prev => ({
+                                      ...prev,
+                                      [sponsor._id]: {
+                                        clientName: e.target.value,
+                                        category: sponsor.category || '',
+                                        externalLink: sponsor.externalLink || '',
+                                      },
+                                    }));
+                                  } else {
+                                    handleSponsorFieldChange(sponsor._id, 'clientName', e.target.value);
+                                  }
+                                }}
+                                className="w-full px-2 py-1 text-sm border border-black/10 rounded"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Category"
+                                value={isEditing ? edits.category : (sponsor.category || '')}
+                                onChange={(e) => {
+                                  if (!isEditing) {
+                                    setSponsorEdits(prev => ({
+                                      ...prev,
+                                      [sponsor._id]: {
+                                        clientName: sponsor.clientName || '',
+                                        category: e.target.value,
+                                        externalLink: sponsor.externalLink || '',
+                                      },
+                                    }));
+                                  } else {
+                                    handleSponsorFieldChange(sponsor._id, 'category', e.target.value);
+                                  }
+                                }}
+                                className="w-full px-2 py-1 text-sm border border-black/10 rounded"
+                              />
+                              <input
+                                type="text"
+                                placeholder="External Link"
+                                value={isEditing ? edits.externalLink : (sponsor.externalLink || '')}
+                                onChange={(e) => {
+                                  if (!isEditing) {
+                                    setSponsorEdits(prev => ({
+                                      ...prev,
+                                      [sponsor._id]: {
+                                        clientName: sponsor.clientName || '',
+                                        category: sponsor.category || '',
+                                        externalLink: e.target.value,
+                                      },
+                                    }));
+                                  } else {
+                                    handleSponsorFieldChange(sponsor._id, 'externalLink', e.target.value);
+                                  }
+                                }}
+                                className="w-full px-2 py-1 text-sm border border-black/10 rounded"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            {isEditing ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSaveSponsor(sponsor)}
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                  Save
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSponsorEdits(prev => {
+                                      const newEdits = { ...prev };
+                                      delete newEdits[sponsor._id];
+                                      return newEdits;
+                                    });
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSponsorEdits(prev => ({
+                                      ...prev,
+                                      [sponsor._id]: {
+                                        clientName: sponsor.clientName || '',
+                                        category: sponsor.category || '',
+                                        externalLink: sponsor.externalLink || '',
+                                      },
+                                    }));
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteSponsor(sponsor._id)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
+                  
+                  <Button
+                    onClick={handleAddSponsor}
+                    className="w-full bg-black hover:bg-black/90 text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Sponsor
+                  </Button>
                 </div>
               )}
 
