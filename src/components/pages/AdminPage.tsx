@@ -3,7 +3,7 @@ import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 import AdminAccessGate from '@/components/AdminAccessGate';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-// Lazy load AdminDashboard (new tabbed interface with WorkGalleryManagerV4)
+// Lazy load AdminDashboard (new tabbed interface with WorkGalleryManager)
 const AdminDashboard = lazy(() => import('@/components/AdminPanel/AdminDashboard'));
 
 /**

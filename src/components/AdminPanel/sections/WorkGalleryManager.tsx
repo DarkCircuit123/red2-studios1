@@ -1,5 +1,5 @@
 /**
- * Work Gallery Manager V4 - 90 SLOT GALLERY WITH DATABASE PERSISTENCE
+ * Work Gallery Manager - 90 SLOT GALLERY WITH DATABASE PERSISTENCE
  * FIXED: Uses the safe upsert API for CMS persistence
  * 
  * This version manages 90 slots with full metadata tracking:
@@ -48,8 +48,8 @@ interface StatusMessage {
   message: string;
 }
 
-export default function WorkGalleryManagerV4() {
-  console.log('[WorkGalleryManagerV4] Component rendering');
+export default function WorkGalleryManager() {
+  console.log('[WorkGalleryManager] Component rendering');
   
   // 90 SLOTS WITH DATABASE PERSISTENCE
   const [slots, setSlots] = useState<SlotData[]>(() => {
@@ -65,7 +65,7 @@ export default function WorkGalleryManagerV4() {
         uploadedAt: undefined,
       };
     });
-    console.log('[WorkGalleryManagerV4] Initial state created with', initialSlots.length, 'slots');
+    console.log('[WorkGalleryManager] Initial state created with', initialSlots.length, 'slots');
     return initialSlots;
   });
 
@@ -92,7 +92,7 @@ export default function WorkGalleryManagerV4() {
       const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 1000 });
       const dbPhotos = result.items || [];
       
-      console.log('[WorkGalleryManagerV4] Loaded', dbPhotos.length, 'photos from database');
+      console.log('[WorkGalleryManager] Loaded', dbPhotos.length, 'photos from database');
       
       // Map database photos to slots based on displayOrder
       const updatedSlots = slots.map(slot => {
@@ -112,7 +112,7 @@ export default function WorkGalleryManagerV4() {
       
       setSlots(updatedSlots);
     } catch (error) {
-      console.error('[WorkGalleryManagerV4] Error loading photos:', error);
+      console.error('[WorkGalleryManager] Error loading photos:', error);
       addStatusMessage('error', 'Failed to load photos from database');
     } finally {
       setIsLoading(false);
@@ -188,7 +188,7 @@ export default function WorkGalleryManagerV4() {
               throw new Error('No image URL returned');
             }
 
-            console.log('[WorkGalleryManagerV4] Wix Media upload succeeded for slot', emptySlot.slotNumber, 'URL:', imageUrl);
+            console.log('[WorkGalleryManager] Wix Media upload succeeded for slot', emptySlot.slotNumber, 'URL:', imageUrl);
 
             // Step 2: Upsert to CMS using the safe upsert API
             const upsertResponse = await fetch('/api/portfolio/upsert-slot', {
@@ -209,7 +209,7 @@ export default function WorkGalleryManagerV4() {
             }
 
             const upsertData = await upsertResponse.json();
-            console.log('[WorkGalleryManagerV4] CMS upsert succeeded for slot', emptySlot.slotNumber, 'itemId:', upsertData.itemId, 'action:', upsertData.action);
+            console.log('[WorkGalleryManager] CMS upsert succeeded for slot', emptySlot.slotNumber, 'itemId:', upsertData.itemId, 'action:', upsertData.action);
 
             // Update local slot
             emptySlot.image = convertWixImageToHttps(imageUrl) || imageUrl;
@@ -221,7 +221,7 @@ export default function WorkGalleryManagerV4() {
 
             addStatusMessage('success', `Slot ${emptySlot.slotNumber}: ${upsertData.action === 'created' ? 'created' : 'updated'}`);
           } catch (error) {
-            console.error('[WorkGalleryManagerV4] Error uploading file:', error);
+            console.error('[WorkGalleryManager] Error uploading file:', error);
             addStatusMessage('error', `Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
         }
@@ -235,7 +235,7 @@ export default function WorkGalleryManagerV4() {
 
       addStatusMessage('success', `Successfully uploaded ${filesAdded} file(s)`);
     } catch (error) {
-      console.error('[WorkGalleryManagerV4] Upload error:', error);
+      console.error('[WorkGalleryManager] Upload error:', error);
       addStatusMessage('error', 'Upload failed');
     } finally {
       setIsUploading(false);
@@ -299,7 +299,7 @@ export default function WorkGalleryManagerV4() {
         addStatusMessage('success', `Slot ${slotNumber} replaced`);
       }
     } catch (error) {
-      console.error('[WorkGalleryManagerV4] Replace error:', error);
+      console.error('[WorkGalleryManager] Replace error:', error);
       addStatusMessage('error', `Failed to replace slot ${slotNumber}`);
     } finally {
       setReplacingSlot(null);
@@ -334,7 +334,7 @@ export default function WorkGalleryManagerV4() {
         addStatusMessage('success', `Slot ${slotNumber} deleted`);
       }
     } catch (error) {
-      console.error('[WorkGalleryManagerV4] Delete error:', error);
+      console.error('[WorkGalleryManager] Delete error:', error);
       addStatusMessage('error', `Failed to delete slot ${slotNumber}`);
     } finally {
       setDeletingSlot(null);
@@ -357,7 +357,7 @@ export default function WorkGalleryManagerV4() {
 
   const filledSlots = slots.filter(s => s.image).length;
 
-  console.log('[WorkGalleryManagerV4] Rendering with', slots.length, 'slots, filled:', filledSlots);
+  console.log('[WorkGalleryManager] Rendering with', slots.length, 'slots, filled:', filledSlots);
 
   return (
     <div className="space-y-8">
@@ -650,8 +650,7 @@ export default function WorkGalleryManagerV4() {
                 </div>
               )}
             </motion.div>
-          ))}
-        </div>
+          ))}</div>
       </Card>
 
       {/* Preview Modal */}

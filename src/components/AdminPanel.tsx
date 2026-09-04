@@ -404,7 +404,183 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* ... keep existing code (Photos, Sponsors, Music, About tabs) ... */}
+              {/* Photos Tab */}
+              {activeTab === 'photos' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
+                      Homepage Photos
+                    </h3>
+                    <p className="text-xs text-black/60">Manage hero, about, and contact section images</p>
+                  </div>
+                  {homepageImages && (
+                    <ImageUploadManager
+                      label="Hero Image"
+                      currentImage={homepageImages.heroImage}
+                      collectionId="homepageimages"
+                      itemId={homepageImages._id}
+                      fieldName="heroImage"
+                      onImageUpload={async (url) => {
+                        try {
+                          await adminCms.update('homepageimages', {
+                            _id: homepageImages._id,
+                            heroImage: url,
+                          });
+                          setHomepageImages({ ...homepageImages, heroImage: url });
+                        } catch (error) {
+                          console.error('Failed to update hero image:', error);
+                        }
+                      }}
+                      onImageDelete={async () => {
+                        try {
+                          await adminCms.update('homepageimages', {
+                            _id: homepageImages._id,
+                            heroImage: undefined,
+                          });
+                          setHomepageImages({ ...homepageImages, heroImage: undefined });
+                        } catch (error) {
+                          console.error('Failed to delete hero image:', error);
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Sponsors Tab */}
+              {activeTab === 'sponsors' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
+                      Sponsors & Press
+                    </h3>
+                    <p className="text-xs text-black/60">Manage client logos and press mentions</p>
+                  </div>
+                  <div className="bg-gradient-to-b from-black to-black/95 border border-white/10 rounded-lg p-6">
+                    <RubberBandPhotosManager />
+                  </div>
+                </div>
+              )}
+
+              {/* Music Tab */}
+              {activeTab === 'music' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
+                      Background Music
+                    </h3>
+                    <p className="text-xs text-black/60">Configure background music settings</p>
+                  </div>
+                  <div className="bg-gradient-to-b from-black to-black/95 border border-white/10 rounded-lg p-6">
+                    <BackgroundMusicManager />
+                  </div>
+                </div>
+              )}
+
+              {/* About Tab */}
+              {activeTab === 'about' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
+                      About Section
+                    </h3>
+                    <p className="text-xs text-black/60">Edit about page content and image</p>
+                  </div>
+                  {aboutSettings && (
+                    <div className="space-y-4">
+                      <TextEditableField
+                        label="Heading"
+                        value={aboutSettings.heading || ''}
+                        onChange={async (value) => {
+                          setIsSavingAbout(true);
+                          try {
+                            await adminCms.update('about', {
+                              _id: aboutSettings._id,
+                              heading: value,
+                            });
+                            setAboutSettings({ ...aboutSettings, heading: value });
+                          } catch (error) {
+                            console.error('Failed to update heading:', error);
+                          } finally {
+                            setIsSavingAbout(false);
+                          }
+                        }}
+                        isSaving={isSavingAbout}
+                      />
+                      <TextEditableField
+                        label="Subheading"
+                        value={aboutSettings.subheading || ''}
+                        onChange={async (value) => {
+                          setIsSavingAbout(true);
+                          try {
+                            await adminCms.update('about', {
+                              _id: aboutSettings._id,
+                              subheading: value,
+                            });
+                            setAboutSettings({ ...aboutSettings, subheading: value });
+                          } catch (error) {
+                            console.error('Failed to update subheading:', error);
+                          } finally {
+                            setIsSavingAbout(false);
+                          }
+                        }}
+                        isSaving={isSavingAbout}
+                      />
+                      <TextEditableField
+                        label="About Text"
+                        value={aboutSettings.aboutText || ''}
+                        onChange={async (value) => {
+                          setIsSavingAbout(true);
+                          try {
+                            await adminCms.update('about', {
+                              _id: aboutSettings._id,
+                              aboutText: value,
+                            });
+                            setAboutSettings({ ...aboutSettings, aboutText: value });
+                          } catch (error) {
+                            console.error('Failed to update about text:', error);
+                          } finally {
+                            setIsSavingAbout(false);
+                          }
+                        }}
+                        isSaving={isSavingAbout}
+                        isTextarea
+                      />
+                      {aboutSettings.mainImage && (
+                        <ImageUploadManager
+                          label="Main Image"
+                          currentImage={aboutSettings.mainImage}
+                          collectionId="about"
+                          itemId={aboutSettings._id}
+                          fieldName="mainImage"
+                          onImageUpload={async (url) => {
+                            try {
+                              await adminCms.update('about', {
+                                _id: aboutSettings._id,
+                                mainImage: url,
+                              });
+                              setAboutSettings({ ...aboutSettings, mainImage: url });
+                            } catch (error) {
+                              console.error('Failed to update main image:', error);
+                            }
+                          }}
+                          onImageDelete={async () => {
+                            try {
+                              await adminCms.update('about', {
+                                _id: aboutSettings._id,
+                                mainImage: undefined,
+                              });
+                              setAboutSettings({ ...aboutSettings, mainImage: undefined });
+                            } catch (error) {
+                              console.error('Failed to delete main image:', error);
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
         </>
