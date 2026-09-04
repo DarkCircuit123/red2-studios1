@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import AuthMigrationVerifier from '../AuthMigrationVerifier';
 import Header from '../Header';
 import Footer from '../Footer';
 
@@ -18,10 +19,7 @@ export default function AuthMigrationVerificationPage() {
           </div>
 
           <Suspense fallback={<div className="text-center py-8">Loading verification tool...</div>}>
-            <div className="p-6 bg-green-50 border border-green-200 rounded-lg">
-              <h2 className="text-lg font-semibold text-green-900 mb-3">Authentication Status</h2>
-              <p className="text-green-800">Authentication system is active and ready.</p>
-            </div>
+            <AuthMigrationVerifier />
           </Suspense>
 
           <div className="mt-12 p-6 bg-blue-50 border border-blue-200 rounded-lg">

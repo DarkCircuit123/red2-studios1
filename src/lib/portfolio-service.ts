@@ -1,16 +1,5 @@
 import { BaseCrudService } from '@/integrations';
-import { Portfolio } from '@/entities';
-
-interface PortfolioImages {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  portfolioItemId?: string;
-  displayOrder?: number;
-  caption?: string;
-  altText?: string;
-  image?: string;
-}
+import { Portfolio, PortfolioImages } from '@/entities';
 
 export interface PortfolioWithImages extends Portfolio {
   images?: PortfolioImages[];

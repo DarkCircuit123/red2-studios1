@@ -1,17 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { PortfolioService, PortfolioWithImages } from '@/lib/portfolio-service';
-import { Portfolio } from '@/entities';
-
-interface PortfolioImages {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  portfolioItemId?: string;
-  displayOrder?: number;
-  caption?: string;
-  altText?: string;
-  image?: string;
-}
+import { Portfolio, PortfolioImages } from '@/entities';
 
 interface UsePortfolioState {
   portfolios: PortfolioWithImages[];
