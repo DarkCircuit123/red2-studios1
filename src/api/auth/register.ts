@@ -116,11 +116,10 @@ export async function POST({ request, locals }: { request: Request; locals: any 
 
     // Get the context from locals (provided by @wix/astro integration)
     const context = locals;
-    const membersClient = members(context);
 
     try {
       // Create new member with email and password
-      const newMember = await membersClient.createMember({
+      const newMember = await members.createMember({
         loginEmail: email,
         password: password,
         profile: {

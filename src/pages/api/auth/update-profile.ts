@@ -12,13 +12,9 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       );
     }
 
-    // Get the context from locals (provided by @wix/astro integration)
-    const context = locals;
-    const membersClient = members(context);
-
     try {
       // Get current member
-      const currentMember = await membersClient.getCurrentMember();
+      const currentMember = await members.getCurrentMember();
 
       if (!currentMember?.member?._id) {
         return new Response(
@@ -28,7 +24,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       }
 
       // Update member profile with nickname only
-      const updatedMember = await membersClient.updateMember(currentMember.member._id, {
+      const updatedMember = await members.updateMember(currentMember.member._id, {
         profile: {
           nickname: nickname.trim(),
         },

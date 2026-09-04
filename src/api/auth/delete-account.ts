@@ -84,13 +84,8 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       );
     }
 
-    // Get the context from locals (provided by @wix/astro integration)
-    const context = locals;
-    const membersClient = members(context);
-    const authClient = authentication(context);
-
     // Get current member
-    const currentMember = await membersClient.getCurrentMember({ fieldsets: ['FULL'] });
+    const currentMember = await members.getCurrentMember({ fieldsets: ['FULL'] });
 
     if (!currentMember?.member?._id || !currentMember?.member?.loginEmail) {
       return new Response(
@@ -109,7 +104,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
     // member's own email + the submitted password, which only succeeds
     // if the password is actually correct.
     try {
-      await authClient.login({
+      await authentication.login({
         loginEmail: currentMember.member.loginEmail,
         password,
       });
@@ -138,7 +133,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
 
     // Delete the member account
     try {
-      await membersClient.deleteMember(currentMember.member._id);
+      await members.deleteMember(currentMember.member._id);
 
       await logRateLimitAttempt(memberId, '/api/auth/delete-account', true, ipAddress, userAgent);
 

@@ -45,16 +45,11 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       );
     }
 
-    // Get the context from locals (provided by @wix/astro integration)
-    const context = locals;
-    const membersClient = members(context);
-    const authClient = authentication(context);
-
     // Authenticate the user with their credentials
     // This verifies the password is correct
     let loginResult: any;
     try {
-      loginResult = await authClient.login({
+      loginResult = await authentication.login({
         loginEmail: email,
         password: password,
       });
@@ -69,7 +64,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
     // Get the authenticated member's details
     let currentMember: any;
     try {
-      currentMember = await membersClient.getCurrentMember({ fieldsets: ['FULL'] });
+      currentMember = await members.getCurrentMember({ fieldsets: ['FULL'] });
     } catch (memberError) {
       console.error('Failed to get current member:', memberError);
       return new Response(

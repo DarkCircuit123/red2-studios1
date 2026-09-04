@@ -112,12 +112,8 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       );
     }
 
-    // Get the context from locals (provided by @wix/astro integration)
-    const context = locals;
-    const membersClient = members(context);
-
     // Get current member
-    const currentMember = await membersClient.getCurrentMember({ fieldsets: ['FULL'] });
+    const currentMember = await members.getCurrentMember({ fieldsets: ['FULL'] });
     
     if (!currentMember?.member?.loginEmail || !currentMember?.member?._id) {
       return new Response(
@@ -219,7 +215,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       });
 
       // Update the password
-      await membersClient.updateMember(currentMember.member._id, {
+      await members.updateMember(currentMember.member._id, {
         loginEmail: currentMember.member.loginEmail,
         password: newPassword,
       });
