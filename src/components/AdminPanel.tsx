@@ -15,6 +15,8 @@ import { HomepageImages, ClientsPress, AboutSection, Portfolio, MusicSettings } 
 import { playClickSound } from '@/lib/click-sound';
 import { Image } from '@/components/ui/image';
 
+const MAX_GALLERY_SLOTS = 90;
+
 interface AdminPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,7 +25,7 @@ interface AdminPanelProps {
 interface AboutSettings extends AboutSection {}
 
 interface GallerySlot {
-  slotNumber: number; // 1-30
+  slotNumber: number; // 1-MAX_GALLERY_SLOTS
   itemId: string; // CMS item _id
   image?: string; // Image URL
   caption?: string;
@@ -44,7 +46,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [isInitializingGallery, setIsInitializingGallery] = useState(false);
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
 
-  // Initialize 30-slot gallery with self-healing
+  // Initialize gallery with self-healing
   const initializeGallery = useCallback(async () => {
     setIsInitializingGallery(true);
     try {
@@ -55,14 +57,14 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
       // Create a map of existing items by displayOrder
       const itemsByOrder = new Map<number, Portfolio>();
       existingItems.forEach(item => {
-        if (item.displayOrder && item.displayOrder >= 1 && item.displayOrder <= 30) {
+        if (item.displayOrder && item.displayOrder >= 1 && item.displayOrder <= MAX_GALLERY_SLOTS) {
           itemsByOrder.set(item.displayOrder, item);
         }
       });
 
       // Self-heal: Create missing slots
       const slots: GallerySlot[] = [];
-      for (let i = 1; i <= 30; i++) {
+      for (let i = 1; i <= MAX_GALLERY_SLOTS; i++) {
         const existing = itemsByOrder.get(i);
         if (existing) {
           slots.push({
@@ -267,19 +269,19 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* Work Tab - 30-Slot Gallery Management */}
+              {/* Work Tab - Gallery Management */}
               {activeTab === 'work' && (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
-                      Work Gallery (30 Slots)
+                      Work Gallery ({MAX_GALLERY_SLOTS} Slots)
                     </h3>
-                    <p className="text-xs text-black/60">Manage your portfolio with a deterministic 30-image gallery</p>
+                    <p className="text-xs text-black/60">Manage your portfolio with a deterministic {MAX_GALLERY_SLOTS}-image gallery</p>
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <p className="text-xs text-blue-700">
-                      Click any slot to upload an image. Empty slots are automatically created and maintained. Gallery order persists (Slot 1-30).
+                      Click any slot to upload an image. Empty slots are automatically created and maintained. Gallery order persists (Slot 1-{MAX_GALLERY_SLOTS}).
                     </p>
                   </div>
 
