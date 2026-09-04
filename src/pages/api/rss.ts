@@ -41,22 +41,22 @@ function parseRSSFeed(xmlText: string): any[] {
   
   try {
     // Parse XML using regex (simple approach)
-    const itemRegex = /<item>([\\s\\S]*?)<\\/item>/g;
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
     let match;
     
     while ((match = itemRegex.exec(xmlText)) !== null) {
       const itemXml = match[1];
       
       // Extract title
-      const titleMatch = /<title[^>]*>([\\s\\S]*?)<\\/title>/.exec(itemXml);
+      const titleMatch = /<title[^>]*>([\s\S]*?)<\/title>/.exec(itemXml);
       const title = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').trim() : 'Untitled';
       
       // Extract link
-      const linkMatch = /<link[^>]*>([\\s\\S]*?)<\\/link>/.exec(itemXml);
+      const linkMatch = /<link[^>]*>([\s\S]*?)<\/link>/.exec(itemXml);
       const link = linkMatch ? linkMatch[1].trim() : '#';
       
       // Extract pubDate
-      const pubDateMatch = /<pubDate[^>]*>([\\s\\S]*?)<\\/pubDate>/.exec(itemXml);
+      const pubDateMatch = /<pubDate[^>]*>([\s\S]*?)<\/pubDate>/.exec(itemXml);
       const pubDate = pubDateMatch ? pubDateMatch[1].trim() : new Date().toISOString();
       
       items.push({
@@ -75,7 +75,7 @@ function parseRSSFeed(xmlText: string): any[] {
 // Filter Sony Alpha feed items - remove irrelevant content
 function filterSonyAlphaFeed(items: any[]): any[] {
   const blockedKeywords = [
-    'deal', 'price', 'discount', 'sale', 'battery', 'power bank', 'kickstarter', 'firmware', 'update'
+    'deal', 'price', 'discount', 'sale', 'battery', 'power bank', 'kickstarter', 'firmware'
   ];
   
   return items.filter(item => {
@@ -155,23 +155,38 @@ export const GET: APIRoute = async ({ url }) => {
     }
     
     const text = await response.text();
-    let items = parseRSSFeed(text);
     
-    // Apply Sony Alpha filter if this is a Sony Alpha feed
-    if (feedUrl.includes('sonyalpharumors') || feedUrl.includes('sony')) {
-      items = filterSonyAlphaFeed(items);
-    }
-    
-    // Return parsed items or fallback if empty
-    return new Response(
-      JSON.stringify({
-        items: items.length > 0 ? items : FALLBACK_STORIES,
-      }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
+    try {
+      let items = parseRSSFeed(text);
+      
+      // Apply Sony Alpha filter if this is a Sony Alpha feed
+      if (feedUrl.includes('sonyalpharumors') || feedUrl.includes('sony')) {
+        items = filterSonyAlphaFeed(items);
       }
-    );
+      
+      // Return parsed items or fallback if empty
+      return new Response(
+        JSON.stringify({
+          items: items.length > 0 ? items : FALLBACK_STORIES,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    } catch (parseError) {
+      console.error('Error parsing RSS feed:', parseError);
+      return new Response(
+        JSON.stringify({
+          items: FALLBACK_STORIES,
+          error: 'Failed to parse RSS feed',
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
   } catch (error) {
     console.error('Error fetching RSS feed:', error);
     
