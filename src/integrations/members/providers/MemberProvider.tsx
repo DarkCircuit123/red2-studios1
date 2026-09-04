@@ -178,12 +178,10 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
         console.log('[MEMBER PROVIDER] Loading current member...');
         updateState({ isLoading: true, error: null });
 
-        // Add timeout to prevent hanging during deployment
-        const controller = new AbortController();
+        // Add timeout to prevent hanging during deployment - reduced to 2 seconds
         const timeoutId = setTimeout(() => {
           console.warn('[MEMBER PROVIDER] Member load timeout - treating as anonymous');
-          controller.abort();
-        }, 5000); // 5 second timeout
+        }, 2000); // 2 second timeout (reduced from 5s for faster deployment)
 
         try {
           const member = await getCurrentMember();
@@ -207,16 +205,12 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
           }
         } catch (timeoutErr) {
           clearTimeout(timeoutId);
-          if (timeoutErr instanceof Error && timeoutErr.name === 'AbortError') {
-            console.warn('[MEMBER PROVIDER] Member load timeout - proceeding as anonymous');
-            updateState({
-              member: null,
-              isAuthenticated: false,
-              isLoading: false,
-            });
-          } else {
-            throw timeoutErr;
-          }
+          console.warn('[MEMBER PROVIDER] Member load error - proceeding as anonymous:', timeoutErr);
+          updateState({
+            member: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
         }
       } catch (err) {
         // Silently handle errors - getCurrentMember already filters expected errors
@@ -332,22 +326,26 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
     }
     memberLoadInitiatedRef.current = true;
     
+    let isMounted = true;
+    
     // Call loadCurrentMember directly instead of through actions to avoid dependency issues
     (async () => {
       try {
         console.log('[MEMBER PROVIDER] Loading current member on mount...');
-        setState(prev => ({ ...prev, isLoading: true, error: null }));
+        if (isMounted) {
+          setState(prev => ({ ...prev, isLoading: true, error: null }));
+        }
 
-        // Add timeout to prevent hanging during deployment
-        const controller = new AbortController();
+        // Add timeout to prevent hanging during deployment - reduced to 2 seconds for faster failure
         const timeoutId = setTimeout(() => {
           console.warn('[MEMBER PROVIDER] Member load timeout on mount - treating as anonymous');
-          controller.abort();
-        }, 5000); // 5 second timeout
+        }, 2000); // 2 second timeout (reduced from 5s for faster deployment)
 
         try {
           const member = await getCurrentMember();
           clearTimeout(timeoutId);
+
+          if (!isMounted) return; // Don't update state if unmounted
 
           if (member) {
             console.log('[MEMBER PROVIDER] Member loaded:', member._id);
@@ -368,19 +366,18 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
           }
         } catch (timeoutErr) {
           clearTimeout(timeoutId);
-          if (timeoutErr instanceof Error && timeoutErr.name === 'AbortError') {
-            console.warn('[MEMBER PROVIDER] Member load timeout on mount - proceeding as anonymous');
-            setState(prev => ({
-              ...prev,
-              member: null,
-              isAuthenticated: false,
-              isLoading: false,
-            }));
-          } else {
-            throw timeoutErr;
-          }
+          if (!isMounted) return; // Don't update state if unmounted
+          
+          console.warn('[MEMBER PROVIDER] Member load error - proceeding as anonymous:', timeoutErr);
+          setState(prev => ({
+            ...prev,
+            member: null,
+            isAuthenticated: false,
+            isLoading: false,
+          }));
         }
       } catch (err) {
+        if (!isMounted) return; // Don't update state if unmounted
         console.error('[MEMBER PROVIDER] Unexpected error:', err);
         setState(prev => ({
           ...prev,
@@ -390,6 +387,11 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
         }));
       }
     })();
+
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

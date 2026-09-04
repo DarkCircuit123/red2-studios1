@@ -26,7 +26,7 @@ const clientRequestCache = new Map<string, Promise<any>>();
 const clientResultCache = new Map<string, CacheEntry<any>>();
 
 const CACHE_TTL_MS = 300000; // 5 minutes (increased from 60s)
-const REQUEST_TIMEOUT_MS = 30000; // 30 second timeout for requests
+const REQUEST_TIMEOUT_MS = 5000; // 5 second timeout for requests (reduced from 30s for faster deployment)
 const isBrowser = typeof window !== 'undefined';
 
 function getCacheKey(
