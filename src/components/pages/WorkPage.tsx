@@ -123,15 +123,6 @@ export default function WorkPage() {
     return baseClasses;
   };
 
-  const getAspectRatioClasses = (image: ImageWithLayout) => {
-    if (image.layoutSize === 'large') {
-      return image.layoutOrientation === 'portrait' ? 'aspect-[3/4]' : 'aspect-[16/9]';
-    } else if (image.layoutSize === 'medium') {
-      return image.layoutOrientation === 'portrait' ? 'aspect-[3/4]' : 'aspect-[4/3]';
-    }
-    return 'aspect-square';
-  };
-
   return (
     <div className="min-h-screen bg-black overflow-hidden">
       <Header />
@@ -235,7 +226,7 @@ export default function WorkPage() {
                 >
                   {/* Image Container with Parallax */}
                   <motion.div
-                    className={`relative w-full h-full overflow-hidden bg-black/30 ${getAspectRatioClasses(image)}`}
+                    className="relative w-full h-auto overflow-hidden bg-black/30"
                     whileHover={{ scale: 1.02 }}
                     transition={{ duration: 0.4, type: 'spring', stiffness: 200 }}
                   >
@@ -243,9 +234,10 @@ export default function WorkPage() {
                     <Image
                       src={image.image || 'https://static.wixstatic.com/media/e9d727_9c9c4486a82b496ca6c48026f5bbed4d~mv2.png?originWidth=576&originHeight=384'}
                       alt={image.altText || 'Portfolio image'}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-110"
                       data-field-name="image"
                       data-record-id={image._id}
+                       loading="lazy"
                     />
 
                     {/* Subtle grain overlay */}

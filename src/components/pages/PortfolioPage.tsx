@@ -165,7 +165,7 @@ export default function PortfolioPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[300px]"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max items-start"
           >
             {allImages.map((image, index) => (
               <motion.div
@@ -180,9 +180,10 @@ export default function PortfolioPage() {
                 <Image
                   src={WixImageResolver.resolve(image.image).url}
                   alt={image.altText || image.caption || 'Portfolio image'}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-105"
                   width={400}
                   height={300}
+                  loading="lazy"
                 />
                 {/* Overlay on hover */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end p-4">
