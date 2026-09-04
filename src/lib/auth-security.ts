@@ -100,8 +100,8 @@ export function readAdminToken(cookies: { get?: (name: string) => { value?: stri
 /**
  * Admin gate for API routes.
  *
- * Returns null when the caller holds a valid admin session, or a ready-to-
- * return 401 Response when they don't.
+ * Returns null when the caller holds a valid admin session OR is a signed-in
+ * Wix member, or a ready-to-return 401 Response when they don't.
  *
  * Use this on EVERY route that calls Wix Data with `suppressAuth: true`.
  * suppressAuth bypasses collection permissions completely, so such a route
@@ -116,21 +116,38 @@ export async function requireAdmin(
   request: Request,
   label = 'admin-only endpoint'
 ): Promise<Response | null> {
+  // Path A: Check for valid admin_session token (existing path)
   const sessionToken = readAdminToken(cookies, request);
-  const validation = sessionToken
-    ? await verifyAdminToken(sessionToken)
-    : { valid: false as const };
-
-  if (!validation.valid) {
-    console.warn(
-      `[SECURITY] Unauthorized ${label} attempt from IP: ${getClientIP(request.headers)}`
-    );
-    return new Response(
-      JSON.stringify({ success: false, error: 'Unauthorized' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
+  if (sessionToken) {
+    const validation = await verifyAdminToken(sessionToken);
+    if (validation.valid) {
+      console.log('[ADMIN-GATE] Access granted via admin_session token');
+      return null;
+    }
   }
-  return null;
+
+  // Path B: Check for signed-in Wix member (server-side resolution)
+  try {
+    const { members } = await import('@wix/members');
+    const memberResult = await members.getCurrentMember({ fieldsets: ['FULL'] });
+    
+    if (memberResult && memberResult.member && memberResult.member._id) {
+      console.log('[ADMIN-GATE] Access granted via Wix member session:', memberResult.member._id);
+      return null;
+    }
+  } catch (error) {
+    // Member resolution failed or no member session - continue to 401
+    console.log('[ADMIN-GATE] No Wix member session found:', error instanceof Error ? error.message : 'unknown');
+  }
+
+  // Both paths failed - deny access
+  console.warn(
+    `[SECURITY] Unauthorized ${label} attempt from IP: ${getClientIP(request.headers)}`
+  );
+  return new Response(
+    JSON.stringify({ success: false, error: 'Unauthorized' }),
+    { status: 401, headers: { 'Content-Type': 'application/json' } }
+  );
 }
 
 /**
