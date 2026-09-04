@@ -26,7 +26,7 @@
         "src/components/*"
       ],
       "@/integrations/*": [
-        "integrations/*",
+        "integrations/*"
       ],
       "@/integrations": [
         "integrations"
@@ -35,7 +35,7 @@
         "integrations"
       ],
     }
-  },
+  }
   "include": [
     "src",
     "integrations",
