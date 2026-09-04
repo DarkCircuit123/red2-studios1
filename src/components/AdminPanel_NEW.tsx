@@ -17,6 +17,9 @@ import { playClickSound } from '@/lib/click-sound';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { uploadMedia } from '@/lib/wix-media-upload-service';
+import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
+import { useToast } from '@/hooks/use-toast';
 
 const MAX_GALLERY_SLOTS = 90;
 
@@ -45,6 +48,7 @@ interface SponsorEditState {
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { member, actions: memberActions } = useMember();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('photos');
   const [homepageImages, setHomepageImages] = useState<HomepageImages | null>(null);
   const [sponsors, setSponsors] = useState<ClientsPress[]>([]);
@@ -58,6 +62,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
   const [sponsorEdits, setSponsorEdits] = useState<SponsorEditState>({});
   const [uploadingSponsorId, setUploadingSponsorId] = useState<string | null>(null);
+  const [isUploadingSponsorImage, setIsUploadingSponsorImage] = useState(false);
 
   // Initialize gallery with self-healing
   const initializeGallery = useCallback(async () => {
@@ -267,6 +272,78 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     }
   };
 
+  const handleSponsorLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, sponsorId: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingSponsorId(sponsorId);
+      setIsUploadingSponsorImage(true);
+
+      // Upload to Wix Media Manager
+      const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
+
+      if (!result.mediaUrl) {
+        throw new Error('Upload succeeded but no media URL returned');
+      }
+
+      // Persist to CMS immediately
+      await adminCms.update('clientspress', {
+        _id: sponsorId,
+        clientLogo: result.mediaUrl,
+      });
+
+      // Update local state
+      setSponsors(sponsors.map(s =>
+        s._id === sponsorId
+          ? { ...s, clientLogo: result.mediaUrl }
+          : s
+      ));
+
+      toast({
+        title: 'Success',
+        description: 'Logo updated successfully',
+      });
+    } catch (error) {
+      console.error('Failed to upload and save logo:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to upload logo',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingSponsorImage(false);
+      setUploadingSponsorId(null);
+    }
+  };
+
+  const handleDeleteSponsorLogo = async (sponsorId: string) => {
+    try {
+      await adminCms.update('clientspress', {
+        _id: sponsorId,
+        clientLogo: undefined,
+      });
+
+      setSponsors(sponsors.map(s =>
+        s._id === sponsorId
+          ? { ...s, clientLogo: undefined }
+          : s
+      ));
+
+      toast({
+        title: 'Success',
+        description: 'Logo deleted successfully',
+      });
+    } catch (error) {
+      console.error('Failed to delete logo:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete logo',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -419,12 +496,10 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                   fieldName="image"
                                   onImageUpload={async (url) => {
                                     try {
-                                      // Update the CMS item with the new image - NOW USING adminCms.update
                                       await adminCms.update('portfolioimages', {
                                         _id: slot.itemId,
                                         image: url,
                                       });
-                                      // Update local state
                                       const updatedSlots = gallerySlots.map(s =>
                                         s.slotNumber === slot.slotNumber
                                           ? { ...s, image: url }
@@ -438,12 +513,10 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                   }}
                                   onImageDelete={async () => {
                                     try {
-                                      // Clear the image from the CMS item - NOW USING adminCms.update
                                       await adminCms.update('portfolioimages', {
                                         _id: slot.itemId,
                                         image: undefined,
                                       });
-                                      // Update local state
                                       const updatedSlots = gallerySlots.map(s =>
                                         s.slotNumber === slot.slotNumber
                                           ? { ...s, image: undefined }
@@ -464,7 +537,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   try {
-                                    // NOW USING adminCms.update
                                     await adminCms.update('portfolioimages', {
                                       _id: slot.itemId,
                                       image: undefined,
@@ -627,26 +699,62 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     <h3 className="text-sm font-heading font-bold text-black mb-2 uppercase tracking-wide">
                       Sponsors & Press
                     </h3>
-                    <p className="text-xs text-black/60">Manage client logos and press mentions</p>
+                    <p className="text-xs text-black/60">Manage client logos and press mentions ({sponsors.length} sponsors)</p>
                   </div>
                   
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {sponsors.map((sponsor) => {
                       const edits = sponsorEdits[sponsor._id];
                       const isEditing = !!edits;
+                      const isUploading = uploadingSponsorId === sponsor._id && isUploadingSponsorImage;
                       
                       return (
                         <div key={sponsor._id} className="border border-black/10 rounded-lg p-4 space-y-3">
+                          {/* Logo Section */}
                           <div className="flex items-start gap-4">
-                            {sponsor.clientLogo && (
-                              <div className="flex-shrink-0">
-                                <Image
-                                  src={sponsor.clientLogo}
-                                  alt={sponsor.clientName || 'Sponsor'}
-                                  className="w-16 h-16 object-cover rounded"
-                                />
+                            <div className="flex-shrink-0 relative group">
+                              <div className="w-20 h-20 border-2 border-dashed border-black/20 rounded-lg overflow-hidden bg-black/2 flex items-center justify-center">
+                                {sponsor.clientLogo ? (
+                                  <Image
+                                    src={sponsor.clientLogo}
+                                    alt={sponsor.clientName || 'Sponsor'}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <Upload className="w-4 h-4 text-black/40" />
+                                )}
                               </div>
-                            )}
+                              
+                              {/* Logo Upload/Delete Controls */}
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-1">
+                                <label className="cursor-pointer p-1 bg-white/90 rounded hover:bg-white transition-colors">
+                                  <Upload className="w-3 h-3 text-black" />
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleSponsorLogoUpload(e, sponsor._id)}
+                                    disabled={isUploading}
+                                    className="hidden"
+                                  />
+                                </label>
+                                {sponsor.clientLogo && (
+                                  <button
+                                    onClick={() => handleDeleteSponsorLogo(sponsor._id)}
+                                    className="p-1 bg-red-500 rounded hover:bg-red-600 transition-colors"
+                                  >
+                                    <Trash2 className="w-3 h-3 text-white" />
+                                  </button>
+                                )}
+                              </div>
+                              
+                              {isUploading && (
+                                <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                                  <div className="text-white text-xs font-bold">Uploading...</div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Fields Section */}
                             <div className="flex-1 space-y-2">
                               <input
                                 type="text"
@@ -711,6 +819,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                             </div>
                           </div>
                           
+                          {/* Action Buttons */}
                           <div className="flex gap-2">
                             {isEditing ? (
                               <>
@@ -736,24 +845,22 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                                 </Button>
                               </>
                             ) : (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSponsorEdits(prev => ({
-                                      ...prev,
-                                      [sponsor._id]: {
-                                        clientName: sponsor.clientName || '',
-                                        category: sponsor.category || '',
-                                        externalLink: sponsor.externalLink || '',
-                                      },
-                                    }));
-                                  }}
-                                >
-                                  Edit
-                                </Button>
-                              </>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSponsorEdits(prev => ({
+                                    ...prev,
+                                    [sponsor._id]: {
+                                      clientName: sponsor.clientName || '',
+                                      category: sponsor.category || '',
+                                      externalLink: sponsor.externalLink || '',
+                                    },
+                                  }));
+                                }}
+                              >
+                                Edit
+                              </Button>
                             )}
                             <Button
                               size="sm"
