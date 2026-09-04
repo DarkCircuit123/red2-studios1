@@ -23,7 +23,7 @@ export const formatPrice = (amount: number, currencyCode: string = DEFAULT_CURRE
  * Get currency from site settings
  * This would typically come from Wix Business Manager settings
  */
-export const useCurrency = () => {
+export const useCurrency = (): { currency: string } => {
   // In a real implementation, this would fetch from Wix settings
   // For now, return the default
   return {
