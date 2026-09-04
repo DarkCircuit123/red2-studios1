@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
@@ -10,16 +10,12 @@ import { playClickSound } from '@/lib/click-sound';
 import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
 import WixImageResolver from '@/lib/wix-image-resolver';
 
-const ROW_UNIT = 8; // pixels per row unit
 const GAP = 24; // gap in pixels (matches gap-6 = 1.5rem = 24px)
 
-interface ImageWithLayout extends Portfolio {
-  layoutSize: 'small' | 'medium' | 'large';
-  layoutOrientation: 'portrait' | 'landscape' | 'square';
+interface ImageWithDimensions extends Portfolio {
   aspectRatio?: number;
   originWidth?: number;
   originHeight?: number;
-  gridRowSpan?: number;
 }
 
 /**
@@ -47,75 +43,85 @@ const extractOriginDimensions = (url: string): { width?: number; height?: number
 };
 
 /**
- * Calculate grid row span based on aspect ratio and column width
- * Formula: (columnWidth * aspectRatio + gap) / ROW_UNIT, rounded up
- * Fallback: 3:4 portrait aspect ratio when dimensions unknown
+ * Distribute images into columns using shortest-column-first packing
+ * Returns array of arrays, one per column
  */
-const calculateGridRowSpan = (aspectRatio: number, columnWidth: number): number => {
-  // Fallback to 3:4 portrait to prevent overlaps
-  const effectiveAspectRatio = aspectRatio || 0.75;
-  const effectiveColumnWidth = columnWidth || 250; // Default fallback width
-  const height = effectiveColumnWidth * effectiveAspectRatio + GAP;
-  return Math.ceil(height / ROW_UNIT);
+const distributeIntoColumns = (
+  images: ImageWithDimensions[],
+  columnCount: number,
+  columnWidth: number
+): ImageWithDimensions[][] => {
+  const columns: ImageWithDimensions[][] = Array.from({ length: columnCount }, () => []);
+  const columnHeights: number[] = Array(columnCount).fill(0);
+
+  images.forEach((image) => {
+    // Calculate display height for this image
+    const aspectRatio = image.aspectRatio || 0.75; // Default to 3:4 portrait
+    const displayHeight = columnWidth * aspectRatio + GAP;
+
+    // Find column with smallest height (leftmost on tie)
+    let minHeight = columnHeights[0];
+    let minColumn = 0;
+    for (let i = 1; i < columnCount; i++) {
+      if (columnHeights[i] < minHeight) {
+        minHeight = columnHeights[i];
+        minColumn = i;
+      }
+    }
+
+    // Add image to shortest column
+    columns[minColumn].push(image);
+    columnHeights[minColumn] += displayHeight;
+  });
+
+  return columns;
+};
+
+/**
+ * Determine column count based on viewport width
+ */
+const getColumnCount = (containerWidth: number): number => {
+  if (containerWidth < 768) return 1;  // mobile
+  if (containerWidth < 1024) return 2; // md
+  return 4;                             // lg
 };
 
 export default function WorkPage() {
-  const [allImages, setAllImages] = useState<ImageWithLayout[]>([])
+  const [allImages, setAllImages] = useState<ImageWithDimensions[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
-  const [columnWidth, setColumnWidth] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [columnCount, setColumnCount] = useState(1);
+  const [columns, setColumns] = useState<ImageWithDimensions[][]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
 
-  // Measure column width synchronously on first paint using useLayoutEffect
-  useLayoutEffect(() => {
-    if (!gridRef.current) return;
-
-    const gridStyle = window.getComputedStyle(gridRef.current);
-    const gridTemplateColumns = gridStyle.gridTemplateColumns;
-    if (gridTemplateColumns && gridTemplateColumns !== 'none') {
-      const columns = gridTemplateColumns.split(' ');
-      const firstColWidth = parseFloat(columns[0]);
-      if (!isNaN(firstColWidth)) {
-        setColumnWidth(firstColWidth);
-      }
-    }
-  }, []);
-
-  // ... keep existing code (ResizeObserver effect)
+  // Track container width and update column count
   useEffect(() => {
-    if (!gridRef.current) return;
+    const updateLayout = () => {
+      if (!containerRef.current) return;
+      const width = containerRef.current.offsetWidth;
+      setContainerWidth(width);
+      setColumnCount(getColumnCount(width));
+    };
 
-    const resizeObserver = new ResizeObserver(() => {
-      if (gridRef.current) {
-        const gridStyle = window.getComputedStyle(gridRef.current);
-        const gridTemplateColumns = gridStyle.gridTemplateColumns;
-        if (gridTemplateColumns && gridTemplateColumns !== 'none') {
-          const columns = gridTemplateColumns.split(' ');
-          const firstColWidth = parseFloat(columns[0]);
-          if (!isNaN(firstColWidth)) {
-            setColumnWidth(firstColWidth);
-          }
-        }
-      }
-    });
+    updateLayout();
+    const resizeObserver = new ResizeObserver(updateLayout);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
 
-    resizeObserver.observe(gridRef.current);
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Recalculate grid row spans when column width changes
+  // Redistribute images when container width or column count changes
   useEffect(() => {
-    if (columnWidth > 0 && allImages.length > 0) {
-      setAllImages(prevImages =>
-        prevImages.map(img => ({
-          ...img,
-          gridRowSpan: img.aspectRatio ? calculateGridRowSpan(img.aspectRatio, columnWidth) : 1,
-        }))
-      );
+    if (allImages.length > 0 && containerWidth > 0 && columnCount > 0) {
+      const columnWidth = (containerWidth - GAP * (columnCount - 1)) / columnCount;
+      const newColumns = distributeIntoColumns(allImages, columnCount, columnWidth);
+      setColumns(newColumns);
     }
-  }, [columnWidth]);
+  }, [allImages, containerWidth, columnCount]);
 
   // Fetch all images from portfolioimages collection
   useEffect(() => {
@@ -123,16 +129,16 @@ export default function WorkPage() {
       setIsLoading(true);
       try {
         const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 1000 });
-        const allImages = result.items || [];
+        const allItems = result.items || [];
         
         // Filter out items with broken/placeholder URLs using sanitizer
-        const validImages = filterValidImages(allImages, 'image');
+        const validImages = filterValidImages(allItems, 'image');
         
         // Generate and log sanitization report
         const report = generateSanitizationReport(
-          allImages.length,
+          allItems.length,
           validImages.length,
-          allImages
+          allItems
             .filter(img => !validImages.find(v => v._id === img._id))
             .map(img => img.image || 'unknown')
         );
@@ -144,7 +150,6 @@ export default function WorkPage() {
             `  Valid: ${report.sanitizedCount}\n` +
             `  Removed: ${report.removed} (${report.percentageRemoved.toFixed(1)}%)`
           );
-          // Store report for display in status component
           sessionStorage.setItem('imageSanitizationReport', JSON.stringify({
             originalCount: report.originalCount,
             sanitizedCount: report.sanitizedCount,
@@ -153,77 +158,52 @@ export default function WorkPage() {
           }));
         }
         
-        // Assign artful layout sizes and orientations, load dimensions
-        const layoutImages: ImageWithLayout[] = await Promise.all(
-          validImages.map(async (img, index) => {
-            const layoutPattern = index % 12;
-            let layoutSize: 'small' | 'medium' | 'large' = 'medium';
-            let layoutOrientation: 'portrait' | 'landscape' | 'square' = 'square';
-
-            // Create an artful pattern
-            if (layoutPattern === 0 || layoutPattern === 7) {
-              layoutSize = 'large';
-              layoutOrientation = layoutPattern === 0 ? 'landscape' : 'portrait';
-            } else if (layoutPattern === 3 || layoutPattern === 9) {
-              layoutSize = 'large';
-              layoutOrientation = layoutPattern === 3 ? 'portrait' : 'landscape';
-            } else if (layoutPattern % 2 === 0) {
-              layoutSize = 'medium';
-              layoutOrientation = 'square';
-            } else {
-              layoutSize = 'small';
-              layoutOrientation = layoutPattern % 3 === 1 ? 'portrait' : 'landscape';
-            }
-
-            // Try to extract origin dimensions from URL first
-            const urlDims = extractOriginDimensions(img.image);
-            
-            if (urlDims.width && urlDims.height) {
-              // Use extracted dimensions
-              const aspectRatio = urlDims.width / urlDims.height;
-              return {
-                ...img,
-                layoutSize,
-                layoutOrientation,
-                originWidth: urlDims.width,
-                originHeight: urlDims.height,
-                aspectRatio,
-                gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : calculateGridRowSpan(0, columnWidth),
-              };
-            } else {
-              // Fall back to loading image to measure
-              return new Promise<ImageWithLayout>((resolve) => {
-                const image = new window.Image();
-                image.onload = () => {
-                  const aspectRatio = image.naturalWidth / image.naturalHeight;
+        // Load image dimensions
+        const imagesWithDimensions = await Promise.all(
+          validImages.map(
+            (image) =>
+              new Promise<ImageWithDimensions>((resolve) => {
+                // Try to extract origin dimensions from URL first
+                const urlDims = extractOriginDimensions(image.image);
+                
+                if (urlDims.width && urlDims.height) {
+                  // Use extracted dimensions
+                  const aspectRatio = urlDims.width / urlDims.height;
                   resolve({
-                    ...img,
-                    layoutSize,
-                    layoutOrientation,
-                    originWidth: image.naturalWidth,
-                    originHeight: image.naturalHeight,
+                    ...image,
+                    originWidth: urlDims.width,
+                    originHeight: urlDims.height,
                     aspectRatio,
-                    gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : calculateGridRowSpan(0, columnWidth),
                   });
-                };
-                image.onerror = () => {
-                  console.warn('Failed to load image:', img.image);
-                  resolve({
-                    ...img,
-                    layoutSize,
-                    layoutOrientation,
-                    aspectRatio: 1,
-                    gridRowSpan: calculateGridRowSpan(0, columnWidth),
+                } else {
+                  // Fall back to loading image to measure
+                  return new Promise<ImageWithDimensions>((innerResolve) => {
+                    const img = new window.Image();
+                    img.onload = () => {
+                      const aspectRatio = img.naturalWidth / img.naturalHeight;
+                      innerResolve({
+                        ...image,
+                        originWidth: img.naturalWidth,
+                        originHeight: img.naturalHeight,
+                        aspectRatio,
+                      });
+                    };
+                    img.onerror = () => {
+                      console.warn('Failed to load image:', image.image);
+                      innerResolve({
+                        ...image,
+                        aspectRatio: 0.75, // Default 3:4 portrait
+                      });
+                    };
+                    const resolved = WixImageResolver.resolve(image.image);
+                    img.src = resolved.url || '';
                   });
-                };
-                const resolved = WixImageResolver.resolve(img.image);
-                image.src = resolved.url || '';
-              });
-            }
-          })
+                }
+              })
+          )
         );
 
-        setAllImages(layoutImages);
+        setAllImages(imagesWithDimensions);
       } catch (error) {
         console.error('Failed to fetch portfolio images:', error);
         setAllImages([]);
@@ -308,100 +288,125 @@ export default function WorkPage() {
 
         {/* Masonry Grid - Pure Photos */}
         {isLoading ? (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-            gridAutoRows: `${ROW_UNIT}px`,
-            gap: `${GAP}px`,
-            alignItems: 'start',
-          }}>
-            {Array(16)
-              .fill(null)
-              .map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0.5 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.6, delay: i * 0.05 }}
-                  className="bg-white/5 animate-pulse"
-                  style={{ gridRowEnd: 'span 50' }}
-                />
-              ))}
+          <div
+            style={{
+              display: 'flex',
+              gap: `${GAP}px`,
+              alignItems: 'flex-start',
+            }}
+          >
+            {Array.from({ length: columnCount }).map((_, colIndex) => (
+              <div
+                key={colIndex}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: `${GAP}px`,
+                }}
+              >
+                {Array(4)
+                  .fill(null)
+                  .map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0.5 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.6, delay: i * 0.05 }}
+                      className="bg-white/5 animate-pulse w-full"
+                      style={{ paddingBottom: '133.33%', position: 'relative' }}
+                    />
+                  ))}
+              </div>
+            ))}
           </div>
         ) : allImages.length > 0 ? (
           <motion.div
-            ref={gridRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gridAutoRows: `${ROW_UNIT}px`,
+              display: 'flex',
               gap: `${GAP}px`,
-              alignItems: 'start',
+              alignItems: 'flex-start',
             }}
           >
-            {allImages.map((image, index) => (
-                <motion.div
-                  key={image._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.6,
-                    delay: (index % 12) * 0.05,
-                    type: 'spring',
-                    stiffness: 100,
-                    damping: 15,
-                  }}
-                  style={{
-                    gridRowEnd: image.gridRowSpan ? `span ${image.gridRowSpan}` : `span ${calculateGridRowSpan(0.75, columnWidth)}`,
-                  }}
-                  className="relative overflow-hidden group cursor-pointer"
-                  onClick={() => {
-                    playClickSound();
-                    setSelectedImage(image.image || '');
-                  }}
-                >
-                  {/* Image Container with Parallax */}
-                  <motion.div
-                    className="relative w-full h-full overflow-hidden bg-black/30"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.4, type: 'spring', stiffness: 200 }}
-                  >
-                    {/* Image */}
-                    <Image
-                      src={image.image || 'https://static.wixstatic.com/media/e9d727_9c9c4486a82b496ca6c48026f5bbed4d~mv2.png?originWidth=576&originHeight=384'}
-                      alt={image.altText || 'Portfolio image'}
-                      fittingType="fit"
-                      className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
-                      data-field-name="image"
-                      data-record-id={image._id}
-                      loading="lazy"
-                    />
-
-                    {/* Subtle grain overlay */}
-                    <div className="absolute inset-0 bg-grain opacity-5 pointer-events-none" />
-
-                    {/* Hover overlay - minimal */}
+            {columns.map((column, colIndex) => (
+              <div
+                key={colIndex}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: `${GAP}px`,
+                }}
+              >
+                {column.map((image, imgIndex) => {
+                  const globalIndex = allImages.findIndex(img => img._id === image._id);
+                  return (
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      whileHover={{ opacity: 1 }}
-                      transition={{ duration: 0.3 }}
-                      className="absolute inset-0 bg-black/40 flex items-center justify-center"
+                      key={image._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.6,
+                        delay: (globalIndex % 12) * 0.03,
+                        type: 'spring',
+                        stiffness: 100,
+                        damping: 15,
+                      }}
+                      className="relative overflow-hidden group cursor-pointer w-full"
+                      onClick={() => {
+                        playClickSound();
+                        setSelectedImage(image.image || '');
+                      }}
+                      style={{ display: 'block' }}
                     >
-                      <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        whileHover={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                        className="text-white text-sm font-paragraph tracking-widest uppercase"
+                      {/* Image Container with Hover Effect */}
+                      <div
+                        className="relative w-full overflow-hidden bg-black/30"
+                        style={{
+                          paddingBottom: image.aspectRatio
+                            ? `${(1 / (image.aspectRatio || 1)) * 100}%`
+                            : '133.33%', // 3:4 default
+                        }}
                       >
-                        View
-                      </motion.div>
+                        {/* Image */}
+                        <Image
+                          src={image.image || 'https://static.wixstatic.com/media/e9d727_9c9c4486a82b496ca6c48026f5bbed4d~mv2.png?originWidth=576&originHeight=384'}
+                          alt={image.altText || 'Portfolio image'}
+                          fittingType="fit"
+                          className="absolute inset-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                          data-field-name="image"
+                          data-record-id={image._id}
+                          loading="lazy"
+                        />
+
+                        {/* Subtle grain overlay */}
+                        <div className="absolute inset-0 bg-grain opacity-5 pointer-events-none" />
+
+                        {/* Hover overlay - minimal */}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          whileHover={{ opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="absolute inset-0 bg-black/40 flex items-center justify-center"
+                        >
+                          <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            whileHover={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                            className="text-white text-sm font-paragraph tracking-widest uppercase"
+                          >
+                            View
+                          </motion.div>
+                        </motion.div>
+                      </div>
                     </motion.div>
-                  </motion.div>
-                </motion.div>
-              )}
+                  );
+                })}
+              </div>
+            ))}
           </motion.div>
         ) : (
           <motion.div
