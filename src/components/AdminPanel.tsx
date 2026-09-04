@@ -145,6 +145,15 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
           BaseCrudService.getAll<AboutSection>('about', {}, { limit: 1 }),
         ]);
 
+        // Debug log for about collection load
+        console.log('[ADMIN PANEL] Promise.allSettled results:', {
+          homepageImages: results[0].status,
+          clientspress: results[1].status,
+          musicsettings: results[2].status,
+          about: results[3].status,
+          aboutDetails: results[3].status === 'fulfilled' ? { itemCount: results[3].value?.items?.length } : (results[3].status === 'rejected' ? { error: results[3].reason } : {}),
+        });
+
         // Handle homepage images
         if (results[0].status === 'fulfilled' && results[0].value?.items?.length > 0) {
           setHomepageImages(results[0].value.items[0]);
