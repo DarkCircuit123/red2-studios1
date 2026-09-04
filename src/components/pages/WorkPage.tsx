@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities';
@@ -49,10 +49,13 @@ const extractOriginDimensions = (url: string): { width?: number; height?: number
 /**
  * Calculate grid row span based on aspect ratio and column width
  * Formula: (columnWidth * aspectRatio + gap) / ROW_UNIT, rounded up
+ * Fallback: 3:4 portrait aspect ratio when dimensions unknown
  */
 const calculateGridRowSpan = (aspectRatio: number, columnWidth: number): number => {
-  if (!aspectRatio || !columnWidth) return 1;
-  const height = columnWidth * aspectRatio + GAP;
+  // Fallback to 3:4 portrait to prevent overlaps
+  const effectiveAspectRatio = aspectRatio || 0.75;
+  const effectiveColumnWidth = columnWidth || 250; // Default fallback width
+  const height = effectiveColumnWidth * effectiveAspectRatio + GAP;
   return Math.ceil(height / ROW_UNIT);
 };
 
@@ -64,9 +67,23 @@ export default function WorkPage() {
   const [columnWidth, setColumnWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll();
 
-  // Set up ResizeObserver to track column width changes
+  // Measure column width synchronously on first paint using useLayoutEffect
+  useLayoutEffect(() => {
+    if (!gridRef.current) return;
+
+    const gridStyle = window.getComputedStyle(gridRef.current);
+    const gridTemplateColumns = gridStyle.gridTemplateColumns;
+    if (gridTemplateColumns && gridTemplateColumns !== 'none') {
+      const columns = gridTemplateColumns.split(' ');
+      const firstColWidth = parseFloat(columns[0]);
+      if (!isNaN(firstColWidth)) {
+        setColumnWidth(firstColWidth);
+      }
+    }
+  }, []);
+
+  // ... keep existing code (ResizeObserver effect)
   useEffect(() => {
     if (!gridRef.current) return;
 
@@ -171,7 +188,7 @@ export default function WorkPage() {
                 originWidth: urlDims.width,
                 originHeight: urlDims.height,
                 aspectRatio,
-                gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : 1,
+                gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : calculateGridRowSpan(0, columnWidth),
               };
             } else {
               // Fall back to loading image to measure
@@ -186,7 +203,7 @@ export default function WorkPage() {
                     originWidth: image.naturalWidth,
                     originHeight: image.naturalHeight,
                     aspectRatio,
-                    gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : 1,
+                    gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : calculateGridRowSpan(0, columnWidth),
                   });
                 };
                 image.onerror = () => {
@@ -196,7 +213,7 @@ export default function WorkPage() {
                     layoutSize,
                     layoutOrientation,
                     aspectRatio: 1,
-                    gridRowSpan: 1,
+                    gridRowSpan: calculateGridRowSpan(0, columnWidth),
                   });
                 };
                 const resolved = WixImageResolver.resolve(img.image);
@@ -325,10 +342,7 @@ export default function WorkPage() {
               alignItems: 'start',
             }}
           >
-            {allImages.map((image, index) => {
-              const yOffset = useTransform(scrollY, [0, 1000], [0, index % 2 === 0 ? 30 : -30]);
-
-              return (
+            {allImages.map((image, index) => (
                 <motion.div
                   key={image._id}
                   initial={{ opacity: 0, y: 20 }}
@@ -341,8 +355,7 @@ export default function WorkPage() {
                     damping: 15,
                   }}
                   style={{
-                    y: yOffset,
-                    gridRowEnd: image.gridRowSpan ? `span ${image.gridRowSpan}` : 'auto',
+                    gridRowEnd: image.gridRowSpan ? `span ${image.gridRowSpan}` : `span ${calculateGridRowSpan(0.75, columnWidth)}`,
                   }}
                   className="relative overflow-hidden group cursor-pointer"
                   onClick={() => {
@@ -388,8 +401,7 @@ export default function WorkPage() {
                     </motion.div>
                   </motion.div>
                 </motion.div>
-              );
-            })}
+              )}
           </motion.div>
         ) : (
           <motion.div

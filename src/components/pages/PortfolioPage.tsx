@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities';
@@ -78,10 +78,13 @@ const convertWixImageToHttps = (url: string): string => {
 /**
  * Calculate grid row span based on aspect ratio and column width
  * Formula: (columnWidth * aspectRatio + gap) / ROW_UNIT, rounded up
+ * Fallback: 3:4 portrait aspect ratio when dimensions unknown
  */
 const calculateGridRowSpan = (aspectRatio: number, columnWidth: number): number => {
-  if (!aspectRatio || !columnWidth) return 1;
-  const height = columnWidth * aspectRatio + GAP;
+  // Fallback to 3:4 portrait to prevent overlaps
+  const effectiveAspectRatio = aspectRatio || 0.75;
+  const effectiveColumnWidth = columnWidth || 250; // Default fallback width
+  const height = effectiveColumnWidth * effectiveAspectRatio + GAP;
   return Math.ceil(height / ROW_UNIT);
 };
 
@@ -90,6 +93,21 @@ export default function PortfolioPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [columnWidth, setColumnWidth] = useState(0);
   const gridRef = useRef<HTMLDivElement>(null);
+
+  // Measure column width synchronously on first paint using useLayoutEffect
+  useLayoutEffect(() => {
+    if (!gridRef.current) return;
+
+    const gridStyle = window.getComputedStyle(gridRef.current);
+    const gridTemplateColumns = gridStyle.gridTemplateColumns;
+    if (gridTemplateColumns && gridTemplateColumns !== 'none') {
+      const columns = gridTemplateColumns.split(' ');
+      const firstColWidth = parseFloat(columns[0]);
+      if (!isNaN(firstColWidth)) {
+        setColumnWidth(firstColWidth);
+      }
+    }
+  }, []);
 
   // Determine grid span based on aspect ratio
   const getGridSpan = (aspectRatio: number): 'vertical' | 'horizontal' | 'square' => {
@@ -126,7 +144,7 @@ export default function PortfolioPage() {
       setAllImages(prevImages =>
         prevImages.map(img => ({
           ...img,
-          gridRowSpan: img.aspectRatio ? calculateGridRowSpan(img.aspectRatio, columnWidth) : 1,
+          gridRowSpan: calculateGridRowSpan(img.aspectRatio || 0.75, columnWidth),
         }))
       );
     }
@@ -192,7 +210,7 @@ export default function PortfolioPage() {
                     originHeight: urlDims.height,
                     aspectRatio,
                     gridSpan: getGridSpan(aspectRatio),
-                    gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : 1,
+                    gridRowSpan: calculateGridRowSpan(aspectRatio, columnWidth),
                   });
                 } else {
                   // Fall back to loading image to measure
@@ -205,7 +223,7 @@ export default function PortfolioPage() {
                       originHeight: img.naturalHeight,
                       aspectRatio,
                       gridSpan: getGridSpan(aspectRatio),
-                      gridRowSpan: columnWidth > 0 ? calculateGridRowSpan(aspectRatio, columnWidth) : 1,
+                      gridRowSpan: calculateGridRowSpan(aspectRatio, columnWidth),
                     });
                   };
                   img.onerror = () => {
@@ -214,7 +232,7 @@ export default function PortfolioPage() {
                       ...image,
                       aspectRatio: 1,
                       gridSpan: 'square',
-                      gridRowSpan: 1,
+                      gridRowSpan: calculateGridRowSpan(0.75, columnWidth),
                     });
                   };
                   // Resolve wix:image:// URLs to HTTPS before setting as src
@@ -278,7 +296,7 @@ export default function PortfolioPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05, duration: 0.4 }}
                 style={{
-                  gridRowEnd: image.gridRowSpan ? `span ${image.gridRowSpan}` : 'auto',
+                  gridRowEnd: image.gridRowSpan ? `span ${image.gridRowSpan}` : `span ${calculateGridRowSpan(0.75, columnWidth)}`,
                 }}
                 className="relative overflow-hidden rounded-lg bg-white/5 group cursor-pointer"
               >
