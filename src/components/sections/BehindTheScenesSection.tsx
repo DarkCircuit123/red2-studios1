@@ -96,7 +96,7 @@ export default function BehindTheScenesSection() {
                     width={400}
                     height={400}
                     loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 gallery-image-hover reveal-wipe"
                   />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">

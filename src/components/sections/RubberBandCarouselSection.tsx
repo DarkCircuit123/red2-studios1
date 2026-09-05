@@ -63,7 +63,7 @@ const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
       width={1920}
       height={1080}
       loading="lazy"
-      className="w-full h-full"
+      className="w-full h-full gallery-image-hover reveal-wipe"
       style={imageStyle}
     />
   );

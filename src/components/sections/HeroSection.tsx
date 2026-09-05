@@ -87,7 +87,7 @@ export default function HeroSection() {
             src={heroImage}
             alt="Hero background"
             onLoad={handleImageLoad}
-            className="w-full h-full"
+            className="w-full h-full hero-image-drift"
             style={{
               objectFit: fitting.objectFit as any,
               objectPosition: fitting.objectPosition,

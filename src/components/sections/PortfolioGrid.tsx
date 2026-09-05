@@ -64,7 +64,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
           initial="hidden"
           animate={sectionVisible ? "visible" : "hidden"}
           variants={scrollAnimationVariants.headingSlideUp}
-          className="mb-24 md:mb-32"
+          className="mb-24 md:mb-32 reveal"
         >
           <h2 className="text-7xl md:text-8xl lg:text-9xl font-heading font-black text-white mb-8 tracking-tighter leading-none">
             Selected
@@ -83,7 +83,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
             animate={sectionVisible ? "visible" : "hidden"}
             variants={scrollAnimationVariants.textSlideUp}
             transition={{ delay: 0.2 }}
-            className="text-base md:text-lg font-paragraph text-white/70 max-w-2xl leading-relaxed"
+            className="text-base md:text-lg font-paragraph text-white/70 max-w-2xl leading-relaxed reveal"
           >
             A selection of recent projects showcasing diverse aesthetics and creative directions. Each work represents precision and luxury restraint.
           </motion.p>
@@ -125,7 +125,7 @@ export default function PortfolioGrid({ items, isLoading }: PortfolioGridProps) 
                   <Image
                     src={item?.mainImage || 'https://static.wixstatic.com/media/e9d727_403fade06e9145e09633cfb8f096c86e~mv2.png?originWidth=576&originHeight=576'}
                     alt={item?.projectName || 'Portfolio project'}
-                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 portfolio-image-hover reveal-wipe"
                     data-field-name="mainImage"
                     data-record-id={item?._id}
                   />

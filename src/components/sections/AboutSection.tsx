@@ -105,7 +105,7 @@ export default function AboutSection() {
               initial="hidden"
               animate={sectionVisible ? "visible" : "hidden"}
               variants={scrollAnimationVariants.headingSlideUp}
-              className="space-y-3 md:space-y-4"
+              className="space-y-3 md:space-y-4 reveal"
             >
               <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-black text-white leading-tight tracking-tighter">
                 About
@@ -130,7 +130,7 @@ export default function AboutSection() {
               animate={sectionVisible ? "visible" : "hidden"}
               variants={scrollAnimationVariants.textSlideUp}
               transition={{ delay: 0.2 }}
-              className="relative"
+              className="relative reveal"
             >
               {/* Floated image container - desktop/tablet */}
               <div className="hidden sm:block float-right ml-6 md:ml-8 mb-4 md:mb-6 w-64 md:w-80 lg:w-96 flex-shrink-0">
@@ -140,7 +140,7 @@ export default function AboutSection() {
                   variants={scrollAnimationVariants.imageSlideInRight}
                   whileHover={{ y: -8 }}
                   transition={{ duration: 0.3 }}
-                  className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative"
+                  className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"
                 >
                   {!isLoading && (
                     <motion.div
@@ -194,7 +194,7 @@ export default function AboutSection() {
                   variants={scrollAnimationVariants.imageSlideInLeft}
                   whileHover={{ y: -8 }}
                   transition={{ duration: 0.3 }}
-                  className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative"
+                  className="aspect-square overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"
                 >
                   {!isLoading && (
                     <motion.div
@@ -239,7 +239,7 @@ export default function AboutSection() {
                 <motion.div
                   key={i}
                   variants={getStaggeredVariant(i, 0.3, 0.1)}
-                  className="space-y-3 group"
+                  className={`space-y-3 group reveal reveal-delay-${i + 1}`}
                 >
                   <motion.p
                     className="text-5xl md:text-6xl font-heading font-black text-primary"

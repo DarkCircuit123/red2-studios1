@@ -1,92 +1,30 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
 
-export type RevealDirection = 'left' | 'right' | 'up' | 'down' | 'center';
-
-interface ScrollRevealProps {
-  children: React.ReactNode;
-  direction?: RevealDirection;
-  delay?: number;
-  duration?: number;
-  className?: string;
-  staggerChildren?: boolean;
-  index?: number;
-  baseDelay?: number;
+interface ScrollRevealOptions {
+  threshold?: number;
+  rootMargin?: string;
 }
 
-const getInitialVariant = (direction: RevealDirection) => {
-  const baseConfig = {
-    opacity: 0,
-    transition: { duration: 0 },
-  };
-
-  switch (direction) {
-    case 'left':
-      return { ...baseConfig, x: -80 };
-    case 'right':
-      return { ...baseConfig, x: 80 };
-    case 'up':
-      return { ...baseConfig, y: 60 };
-    case 'down':
-      return { ...baseConfig, y: -60 };
-    case 'center':
-    default:
-      return { ...baseConfig, y: 40, scale: 0.95 };
-  }
-};
-
-const getAnimateVariant = () => ({
-  opacity: 1,
-  x: 0,
-  y: 0,
-  scale: 1,
-});
-
-const getExitVariant = (direction: RevealDirection) => {
-  switch (direction) {
-    case 'left':
-      return { opacity: 0, x: -40 };
-    case 'right':
-      return { opacity: 0, x: 40 };
-    case 'up':
-      return { opacity: 0, y: -40 };
-    case 'down':
-      return { opacity: 0, y: 40 };
-    case 'center':
-    default:
-      return { opacity: 0, y: 20, scale: 0.95 };
-  }
-};
-
-export const ScrollReveal: React.FC<ScrollRevealProps> = ({
-  children,
-  direction = 'up',
-  delay = 0,
-  duration = 800,
-  className = '',
-  staggerChildren = false,
-  index = 0,
-  baseDelay = 0,
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+/**
+ * Hook to add scroll reveal animations using IntersectionObserver
+ * Adds .is-visible class when element enters viewport
+ * Unobserves after first reveal to prevent re-animation on scroll back
+ */
+export const useScrollReveal = (options: ScrollRevealOptions = {}) => {
+  const ref = useRef<HTMLElement>(null);
+  const { threshold = 0.15, rootMargin = '0px 0px -10% 0px' } = options;
 
   useEffect(() => {
-    // Check for reduced motion preference
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          entry.target.classList.add('is-visible');
           observer.unobserve(entry.target);
         }
       },
       {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px',
+        threshold,
+        rootMargin,
       }
     );
 
@@ -99,69 +37,31 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
         observer.unobserve(ref.current);
       }
     };
-  }, []);
+  }, [threshold, rootMargin]);
 
-  if (prefersReducedMotion) {
-    return (
-      <div ref={ref} className={className}>
-        {children}
-      </div>
-    );
-  }
-
-  const calculatedDelay = baseDelay + (staggerChildren ? index * 0.1 : delay / 1000);
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={getInitialVariant(direction)}
-      animate={isVisible ? getAnimateVariant() : getInitialVariant(direction)}
-      exit={getExitVariant(direction)}
-      transition={{
-        duration: duration / 1000,
-        delay: calculatedDelay,
-        ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for premium feel
-      }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
+  return ref;
 };
 
-// Container component for staggered children
-interface ScrollRevealContainerProps {
+/**
+ * Component wrapper for scroll reveal animations
+ * Applies .reveal class and manages IntersectionObserver
+ */
+export const ScrollReveal: React.FC<{
   children: React.ReactNode;
   className?: string;
-  staggerDelay?: number;
-}
-
-export const ScrollRevealContainer: React.FC<ScrollRevealContainerProps> = ({
-  children,
-  className = '',
-  staggerDelay = 0.08,
-}) => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: staggerDelay,
-        delayChildren: 0,
-      },
-    },
-  };
+  revealClass?: 'reveal' | 'reveal-wipe';
+  delay?: 1 | 2 | 3 | 4 | 5;
+}> = ({ children, className = '', revealClass = 'reveal', delay }) => {
+  const ref = useScrollReveal();
+  const delayClass = delay ? `reveal-delay-${delay}` : '';
 
   return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      variants={containerVariants}
-      className={className}
+    <div
+      ref={ref}
+      className={`${revealClass} ${delayClass} ${className}`.trim()}
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 
