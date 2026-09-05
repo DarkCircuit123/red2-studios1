@@ -82,8 +82,10 @@ export default function Footer() {
                 onClick={playClickSound}
                 className="footer-logo-container relative flex items-center gap-0 group w-fit"
               >
-                <span className="text-2xl font-heading font-black text-white tracking-tight hover:text-primary transition-colors duration-300">
-                  RED<span 
+                <span className="text-2xl font-heading font-black tracking-tight transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(255,36,0,0.8)]">
+                  <span className="text-white inline-block transition-colors duration-300 group-hover:text-scarlet">
+                    RED
+                  </span><span 
                     className="footer-logo-2 inline-block transition-colors duration-300"
                     style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
                   >
