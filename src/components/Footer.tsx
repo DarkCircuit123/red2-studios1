@@ -86,7 +86,7 @@ export default function Footer() {
                   <span className="text-white inline-block transition-colors duration-300 group-hover:text-scarlet">
                     RED
                   </span><span 
-                    className="footer-logo-2 inline-block transition-colors duration-300 -ml-2 text-lg -mt-1"
+                    className="footer-logo-2 inline-block transition-colors duration-300 -ml-2 text-lg -mt-3"
                     style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
                   >
                     <span className="footer-logo-2-inner">
