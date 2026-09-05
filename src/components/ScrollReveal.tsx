@@ -51,7 +51,9 @@ export const ScrollReveal: React.FC<{
   className?: string;
   revealClass?: 'reveal' | 'reveal-wipe';
   delay?: 1 | 2 | 3 | 4 | 5;
-}> = ({ children, className = '', revealClass = 'reveal', delay }) => {
+  direction?: 'up' | 'down' | 'left' | 'right';
+  duration?: number;
+}> = ({ children, className = '', revealClass = 'reveal', delay, direction, duration }) => {
   const ref = useScrollReveal();
   const delayClass = delay ? `reveal-delay-${delay}` : '';
 
