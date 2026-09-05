@@ -175,7 +175,7 @@ export default function Header() {
             className="relative flex items-center gap-0"
           >
             <span className="font-heading font-black tracking-tight text-7xl transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(111,8,9,0.8)]">
-              <span className="text-white inline-block transition-colors duration-300 group-hover:text-primary">
+              <span className="text-white inline-block transition-colors duration-300 group-hover:text-scarlet">
                 RED
               </span>
               <span 
