@@ -12,6 +12,7 @@ export default {
         primary: '#000000',
         secondary: '#ffffff',
         accent: '#ff0000',
+        'scarlet': '#FF2400',
         muted: '#666666',
         'muted-foreground': '#999999',
         border: '#e5e5e5',
