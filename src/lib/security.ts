@@ -203,7 +203,6 @@ export function generateSRIHash(content: string): string {
 export function validateSecurityHeaders(headers: Record<string, string>): boolean {
   const requiredHeaders = [
     'X-Content-Type-Options',
-    'X-Frame-Options',
     'X-XSS-Protection',
   ];
 

@@ -26,7 +26,6 @@ export class CSPManager {
     this.directives.set('img-src', ["'self'", 'data:', 'https:']);
     this.directives.set('font-src', ["'self'", 'https://fonts.gstatic.com']);
     this.directives.set('connect-src', ["'self'", 'https:']);
-    this.directives.set('frame-ancestors', ["'none'"]);
     this.directives.set('base-uri', ["'self'"]);
     this.directives.set('form-action', ["'self'"]);
   }
