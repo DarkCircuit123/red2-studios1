@@ -153,15 +153,15 @@ export default function Header() {
         {/* Logo - Text-based RED² with unified hover behavior - Positioned absolutely on left */}
         <style>{`
           @keyframes spin-2 {
-            from {
+            0% {
               transform: rotateY(0deg);
             }
-            to {
+            100% {
               transform: rotateY(360deg);
             }
           }
           .logo-container:hover .logo-2-inner {
-            animation: spin-2 4s linear infinite;
+            animation: spin-2 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 1;
           }
           .logo-2-inner {
             position: relative;
