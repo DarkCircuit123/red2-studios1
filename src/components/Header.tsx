@@ -174,12 +174,12 @@ export default function Header() {
             onClick={handleLinkClick}
             className="relative flex items-center gap-0"
           >
-            <span className="font-heading font-black tracking-tight text-7xl transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(111,8,9,0.8)]">
+            <span className="font-heading font-black tracking-tight text-7xl transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(255,36,0,0.8)]">
               <span className="text-white inline-block transition-colors duration-300 group-hover:text-scarlet">
                 RED
               </span>
               <span 
-                className="logo-2 text-accent inline-block transition-colors duration-300 group-hover:text-scarlet"
+                className="logo-2 text-white inline-block transition-colors duration-300 group-hover:text-scarlet"
                 style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
               >
                 ²
