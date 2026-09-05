@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo, memo, useLayoutEffect } from 'react';
+import React, { useEffect, useRef, useState, useMemo, memo, useLayoutEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
@@ -35,7 +35,7 @@ const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
 
   const { fitting } = useImageFitting(fitOptions);
 
-  const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     setImageDims(prevDims => {
       // Guard: only update if dimensions actually changed
@@ -47,7 +47,7 @@ const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
         height: img.naturalHeight,
       };
     });
-  }, []);
+  };
 
   const imageStyle = useMemo(() => ({
     objectFit: fitting.objectFit as any,
@@ -88,58 +88,57 @@ const RubberBandCarouselSection: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Load carousel images from CMS using API endpoint
-  const loadCarouselImages = useCallback(async () => {
-    try {
-      const response = await fetch('/api/cms/get-carouselimages', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) {
-        const errorMsg = `Failed to fetch carousel images: HTTP ${response.status}`;
-        console.error('[RubberBandCarousel]', errorMsg);
-        setLoadError(errorMsg);
-        setCmsImages(null);
-        return;
-      }
-
-      const result = await response.json();
-      const collected: CarouselImage[] = [];
-
-      result.items?.forEach((item: any) => {
-        if (item.image && item.isActive) {
-          // Convert wix:image:// URLs to HTTPS for browser rendering
-          const httpsUrl = convertWixImageToHttps(item.image);
-          if (httpsUrl) {
-            collected.push({
-              id: item._id,
-              url: httpsUrl,
-              alt: item.imageName || 'Carousel photo',
-            });
-          }
-        }
-      });
-
-      // Sort by displayOrder if available
-      collected.sort((a, b) => {
-        const aOrder = result.items?.find((i: any) => i._id === a.id)?.displayOrder ?? 999;
-        const bOrder = result.items?.find((i: any) => i._id === b.id)?.displayOrder ?? 999;
-        return aOrder - bOrder;
-      });
-
-      // Set images if any were collected; otherwise set to empty array (not null)
-      // to distinguish from a fetch error
-      setCmsImages(collected.length > 0 ? collected : []);
-      setLoadError(null);
-    } catch (error) {
-      const errorMsg = `[RubberBandCarousel] Failed to load carousel images: ${error instanceof Error ? error.message : String(error)}`;
-      console.error(errorMsg);
-      setLoadError(errorMsg);
-      setCmsImages(null);
-    }
-  }, []);
-
   useEffect(() => {
+    const loadCarouselImages = async () => {
+      try {
+        const response = await fetch('/api/cms/get-carouselimages', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          const errorMsg = `Failed to fetch carousel images: HTTP ${response.status}`;
+          console.error('[RubberBandCarousel]', errorMsg);
+          setLoadError(errorMsg);
+          setCmsImages([]);
+          return;
+        }
+
+        const result = await response.json();
+        const collected: CarouselImage[] = [];
+
+        result.items?.forEach((item: any) => {
+          if (item.image && item.isActive) {
+            // Convert wix:image:// URLs to HTTPS for browser rendering
+            const httpsUrl = convertWixImageToHttps(item.image);
+            if (httpsUrl) {
+              collected.push({
+                id: item._id,
+                url: httpsUrl,
+                alt: item.imageName || 'Carousel photo',
+              });
+            }
+          }
+        });
+
+        // Sort by displayOrder if available
+        collected.sort((a, b) => {
+          const aOrder = result.items?.find((i: any) => i._id === a.id)?.displayOrder ?? 999;
+          const bOrder = result.items?.find((i: any) => i._id === b.id)?.displayOrder ?? 999;
+          return aOrder - bOrder;
+        });
+
+        // Set images if any were collected; otherwise set to empty array
+        setCmsImages(collected.length > 0 ? collected : []);
+        setLoadError(null);
+      } catch (error) {
+        const errorMsg = `[RubberBandCarousel] Failed to load carousel images: ${error instanceof Error ? error.message : String(error)}`;
+        console.error(errorMsg);
+        setLoadError(errorMsg);
+        setCmsImages([]);
+      }
+    };
+
     loadCarouselImages();
   }, []);
 
@@ -158,18 +157,18 @@ const RubberBandCarouselSection: React.FC = () => {
     };
   }, [cmsImages]);
 
-  // Elastic easing function for overshoot snap-back (memoized)
-  const easeOutElastic = useCallback((t: number): number => {
+  // Elastic easing function for overshoot snap-back
+  const easeOutElastic = (t: number): number => {
     const c5 = (2 * Math.PI) / 4.5;
     return t === 0
       ? 0
       : t === 1
       ? 1
       : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c5) + 1;
-  }, []);
+  };
 
-  // Step 1 & 2: Track mouse position and calculate pull offset (memoized)
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  // Step 1 & 2: Track mouse position and calculate pull offset
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || !isHoveringRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -189,9 +188,9 @@ const RubberBandCarouselSection: React.FC = () => {
       50;
 
     curvedPullRef.current = curvedPull;
-  }, []);
+  };
 
-  const handleMouseEnter = useCallback(() => {
+  const handleMouseEnter = () => {
     isHoveringRef.current = true;
     mousePercentRef.current = 0;
     curvedPullRef.current = 0;
@@ -200,9 +199,9 @@ const RubberBandCarouselSection: React.FC = () => {
     if (snapBackAnimationRef.current) {
       cancelAnimationFrame(snapBackAnimationRef.current);
     }
-  }, []);
+  };
 
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = () => {
     isHoveringRef.current = false;
 
     // Step 5: Animate snap-back with overshoot
@@ -227,13 +226,16 @@ const RubberBandCarouselSection: React.FC = () => {
     };
 
     snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
-  }, []);
+  };
 
   // Step 4: Main animation loop - optimized to avoid unnecessary state updates
   // Use a ref to track the last scroll position to prevent excessive state updates
   const lastScrollPositionRef = useRef(0);
   
   useLayoutEffect(() => {
+    // Guard: Don't animate if there are no images
+    if (totalWidth === 0) return;
+
     let animationFrameId: number;
     let isAnimating = true;
 
