@@ -26,14 +26,14 @@
         "src/components/*"
       ],
       "@/integrations/*": [
-        "integrations/*",
+        "integrations/*"
       ],
       "@/integrations": [
         "integrations"
       ],
       "@wix/codegen-framework-packages": [
         "integrations"
-      ],
+      ]
     }
   },
   "include": [
