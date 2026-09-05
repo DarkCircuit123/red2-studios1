@@ -163,6 +163,30 @@ export default function Header() {
           .logo-container:hover .logo-2 {
             animation: spin-2 4s linear infinite;
           }
+          .logo-2-inner {
+            position: relative;
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            transform-style: preserve-3d;
+          }
+          .logo-2-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backface-visibility: hidden;
+          }
+          .logo-2-front {
+            color: #FF2400;
+            z-index: 2;
+          }
+          .logo-2-back {
+            color: white;
+            transform: rotateY(180deg);
+          }
         `}</style>
         <motion.div
           whileHover={{ scale: 1.08 }}
@@ -179,10 +203,13 @@ export default function Header() {
                 RED
               </span>
               <span 
-                className="logo-2 text-white inline-block transition-colors duration-300 group-hover:text-scarlet"
+                className="logo-2 inline-block transition-colors duration-300"
                 style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
               >
-                ²
+                <span className="logo-2-inner">
+                  <span className="logo-2-face logo-2-front">²</span>
+                  <span className="logo-2-face logo-2-back">²</span>
+                </span>
               </span>
             </span>
           </Link>
