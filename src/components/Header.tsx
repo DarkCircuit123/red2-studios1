@@ -160,7 +160,7 @@ export default function Header() {
               transform: rotateY(360deg);
             }
           }
-          .logo-container:hover .logo-2 {
+          .logo-container:hover .logo-2-inner {
             animation: spin-2 4s linear infinite;
           }
           .logo-2-inner {
@@ -169,6 +169,7 @@ export default function Header() {
             width: 1em;
             height: 1em;
             transform-style: preserve-3d;
+            transition: transform 0.3s ease;
           }
           .logo-2-face {
             position: absolute;
@@ -178,14 +179,16 @@ export default function Header() {
             align-items: center;
             justify-content: center;
             backface-visibility: hidden;
+            font-size: 1em;
           }
           .logo-2-front {
             color: #FF2400;
             z-index: 2;
+            transform: translateZ(0.5em);
           }
           .logo-2-back {
             color: white;
-            transform: rotateY(180deg);
+            transform: rotateY(180deg) translateZ(0.5em);
           }
         `}</style>
         <motion.div
