@@ -145,7 +145,7 @@ export default function AboutPageManager() {
               placeholder="Enter the main about text content here. This will be displayed prominently on your About page."
               className="w-full min-h-96 p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
             />
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-slate-500 mt-2">
               {aboutText.length} characters
             </p>
           </div>
@@ -206,7 +206,7 @@ export default function AboutPageManager() {
             </div>
           )}
           {!heading && !subheading && !aboutText && (
-            <p className="text-slate-400 italic">Preview will appear here as you edit the content</p>
+            <p className="text-slate-500 italic">Preview will appear here as you edit the content</p>
           )}
         </div>
       </Card>

@@ -233,7 +233,7 @@ export default function RubberBandPhotosManager() {
               <div className="text-center">
                 <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-2" />
                 <p className="text-slate-500 text-sm">No carousel photos yet</p>
-                <p className="text-slate-400 text-xs mt-1">Upload photos above to get started</p>
+                <p className="text-slate-500 text-xs mt-1">Upload photos above to get started</p>
               </div>
             </div>
           ) : (
