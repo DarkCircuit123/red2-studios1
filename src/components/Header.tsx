@@ -160,19 +160,31 @@ export default function Header() {
               transform: rotateY(360deg);
             }
           }
-          .logo-container:hover .logo-2 {
-            animation: spin-2 4s linear infinite;
+          .logo-2-front {
             color: #A31621;
           }
-          .logo-container:hover .logo-red {
-            color: #A31621;
+          .logo-2-back {
+            color: #ffffff;
+          }
+          .logo-2-face {
+            display: inline-block;
+            transformStyle: preserve-3d;
+          }
+          .logo-red {
+            color: #ffffff;
             transition: color 300ms ease;
+          }
+          .logo-wrap:hover .logo-red {
+            color: #A31621;
+          }
+          .logo-wrap:hover .logo-2 {
+            animation: spin-2 4s linear infinite;
           }
         `}</style>
         <motion.div
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.98 }}
-          className="logo-container group absolute left-6 md:left-8"
+          className="logo-wrap group absolute left-6 md:left-8"
         >
           <Link
             to="/"
@@ -180,11 +192,11 @@ export default function Header() {
             className="relative flex items-center gap-0"
           >
             <span className="font-heading font-black tracking-tight text-7xl transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(111,8,9,0.8)]">
-              <span className="logo-red text-white inline-block transition-colors duration-300 group-hover:text-primary">
+              <span className="logo-red inline-block">
                 RED
               </span>
               <span 
-                className="logo-2 text-primary inline-block transition-colors duration-300 group-hover:text-white"
+                className="logo-2 inline-block -mt-32"
                 style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
               >
                 ²
