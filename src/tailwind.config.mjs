@@ -27,7 +27,7 @@ export default {
         'popover-foreground': '#000000',
       },
       fontFamily: {
-        heading: ['Playfair Display', 'serif'],
+        heading: ['Montserrat', 'sans-serif'],
         paragraph: ['Inter', 'sans-serif'],
         mono: ['Space Mono', 'monospace'],
       },
