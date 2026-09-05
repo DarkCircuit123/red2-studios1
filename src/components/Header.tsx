@@ -179,7 +179,7 @@ export default function Header() {
                 RED
               </span>
               <span 
-                className="logo-2 text-accent inline-block transition-colors duration-300 group-hover:text-white"
+                className="logo-2 text-accent inline-block transition-colors duration-300 group-hover:text-scarlet"
                 style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
               >
                 ²
