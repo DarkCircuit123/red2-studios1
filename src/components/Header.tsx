@@ -188,7 +188,7 @@ export default function Header() {
         <motion.div
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.98 }}
-          className="logo-wrap group absolute left-6 md:left-8"
+          className="logo-wrap group absolute left-6 md:left-8 top-4"
         >
           <Link
             to="/"
