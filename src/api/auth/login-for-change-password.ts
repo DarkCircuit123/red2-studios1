@@ -1,4 +1,3 @@
-import { members } from '@wix/members';
 import { BaseCrudService } from '@/integrations';
 
 // Helper to extract IP address from request headers
@@ -45,74 +44,13 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       );
     }
 
-    // CRITICAL: The Wix @wix/members SDK does not provide a server-side
-    // password verification method. The authentication.login() method is from
-    // @wix/site-members (frontend module) and cannot be used on the server.
-    // Without a server-side password verification API, we cannot securely
-    // verify the password before generating the authorization token.
-    // This is a limitation of the Wix Members SDK.
-    // For now, we proceed with token generation after basic validation.
-    // The actual password verification should happen on the frontend before
-    // calling this endpoint.
-
-    // Get the authenticated member's details
-    let currentMember: any;
-    try {
-      currentMember = await members.getMyMember({ fieldsets: ['FULL'] });
-    } catch (memberError) {
-      console.error('Failed to get current member:', memberError);
-      return new Response(
-        JSON.stringify({ message: 'Failed to retrieve member information' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!currentMember?.member?._id || !currentMember?.member?.loginEmail) {
-      return new Response(
-        JSON.stringify({ message: 'Failed to retrieve member information' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const memberId = currentMember.member._id;
-
-    // Generate a secure token for password change authorization
-    const token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
-    const createdAt = new Date();
-
-    // Write the token to password_change_authorizations using backend context (admin credentials)
-    // This bypasses client-side collection permissions
-    try {
-      await BaseCrudService.create('passwordchangeauthorizations', {
-        _id: crypto.randomUUID(),
-        memberId,
-        token,
-        expiresAt,
-        used: false,
-        createdAt,
-      });
-    } catch (tokenError) {
-      console.error('Failed to create authorization token:', tokenError);
-      await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
-      return new Response(
-        JSON.stringify({ message: 'Failed to generate authorization token' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Log successful token generation
-    await logPasswordChangeAttempt(memberId, true, ipAddress, userAgent);
-
-    // Return the token to the client
+    // NOTE: The Wix @wix/members SDK does not provide server-side
+    // getMyMember method or password verification. These are only available
+    // through the frontend @wix/site-members module. This endpoint cannot
+    // verify credentials or retrieve member information on the server side.
     return new Response(
-      JSON.stringify({
-        message: 'Authentication successful',
-        token,
-        memberId,
-        email: currentMember.member.loginEmail,
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ message: 'Password change is not available at this time' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Login for change password error:', error);

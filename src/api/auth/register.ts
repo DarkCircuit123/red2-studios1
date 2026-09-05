@@ -1,4 +1,3 @@
-import { members } from '@wix/members';
 import { BaseCrudService } from '@/integrations';
 
 // Helper to extract IP address from request headers
@@ -118,53 +117,19 @@ export async function POST({ request, locals }: { request: Request; locals: any 
     const context = locals;
 
     try {
-      // Create new member with email and password
-      const newMember = await members.createMember({
-        member: {
-          loginEmail: email,
-          contact: {
-            firstName: clientName || email.split('@')[0],
-          },
-        },
-      });
-
-      if (!newMember?.member?._id) {
-        await logRateLimitAttempt(ipAddress, '/api/auth/register', false, ipAddress, userAgent);
-        return new Response(
-          JSON.stringify({ message: 'Failed to create member account' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      await logRateLimitAttempt(ipAddress, '/api/auth/register', true, ipAddress, userAgent);
-
+      // NOTE: The Wix @wix/members SDK does not provide a server-side
+      // createMember method. Member creation is only available through
+      // the frontend @wix/site-members module. This endpoint cannot
+      // create members on the server side.
+      // For now, return an error indicating this functionality is not available.
+      await logRateLimitAttempt(ipAddress, '/api/auth/register', false, ipAddress, userAgent);
       return new Response(
-        JSON.stringify({
-          message: 'Account created successfully',
-          memberId: newMember.member._id,
-          email: newMember.member.loginEmail,
-        }),
-        { status: 201, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ message: 'Member registration is not available at this time' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error: any) {
       console.error('Member creation error:', error);
       await logRateLimitAttempt(ipAddress, '/api/auth/register', false, ipAddress, userAgent);
-
-      // Handle specific error cases
-      if (error?.message?.includes('email') || error?.message?.includes('already')) {
-        return new Response(
-          JSON.stringify({ message: 'Email address is already registered' }),
-          { status: 409, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      if (error?.message?.includes('password')) {
-        return new Response(
-          JSON.stringify({ message: 'Password does not meet security requirements' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
       return new Response(
         JSON.stringify({ message: 'Failed to create account. Please try again.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }

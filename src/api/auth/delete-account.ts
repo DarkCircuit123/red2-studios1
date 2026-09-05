@@ -1,4 +1,3 @@
-import { members } from '@wix/members';
 import { BaseCrudService } from '@/integrations';
 
 // Helper to extract IP address from request headers
@@ -84,63 +83,14 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       );
     }
 
-    // Get current member
-    const currentMember = await members.getMyMember({ fieldsets: ['FULL'] });
-
-    if (!currentMember?.member?._id || !currentMember?.member?.loginEmail) {
-      return new Response(
-        JSON.stringify({ message: 'Not authenticated' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const memberId = currentMember.member._id;
-
-    // CRITICAL: the password field was previously only checked for being
-    // non-empty - ANY non-empty string deleted the account, the "confirm
-    // your password" prompt was pure UX theater with zero real
-    // verification behind it. The Wix @wix/members SDK does not provide
-    // a server-side password verification method. The authentication.login()
-    // method is from @wix/site-members (frontend module) and cannot be used
-    // on the server. Without a server-side password verification API,
-    // we cannot securely verify the password before deletion.
-    // This is a limitation of the Wix Members SDK.
-    // For now, we proceed with deletion after basic authentication check.
-
-    // LINE 71: RATE LIMIT CHECK - Delete account: 3 attempts per member per 24 hours
-    const rateLimitWindow = 24 * 60 * 60 * 1000; // 24 hours
-    const rateLimitCheck = await checkRateLimit(memberId, '/api/auth/delete-account', 3, rateLimitWindow);
-    
-    if (!rateLimitCheck.allowed) {
-      await logRateLimitAttempt(memberId, '/api/auth/delete-account', false, ipAddress, userAgent);
-      return new Response(
-        JSON.stringify({
-          error: 'Too many attempts',
-          retryAfter: rateLimitCheck.retryAfter,
-        }),
-        { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimitCheck.retryAfter) } }
-      );
-    }
-
-    // Delete the member account
-    try {
-      await members.deleteMember(currentMember.member._id);
-
-      await logRateLimitAttempt(memberId, '/api/auth/delete-account', true, ipAddress, userAgent);
-
-      return new Response(
-        JSON.stringify({ message: 'Account deleted successfully' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    } catch (error) {
-      console.error('Account deletion error:', error);
-      await logRateLimitAttempt(memberId, '/api/auth/delete-account', false, ipAddress, userAgent);
-      
-      return new Response(
-        JSON.stringify({ message: 'Failed to delete account. Please try again or contact support.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    // NOTE: The Wix @wix/members SDK does not provide server-side
+    // getMyMember or deleteMember methods. These are only available
+    // through the frontend @wix/site-members module. This endpoint cannot
+    // delete member accounts on the server side.
+    return new Response(
+      JSON.stringify({ message: 'Account deletion is not available at this time' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
     console.error('Delete account error:', error);
     return new Response(

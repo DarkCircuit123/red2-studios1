@@ -1,4 +1,3 @@
-import { members } from '@wix/members';
 import { BaseCrudService } from '@/integrations';
 
 // Helper to extract IP address from request headers
@@ -112,132 +111,14 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       );
     }
 
-    // Get current member
-    const currentMember = await members.getMyMember({ fieldsets: ['FULL'] });
-    
-    if (!currentMember?.member?.loginEmail || !currentMember?.member?._id) {
-      return new Response(
-        JSON.stringify({ message: 'Not authenticated' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const memberId = currentMember.member._id;
-
-    // RATE LIMIT CHECK - Update password: 10 attempts per member per hour
-    const rateLimitWindow = 60 * 60 * 1000; // 1 hour
-    const rateLimitCheck = await checkRateLimit(memberId, '/api/auth/update-password', 10, rateLimitWindow);
-    
-    if (!rateLimitCheck.allowed) {
-      await logRateLimitAttempt(memberId, '/api/auth/update-password', false, ipAddress, userAgent);
-      return new Response(
-        JSON.stringify({
-          error: 'Too many attempts',
-          retryAfter: rateLimitCheck.retryAfter,
-        }),
-        { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimitCheck.retryAfter) } }
-      );
-    }
-
-    // VALIDATE AUTHORIZATION TOKEN
-    // Verify that the token exists, is not expired, has not been used, and belongs to the current member
-    // NO PASSWORD VERIFICATION HERE - verification happened via real Wix login in ClientLoginPage
-    let tokenValid = false;
-    let tokenRecord: any = null;
-    try {
-      // Query the password_change_authorizations collection for the token
-      const { items } = await BaseCrudService.getAll('passwordchangeauthorizations', {}, { limit: 100 });
-      
-      tokenRecord = items.find((item: any) => item.token === token);
-      
-      if (!tokenRecord) {
-        await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
-        return new Response(
-          JSON.stringify({ message: 'Fresh authentication required' }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Verify token belongs to current member
-      if (tokenRecord.memberId !== memberId) {
-        await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
-        return new Response(
-          JSON.stringify({ message: 'Fresh authentication required' }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Verify token has not expired
-      const now = new Date();
-      const expiresAt = new Date(tokenRecord.expiresAt);
-      if (now > expiresAt) {
-        await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
-        return new Response(
-          JSON.stringify({ message: 'Fresh authentication required' }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Verify token has not been used
-      if (tokenRecord.used === true) {
-        await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
-        return new Response(
-          JSON.stringify({ message: 'Fresh authentication required' }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      tokenValid = true;
-    } catch (error) {
-      console.error('Token validation error:', error);
-      await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
-      return new Response(
-        JSON.stringify({ message: 'Fresh authentication required' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!tokenValid) {
-      await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
-      return new Response(
-        JSON.stringify({ message: 'Fresh authentication required' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // MARK TOKEN AS USED AND UPDATE PASSWORD
-    // Update password using the Wix Members API
-    try {
-      // Mark the token as used to prevent replay attacks
-      await BaseCrudService.update('passwordchangeauthorizations', {
-        _id: tokenRecord._id,
-        used: true,
-      });
-
-      // Update the password
-      await members.updateMember(currentMember.member._id, {
-        loginEmail: currentMember.member.loginEmail,
-        password: newPassword,
-      });
-
-      // Log successful password change
-      await logPasswordChangeAttempt(memberId, true, ipAddress, userAgent);
-      await logRateLimitAttempt(memberId, '/api/auth/update-password', true, ipAddress, userAgent);
-
-      return new Response(
-        JSON.stringify({ message: 'Password updated successfully' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    } catch (error) {
-      console.error('Password update error:', error);
-      await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
-      await logRateLimitAttempt(memberId, '/api/auth/update-password', false, ipAddress, userAgent);
-      
-      return new Response(
-        JSON.stringify({ message: 'Failed to update password. Please try again or contact support.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    // NOTE: The Wix @wix/members SDK does not provide server-side
+    // getMyMember or updateMember methods. These are only available
+    // through the frontend @wix/site-members module. This endpoint cannot
+    // update member passwords on the server side.
+    return new Response(
+      JSON.stringify({ message: 'Password update is not available at this time' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
     console.error('Update password error:', error);
     return new Response(
