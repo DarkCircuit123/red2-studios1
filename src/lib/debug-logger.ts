@@ -129,16 +129,3 @@ export const logger = {
   error: (message: string, error?: any, context?: { module?: string }) =>
     debugError(context?.module ? `[${context.module}] ${message}` : message, error),
 };
-
-export const logger = {
-  debug: (message: string, data?: any, context?: { module?: string }) =>
-    debugLog(context?.module ? `[${context.module}] ${message}` : message, data),
-  log: (message: string, data?: any, context?: { module?: string }) =>
-    debugLog(context?.module ? `[${context.module}] ${message}` : message, data),
-  info: (message: string, data?: any, context?: { module?: string }) =>
-    debugInfo(context?.module ? `[${context.module}] ${message}` : message, data),
-  warn: (message: string, data?: any, context?: { module?: string }) =>
-    debugWarn(context?.module ? `[${context.module}] ${message}` : message, data),
-  error: (message: string, error?: any, context?: { module?: string }) =>
-    debugError(context?.module ? `[${context.module}] ${message}` : message, error),
-};
