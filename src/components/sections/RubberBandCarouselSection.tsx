@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useCallback, useMemo, memo, useLayo
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 import { useImageFitting } from '@/hooks/useImageFitting';
-import { HomepageImages } from '@/entities';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
 interface CarouselImage {
@@ -90,7 +89,7 @@ const RubberBandCarouselSection: React.FC = () => {
   // Load carousel images from CMS using API endpoint
   const loadCarouselImages = useCallback(async () => {
     try {
-      const response = await fetch('/api/cms/get-homepageimages', {
+      const response = await fetch('/api/cms/get-carouselimages', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -102,10 +101,10 @@ const RubberBandCarouselSection: React.FC = () => {
       const result = await response.json();
       const collected: CarouselImage[] = [];
 
-      result.items?.forEach((item: HomepageImages) => {
-        if (item.heroImage) {
+      result.items?.forEach((item: any) => {
+        if (item.image && item.isActive) {
           // Convert wix:image:// URLs to HTTPS for browser rendering
-          const httpsUrl = convertWixImageToHttps(item.heroImage);
+          const httpsUrl = convertWixImageToHttps(item.image);
           if (httpsUrl) {
             collected.push({
               id: item._id,
@@ -114,6 +113,13 @@ const RubberBandCarouselSection: React.FC = () => {
             });
           }
         }
+      });
+
+      // Sort by displayOrder if available
+      collected.sort((a, b) => {
+        const aOrder = result.items?.find((i: any) => i._id === a.id)?.displayOrder ?? 999;
+        const bOrder = result.items?.find((i: any) => i._id === b.id)?.displayOrder ?? 999;
+        return aOrder - bOrder;
       });
 
       // Only take over when there is something to show, so an empty or

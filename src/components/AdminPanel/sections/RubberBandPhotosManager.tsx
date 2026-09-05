@@ -5,18 +5,25 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image as ImageIcon, Upload, Trash2, Eye, Plus, RefreshCw } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
-import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { motion } from 'framer-motion';
 
+interface CarouselImage {
+  _id: string;
+  imageName?: string;
+  image?: string;
+  displayOrder?: number;
+  isActive?: boolean;
+}
+
 export default function RubberBandPhotosManager() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [photos, setPhotos] = useState<HomepageImages[]>([]);
+  const [photos, setPhotos] = useState<CarouselImage[]>([]);
   const [uploading, setUploading] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,8 +37,9 @@ export default function RubberBandPhotosManager() {
   const loadPhotos = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
-      setPhotos(result.items || []);
+      const result = await BaseCrudService.getAll<CarouselImage>('carouselimages', {}, { limit: 100 });
+      const sorted = (result.items || []).sort((a, b) => (a.displayOrder ?? 999) - (b.displayOrder ?? 999));
+      setPhotos(sorted);
     } catch (error) {
       console.error('Error loading photos:', error);
       toast({
@@ -55,14 +63,15 @@ export default function RubberBandPhotosManager() {
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
       // Create new photo entry
-      const newPhoto: HomepageImages = {
+      const newPhoto: CarouselImage = {
         _id: crypto.randomUUID(),
         imageName: file.name.replace(/\.[^/.]+$/, ''),
-        heroImage: result.mediaUrl,
+        image: result.mediaUrl,
+        displayOrder: photos.length,
         isActive: true,
       };
 
-      await adminCms.create('homepageimages', newPhoto);
+      await adminCms.create('carouselimages', newPhoto);
       setPhotos([...photos, newPhoto]);
 
       toast({
@@ -99,13 +108,13 @@ export default function RubberBandPhotosManager() {
       // Update the photo with new image URL
       const photoToUpdate = photos.find(p => p._id === photoId);
       if (photoToUpdate) {
-        const updatedPhoto: HomepageImages = {
+        const updatedPhoto: CarouselImage = {
           ...photoToUpdate,
-          heroImage: result.mediaUrl,
+          image: result.mediaUrl,
           imageName: file.name.replace(/\.[^/.]+$/, ''),
         };
 
-        await adminCms.update('homepageimages', updatedPhoto);
+        await adminCms.update('carouselimages', updatedPhoto);
         
         // Update local state
         setPhotos(photos.map(p => p._id === photoId ? updatedPhoto : p));
@@ -135,7 +144,7 @@ export default function RubberBandPhotosManager() {
   const handleDeletePhoto = async (photoId: string) => {
     try {
       setIsSaving(true);
-      await adminCms.delete('homepageimages', photoId);
+      await adminCms.delete('carouselimages', photoId);
       setPhotos(photos.filter(p => p._id !== photoId));
 
       toast({
@@ -231,7 +240,7 @@ export default function RubberBandPhotosManager() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {photos.map((photo, index) => {
                 // Convert wix:image URLs to HTTPS for display
-                const displayImageUrl = convertWixImageToHttps(photo.heroImage) || photo.heroImage;
+                const displayImageUrl = convertWixImageToHttps(photo.image) || photo.image;
                 
                 return (
                   <motion.div

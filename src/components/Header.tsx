@@ -178,15 +178,12 @@ export default function Header() {
             align-items: center;
             justify-content: center;
             backface-visibility: hidden;
-            font-size: 1em;
           }
           .logo-2-front {
-            color: #FF2400;
             z-index: 2;
             transform: translateZ(0.5em);
           }
           .logo-2-back {
-            color: white;
             transform: rotateY(180deg) translateZ(0.5em);
           }
         `}</style>
@@ -209,8 +206,8 @@ export default function Header() {
                 style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
               >
                 <span className="logo-2-inner">
-                  <span className="logo-2-face logo-2-front text-primary">²</span>
-                  <span className="logo-2-face logo-2-back text-primary">²</span>
+                  <span className="logo-2-face logo-2-front text-scarlet text-5xl">²</span>
+                  <span className="logo-2-face logo-2-back text-white text-5xl">²</span>
                 </span>
               </span>
             </span>
