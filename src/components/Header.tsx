@@ -141,7 +141,6 @@ export default function Header() {
         onClose={handleLoginModalClose}
         onLoginSuccess={handleLoginSuccess}
       />
-      
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
@@ -210,8 +209,8 @@ export default function Header() {
                 style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
               >
                 <span className="logo-2-inner">
-                  <span className="logo-2-face logo-2-front">²</span>
-                  <span className="logo-2-face logo-2-back">²</span>
+                  <span className="logo-2-face logo-2-front text-primary">²</span>
+                  <span className="logo-2-face logo-2-back text-color-7">²</span>
                 </span>
               </span>
             </span>
