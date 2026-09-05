@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Check, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { BookingAvailability } from '@/entities/index';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -27,6 +28,7 @@ interface Booking {
 }
 
 export default function BookingPage() {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState<BookingAvailability[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -39,6 +41,10 @@ export default function BookingPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const handleGetInTouch = () => {
+    navigate('/contact');
+  };
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -411,9 +417,9 @@ export default function BookingPage() {
             <p className="text-white/60 mb-6">
               Need a custom date or time? Contact us directly.
             </p>
-            <a href="/#contact" className="inline-block px-8 py-3 bg-white text-slate-950 font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300">
+            <button onClick={handleGetInTouch} className="inline-block px-8 py-3 bg-white text-slate-950 font-heading font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all duration-300">
               Get in Touch
-            </a>
+            </button>
           </motion.div>
         </div>
       </section>
