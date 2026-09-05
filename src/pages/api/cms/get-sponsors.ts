@@ -6,10 +6,15 @@ export const GET: APIRoute = async () => {
   try {
     const result = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
     
+    // Filter out empty sponsors - only show those with clientName or clientLogo
+    const filledSponsors = (result?.items || []).filter(
+      sponsor => sponsor.clientName || sponsor.clientLogo
+    );
+    
     return new Response(
       JSON.stringify({
         success: true,
-        items: result?.items || [],
+        items: filledSponsors,
       }),
       {
         status: 200,
