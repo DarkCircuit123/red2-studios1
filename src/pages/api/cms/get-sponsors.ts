@@ -6,9 +6,15 @@ export const GET: APIRoute = async () => {
   try {
     const result = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
     
-    // Filter out empty sponsors - only show those with clientName or clientLogo
+    // Filter out empty/placeholder sponsors - only show those with BOTH clientName AND clientLogo
+    // and exclude items with placeholder text like "Become a sponsor"
     const filledSponsors = (result?.items || []).filter(
-      sponsor => sponsor.clientName || sponsor.clientLogo
+      sponsor => {
+        const hasName = sponsor.clientName && sponsor.clientName.trim().length > 0;
+        const hasLogo = sponsor.clientLogo && sponsor.clientLogo.trim().length > 0;
+        const isNotPlaceholder = !sponsor.clientName?.toLowerCase().includes('sponsor');
+        return hasName && hasLogo && isNotPlaceholder;
+      }
     );
     
     return new Response(
