@@ -195,7 +195,6 @@ export default function Header() {
             { href: '/portfolio', label: 'Work', isLink: true },
             { href: '/booking', label: 'Booking', isLink: true, scrollTo: '#booking-form' },
             { href: '/contact', label: 'Contact', isLink: true, isPage: true },
-            { href: '/play', label: 'Play', isLink: true },
           ].map((item, i) => (
             <motion.div
               key={i}
