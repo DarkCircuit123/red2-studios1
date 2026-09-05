@@ -83,8 +83,9 @@ const RubberBandCarouselSection: React.FC = () => {
   const snapBackAnimationRef = useRef<number>();
 
   // Images uploaded through Admin -> Home Page -> Photos tab. This section now reads
-  // from the 'homepageimages' collection which is managed via the admin panel.
+  // from the 'carouselimages' collection which is managed via the admin panel.
   const [cmsImages, setCmsImages] = useState<CarouselImage[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Load carousel images from CMS using API endpoint
   const loadCarouselImages = useCallback(async () => {
@@ -95,7 +96,11 @@ const RubberBandCarouselSection: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch carousel images: ${response.status}`);
+        const errorMsg = `Failed to fetch carousel images: HTTP ${response.status}`;
+        console.error('[RubberBandCarousel]', errorMsg);
+        setLoadError(errorMsg);
+        setCmsImages(null);
+        return;
       }
 
       const result = await response.json();
@@ -122,13 +127,14 @@ const RubberBandCarouselSection: React.FC = () => {
         return aOrder - bOrder;
       });
 
-      // Only take over when there is something to show, so an empty or
-      // failed read leaves the existing visuals in place rather than
-      // blanking the section.
-      setCmsImages(collected.length > 0 ? collected : null);
+      // Set images if any were collected; otherwise set to empty array (not null)
+      // to distinguish from a fetch error
+      setCmsImages(collected.length > 0 ? collected : []);
+      setLoadError(null);
     } catch (error) {
-      console.error('[RubberBandCarousel] Failed to load carousel images:', error);
-      console.warn('[RubberBandCarousel] Using fallback images');
+      const errorMsg = `[RubberBandCarousel] Failed to load carousel images: ${error instanceof Error ? error.message : String(error)}`;
+      console.error(errorMsg);
+      setLoadError(errorMsg);
       setCmsImages(null);
     }
   }, []);
@@ -137,51 +143,20 @@ const RubberBandCarouselSection: React.FC = () => {
     loadCarouselImages();
   }, []);
 
-  // Fallback used only until the CMS responds, or if it has no images yet.
-  const fallbackImages: CarouselImage[] = useMemo(() => [
-    {
-      id: '1',
-      url: 'https://static.wixstatic.com/media/e9d727_dc338c865879444cab6ecb545a8e8d0b~mv2.png?originWidth=1920&originHeight=1024',
-      alt: 'Portfolio work 1',
-    },
-    {
-      id: '2',
-      url: 'https://static.wixstatic.com/media/e9d727_caf9a0b8c25a48e498e615968b84cfc5~mv2.png?originWidth=1920&originHeight=1024',
-      alt: 'Portfolio work 2',
-    },
-    {
-      id: '3',
-      url: 'https://static.wixstatic.com/media/e9d727_af58458647a24198895103de7f52ee34~mv2.png?originWidth=1920&originHeight=1024',
-      alt: 'Portfolio work 3',
-    },
-    {
-      id: '4',
-      url: 'https://static.wixstatic.com/media/e9d727_7398b229af7349179713a070e2ba3045~mv2.png?originWidth=1920&originHeight=1024',
-      alt: 'Portfolio work 4',
-    },
-    {
-      id: '5',
-      url: 'https://static.wixstatic.com/media/e9d727_df5b596912a946fa8801c5a797d9fab5~mv2.png?originWidth=1920&originHeight=1024',
-      alt: 'Portfolio work 5',
-    },
-    {
-      id: '6',
-      url: 'https://static.wixstatic.com/media/e9d727_9ddd1fbce8c04f54a8ae54df6c169f95~mv2.png?originWidth=1920&originHeight=1024',
-      alt: 'Portfolio work 6',
-    },
-  ], []);
-
-  // CMS wins whenever it has images; the hardcoded set is only a placeholder.
-  const images: CarouselImage[] = cmsImages ?? fallbackImages;
-
   // Memoize duplicated images and total width to prevent effect re-runs
   const { duplicatedImages, totalWidth } = useMemo(() => {
-    const duped = [...images, ...images, ...images];
+    if (!cmsImages || cmsImages.length === 0) {
+      return {
+        duplicatedImages: [],
+        totalWidth: 0,
+      };
+    }
+    const duped = [...cmsImages, ...cmsImages, ...cmsImages];
     return {
       duplicatedImages: duped,
       totalWidth: duped.length * 100, // Each image is 100vw
     };
-  }, [images]);
+  }, [cmsImages]);
 
   // Elastic easing function for overshoot snap-back (memoized)
   const easeOutElastic = useCallback((t: number): number => {
@@ -299,34 +274,39 @@ const RubberBandCarouselSection: React.FC = () => {
   }, [totalWidth]);
 
   return (
-    <section
-      ref={containerRef}
-      className="relative w-screen h-[55vh] bg-[#0a0a0a] overflow-hidden"
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Carousel container */}
-      <motion.div
-        className="flex h-full"
-        style={{
-          x: -scrollPosition,
-          gap: '8px',
-        }}
-      >
-        {duplicatedImages.map((image, index) => (
-          <div
-            key={`${image.id}-${index}`}
-            className="flex-shrink-0 w-screen h-full"
+    <>
+      {/* Only render carousel section if images are available */}
+      {cmsImages && cmsImages.length > 0 && (
+        <section
+          ref={containerRef}
+          className="relative w-screen h-[55vh] bg-[#0a0a0a] overflow-hidden"
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {/* Carousel container */}
+          <motion.div
+            className="flex h-full"
+            style={{
+              x: -scrollPosition,
+              gap: '8px',
+            }}
           >
-            <CarouselImageCard image={image} />
-          </div>
-        ))}
-      </motion.div>
+            {duplicatedImages.map((image, index) => (
+              <div
+                key={`${image.id}-${index}`}
+                className="flex-shrink-0 w-screen h-full"
+              >
+                <CarouselImageCard image={image} />
+              </div>
+            ))}
+          </motion.div>
 
-      {/* Bottom divider */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-[#2a2a2a]" />
-    </section>
+          {/* Bottom divider */}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-[#2a2a2a]" />
+        </section>
+      )}
+    </>
   );
 };
 
