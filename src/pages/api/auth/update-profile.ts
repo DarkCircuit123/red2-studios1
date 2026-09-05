@@ -14,7 +14,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
 
     try {
       // Get current member
-      const currentMember = await members.getCurrentMember();
+      const currentMember = await members.getMyMember({ fieldsets: ['FULL'] });
 
       if (!currentMember?.member?._id) {
         return new Response(

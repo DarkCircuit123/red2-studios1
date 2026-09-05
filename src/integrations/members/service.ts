@@ -36,7 +36,7 @@ const isExpectedAuthError = (error: unknown): boolean => {
 export const getCurrentMember = async (): Promise<Member | null> => {
   try {
     console.log('[MEMBER SERVICE] Loading current member...');
-    const member = await members.getCurrentMember({ fieldsets: ["FULL"] });
+    const member = await members.getMyMember({ fieldsets: ["FULL"] });
     if (!member) {
       console.log('[MEMBER SERVICE] No member session found (anonymous user)');
       return null; // No member session - normal for anonymous visitors

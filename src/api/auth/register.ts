@@ -120,10 +120,11 @@ export async function POST({ request, locals }: { request: Request; locals: any 
     try {
       // Create new member with email and password
       const newMember = await members.createMember({
-        loginEmail: email,
-        password: password,
-        profile: {
-          nickname: clientName || email.split('@')[0],
+        member: {
+          loginEmail: email,
+          contact: {
+            firstName: clientName || email.split('@')[0],
+          },
         },
       });
 

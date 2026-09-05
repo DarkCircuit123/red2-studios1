@@ -113,7 +113,7 @@ export async function POST({ request, locals }: { request: Request; locals: any 
     }
 
     // Get current member
-    const currentMember = await members.getCurrentMember({ fieldsets: ['FULL'] });
+    const currentMember = await members.getMyMember({ fieldsets: ['FULL'] });
     
     if (!currentMember?.member?.loginEmail || !currentMember?.member?._id) {
       return new Response(

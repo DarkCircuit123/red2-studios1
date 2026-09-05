@@ -131,7 +131,7 @@ export async function requireAdmin(
   // Check for signed-in Wix member resolved server-side
   try {
     const { members } = await import('@wix/members');
-    const memberResult = await members.getCurrentMember({ fieldsets: ['FULL'] });
+    const memberResult = await members.getMyMember({ fieldsets: ['FULL'] });
     
     if (memberResult && memberResult.member) {
       console.log('[ADMIN-GATE] Wix member authenticated:', memberResult.member._id);
@@ -395,7 +395,7 @@ export async function verifyMemberToken(sessionToken: string): Promise<{ memberI
 
     // Get current member from Wix session
     try {
-      const memberResult = await members.getCurrentMember({ fieldsets: ['FULL'] });
+      const memberResult = await members.getMyMember({ fieldsets: ['FULL'] });
       
       if (!memberResult || !memberResult.member) {
         console.log('[MEMBER-TOKEN] No member found in session');
