@@ -143,13 +143,17 @@ export default function Header() {
       />
       
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-6 ${
           scrolled
             ? 'bg-black/95 backdrop-blur-md border-b border-primary/30'
             : 'bg-transparent'
         }`}
       >
-        <nav className="max-w-[120rem] mx-auto px-6 md:px-8 py-6 flex items-center justify-center w-full relative">
+        {/* Scrim behind header */}
+        <div className="fixed top-0 left-0 right-0 h-[140px] pointer-events-none z-40" style={{
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 60%, transparent 100%)'
+        }} />
+        <nav className="max-w-[120rem] mx-auto px-6 md:px-8 flex items-center justify-center w-full relative z-50">
         {/* Logo - Text-based RED² with unified hover behavior - Positioned absolutely on left */}
         <style>{`
           .logo-red {
@@ -196,10 +200,11 @@ export default function Header() {
                 RED
               </span>
               <span 
-                className="logo-2-card -mt-32"
+                className="logo-2-card"
+                style={{ transform: 'translateY(-0.34em)' }}
               >
                 <span className="logo-2-front">²</span>
-                <span className="logo-2-back">²</span>
+                <span className="logo-2-back" aria-hidden="true">²</span>
               </span>
             </span>
           </Link>
@@ -224,7 +229,8 @@ export default function Header() {
                   href={item.href}
                   onClick={(e) => handleAnchorClick(e, item.href)}
                   onMouseEnter={playHoverSound}
-                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest rounded-lg hover:bg-white/5 block"
+                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase rounded-lg hover:bg-white/5 block"
+                  style={{ letterSpacing: '0.18em', fontWeight: 500 }}
                 >
                   {item.label}
                 </a>
@@ -249,7 +255,8 @@ export default function Header() {
                     }
                   }}
                   onMouseEnter={playHoverSound}
-                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase tracking-widest rounded-lg hover:bg-white/5 block"
+                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase rounded-lg hover:bg-white/5 block"
+                  style={{ letterSpacing: '0.18em', fontWeight: 500 }}
                 >
                   {item.label}
                 </Link>

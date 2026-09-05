@@ -1,6 +1,8 @@
 import { Image } from '@/components/ui/image';
 import { useState, useEffect, useRef } from 'react';
 import { useImageFitting } from '@/hooks/useImageFitting';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 interface HomepageImage {
   heroImage?: string;
@@ -101,6 +103,71 @@ export default function HeroSection() {
       {isLoading && (
         <div className="absolute inset-0 w-full h-full bg-black" />
       )}
+
+      {/* Hero Caption Block - Lower Left */}
+      <div className="absolute bottom-0 left-0 z-10" style={{ paddingLeft: '8vw', paddingBottom: '12vh' }}>
+        <div style={{ letterSpacing: '0.3em' }} className="text-sm uppercase">
+          <div style={{ color: 'rgba(255,255,255,0.7)' }}>
+            FASHION. EDITORIAL. BOUDOIR.
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.35)' }}>
+            LOS ANGELES
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Link - Below Caption */}
+      <Link
+        to="/portfolio"
+        className="absolute z-10 inline-block uppercase transition-all duration-[400ms] ease-out"
+        style={{
+          left: '8vw',
+          bottom: 'calc(12vh - 60px)',
+          paddingTop: '14px',
+          paddingBottom: '14px',
+          paddingLeft: '32px',
+          paddingRight: '32px',
+          letterSpacing: '0.25em',
+          fontSize: '0.75rem',
+          fontWeight: 500,
+          border: '1px solid rgba(255,255,255,0.4)',
+          backgroundColor: 'transparent',
+          color: 'rgba(255,255,255,0.7)',
+        }}
+        onMouseEnter={(e) => {
+          const el = e.currentTarget as HTMLElement;
+          el.style.borderColor = '#A31621';
+          el.style.backgroundColor = '#A31621';
+          el.style.color = '#ffffff';
+        }}
+        onMouseLeave={(e) => {
+          const el = e.currentTarget as HTMLElement;
+          el.style.borderColor = 'rgba(255,255,255,0.4)';
+          el.style.backgroundColor = 'transparent';
+          el.style.color = 'rgba(255,255,255,0.7)';
+        }}
+      >
+        View Work
+      </Link>
+
+      {/* Scroll Indicator - Bottom Center */}
+      <motion.div
+        className="absolute bottom-8 left-1/2 z-10"
+        style={{
+          transform: 'translateX(-50%)',
+          width: '1px',
+          height: '60px',
+          backgroundColor: 'rgba(255,255,255,0.4)',
+        }}
+        animate={{
+          scaleY: [0, 1, 0],
+        }}
+        transition={{
+          duration: 2.5,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
     </section>
   );
 }
