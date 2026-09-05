@@ -412,7 +412,7 @@ export default function BookingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-20 text-center"
+            className="mt-8 text-center"
           >
             <p className="text-white/60 mb-6">
               Need a custom date or time? Contact us directly.
