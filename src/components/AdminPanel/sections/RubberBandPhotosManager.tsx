@@ -5,25 +5,18 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image as ImageIcon, Upload, Trash2, Eye, Plus, RefreshCw } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
+import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { motion } from 'framer-motion';
 
-interface CarouselImage {
-  _id: string;
-  imageName?: string;
-  image?: string;
-  displayOrder?: number;
-  isActive?: boolean;
-}
-
 export default function RubberBandPhotosManager() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [photos, setPhotos] = useState<CarouselImage[]>([]);
+  const [photos, setPhotos] = useState<HomepageImages[]>([]);
   const [uploading, setUploading] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,9 +30,8 @@ export default function RubberBandPhotosManager() {
   const loadPhotos = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<CarouselImage>('carouselimages', {}, { limit: 100 });
-      const sorted = (result.items || []).sort((a, b) => (a.displayOrder ?? 999) - (b.displayOrder ?? 999));
-      setPhotos(sorted);
+      const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
+      setPhotos(result.items || []);
     } catch (error) {
       console.error('Error loading photos:', error);
       toast({
@@ -63,15 +55,14 @@ export default function RubberBandPhotosManager() {
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
       // Create new photo entry
-      const newPhoto: CarouselImage = {
+      const newPhoto: HomepageImages = {
         _id: crypto.randomUUID(),
         imageName: file.name.replace(/\.[^/.]+$/, ''),
-        image: result.mediaUrl,
-        displayOrder: photos.length,
+        heroImage: result.mediaUrl,
         isActive: true,
       };
 
-      await adminCms.create('carouselimages', newPhoto);
+      await adminCms.create('homepageimages', newPhoto);
       setPhotos([...photos, newPhoto]);
 
       toast({
@@ -108,13 +99,13 @@ export default function RubberBandPhotosManager() {
       // Update the photo with new image URL
       const photoToUpdate = photos.find(p => p._id === photoId);
       if (photoToUpdate) {
-        const updatedPhoto: CarouselImage = {
+        const updatedPhoto: HomepageImages = {
           ...photoToUpdate,
-          image: result.mediaUrl,
+          heroImage: result.mediaUrl,
           imageName: file.name.replace(/\.[^/.]+$/, ''),
         };
 
-        await adminCms.update('carouselimages', updatedPhoto);
+        await adminCms.update('homepageimages', updatedPhoto);
         
         // Update local state
         setPhotos(photos.map(p => p._id === photoId ? updatedPhoto : p));
@@ -144,7 +135,7 @@ export default function RubberBandPhotosManager() {
   const handleDeletePhoto = async (photoId: string) => {
     try {
       setIsSaving(true);
-      await adminCms.delete('carouselimages', photoId);
+      await adminCms.delete('homepageimages', photoId);
       setPhotos(photos.filter(p => p._id !== photoId));
 
       toast({
@@ -233,14 +224,14 @@ export default function RubberBandPhotosManager() {
               <div className="text-center">
                 <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-2" />
                 <p className="text-slate-500 text-sm">No carousel photos yet</p>
-                <p className="text-slate-500 text-xs mt-1">Upload photos above to get started</p>
+                <p className="text-slate-400 text-xs mt-1">Upload photos above to get started</p>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {photos.map((photo, index) => {
                 // Convert wix:image URLs to HTTPS for display
-                const displayImageUrl = convertWixImageToHttps(photo.image) || photo.image;
+                const displayImageUrl = convertWixImageToHttps(photo.heroImage) || photo.heroImage;
                 
                 return (
                   <motion.div

@@ -80,7 +80,7 @@ export default function HomePagePreview() {
           ) : (
             <div className="text-center">
               <Eye className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-              <p className="text-slate-500">No background image</p>
+              <p className="text-slate-400">No background image</p>
             </div>
           )}
 
@@ -116,13 +116,13 @@ export default function HomePagePreview() {
               <h3 className="font-semibold text-slate-900">Background Music</h3>
               <p className="text-sm text-slate-600 mt-1">{settings.musicTitle || 'Untitled'}</p>
               <div className="flex gap-4 mt-2 text-xs text-slate-600">
-                <span className={`flex items-center gap-1 ${settings.musicEnabled ? 'text-green-600' : 'text-slate-500'}`}>
+                <span className={`flex items-center gap-1 ${settings.musicEnabled ? 'text-green-600' : 'text-slate-400'}`}>
                   ● {settings.musicEnabled ? 'Enabled' : 'Disabled'}
                 </span>
-                <span className={`flex items-center gap-1 ${settings.autoplayEnabled ? 'text-green-600' : 'text-slate-500'}`}>
+                <span className={`flex items-center gap-1 ${settings.autoplayEnabled ? 'text-green-600' : 'text-slate-400'}`}>
                   ● {settings.autoplayEnabled ? 'Autoplay' : 'Manual play'}
                 </span>
-                <span className={`flex items-center gap-1 ${settings.loopMusic ? 'text-green-600' : 'text-slate-500'}`}>
+                <span className={`flex items-center gap-1 ${settings.loopMusic ? 'text-green-600' : 'text-slate-400'}`}>
                   ● {settings.loopMusic ? 'Loop' : 'No loop'}
                 </span>
                 <span className="text-slate-600">● Volume: {settings.volume}%</span>

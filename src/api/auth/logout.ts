@@ -1,13 +1,17 @@
-// NOTE: The Wix @wix/members SDK does not provide server-side logout functionality.
-// This endpoint simply redirects to home page.
-// The frontend should handle clearing any client-side session data.
+import { members } from '@wix/members';
 
 export async function POST(context: any) {
   try {
+    // Get the logout URL from Wix Members API
+    const logoutUrl = await members.generateLogoutUrl({
+      redirectUrl: '/',
+    });
+
+    // Redirect to the logout URL
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': '/',
+        'Location': logoutUrl,
       },
     });
   } catch (error) {

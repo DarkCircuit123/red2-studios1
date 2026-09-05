@@ -111,21 +111,3 @@ export const createModuleLogger = (moduleName: string) => {
     perf: (label: string, duration: number) => debugPerf(`${moduleName}:${label}`, duration),
   };
 };
-
-/**
- * Named logger used by chunk-error-recovery, global-error-handler,
- * module-loader and module-preloader. Call shape is
- * logger.<level>(message, data?, { module })
- */
-export const logger = {
-  debug: (message: string, data?: any, context?: { module?: string }) =>
-    debugLog(context?.module ? `[${context.module}] ${message}` : message, data),
-  log: (message: string, data?: any, context?: { module?: string }) =>
-    debugLog(context?.module ? `[${context.module}] ${message}` : message, data),
-  info: (message: string, data?: any, context?: { module?: string }) =>
-    debugInfo(context?.module ? `[${context.module}] ${message}` : message, data),
-  warn: (message: string, data?: any, context?: { module?: string }) =>
-    debugWarn(context?.module ? `[${context.module}] ${message}` : message, data),
-  error: (message: string, error?: any, context?: { module?: string }) =>
-    debugError(context?.module ? `[${context.module}] ${message}` : message, error),
-};

@@ -32,46 +32,6 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mb-12 md:mb-16">
           {/* Brand */}
           <div>
-            <style>{`
-              @keyframes spin-2-footer {
-                0% {
-                  transform: rotateY(0deg);
-                }
-                100% {
-                  transform: rotateY(360deg);
-                }
-              }
-              .footer-logo-container:hover .footer-logo-2-inner {
-                animation: spin-2-footer 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 1;
-              }
-              .footer-logo-2-inner {
-                position: relative;
-                display: inline-block;
-                width: 1em;
-                height: 1em;
-                transform-style: preserve-3d;
-                transition: transform 0.3s ease;
-              }
-              .footer-logo-2-face {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                backface-visibility: hidden;
-                font-size: 1em;
-              }
-              .footer-logo-2-front {
-                color: #6F0809;
-                z-index: 2;
-                transform: translateZ(0.5em);
-              }
-              .footer-logo-2-back {
-                color: #6F0809;
-                transform: rotateY(180deg) translateZ(0.5em);
-              }
-            `}</style>
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
@@ -80,20 +40,10 @@ export default function Footer() {
               <Link
                 to="/"
                 onClick={playClickSound}
-                className="footer-logo-container relative flex items-center gap-0 group w-fit"
+                className="relative flex items-center gap-0 group w-fit"
               >
-                <span className="text-2xl font-heading font-black tracking-tight transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(255,36,0,0.8)]">
-                  <span className="text-white inline-block transition-colors duration-300 group-hover:text-scarlet">
-                    RED
-                  </span><span 
-                    className="footer-logo-2 inline-block transition-colors duration-300 -ml-2 text-lg -mt-12"
-                    style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
-                  >
-                    <span className="footer-logo-2-inner">
-                      <span className="footer-logo-2-face footer-logo-2-front text-primary">²</span>
-                      <span className="footer-logo-2-face footer-logo-2-back text-primary">²</span>
-                    </span>
-                  </span>
+                <span className="text-2xl font-heading font-black text-white tracking-tight hover:text-primary transition-colors duration-300">
+                  RED<span className="text-primary">²</span>
                 </span>
               </Link>
             </motion.div>

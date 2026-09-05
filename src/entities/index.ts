@@ -165,25 +165,6 @@ export interface Bookings {
 
 
 /**
- * Collection ID: carouselimages
- * Interface for CarouselImages
- */
-export interface CarouselImages {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType text */
-  imageName?: string;
-  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
-  image?: string;
-  /** @wixFieldType number */
-  displayOrder?: number;
-  /** @wixFieldType boolean */
-  isActive?: boolean;
-}
-
-
-/**
  * Collection ID: clientgalleries
  * Interface for ClientProofingGalleries
  */

@@ -141,6 +141,7 @@ export default function Header() {
         onClose={handleLoginModalClose}
         onLoginSuccess={handleLoginSuccess}
       />
+      
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
@@ -152,39 +153,15 @@ export default function Header() {
         {/* Logo - Text-based RED² with unified hover behavior - Positioned absolutely on left */}
         <style>{`
           @keyframes spin-2 {
-            0% {
+            from {
               transform: rotateY(0deg);
             }
-            100% {
+            to {
               transform: rotateY(360deg);
             }
           }
-          .logo-container:hover .logo-2-inner {
-            animation: spin-2 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 1;
-          }
-          .logo-2-inner {
-            position: relative;
-            display: inline-block;
-            width: 1em;
-            height: 1em;
-            transform-style: preserve-3d;
-            transition: transform 0.3s ease;
-          }
-          .logo-2-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backface-visibility: hidden;
-          }
-          .logo-2-front {
-            z-index: 2;
-            transform: translateZ(0.5em);
-          }
-          .logo-2-back {
-            transform: rotateY(180deg) translateZ(0.5em);
+          .logo-container:hover .logo-2 {
+            animation: spin-2 4s linear infinite;
           }
         `}</style>
         <motion.div
@@ -197,18 +174,15 @@ export default function Header() {
             onClick={handleLinkClick}
             className="relative flex items-center gap-0"
           >
-            <span className="font-heading font-black tracking-tight text-7xl transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(255,36,0,0.8)]">
-              <span className="text-white inline-block transition-colors duration-300 group-hover:text-scarlet">
+            <span className="font-heading font-black tracking-tight text-7xl transition-all duration-300 group-hover:drop-shadow-[0_0_20px_rgba(111,8,9,0.8)]">
+              <span className="text-white inline-block transition-colors duration-300 group-hover:text-primary">
                 RED
               </span>
               <span 
-                className="logo-2 inline-block transition-colors duration-300 -ml-4 text-5xl -mt-24"
+                className="logo-2 text-primary inline-block transition-colors duration-300 group-hover:text-white"
                 style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
               >
-                <span className="logo-2-inner">
-                  <span className="logo-2-face logo-2-front text-scarlet text-5xl">²</span>
-                  <span className="logo-2-face logo-2-back text-white text-5xl">²</span>
-                </span>
+                ²
               </span>
             </span>
           </Link>
@@ -221,6 +195,7 @@ export default function Header() {
             { href: '/portfolio', label: 'Work', isLink: true },
             { href: '/booking', label: 'Booking', isLink: true, scrollTo: '#booking-form' },
             { href: '/contact', label: 'Contact', isLink: true, isPage: true },
+            { href: '/play', label: 'Play', isLink: true },
           ].map((item, i) => (
             <motion.div
               key={i}

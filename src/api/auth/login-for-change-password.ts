@@ -1,3 +1,4 @@
+import { members, authentication } from '@wix/members';
 import { BaseCrudService } from '@/integrations';
 
 // Helper to extract IP address from request headers
@@ -44,13 +45,80 @@ export async function POST({ request, locals }: { request: Request; locals: any 
       );
     }
 
-    // NOTE: The Wix @wix/members SDK does not provide server-side
-    // getMyMember method or password verification. These are only available
-    // through the frontend @wix/site-members module. This endpoint cannot
-    // verify credentials or retrieve member information on the server side.
+    // Authenticate the user with their credentials
+    // This verifies the password is correct
+    let loginResult: any;
+    try {
+      loginResult = await authentication.login({
+        loginEmail: email,
+        password: password,
+      });
+    } catch (authError) {
+      console.error('Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ message: 'Invalid email or password' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get the authenticated member's details
+    let currentMember: any;
+    try {
+      currentMember = await members.getCurrentMember({ fieldsets: ['FULL'] });
+    } catch (memberError) {
+      console.error('Failed to get current member:', memberError);
+      return new Response(
+        JSON.stringify({ message: 'Failed to retrieve member information' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!currentMember?.member?._id || !currentMember?.member?.loginEmail) {
+      return new Response(
+        JSON.stringify({ message: 'Failed to retrieve member information' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const memberId = currentMember.member._id;
+
+    // Generate a secure token for password change authorization
+    const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+    const createdAt = new Date();
+
+    // Write the token to password_change_authorizations using backend context (admin credentials)
+    // This bypasses client-side collection permissions
+    try {
+      await BaseCrudService.create('passwordchangeauthorizations', {
+        _id: crypto.randomUUID(),
+        memberId,
+        token,
+        expiresAt,
+        used: false,
+        createdAt,
+      });
+    } catch (tokenError) {
+      console.error('Failed to create authorization token:', tokenError);
+      await logPasswordChangeAttempt(memberId, false, ipAddress, userAgent);
+      return new Response(
+        JSON.stringify({ message: 'Failed to generate authorization token' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Log successful token generation
+    await logPasswordChangeAttempt(memberId, true, ipAddress, userAgent);
+
+    // Return the token to the client
     return new Response(
-      JSON.stringify({ message: 'Password change is not available at this time' }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        message: 'Authentication successful',
+        token,
+        memberId,
+        email: currentMember.member.loginEmail,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Login for change password error:', error);

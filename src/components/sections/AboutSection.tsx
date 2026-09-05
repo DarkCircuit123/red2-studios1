@@ -6,16 +6,12 @@ import FashionTicker from '@/components/FashionTicker';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
 import { ScrollReveal } from '@/components/ScrollReveal';
-import { Button } from '@/components/ui/button';
 
 export default function AboutSection() {
   const [aboutImage, setAboutImage] = useState('https://static.wixstatic.com/media/e9d727_b2c52e273a12463198e51100c1907f31~mv2.jpg');
   const [aboutText, setAboutText] = useState('Jordan Michael Zuñiga He does not shoot what you look like. He shoots what you actually are. Born into it. Father behind a lens for 40 years. Mother with paint on her hands. Los Angeles in his blood. Amsterdam sharpened what LA started. He came back different and never stopped moving. Miami made him known. Wynwood before it was cool. Runway. Editorial. Three years of Fashion Week for fashiontv reaching 100 million viewers worldwide. Elite Model Management. Ford. Next. Irene Marie. Stefano Versace Holdings. Warner Brothers. He was not knocking on doors. He was already inside. 2011 he shot Women in Cages for PETA. It went everywhere. HuffPost. People. Getty. The opening was packed. Hulk Hogan showed up, saw the work on the walls, and put Jordan in a choke hold. That is what happens when an image lands that hard. Same year. Art Basel. Haiti: Hope in Progress. 500 collectors and diplomats through the door. World Bank. American Red Cross. The photographs funded lives rebuilt. Started on Pentax film. Shoots Sony A1 II now. The camera changed. The eye did not. RED2 Studios has no address. It is a standard of work that travels. Fully mobile across the United States, shooting hotel suites, private estates, city streets and locations that cannot be planned in advance. He is already where the shot needs to happen. Right now he is looking for new faces. Not models who have a look. Models who have something underneath it. Presence. Realness. The thing the camera either finds or it does not. Twenty-five years in. 500 projects. Still hunting for the next frame that stops people cold. If that sounds like a shoot you want to be part of, it probably is.');
   const [fontFamily, setFontFamily] = useState('font-cormorant-garamond-v2');
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedText, setEditedText] = useState(aboutText);
-  const [isSaving, setIsSaving] = useState(false);
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
 
   const loadAboutData = async () => {
@@ -68,37 +64,6 @@ export default function AboutSection() {
   useEffect(() => {
     loadAboutData();
   }, []);
-
-  useEffect(() => {
-    setEditedText(aboutText);
-  }, [aboutText]);
-
-  const handleSaveText = async () => {
-    setIsSaving(true);
-    try {
-      const response = await fetch('/api/cms/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          collectionId: 'about',
-          action: 'update',
-          item: {
-            _id: 'about-main',
-            aboutText: editedText,
-          },
-        }),
-      });
-
-      if (response.ok) {
-        setAboutText(editedText);
-        setIsEditing(false);
-      }
-    } catch (error) {
-      console.error('Error saving about text:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const statVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -217,57 +182,9 @@ export default function AboutSection() {
               </div>
 
               {/* Biography text - flows around floated image */}
-              {!isEditing ? (
-                <div>
-                  <p className={`text-base md:text-lg text-white/75 leading-relaxed whitespace-pre-wrap ${fontFamily}`}>
-                    {aboutText}
-                  </p>
-                  <motion.button
-                    onClick={() => setIsEditing(true)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="mt-6 px-6 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg font-semibold transition-colors"
-                  >
-                    Edit About Text
-                  </motion.button>
-                </div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4 p-6 bg-white/5 border-2 border-primary/50 rounded-lg"
-                >
-                  <label className="block text-sm font-semibold text-white/80">Edit About Text</label>
-                  <textarea
-                    value={editedText}
-                    onChange={(e) => setEditedText(e.target.value)}
-                    className="w-full h-64 p-4 bg-black/50 border border-primary/30 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-primary resize-none"
-                    placeholder="Enter about text..."
-                  />
-                  <div className="flex gap-3 justify-end">
-                    <motion.button
-                      onClick={() => {
-                        setIsEditing(false);
-                        setEditedText(aboutText);
-                      }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold transition-colors"
-                    >
-                      Cancel
-                    </motion.button>
-                    <motion.button
-                      onClick={handleSaveText}
-                      disabled={isSaving}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-primary hover:bg-primary/80 disabled:bg-primary/50 text-white rounded-lg font-semibold transition-colors"
-                    >
-                      {isSaving ? 'Saving...' : 'Save Changes'}
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )}
+              <p className={`text-base md:text-lg text-white/75 leading-relaxed whitespace-pre-wrap ${fontFamily}`}>
+                {aboutText}
+              </p>
 
               {/* Mobile image - stacked above text */}
               <div className="sm:hidden mb-6 md:mb-8">
