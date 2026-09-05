@@ -5,7 +5,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image as ImageIcon, Upload, Trash2, Eye } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
-import { HomePageSettings } from '@/entities';
+import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
@@ -15,7 +15,7 @@ export default function HeroSectionManager() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [settings, setSettings] = useState<HomePageSettings | null>(null);
+  const [settings, setSettings] = useState<HomepageImages | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
 
@@ -27,29 +27,24 @@ export default function HeroSectionManager() {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<HomePageSettings>('homepagesettings', {}, { limit: 1 });
+      const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
       if (result.items.length > 0) {
         setSettings(result.items[0]);
       } else {
         // Create default settings
-        const newSettings: HomePageSettings = {
+        const newSettings: HomepageImages = {
           _id: crypto.randomUUID(),
-          heroTitle: 'Welcome to Our Site',
-          heroSubtitle: 'Create something amazing',
-          buttonText: 'Get Started',
-          musicEnabled: false,
-          autoplayEnabled: false,
-          loopMusic: true,
-          volume: 50,
+          imageName: 'Hero Image',
+          isActive: true,
         };
-        await adminCms.create('homepagesettings', newSettings);
+        await adminCms.create('homepageimages', newSettings);
         setSettings(newSettings);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load home page settings',
+        description: 'Failed to load home page images',
         variant: 'destructive',
       });
     } finally {
@@ -68,14 +63,14 @@ export default function HeroSectionManager() {
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
       // Update settings with new image URL
-      const updated = { ...settings, heroBackgroundImage: result.mediaUrl };
-      await adminCms.update('homepagesettings', updated);
+      const updated = { ...settings, heroImage: result.mediaUrl };
+      await adminCms.update('homepageimages', updated);
       setSettings(updated);
       setPreviewUrl(result.mediaUrl);
 
       toast({
         title: 'Success',
-        description: 'Hero background image uploaded successfully',
+        description: 'Hero image uploaded successfully',
       });
     } catch (error) {
       console.error('Upload error:', error);
@@ -94,14 +89,14 @@ export default function HeroSectionManager() {
 
     try {
       setIsSaving(true);
-      const updated = { ...settings, heroBackgroundImage: undefined };
-      await adminCms.update('homepagesettings', updated);
+      const updated = { ...settings, heroImage: undefined };
+      await adminCms.update('homepageimages', updated);
       setSettings(updated);
       setPreviewUrl(null);
 
       toast({
         title: 'Success',
-        description: 'Hero background image removed',
+        description: 'Hero image removed',
       });
     } catch (error) {
       console.error('Error removing image:', error);
@@ -125,23 +120,23 @@ export default function HeroSectionManager() {
 
   return (
     <div className="space-y-6">
-      {/* Hero Background Image */}
+      {/* Hero Image */}
       <Card className="p-6 border border-slate-200">
         <div className="space-y-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-blue-600" />
-              Hero Background Image
+              Hero Image
             </h3>
-            <p className="text-sm text-slate-500 mt-1">Upload or replace the main background image for the hero section</p>
+            <p className="text-sm text-slate-500 mt-1">Upload or replace the main image for the hero section</p>
           </div>
 
           {/* Preview */}
-          {(previewUrl || settings?.heroBackgroundImage) && (
+          {(previewUrl || settings?.heroImage) && (
             <div className="relative w-full h-64 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
               <img
-                src={previewUrl || settings?.heroBackgroundImage}
-                alt="Hero background preview"
+                src={previewUrl || settings?.heroImage}
+                alt="Hero image preview"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
@@ -150,7 +145,7 @@ export default function HeroSectionManager() {
             </div>
           )}
 
-          {!previewUrl && !settings?.heroBackgroundImage && (
+          {!previewUrl && !settings?.heroImage && (
             <div className="w-full h-64 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center">
               <div className="text-center">
                 <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-2" />
@@ -190,7 +185,7 @@ export default function HeroSectionManager() {
               </Button>
             </label>
 
-            {(previewUrl || settings?.heroBackgroundImage) && (
+            {(previewUrl || settings?.heroImage) && (
               <Button
                 onClick={handleRemoveBackgroundImage}
                 disabled={isSaving}
@@ -207,7 +202,7 @@ export default function HeroSectionManager() {
       {/* Info Box */}
       <Card className="p-4 bg-blue-50 border border-blue-200">
         <p className="text-sm text-blue-900">
-          <strong>Tip:</strong> Use high-quality images (1920x1080 or larger) for best results. Supported formats: JPG, PNG, WebP.
+          <strong>Tip:</strong> Use high-quality images (1920x1080 or larger) for best results. Supported formats: JPG, PNG, WebP. This image is displayed on the live site.
         </p>
       </Card>
     </div>

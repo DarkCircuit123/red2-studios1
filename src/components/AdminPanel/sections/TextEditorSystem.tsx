@@ -7,11 +7,11 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Type, Save, X } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
-import { HomePageSettings } from '@/entities';
+import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 
 interface TextFieldConfig {
-  key: keyof HomePageSettings;
+  key: keyof HomepageImages;
   label: string;
   placeholder: string;
   maxLength: number;
@@ -21,30 +21,10 @@ interface TextFieldConfig {
 
 const textFields: TextFieldConfig[] = [
   {
-    key: 'heroTitle',
-    label: 'Hero Title',
-    placeholder: 'Enter main headline',
+    key: 'imageName',
+    label: 'Image Name',
+    placeholder: 'Enter image name',
     maxLength: 100,
-  },
-  {
-    key: 'heroSubtitle',
-    label: 'Hero Subtitle',
-    placeholder: 'Enter secondary headline',
-    maxLength: 150,
-  },
-  {
-    key: 'buttonText',
-    label: 'Button Text',
-    placeholder: 'Enter CTA button text',
-    maxLength: 50,
-  },
-  {
-    key: 'sectionContent',
-    label: 'Section Content',
-    placeholder: 'Enter paragraph or section text',
-    maxLength: 1000,
-    multiline: true,
-    rows: 5,
   },
 ];
 
@@ -52,8 +32,8 @@ export default function TextEditorSystem() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [settings, setSettings] = useState<HomePageSettings | null>(null);
-  const [editedSettings, setEditedSettings] = useState<Partial<HomePageSettings>>({});
+  const [settings, setSettings] = useState<HomepageImages | null>(null);
+  const [editedSettings, setEditedSettings] = useState<Partial<HomepageImages>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
@@ -63,7 +43,7 @@ export default function TextEditorSystem() {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<HomePageSettings>('homepagesettings', {}, { limit: 1 });
+      const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
       if (result.items.length > 0) {
         setSettings(result.items[0]);
         setEditedSettings({});
@@ -80,7 +60,7 @@ export default function TextEditorSystem() {
     }
   };
 
-  const handleFieldChange = (key: keyof HomePageSettings, value: string) => {
+  const handleFieldChange = (key: keyof HomepageImages, value: string) => {
     setEditedSettings((prev) => ({
       ...prev,
       [key]: value,
@@ -94,14 +74,14 @@ export default function TextEditorSystem() {
     try {
       setIsSaving(true);
       const updated = { ...settings, ...editedSettings };
-      await adminCms.update('homepagesettings', updated);
+      await adminCms.update('homepageimages', updated);
       setSettings(updated);
       setEditedSettings({});
       setHasChanges(false);
 
       toast({
         title: 'Success',
-        description: 'Text content saved successfully',
+        description: 'Content saved successfully',
       });
     } catch (error) {
       console.error('Error saving:', error);
