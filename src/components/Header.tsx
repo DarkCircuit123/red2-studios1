@@ -205,7 +205,7 @@ export default function Header() {
                 RED
               </span>
               <span 
-                className="logo-2 inline-block transition-colors duration-300 -ml-4 text-5xl -mt-16"
+                className="logo-2 inline-block transition-colors duration-300 -ml-4 text-5xl -mt-24"
                 style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
               >
                 <span className="logo-2-inner">
