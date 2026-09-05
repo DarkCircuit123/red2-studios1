@@ -62,7 +62,15 @@ export default {
                 "secondary-foreground": "#ffffff",
                 background: "#ffffff",
                 foreground: "#000000",
-                "color-7": "#6F0809ff"
+                "color-7": "#6F0809ff",
+                accent: "#6F0809",
+                border: "rgba(255,255,255,0.12)",
+                input: "#1a1a1a",
+                ring: "#6F0809",
+                muted: "#1a1a1a",
+                "muted-foreground": "#a3a3a3",
+                destructive: "#dc2626",
+                "destructive-foreground": "#ffffff"
             },
         },
     },
