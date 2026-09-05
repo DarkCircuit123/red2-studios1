@@ -63,12 +63,12 @@ export default function Footer() {
                 font-size: 1em;
               }
               .footer-logo-2-front {
-                color: #FF2400;
+                color: #6F0809;
                 z-index: 2;
                 transform: translateZ(0.5em);
               }
               .footer-logo-2-back {
-                color: white;
+                color: #6F0809;
                 transform: rotateY(180deg) translateZ(0.5em);
               }
             `}</style>
@@ -86,12 +86,12 @@ export default function Footer() {
                   <span className="text-white inline-block transition-colors duration-300 group-hover:text-scarlet">
                     RED
                   </span><span 
-                    className="footer-logo-2 inline-block transition-colors duration-300 -ml-2 text-lg"
+                    className="footer-logo-2 inline-block transition-colors duration-300 -ml-2 text-lg -mt-1"
                     style={{ display: 'inline-block', transformStyle: 'preserve-3d' }}
                   >
                     <span className="footer-logo-2-inner">
-                      <span className="footer-logo-2-face footer-logo-2-front text-scarlet">²</span>
-                      <span className="footer-logo-2-face footer-logo-2-back text-white">²</span>
+                      <span className="footer-logo-2-face footer-logo-2-front text-primary">²</span>
+                      <span className="footer-logo-2-face footer-logo-2-back text-primary">²</span>
                     </span>
                   </span>
                 </span>
