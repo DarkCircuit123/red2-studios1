@@ -24,13 +24,23 @@ export default function AboutSection() {
 
       if (imageResponse.ok) {
         const imageResult = await imageResponse.json();
+        console.log('[AboutSection] Image API response:', imageResult);
         if (imageResult?.items && imageResult.items.length > 0) {
           const images = imageResult.items[0] as any;
+          console.log('[AboutSection] First image item:', images);
+          console.log('[AboutSection] aboutSectionImage value:', images?.aboutSectionImage);
           // Only set aboutImage if it exists and is a valid string
           if (images?.aboutSectionImage && typeof images.aboutSectionImage === 'string' && images.aboutSectionImage.trim()) {
+            console.log('[AboutSection] Setting aboutImage to:', images.aboutSectionImage);
             setAboutImage(images.aboutSectionImage);
+          } else {
+            console.warn('[AboutSection] aboutSectionImage is empty or invalid');
           }
+        } else {
+          console.warn('[AboutSection] No items returned from image API');
         }
+      } else {
+        console.error('[AboutSection] Image API returned non-ok status:', imageResponse.status);
       }
 
       // Load about text and settings from About collection using API endpoint
@@ -133,6 +143,13 @@ export default function AboutSection() {
               transition={{ delay: 0.2 }}
               className="relative reveal"
             >
+              {/* Debug: Show if image is missing */}
+              {!aboutImage && !isLoading && (
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded text-red-400 text-sm">
+                  ⚠️ About section image not found in CMS. Please add an image to the HomepageImages collection.
+                </div>
+              )}
+
               {/* Floated image container - desktop/tablet */}
               {aboutImage && (
                 <div className="hidden sm:block float-right ml-6 md:ml-8 mb-4 md:mb-6 w-64 md:w-80 lg:w-96 flex-shrink-0">
