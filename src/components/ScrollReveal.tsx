@@ -15,6 +15,9 @@ export const useScrollReveal = (options: ScrollRevealOptions = {}) => {
   const { threshold = 0.15, rootMargin = '0px 0px -10% 0px' } = options;
 
   useEffect(() => {
+    // Enable reveal animations by adding js-reveal class to html element
+    document.documentElement.classList.add('js-reveal');
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {

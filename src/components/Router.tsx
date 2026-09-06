@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 
 // Lazy load all pages to prevent circular dependencies
 // Use dynamic imports with error handling
@@ -32,6 +32,47 @@ const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashb
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
+  useEffect(() => {
+    // Enable reveal animations by adding js-reveal class to html element
+    document.documentElement.classList.add('js-reveal');
+
+    // Re-observe any new .reveal or .reveal-wipe elements that appear after initial mount
+    const observeNewElements = () => {
+      const revealElements = document.querySelectorAll('.reveal:not(.is-visible), .reveal-wipe:not(.is-visible)');
+      revealElements.forEach((el) => {
+        if (!el.classList.contains('is-visible')) {
+          const observer = new IntersectionObserver(
+            ([entry]) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+              }
+            },
+            { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
+          );
+          observer.observe(el);
+        }
+      });
+    };
+
+    // Observe new elements on mount and whenever DOM changes
+    observeNewElements();
+
+    // Watch for new elements being added to the DOM
+    const mutationObserver = new MutationObserver(() => {
+      observeNewElements();
+    });
+
+    mutationObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      mutationObserver.disconnect();
+    };
+  }, []);
+
   return (
     <>
       <ScrollToTop />
