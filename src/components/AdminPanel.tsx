@@ -13,6 +13,7 @@ import BehindTheScenesManager from './AdminPanel/sections/BehindTheScenesManager
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages, ClientsPress, AboutSection, Portfolio, MusicSettings } from '@/entities/index';
+import { getActiveHomepageImages } from '@/lib/get-active-homepage-images';
 import { playClickSound } from '@/lib/click-sound';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
@@ -139,7 +140,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
       try {
         // Load data in parallel with Promise.allSettled to avoid rate limiting
         const results = await Promise.allSettled([
-          BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 }),
+          getActiveHomepageImages(),
           BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 }),
           BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 1 }),
           BaseCrudService.getAll<AboutSection>('about', {}, { limit: 1 }),
@@ -155,8 +156,8 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
         });
 
         // Handle homepage images
-        if (results[0].status === 'fulfilled' && results[0].value?.items?.length > 0) {
-          setHomepageImages(results[0].value.items[0]);
+        if (results[0].status === 'fulfilled' && results[0].value) {
+          setHomepageImages(results[0].value);
         } else {
           setHomepageImages(null);
         }

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { BaseCrudService } from '@/integrations';
+import { getActiveHomepageImages } from '@/lib/get-active-homepage-images';
 
 /**
  * Get Homepage Images API
@@ -11,7 +11,8 @@ export const GET: APIRoute = async (context) => {
   try {
     console.log('[GET_HOMEPAGE_IMAGES] Request started');
 
-    const result = await BaseCrudService.getAll('homepageimages', {}, { limit: 1 });
+    const item = await getActiveHomepageImages();
+    const result = { items: item ? [item] : [], totalCount: item ? 1 : 0 };
 
     console.log('[GET_HOMEPAGE_IMAGES] Successfully fetched homepage images', {
       itemCount: result.items?.length || 0,

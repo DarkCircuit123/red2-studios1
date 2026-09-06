@@ -3,12 +3,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image as ImageIcon, Upload, Trash2, Eye } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
+import { getActiveHomepageImages } from '@/lib/get-active-homepage-images';
 import ImageThumbnailPreview from './ImageThumbnailPreview';
 
 export default function HeroSectionManager() {
@@ -27,18 +27,12 @@ export default function HeroSectionManager() {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
-      if (result.items.length > 0) {
-        setSettings(result.items[0]);
+      const item = await getActiveHomepageImages();
+      if (item) {
+        setSettings(item);
       } else {
-        // Create default settings
-        const newSettings: HomepageImages = {
-          _id: crypto.randomUUID(),
-          imageName: 'Hero Image',
-          isActive: true,
-        };
-        await adminCms.create('homepageimages', newSettings);
-        setSettings(newSettings);
+        // No active homepage images row found - render empty state
+        setSettings(null);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -115,6 +109,29 @@ export default function HeroSectionManager() {
       <div className="flex items-center justify-center py-12">
         <LoadingSpinner />
       </div>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <Card className="p-6 border border-slate-200">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-blue-600" />
+              Hero Image
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">Upload or replace the main image for the hero section</p>
+          </div>
+          <div className="w-full h-64 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center">
+            <div className="text-center">
+              <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-2" />
+              <p className="text-slate-500 text-sm">No homepage images row found</p>
+              <p className="text-slate-400 text-xs mt-1">Please create a homepageimages entry in the CMS</p>
+            </div>
+          </div>
+        </div>
+      </Card>
     );
   }
 
