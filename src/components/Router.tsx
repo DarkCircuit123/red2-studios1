@@ -73,6 +73,28 @@ function Layout() {
     };
   }, []);
 
+  // Re-run reveal observer when async CMS content mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const revealElements = document.querySelectorAll('.reveal:not(.is-visible), .reveal-wipe:not(.is-visible)');
+      revealElements.forEach((el) => {
+        if (!el.classList.contains('is-visible')) {
+          const observer = new IntersectionObserver(
+            ([entry]) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+              }
+            },
+            { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
+          );
+          observer.observe(el);
+        }
+      });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <>
       <ScrollToTop />

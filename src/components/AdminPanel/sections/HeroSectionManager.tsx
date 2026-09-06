@@ -56,7 +56,7 @@ export default function HeroSectionManager() {
       // Use unified upload service with wix-media-upload-service
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
 
-      // Update settings with new image URL
+      // Update existing homepageimages row's heroImage field only
       const updated = { ...settings, heroImage: result.mediaUrl };
       await adminCms.update('homepageimages', updated);
       setSettings(updated);

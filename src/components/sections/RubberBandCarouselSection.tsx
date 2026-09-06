@@ -1,6 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react';
-import { Image } from '@/components/ui/image';
-import { useImageFitting } from '@/hooks/useImageFitting';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { CarouselImages } from '@/entities';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 
@@ -8,73 +6,9 @@ interface CarouselImage {
   id: string;
   url: string;
   alt: string;
-  focalPointX?: number;
-  focalPointY?: number;
   originWidth?: number;
   originHeight?: number;
 }
-
-interface CarouselImageCardProps {
-  image: CarouselImage;
-}
-
-// Extract CarouselImageCard outside the component to prevent recreation on every render
-const CarouselImageCard = memo(({ image }: CarouselImageCardProps) => {
-  const [imageDims, setImageDims] = useState({ width: 1920, height: 1080 });
-
-  // Memoize the options object to prevent useImageFitting from re-running on every render
-  const fitOptions = useMemo(() => (
-    {
-      imageWidth: imageDims.width,
-      imageHeight: imageDims.height,
-      containerWidth: typeof window !== 'undefined' ? window.innerWidth : 1920,
-      containerHeight: Math.round((typeof window !== 'undefined' ? window.innerHeight : 1080) * 0.55),
-      focalPoint: {
-        x: image.focalPointX ?? 50,
-        y: image.focalPointY ?? 50,
-      },
-      fitMode: 'cover' as const,
-    }
-  ), [imageDims.width, imageDims.height, image.focalPointX, image.focalPointY]);
-
-  const { fitting } = useImageFitting(fitOptions);
-
-  const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    setImageDims(prevDims => {
-      // Guard: only update if dimensions actually changed
-      if (prevDims.width === img.naturalWidth && prevDims.height === img.naturalHeight) {
-        return prevDims;
-      }
-      return {
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-      };
-    });
-  }, []);
-
-  const imageStyle = useMemo(() => (
-    {
-      objectFit: fitting.objectFit as any,
-      objectPosition: fitting.objectPosition,
-    }
-  ), [fitting.objectFit, fitting.objectPosition]);
-
-  return (
-    <Image
-      src={image.url}
-      alt={image.alt}
-      onLoad={handleImageLoad}
-      width={1920}
-      height={1080}
-      loading="lazy"
-      className="w-full h-full gallery-image-hover reveal-wipe"
-      style={imageStyle}
-    />
-  );
-});
-
-CarouselImageCard.displayName = 'CarouselImageCard';
 
 const RubberBandCarouselSection: React.FC = () => {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -307,7 +241,6 @@ const RubberBandCarouselSection: React.FC = () => {
 
   return (
     <section
-      ref={trackRef}
       className="relative w-full h-[40vh] sm:h-[48vh] lg:h-[55vh] min-h-[240px] max-h-[620px] bg-black overflow-hidden"
       style={{
         maskImage: 'linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%)',
@@ -318,7 +251,7 @@ const RubberBandCarouselSection: React.FC = () => {
       onMouseLeave={handleMouseLeave}
     >
       {/* Carousel track */}
-      <div className="flex h-full items-center gap-6 md:gap-8 will-change-transform">
+      <div ref={trackRef} className="flex h-full items-center gap-6 md:gap-8 will-change-transform">
         {loop.map((image, index) => (
           <figure
             key={`${image.id}-${index}`}

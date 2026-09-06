@@ -4,7 +4,7 @@ import { CarouselImages } from '@/entities';
 
 /**
  * Get Carousel Images API
- * Fetches carousel images from the carouselimages collection
+ * Fetches active carousel images from the carouselimages collection
  * Filters by isActive: true and sorts by displayOrder ascending
  * Public endpoint - no authentication required
  */
@@ -14,7 +14,7 @@ export const GET: APIRoute = async (context) => {
     console.log('[GET_CAROUSEL_IMAGES] Request started');
 
     const result = await BaseCrudService.getAll<CarouselImages>('carouselimages', {}, { limit: 100 });
-    
+
     // Filter for active items and sort by displayOrder ascending
     const activeItems = (result.items || [])
       .filter(item => item.isActive === true)
