@@ -142,24 +142,17 @@ export default function AboutSection() {
               </div>
             )}
 
-            {/* Two-column grid layout */}
+            {/* Editorial float layout with text wrapping */}
             <motion.div
               initial="hidden"
               animate={sectionVisible ? "visible" : "hidden"}
               variants={scrollAnimationVariants.textSlideUp}
               transition={{ delay: 0.2 }}
-              className="mx-auto grid max-w-6xl grid-cols-1 gap-10 md:gap-14 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start reveal"
+              className="relative reveal mx-auto max-w-4xl"
             >
-              {/* Text content column */}
-              <div className="space-y-5 max-w-[68ch]">
-                <p className={`text-base md:text-lg text-white/75 leading-relaxed whitespace-pre-wrap ${fontFamily}`}>
-                  {aboutText}
-                </p>
-              </div>
-
-              {/* Desktop/tablet image - sticky */}
+              {/* Desktop/tablet floated image */}
               {aboutImage && (
-                <figure className="hidden lg:block lg:sticky lg:top-28 m-0">
+                <figure className="hidden sm:block float-right w-44 md:w-52 lg:w-64 ml-6 md:ml-8 mb-5 flex-shrink-0 [shape-outside:inset(0_round_1rem)] [shape-margin:1rem] m-0">
                   <motion.div
                     initial="hidden"
                     animate={sectionVisible ? "visible" : "hidden"}
@@ -207,46 +200,53 @@ export default function AboutSection() {
                   />
                 </figure>
               )}
-            </motion.div>
 
-            {/* Mobile image - stacked above text */}
-            {aboutImage && (
-              <div className="lg:hidden mb-6 md:mb-8">
-                <motion.div
-                  initial="hidden"
-                  animate={sectionVisible ? "visible" : "hidden"}
-                  variants={scrollAnimationVariants.imageSlideInLeft}
-                  whileHover={{ y: -8 }}
-                  transition={{ duration: 0.3 }}
-                  className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"
-                >
-                  {!isLoading && (
-                    <motion.div
-                      initial={{ scale: 1.1, opacity: 0 }}
-                      animate={sectionVisible ? { scale: 1, opacity: 1 } : { scale: 1.1, opacity: 0 }}
-                      transition={{ duration: 0.8, delay: 0.3 }}
-                      className="w-full h-full flex items-center justify-center"
-                    >
-                      <Image
-                        src={aboutImage}
-                        alt="Jordan Michael Zuniga"
-                        width={600}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      {/* Overlay gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    </motion.div>
-                  )}
-                  {isLoading && (
-                    <motion.div
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="w-full h-full bg-gradient-to-br from-primary/10 to-white/5"
-                    />
-                  )}
-                </motion.div>
+              {/* Text content with wrapping */}
+              <div className="space-y-5">
+                <p className={`text-base md:text-lg text-white/75 leading-relaxed whitespace-pre-wrap ${fontFamily}`}>
+                  {aboutText}
+                </p>
               </div>
-            )}
+
+              {/* Mobile image - stacked above text */}
+              {aboutImage && (
+                <div className="sm:hidden mx-auto w-2/3 mb-6 md:mb-8">
+                  <motion.div
+                    initial="hidden"
+                    animate={sectionVisible ? "visible" : "hidden"}
+                    variants={scrollAnimationVariants.imageSlideInLeft}
+                    whileHover={{ y: -8 }}
+                    transition={{ duration: 0.3 }}
+                    className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"
+                  >
+                    {!isLoading && (
+                      <motion.div
+                        initial={{ scale: 1.1, opacity: 0 }}
+                        animate={sectionVisible ? { scale: 1, opacity: 1 } : { scale: 1.1, opacity: 0 }}
+                        transition={{ duration: 0.8, delay: 0.3 }}
+                        className="w-full h-full flex items-center justify-center"
+                      >
+                        <Image
+                          src={aboutImage}
+                          alt="Jordan Michael Zuniga"
+                          width={600}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        {/* Overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      </motion.div>
+                    )}
+                    {isLoading && (
+                      <motion.div
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="w-full h-full bg-gradient-to-br from-primary/10 to-white/5"
+                      />
+                    )}
+                  </motion.div>
+                </div>
+              )}
+            </motion.div>
 
             {/* Stats - below the text flow */}
             <motion.div
