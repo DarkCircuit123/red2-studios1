@@ -87,6 +87,7 @@ const RubberBandCarouselSection: React.FC = () => {
   const curvedPullRef = useRef(0);
   const isHoveringRef = useRef(false);
   const snapBackAnimationRef = useRef<number>();
+  const pausedRef = useRef(false);
 
   // Fallback images
   const fallbackImages: CarouselImage[] = useMemo(() => [
@@ -239,6 +240,7 @@ const RubberBandCarouselSection: React.FC = () => {
 
   const handleMouseEnter = useCallback(() => {
     isHoveringRef.current = true;
+    pausedRef.current = true;
     mousePercentRef.current = 0;
     curvedPullRef.current = 0;
 
@@ -249,6 +251,7 @@ const RubberBandCarouselSection: React.FC = () => {
 
   const handleMouseLeave = useCallback(() => {
     isHoveringRef.current = false;
+    pausedRef.current = false;
 
     const startTime = Date.now();
     const duration = 600;
@@ -280,10 +283,12 @@ const RubberBandCarouselSection: React.FC = () => {
     let raf: number;
 
     const step = () => {
-      x -= 0.5;
-      const w = setWidth.current;
-      if (w && -x >= w) x += w;
-      if (trackRef.current) trackRef.current.style.transform = `translate3d(${x}px,0,0)`;
+      if (!pausedRef.current) {
+        x -= 0.3;
+        const w = setWidth.current;
+        if (w && -x >= w) x += w;
+        if (trackRef.current) trackRef.current.style.transform = `translate3d(${x}px,0,0)`;
+      }
       raf = requestAnimationFrame(step);
     };
 
@@ -303,17 +308,21 @@ const RubberBandCarouselSection: React.FC = () => {
   return (
     <section
       ref={trackRef}
-      className="relative w-full h-[40vh] sm:h-[48vh] lg:h-[55vh] min-h-[240px] max-h-[620px] bg-[#0a0a0a] overflow-hidden"
+      className="relative w-full h-[40vh] sm:h-[48vh] lg:h-[55vh] min-h-[240px] max-h-[620px] bg-black overflow-hidden"
+      style={{
+        maskImage: 'linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%)',
+      }}
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {/* Carousel track */}
-      <div className="flex h-full items-center gap-3 md:gap-4 will-change-transform">
+      <div className="flex h-full items-center gap-6 md:gap-8 will-change-transform">
         {loop.map((image, index) => (
           <figure
             key={`${image.id}-${index}`}
-            className="relative m-0 h-full flex-[0_0_auto] overflow-hidden rounded-xl bg-neutral-900"
+            className="relative m-0 h-full flex-[0_0_auto] overflow-hidden"
             style={{ aspectRatio: `${image.originWidth} / ${image.originHeight}` }}
           >
             <img
