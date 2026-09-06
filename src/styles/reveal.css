@@ -121,3 +121,7 @@
     outline: none;
   }
 }
+
+/* Force all reveal elements to be visible - override any clipping */
+.reveal,.reveal-wipe{opacity:1!important;transform:none!important;clip-path:none!important}
+.reveal-wipe.is-visible,.reveal.is-visible{opacity:1!important;transform:none!important;clip-path:none!important}

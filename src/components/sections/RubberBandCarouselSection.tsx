@@ -261,7 +261,6 @@ const RubberBandCarouselSection: React.FC = () => {
             <img
               src={carouselSrc(image)}
               alt={image.alt}
-              loading="lazy"
               decoding="async"
               className="block h-full w-full object-cover"
             />
