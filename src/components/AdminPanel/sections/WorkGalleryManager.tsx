@@ -8,6 +8,7 @@
  * - Delete removes image but keeps empty box
  * - Loads every row from portfolioimages collection
  * - Add 12 slots button for manual extension
+ * - Upload Photo button in gallery grid header
  * - Fixed toast messages (only show success if uploaded > 0)
  * - Dark theme applied throughout
  */
@@ -542,13 +543,23 @@ export default function WorkGalleryManager() {
           <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text">
             Gallery Grid ({filledSlots}/{slotCount})
           </h2>
-          <Button
-            onClick={handleAddSlots}
-            className="flex items-center gap-2 bg-admin-raise hover:bg-admin-line text-admin-text border border-admin-line rounded-none text-[11px] px-3 py-2 transition-colors duration-160"
-          >
-            <Plus className="w-3 h-3" />
-            Add 12 Slots
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex items-center gap-2 bg-oxblood hover:bg-oxblood/90 text-white border border-oxblood rounded-none text-[11px] px-3 py-2 transition-colors duration-160 disabled:opacity-50"
+            >
+              <Upload className="w-3 h-3" />
+              Upload Photo
+            </Button>
+            <Button
+              onClick={handleAddSlots}
+              className="flex items-center gap-2 bg-admin-raise hover:bg-admin-line text-admin-text border border-admin-line rounded-none text-[11px] px-3 py-2 transition-colors duration-160"
+            >
+              <Plus className="w-3 h-3" />
+              Add 12 Slots
+            </Button>
+          </div>
         </div>
 
         {/* Loading State */}
