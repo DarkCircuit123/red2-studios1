@@ -212,21 +212,15 @@ export default function RubberBandPhotosManager() {
         ))}
       </div>
 
-      {/* Header */}
+      {/* Header with Upload Button */}
       <div className="bg-admin-surface rounded-none border border-admin-line p-6">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start gap-4">
           <div>
             <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text">
               Carousel Photos
             </h2>
             <p className="text-[13px] text-admin-dim mt-1">Appears in the homepage carousel</p>
           </div>
-        </div>
-      </div>
-
-      {/* Upload Section */}
-      <div className="bg-admin-surface rounded-none border border-admin-line p-6 space-y-4">
-        <label className="block">
           <input
             ref={fileInputRef}
             type="file"
@@ -235,34 +229,24 @@ export default function RubberBandPhotosManager() {
             disabled={uploading}
             className="hidden"
           />
-          <div className="w-full border-2 border-dashed border-admin-line bg-admin-raise rounded-none flex flex-col items-center justify-center cursor-pointer hover:border-oxblood/50 transition-colors duration-160 p-4" style={{ height: '128px' }}>
-            <Upload className="w-5 h-5 text-admin-dim mb-2" />
-            <p className="text-[12px] font-medium text-admin-text text-center">
-              Drag & drop or click to upload
-            </p>
-            <p className="text-[10px] text-admin-faint text-center mt-1 leading-tight">
-              JPEG, PNG, GIF, or WEBP • Max 10MB
-            </p>
-          </div>
-        </label>
-
-        <Button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="w-full bg-oxblood hover:bg-oxblood/90 text-white rounded-none text-[13px] font-medium transition-colors duration-160 disabled:opacity-50"
-        >
-          {uploading ? (
-            <>
-              <LoadingSpinner className="w-4 h-4 mr-2" />
-              Uploading...
-            </>
-          ) : (
-            <>
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Photo
-            </>
-          )}
-        </Button>
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="flex-shrink-0 bg-oxblood hover:bg-oxblood/90 text-white rounded-none text-[13px] font-medium transition-colors duration-160 disabled:opacity-50 h-10 px-4"
+          >
+            {uploading ? (
+              <>
+                <LoadingSpinner className="w-4 h-4 mr-2" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Photo
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Photos List */}
