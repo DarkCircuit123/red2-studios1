@@ -71,7 +71,8 @@ export default function WorkGalleryManager() {
   const loadPhotosFromDatabase = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 1000 });
+      // CRITICAL: Get ALL items without limit to ensure we capture everything
+      const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 10000 });
       const dbPhotos = result.items || [];
       
       console.log('[WorkGalleryManager] Loaded', dbPhotos.length, 'photos from database');
@@ -86,13 +87,15 @@ export default function WorkGalleryManager() {
         }
       });
       
-      // Derive slot count: ALWAYS at least 100, then max(highest, filled + 12)
+      // CRITICAL: Derive slot count - ALWAYS at least 100, then add buffer
+      // If we have 90 photos, we want at least 100 + 12 = 112 slots
       const derivedSlotCount = Math.max(100, highestOrder, filledCount + 12);
       setSlotCount(derivedSlotCount);
       
       console.log('[WorkGalleryManager] Derived slot count:', { highestOrder, filledCount, derivedSlotCount, totalSlots: derivedSlotCount });
       
-      // Create slots for every row returned by query + up to derived count
+      // CRITICAL: Create slots for EVERY slot up to derivedSlotCount
+      // This ensures empty boxes are always rendered
       const newSlots: SlotData[] = [];
       for (let i = 1; i <= derivedSlotCount; i++) {
         const dbPhoto = dbPhotos.find(p => p.displayOrder === i);
@@ -107,6 +110,7 @@ export default function WorkGalleryManager() {
             uploadedAt: dbPhoto._updatedDate?.toString(),
           });
         } else {
+          // CRITICAL: Always create empty slot, even if no DB photo
           newSlots.push({
             id: `slot-${i}-${crypto.randomUUID()}`,
             slotNumber: i,
@@ -119,7 +123,7 @@ export default function WorkGalleryManager() {
         }
       }
       
-      console.log('[WorkGalleryManager] Created', newSlots.length, 'total slots');
+      console.log('[WorkGalleryManager] Created', newSlots.length, 'total slots (filled:', filledCount, ', empty:', newSlots.length - filledCount, ')');
       setSlots(newSlots);
     } catch (error) {
       console.error('[WorkGalleryManager] Error loading photos:', error);
@@ -581,6 +585,10 @@ export default function WorkGalleryManager() {
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <LoadingSpinner className="w-6 h-6" />
+          </div>
+        ) : slots.length === 0 ? (
+          <div className="flex items-center justify-center py-12 text-admin-dim">
+            <p className="text-[13px]">No slots available. Click "Add 12 Slots" to create slots.</p>
           </div>
         ) : (
           /* Grid - RENDERS ALL SLOTS */
