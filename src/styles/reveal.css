@@ -122,10 +122,6 @@
   }
 }
 
-/* Force all reveal elements to be visible - override any clipping */
-.reveal,.reveal-wipe{opacity:1!important;transform:none!important;clip-path:none!important}
-.reveal-wipe.is-visible,.reveal.is-visible{opacity:1!important;transform:none!important;clip-path:none!important}
-
 /* Additional override to ensure clip-path is completely removed */
 html.js-reveal .reveal-wipe:not(.is-visible) {
   clip-path: none !important;
@@ -138,3 +134,7 @@ html.js-reveal .reveal:not(.is-visible) {
   opacity: 1 !important;
   transform: none !important;
 }
+
+/* Force all reveal elements to be visible - override any clipping */
+.reveal,.reveal-wipe{opacity:1!important;transform:none!important;clip-path:none!important}
+.reveal-wipe.is-visible,.reveal.is-visible{opacity:1!important;transform:none!important;clip-path:none!important}

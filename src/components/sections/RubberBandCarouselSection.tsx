@@ -226,7 +226,6 @@ const RubberBandCarouselSection: React.FC = () => {
               src={carouselSrc(image)}
               alt={image.alt}
               decoding="async"
-              loading="lazy"
               className="block h-full w-full object-cover"
               onError={(e) => {
                 console.error('[RubberBandCarousel] Image failed to load:', {
