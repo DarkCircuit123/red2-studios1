@@ -266,13 +266,13 @@ export default function AboutSection() {
                   className={`space-y-3 group reveal reveal-delay-${i + 1}`}
                 >
                   <motion.p
-                    className="text-5xl md:text-6xl font-heading font-black text-primary"
+                    className="text-5xl md:text-6xl font-heading font-black text-red-500"
                     animate={{ opacity: [1, 0.8, 1] }}
                     transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
                   >
                     {stat.value}
                   </motion.p>
-                  <p className="text-xs md:text-sm font-mono text-white/50 uppercase tracking-widest group-hover:text-primary transition-colors">
+                  <p className="text-xs md:text-sm font-mono text-white uppercase tracking-widest group-hover:text-red-500 transition-colors">
                     {stat.label}
                   </p>
                 </motion.div>
