@@ -16,13 +16,6 @@ const RubberBandCarouselSection: React.FC = () => {
   const [slides, setSlides] = useState<CarouselImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mouse tracking refs
-  const mousePercentRef = useRef(0);
-  const curvedPullRef = useRef(0);
-  const isHoveringRef = useRef(false);
-  const snapBackAnimationRef = useRef<number>();
-  const pausedRef = useRef(false);
-
   // Fallback images
   const fallbackImages: CarouselImage[] = useMemo(() => [
     {
@@ -164,16 +157,6 @@ const RubberBandCarouselSection: React.FC = () => {
   // Build duplicated loop for seamless scrolling
   const loop = useMemo(() => [...slides, ...slides], [slides]);
 
-  // Elastic easing function for overshoot snap-back
-  const easeOutElastic = useCallback((t: number): number => {
-    const c5 = (2 * Math.PI) / 4.5;
-    return t === 0
-      ? 0
-      : t === 1
-        ? 1
-        : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c5) + 1;
-  }, []);
-
   // Measure track width on mount and resize
   useEffect(() => {
     const measure = () => {
@@ -186,62 +169,7 @@ const RubberBandCarouselSection: React.FC = () => {
     return () => window.removeEventListener('resize', measure);
   }, [slides.length]);
 
-  // Track mouse position and calculate pull offset
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!trackRef.current || !isHoveringRef.current) return;
-
-    const rect = trackRef.current.getBoundingClientRect();
-    const sectionWidth = rect.width;
-    const mouseXInSection = e.clientX - rect.left;
-
-    mousePercentRef.current = (mouseXInSection / sectionWidth) * 100;
-    const pullStrength = mousePercentRef.current - 50;
-    const curvedPull =
-      Math.sign(pullStrength) *
-      Math.pow(Math.abs(pullStrength) / 50, 2) *
-      50;
-
-    curvedPullRef.current = curvedPull;
-  }, []);
-
-  const handleMouseEnter = useCallback(() => {
-    isHoveringRef.current = true;
-    pausedRef.current = true;
-    mousePercentRef.current = 0;
-    curvedPullRef.current = 0;
-
-    if (snapBackAnimationRef.current) {
-      cancelAnimationFrame(snapBackAnimationRef.current);
-    }
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    isHoveringRef.current = false;
-    pausedRef.current = false;
-
-    const startTime = Date.now();
-    const duration = 600;
-    const startPull = curvedPullRef.current;
-
-    const animateSnapBack = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      const easeValue = easeOutElastic(progress);
-      curvedPullRef.current = startPull * (1 - easeValue);
-
-      if (progress < 1) {
-        snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
-      } else {
-        curvedPullRef.current = 0;
-        mousePercentRef.current = 0;
-      }
-    };
-
-    snapBackAnimationRef.current = requestAnimationFrame(animateSnapBack);
-  }, [easeOutElastic]);
-
-  // Main animation loop with requestAnimationFrame
+  // Main animation loop with requestAnimationFrame - carousel never stops
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -249,12 +177,10 @@ const RubberBandCarouselSection: React.FC = () => {
     let raf: number;
 
     const step = () => {
-      if (!pausedRef.current) {
-        x -= 0.3;
-        const w = setWidth.current;
-        if (w && -x >= w) x += w;
-        if (trackRef.current) trackRef.current.style.transform = `translate3d(${x}px,0,0)`;
-      }
+      x -= 0.3;
+      const w = setWidth.current;
+      if (w && -x >= w) x += w;
+      if (trackRef.current) trackRef.current.style.transform = `translate3d(${x}px,0,0)`;
       raf = requestAnimationFrame(step);
     };
 
@@ -287,9 +213,6 @@ const RubberBandCarouselSection: React.FC = () => {
         maskImage: 'linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%)',
         WebkitMaskImage: 'linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%)',
       }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
       {/* Carousel track */}
       <div ref={trackRef} className="flex h-full items-center gap-6 md:gap-8 will-change-transform">
