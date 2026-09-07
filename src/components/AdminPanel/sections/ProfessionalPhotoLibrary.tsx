@@ -146,14 +146,14 @@ export default function ProfessionalPhotoLibrary() {
     e.preventDefault();
     e.stopPropagation();
     if (dragOverRef.current) {
-      dragOverRef.current.classList.add('border-primary', 'bg-primary/5');
+      dragOverRef.current.classList.add('border-oxblood', 'bg-admin-raise');
     }
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (dragOverRef.current) {
-      dragOverRef.current.classList.remove('border-primary', 'bg-primary/5');
+      dragOverRef.current.classList.remove('border-oxblood', 'bg-admin-raise');
     }
   }, []);
 
@@ -161,7 +161,7 @@ export default function ProfessionalPhotoLibrary() {
     e.preventDefault();
     e.stopPropagation();
     if (dragOverRef.current) {
-      dragOverRef.current.classList.remove('border-primary', 'bg-primary/5');
+      dragOverRef.current.classList.remove('border-oxblood', 'bg-admin-raise');
     }
     const files = Array.from(e.dataTransfer.files);
     addFilesToQueue(files);
@@ -462,13 +462,13 @@ export default function ProfessionalPhotoLibrary() {
       : 0;
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg overflow-hidden">
+    <div className="w-full h-full bg-admin-bg rounded-none overflow-hidden">
       {/* Header */}
-      <div className="border-b border-slate-200 bg-white p-6">
+      <div className="border-b border-admin-line bg-admin-surface p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Photo Library</h2>
-            <p className="text-sm text-slate-600 mt-1">
+            <h2 className="font-heading text-[18px] uppercase tracking-[0.15em] font-bold text-admin-text">Photo Library</h2>
+            <p className="text-[13px] text-admin-dim mt-1">
               Manage and organize your media assets
             </p>
           </div>
@@ -478,7 +478,7 @@ export default function ProfessionalPhotoLibrary() {
               size="sm"
               onClick={syncPhotos}
               disabled={isSyncing}
-              className="gap-2"
+              className="gap-2 bg-admin-raise hover:bg-admin-line text-admin-text border-admin-line rounded-none text-[11px]"
             >
               {isSyncing ? (
                 <LoadingSpinner className="w-4 h-4" />
@@ -491,7 +491,7 @@ export default function ProfessionalPhotoLibrary() {
               variant="outline"
               size="sm"
               onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-              className="gap-2"
+              className="gap-2 bg-admin-raise hover:bg-admin-line text-admin-text border-admin-line rounded-none text-[11px]"
             >
               {viewMode === 'grid' ? (
                 <List className="w-4 h-4" />
@@ -507,18 +507,18 @@ export default function ProfessionalPhotoLibrary() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg mb-4"
+            className="flex items-center gap-3 p-3 bg-admin-raise border border-danger/30 rounded-none mb-4"
           >
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <AlertCircle className="w-5 h-5 text-danger flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-red-900">{error}</p>
-              <p className="text-xs text-red-700 mt-1">
+              <p className="text-[13px] font-medium text-danger">{error}</p>
+              <p className="text-[11px] text-admin-faint mt-1">
                 The upload interface remains available. Try syncing or refreshing.
               </p>
             </div>
             <button
               onClick={() => setError(null)}
-              className="text-red-600 hover:text-red-700"
+              className="text-danger hover:text-danger/80"
             >
               <X className="w-4 h-4" />
             </button>
@@ -530,23 +530,23 @@ export default function ProfessionalPhotoLibrary() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4"
+            className="p-3 bg-admin-raise border border-admin-line/60 rounded-none mb-4"
           >
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-blue-900">
+              <p className="text-[13px] font-medium text-admin-text">
                 Upload Progress: {uploadStats.success + uploadStats.uploading}/{uploadStats.total}
               </p>
-              <span className="text-xs text-blue-700">{overallProgress}%</span>
+              <span className="text-[11px] text-admin-dim">{overallProgress}%</span>
             </div>
-            <div className="w-full h-2 bg-blue-200 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-admin-line rounded-none overflow-hidden">
               <motion.div
-                className="h-full bg-blue-600"
+                className="h-full bg-oxblood"
                 initial={{ width: 0 }}
                 animate={{ width: `${overallProgress}%` }}
                 transition={{ duration: 0.3 }}
               />
             </div>
-            <div className="flex gap-4 mt-2 text-xs text-blue-700">
+            <div className="flex gap-4 mt-2 text-[11px] text-admin-dim">
               {uploadStats.uploading > 0 && (
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" /> {uploadStats.uploading} uploading
@@ -570,19 +570,19 @@ export default function ProfessionalPhotoLibrary() {
       {/* Main Content */}
       <div className="flex h-[calc(100%-120px)]">
         {/* Left Panel - Upload & Queue */}
-        <div className="w-80 border-r border-slate-200 bg-white overflow-y-auto">
+        <div className="w-80 border-r border-admin-line bg-admin-surface overflow-y-auto">
           {/* Drag & Drop Area */}
-          <div className="p-4 border-b border-slate-200">
+          <div className="p-4 border-b border-admin-line">
             <div
               ref={dragOverRef}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer transition-colors hover:border-primary hover:bg-primary/5"
+              className="border-2 border-dashed border-admin-line rounded-none p-6 text-center cursor-pointer transition-colors hover:border-oxblood hover:bg-admin-raise"
             >
-              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-slate-900">Drop photos here</p>
-              <p className="text-xs text-slate-600 mt-1">or click to select</p>
+              <Upload className="w-8 h-8 text-admin-faint mx-auto mb-2" />
+              <p className="text-sm font-medium text-admin-text">Drop photos here</p>
+              <p className="text-xs text-admin-dim mt-1">or click to select</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -593,7 +593,7 @@ export default function ProfessionalPhotoLibrary() {
               />
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-3 w-full gap-2"
+                className="mt-3 w-full gap-2 bg-oxblood hover:bg-oxblood/90 text-white rounded-none text-[13px] font-medium"
               >
                 <Upload className="w-4 h-4" />
                 Select Photos
@@ -603,11 +603,11 @@ export default function ProfessionalPhotoLibrary() {
 
           {/* Upload Queue */}
           <div className="p-4">
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Upload Queue</h3>
+            <h3 className="text-[13px] font-heading uppercase tracking-[0.1em] text-admin-text mb-3">Upload Queue</h3>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               <AnimatePresence>
                 {uploadQueue.length === 0 ? (
-                  <p className="text-xs text-slate-500 text-center py-4">
+                  <p className="text-xs text-admin-faint text-center py-4">
                     No uploads in progress
                   </p>
                 ) : (
@@ -617,14 +617,14 @@ export default function ProfessionalPhotoLibrary() {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="p-2 bg-slate-50 rounded border border-slate-200"
+                      className="p-2 bg-admin-raise rounded-none border border-admin-line"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-slate-900 truncate">
+                          <p className="text-xs font-medium text-admin-text truncate">
                             {item.file.name}
                           </p>
-                          <p className="text-xs text-slate-600">
+                          <p className="text-xs text-admin-dim">
                             {(item.file.size / 1024 / 1024).toFixed(2)} MB
                           </p>
                         </div>
@@ -643,9 +643,9 @@ export default function ProfessionalPhotoLibrary() {
                       </div>
 
                       {/* Progress Bar */}
-                      <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mb-2">
+                      <div className="w-full h-1.5 bg-admin-line rounded-none overflow-hidden mb-2">
                         <motion.div
-                          className="h-full bg-primary"
+                          className="h-full bg-oxblood"
                           initial={{ width: 0 }}
                           animate={{ width: `${item.progress}%` }}
                           transition={{ duration: 0.3 }}
@@ -654,7 +654,7 @@ export default function ProfessionalPhotoLibrary() {
 
                       {/* Error Message */}
                       {item.error && (
-                        <p className="text-xs text-red-600 mb-2">{item.error}</p>
+                        <p className="text-xs text-danger mb-2">{item.error}</p>
                       )}
 
                       {/* Actions */}
@@ -664,7 +664,7 @@ export default function ProfessionalPhotoLibrary() {
                             size="sm"
                             variant="outline"
                             onClick={() => retryUpload(item.id)}
-                            className="flex-1 h-7 text-xs gap-1"
+                            className="flex-1 h-7 text-xs gap-1 bg-admin-line hover:bg-admin-line/60 text-admin-text border-admin-line rounded-none"
                           >
                             <RotateCcw className="w-3 h-3" />
                             Retry
@@ -675,7 +675,7 @@ export default function ProfessionalPhotoLibrary() {
                             size="sm"
                             variant="outline"
                             onClick={() => cancelUpload(item.id)}
-                            className="flex-1 h-7 text-xs gap-1"
+                            className="flex-1 h-7 text-xs gap-1 bg-admin-line hover:bg-admin-line/60 text-admin-text border-admin-line rounded-none"
                           >
                             <X className="w-3 h-3" />
                             Cancel
@@ -693,7 +693,7 @@ export default function ProfessionalPhotoLibrary() {
         {/* Right Panel - Photo Library */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Toolbar */}
-          <div className="border-b border-slate-200 bg-white p-4">
+          <div className="border-b border-admin-line bg-admin-surface p-4">
             <div className="flex items-center gap-3 mb-3">
               {selectedPhotos.size > 0 && (
                 <motion.div
@@ -711,14 +711,14 @@ export default function ProfessionalPhotoLibrary() {
                       }
                     }}
                   />
-                  <span className="text-sm font-medium text-slate-900">
+                  <span className="text-sm font-medium text-admin-text">
                     {selectedPhotos.size} selected
                   </span>
                   <Button
                     size="sm"
                     variant="destructive"
                     onClick={bulkDelete}
-                    className="gap-2"
+                    className="gap-2 bg-danger hover:bg-danger/90 text-white rounded-none"
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete
@@ -728,14 +728,14 @@ export default function ProfessionalPhotoLibrary() {
 
               {/* Search */}
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-faint" />
                 <Input
                   placeholder="Search photos..."
                   value={filters.search}
                   onChange={e =>
                     setFilters(prev => ({ ...prev, search: e.target.value }))
                   }
-                  className="pl-9"
+                  className="pl-9 bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint rounded-none"
                 />
               </div>
 
@@ -748,7 +748,7 @@ export default function ProfessionalPhotoLibrary() {
                     sortBy: e.target.value as 'name' | 'date' | 'size',
                   }))
                 }
-                className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                className="px-3 py-2 border border-admin-line rounded-none bg-admin-raise text-admin-text text-sm"
               >
                 <option value="date">Sort by Date</option>
                 <option value="name">Sort by Name</option>
@@ -763,15 +763,15 @@ export default function ProfessionalPhotoLibrary() {
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
                   <LoadingSpinner className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-sm text-slate-600">Loading photos...</p>
+                  <p className="text-sm text-admin-dim">Loading photos...</p>
                 </div>
               </div>
             ) : filteredPhotos.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <Upload className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-slate-900">No photos yet</p>
-                  <p className="text-xs text-slate-600 mt-1">
+                  <Upload className="w-12 h-12 text-admin-faint mx-auto mb-3" />
+                  <p className="text-sm font-medium text-admin-text">No photos yet</p>
+                  <p className="text-xs text-admin-dim mt-1">
                     Upload your first photo to get started
                   </p>
                 </div>
@@ -836,19 +836,20 @@ export default function ProfessionalPhotoLibrary() {
           if (!open) setConfirmAction({ type: null, items: [], message: '' });
         }}
       >
-        <DialogContent>
+        <DialogContent className="bg-admin-surface border-admin-line">
           <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
-            <DialogDescription>{confirmAction.message}</DialogDescription>
+            <DialogTitle className="text-admin-text">Confirm Action</DialogTitle>
+            <DialogDescription className="text-admin-dim">{confirmAction.message}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setConfirmAction({ type: null, items: [], message: '' })}
+              className="bg-admin-raise hover:bg-admin-line text-admin-text border-admin-line rounded-none"
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={executeConfirmAction}>
+            <Button variant="destructive" onClick={executeConfirmAction} className="bg-danger hover:bg-danger/90 text-white rounded-none">
               Confirm
             </Button>
           </DialogFooter>
@@ -910,8 +911,8 @@ function PhotoGridCard({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className={`relative group rounded-lg overflow-hidden border-2 transition-colors ${
-        isSelected ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-primary'
+      className={`relative group rounded-none overflow-hidden border-2 transition-colors ${
+        isSelected ? 'border-oxblood bg-admin-raise' : 'border-admin-line hover:border-oxblood'
       }`}
     >
       {/* Checkbox */}
@@ -920,7 +921,7 @@ function PhotoGridCard({
       </div>
 
       {/* Image */}
-      <div className="aspect-square bg-slate-100 overflow-hidden">
+      <div className="aspect-square bg-admin-raise overflow-hidden">
         {photo.image ? (
           <ImageComponent
             src={photo.image}
@@ -930,8 +931,8 @@ function PhotoGridCard({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-slate-200">
-            <Upload className="w-8 h-8 text-slate-400" />
+          <div className="w-full h-full flex items-center justify-center bg-admin-line">
+            <Upload className="w-8 h-8 text-admin-faint" />
           </div>
         )}
       </div>
@@ -942,7 +943,7 @@ function PhotoGridCard({
           size="sm"
           variant="secondary"
           onClick={onExpand}
-          className="gap-1"
+          className="gap-1 bg-white/10 hover:bg-white/20 text-white border-white/15 rounded-none"
         >
           <Maximize2 className="w-4 h-4" />
         </Button>
@@ -950,7 +951,7 @@ function PhotoGridCard({
           size="sm"
           variant="secondary"
           onClick={onEdit}
-          className="gap-1"
+          className="gap-1 bg-white/10 hover:bg-white/20 text-white border-white/15 rounded-none"
         >
           Edit
         </Button>
@@ -958,7 +959,7 @@ function PhotoGridCard({
           size="sm"
           variant="destructive"
           onClick={onDelete}
-          className="gap-1"
+          className="gap-1 bg-danger hover:bg-danger/90 text-white rounded-none"
         >
           <Trash2 className="w-4 h-4" />
         </Button>
@@ -966,8 +967,8 @@ function PhotoGridCard({
 
       {/* Caption */}
       {photo.caption && (
-        <div className="p-2 bg-white border-t border-slate-200">
-          <p className="text-xs font-medium text-slate-900 truncate">
+        <div className="p-2 bg-admin-raise border-t border-admin-line">
+          <p className="text-xs font-medium text-admin-text truncate">
             {photo.caption}
           </p>
         </div>
@@ -997,14 +998,14 @@ function PhotoListRow({
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -10 }}
-      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-        isSelected ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-primary'
+      className={`flex items-center gap-3 p-3 rounded-none border transition-colors ${
+        isSelected ? 'border-oxblood bg-admin-raise' : 'border-admin-line hover:border-oxblood'
       }`}
     >
       <Checkbox checked={isSelected} onChange={onSelect} />
 
       {/* Thumbnail */}
-      <div className="w-12 h-12 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+      <div className="w-12 h-12 rounded-none bg-admin-raise overflow-hidden flex-shrink-0 border border-admin-line">
         {photo.image ? (
           <ImageComponent
             src={photo.image}
@@ -1014,18 +1015,18 @@ function PhotoListRow({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-slate-200">
-            <Upload className="w-4 h-4 text-slate-400" />
+          <div className="w-full h-full flex items-center justify-center bg-admin-line">
+            <Upload className="w-4 h-4 text-admin-faint" />
           </div>
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-900 truncate">
+        <p className="text-sm font-medium text-admin-text truncate">
           {photo.caption || 'Untitled'}
         </p>
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-admin-dim">
           {photo._createdDate
             ? new Date(photo._createdDate).toLocaleDateString()
             : 'Unknown date'}
@@ -1038,7 +1039,7 @@ function PhotoListRow({
           size="sm"
           variant="ghost"
           onClick={onExpand}
-          className="h-8 w-8 p-0"
+          className="h-8 w-8 p-0 text-admin-dim hover:text-admin-text hover:bg-admin-line rounded-none"
         >
           <Maximize2 className="w-4 h-4" />
         </Button>
@@ -1046,7 +1047,7 @@ function PhotoListRow({
           size="sm"
           variant="ghost"
           onClick={onEdit}
-          className="h-8 w-8 p-0"
+          className="h-8 w-8 p-0 text-admin-dim hover:text-admin-text hover:bg-admin-line rounded-none"
         >
           Edit
         </Button>
@@ -1054,7 +1055,7 @@ function PhotoListRow({
           size="sm"
           variant="ghost"
           onClick={onDelete}
-          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="h-8 w-8 p-0 text-admin-dim hover:text-danger hover:bg-danger/10 rounded-none"
         >
           <Trash2 className="w-4 h-4" />
         </Button>
@@ -1091,15 +1092,15 @@ function PhotoExpandedView({
         animate={{ scale: 1 }}
         exit={{ scale: 0.9 }}
         onClick={e => e.stopPropagation()}
-        className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-admin-surface rounded-none max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-admin-line"
       >
-        <div className="sticky top-0 flex items-center justify-between p-4 border-b border-slate-200 bg-white">
-          <h3 className="font-semibold text-slate-900">
+        <div className="sticky top-0 flex items-center justify-between p-4 border-b border-admin-line bg-admin-surface">
+          <h3 className="font-heading text-[13px] uppercase tracking-[0.1em] text-admin-text">
             {photo.caption || 'Photo'}
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-600 hover:text-slate-900"
+            className="text-admin-dim hover:text-admin-text"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1112,45 +1113,45 @@ function PhotoExpandedView({
               alt={photo.altText || 'Photo'}
               width={600}
               height={600}
-              className="w-full h-auto rounded-lg mb-4"
+              className="w-full h-auto rounded-none mb-4 border border-admin-line"
             />
           )}
 
           <div className="space-y-3">
             {photo.caption && (
               <div>
-                <p className="text-xs font-medium text-slate-600">Caption</p>
-                <p className="text-sm text-slate-900">{photo.caption}</p>
+                <p className="text-xs font-heading uppercase tracking-[0.1em] text-admin-dim">Caption</p>
+                <p className="text-sm text-admin-text">{photo.caption}</p>
               </div>
             )}
             {photo.altText && (
               <div>
-                <p className="text-xs font-medium text-slate-600">Alt Text</p>
-                <p className="text-sm text-slate-900">{photo.altText}</p>
+                <p className="text-xs font-heading uppercase tracking-[0.1em] text-admin-dim">Alt Text</p>
+                <p className="text-sm text-admin-text">{photo.altText}</p>
               </div>
             )}
             {photo._createdDate && (
               <div>
-                <p className="text-xs font-medium text-slate-600">Created</p>
-                <p className="text-sm text-slate-900">
+                <p className="text-xs font-heading uppercase tracking-[0.1em] text-admin-dim">Created</p>
+                <p className="text-sm text-admin-text">
                   {new Date(photo._createdDate).toLocaleString()}
                 </p>
               </div>
             )}
           </div>
 
-          <div className="flex gap-2 mt-6 pt-4 border-t border-slate-200">
+          <div className="flex gap-2 mt-6 pt-4 border-t border-admin-line">
             <Button
               variant="outline"
               onClick={onClose}
-              className="flex-1"
+              className="flex-1 bg-admin-raise hover:bg-admin-line text-admin-text border-admin-line rounded-none"
             >
               Close
             </Button>
             <Button
               variant="destructive"
               onClick={onDelete}
-              className="flex-1 gap-2"
+              className="flex-1 gap-2 bg-danger hover:bg-danger/90 text-white rounded-none"
             >
               <Trash2 className="w-4 h-4" />
               Delete
@@ -1220,13 +1221,13 @@ function PhotoEditModal({
         animate={{ scale: 1 }}
         exit={{ scale: 0.9 }}
         onClick={e => e.stopPropagation()}
-        className="bg-white rounded-lg max-w-md w-full"
+        className="bg-admin-surface rounded-none max-w-md w-full border border-admin-line"
       >
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
-          <h3 className="font-semibold text-slate-900">Edit Photo</h3>
+        <div className="flex items-center justify-between p-4 border-b border-admin-line">
+          <h3 className="font-heading text-[13px] uppercase tracking-[0.1em] text-admin-text">Edit Photo</h3>
           <button
             onClick={onClose}
-            className="text-slate-600 hover:text-slate-900"
+            className="text-admin-dim hover:text-admin-text"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1234,7 +1235,7 @@ function PhotoEditModal({
 
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">
+            <label className="block text-xs font-heading uppercase tracking-[0.1em] text-admin-text mb-2">
               Caption
             </label>
             <Input
@@ -1243,11 +1244,12 @@ function PhotoEditModal({
                 setFormData(prev => ({ ...prev, caption: e.target.value }))
               }
               placeholder="Enter caption"
+              className="bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint rounded-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">
+            <label className="block text-xs font-heading uppercase tracking-[0.1em] text-admin-text mb-2">
               Alt Text
             </label>
             <Input
@@ -1256,11 +1258,12 @@ function PhotoEditModal({
                 setFormData(prev => ({ ...prev, altText: e.target.value }))
               }
               placeholder="Enter alt text"
+              className="bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint rounded-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">
+            <label className="block text-xs font-heading uppercase tracking-[0.1em] text-admin-text mb-2">
               Display Order
             </label>
             <Input
@@ -1272,15 +1275,16 @@ function PhotoEditModal({
                   displayOrder: parseInt(e.target.value) || 0,
                 }))
               }
+              className="bg-admin-raise border-admin-line text-admin-text rounded-none"
             />
           </div>
         </div>
 
-        <div className="flex gap-2 p-4 border-t border-slate-200">
-          <Button variant="outline" onClick={onClose} className="flex-1">
+        <div className="flex gap-2 p-4 border-t border-admin-line">
+          <Button variant="outline" onClick={onClose} className="flex-1 bg-admin-raise hover:bg-admin-line text-admin-text border-admin-line rounded-none">
             Cancel
           </Button>
-          <Button onClick={handleSave} className="flex-1">
+          <Button onClick={handleSave} className="flex-1 bg-oxblood hover:bg-oxblood/90 text-white rounded-none">
             Save Changes
           </Button>
         </div>

@@ -1,8 +1,17 @@
+/**
+ * Rubber Band Photos Manager - Carousel Images with dark theme
+ * 
+ * Features:
+ * - Dynamic slot count derived from data
+ * - Upload and replace carousel photos
+ * - Dark theme applied throughout
+ * - 4.5:1 contrast compliance
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Image as ImageIcon, Upload, Trash2, Eye, Plus, RefreshCw } from 'lucide-react';
+import { Image as ImageIcon, Upload, Trash2, Eye, Plus, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { CarouselImages } from '@/entities';
@@ -13,6 +22,12 @@ import { convertWixImageToHttps } from '@/lib/convert-wix-image';
 import { computeSlotCount } from '@/lib/admin-helpers';
 import { motion } from 'framer-motion';
 
+interface StatusMessage {
+  id: string;
+  type: 'info' | 'success' | 'error' | 'warning';
+  message: string;
+}
+
 export default function RubberBandPhotosManager() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -21,6 +36,7 @@ export default function RubberBandPhotosManager() {
   const [uploading, setUploading] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const [slotCount, setSlotCount] = useState(90);
+  const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
@@ -42,14 +58,18 @@ export default function RubberBandPhotosManager() {
       setSlotCount(computeSlotCount(activePhotos));
     } catch (error) {
       console.error('Error loading photos:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load carousel photos',
-        variant: 'destructive',
-      });
+      addStatusMessage('error', 'Failed to load carousel photos');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const addStatusMessage = (type: StatusMessage['type'], message: string) => {
+    const id = crypto.randomUUID();
+    setStatusMessages(prev => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setStatusMessages(prev => prev.filter(m => m.id !== id));
+    }, 5000);
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +78,7 @@ export default function RubberBandPhotosManager() {
 
     try {
       setUploading(true);
+      addStatusMessage('info', 'Uploading photo...');
 
       // Upload the image
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
@@ -81,10 +102,7 @@ export default function RubberBandPhotosManager() {
       setPhotos(updatedPhotos);
       setSlotCount(computeSlotCount(updatedPhotos));
 
-      toast({
-        title: 'Success',
-        description: 'Photo uploaded successfully',
-      });
+      addStatusMessage('success', 'Photo uploaded successfully');
 
       // Reset file input
       if (fileInputRef.current) {
@@ -92,11 +110,7 @@ export default function RubberBandPhotosManager() {
       }
     } catch (error) {
       console.error('Upload error:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to upload photo',
-        variant: 'destructive',
-      });
+      addStatusMessage('error', error instanceof Error ? error.message : 'Failed to upload photo');
     } finally {
       setUploading(false);
     }
@@ -108,6 +122,7 @@ export default function RubberBandPhotosManager() {
 
     try {
       setReplacingId(photoId);
+      addStatusMessage('info', 'Replacing photo...');
 
       // Upload the new image
       const result = await uploadMedia(file, 'image', IMAGE_UPLOAD_CONFIG);
@@ -128,10 +143,7 @@ export default function RubberBandPhotosManager() {
         setPhotos(updatedPhotos);
         setSlotCount(computeSlotCount(updatedPhotos));
 
-        toast({
-          title: 'Success',
-          description: 'Photo replaced successfully',
-        });
+        addStatusMessage('success', 'Photo replaced successfully');
       }
 
       // Reset file input
@@ -140,35 +152,28 @@ export default function RubberBandPhotosManager() {
       }
     } catch (error) {
       console.error('Replace error:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to replace photo',
-        variant: 'destructive',
-      });
+      addStatusMessage('error', error instanceof Error ? error.message : 'Failed to replace photo');
     } finally {
       setReplacingId(null);
     }
   };
 
   const handleDeletePhoto = async (photoId: string) => {
+    if (!confirm('Delete this carousel photo?')) return;
+
     try {
       setIsSaving(true);
+      addStatusMessage('info', 'Deleting photo...');
+      
       await adminCms.delete('carouselimages', photoId);
       const updatedPhotos = photos.filter(p => p._id !== photoId);
       setPhotos(updatedPhotos);
       setSlotCount(computeSlotCount(updatedPhotos));
 
-      toast({
-        title: 'Success',
-        description: 'Photo deleted successfully',
-      });
+      addStatusMessage('success', 'Photo deleted successfully');
     } catch (error) {
       console.error('Error deleting photo:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete photo',
-        variant: 'destructive',
-      });
+      addStatusMessage('error', 'Failed to delete photo');
     } finally {
       setIsSaving(false);
     }
@@ -177,10 +182,7 @@ export default function RubberBandPhotosManager() {
   const handleAddSlots = () => {
     const newSlotCount = slotCount + 12;
     setSlotCount(newSlotCount);
-    toast({
-      title: 'Slots Added',
-      description: `Work gallery expanded to ${newSlotCount} slots`,
-    });
+    addStatusMessage('info', `Carousel expanded to ${newSlotCount} slots`);
   };
 
   if (isLoading) {
@@ -191,188 +193,212 @@ export default function RubberBandPhotosManager() {
     );
   }
 
+  const filledSlots = photos.length;
+
   return (
     <div className="space-y-6">
+      {/* Status Messages */}
+      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+        {statusMessages.map(msg => (
+          <motion.div
+            key={msg.id}
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            className={`p-3 rounded-sm flex items-center gap-2 text-[13px] font-medium border transition-colors duration-160 ${
+              msg.type === 'success' ? 'bg-admin-raise border-ok/30 text-ok' :
+              msg.type === 'error' ? 'bg-admin-raise border-danger/30 text-danger' :
+              msg.type === 'warning' ? 'bg-admin-raise border-warn/30 text-warn' :
+              'bg-admin-raise border-admin-line text-admin-text'
+            }`}
+          >
+            {msg.type === 'success' && <CheckCircle className="w-4 h-4" />}
+            {msg.type === 'error' && <AlertCircle className="w-4 h-4" />}
+            {msg.message}
+          </motion.div>
+        ))}
+      </div>
+
       {/* Upload Section */}
-      <Card className="p-6 border border-slate-200">
-        <div className="space-y-4">
+      <div className="bg-admin-surface rounded-none border border-admin-line p-6 space-y-4">
+        <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-              <Plus className="w-5 h-5 text-blue-600" />
-              Add Carousel Photos
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">Upload photos to display in the rubber band carousel section</p>
+            <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text flex items-center gap-2">
+              <Upload className="w-4 h-4 text-oxblood" />
+              Carousel Photos
+            </h2>
+            <p className="text-[13px] text-admin-dim mt-2">Upload photos for the rubber band carousel section</p>
           </div>
-
-          {/* Upload Button */}
-          <label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              disabled={uploading}
-              className="hidden"
-            />
-            <Button
-              asChild
-              disabled={uploading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <span className="cursor-pointer flex items-center justify-center gap-2">
-                {uploading ? (
-                  <>
-                    <LoadingSpinner />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    Upload Photo
-                  </>
-                )}
-              </span>
-            </Button>
-          </label>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-oxblood">{filledSlots}</p>
+            <p className="text-[11px] text-admin-faint font-medium">photos</p>
+          </div>
         </div>
-      </Card>
 
-      {/* Rubber Band Carousel Section */}
-      <Card className="p-6 border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <ImageIcon className="w-5 h-5 text-purple-600" />
-                RUBBER BAND CAROUSEL
-              </h3>
-              <p className="text-sm text-slate-600 mt-1">Manage images displayed in the carousel on the homepage</p>
-              <p className="text-xs text-slate-500 mt-2">Current slots: <strong>{slotCount}</strong></p>
+        {/* Upload Button */}
+        <label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+          <Button
+            asChild
+            disabled={uploading}
+            className="w-full bg-oxblood hover:bg-oxblood/90 text-white rounded-none text-[13px] font-medium transition-colors duration-160 disabled:opacity-50"
+          >
+            <span className="cursor-pointer flex items-center justify-center gap-2">
+              {uploading ? (
+                <>
+                  <LoadingSpinner className="w-4 h-4" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4" />
+                  Upload Photo
+                </>
+              )}
+            </span>
+          </Button>
+        </label>
+      </div>
+
+      {/* Carousel Photos Grid */}
+      <div className="bg-admin-surface rounded-none border border-admin-line p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text">
+            Carousel Grid ({filledSlots} photos)
+          </h2>
+          <Button
+            onClick={handleAddSlots}
+            className="flex items-center gap-2 bg-admin-raise hover:bg-admin-line text-admin-text border border-admin-line rounded-none text-[11px] px-3 py-2 transition-colors duration-160"
+          >
+            <Plus className="w-3 h-3" />
+            Add 12 Slots
+          </Button>
+        </div>
+
+        {photos.length === 0 ? (
+          <div className="w-full py-12 rounded-none border border-dashed border-admin-line bg-admin-raise flex items-center justify-center">
+            <div className="text-center">
+              <ImageIcon className="w-12 h-12 text-admin-faint mx-auto mb-2" />
+              <p className="text-admin-dim text-[13px]">No carousel photos yet</p>
+              <p className="text-admin-faint text-[11px] mt-1">Upload photos above to get started</p>
             </div>
-            <Button
-              onClick={handleAddSlots}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add 12 Slots
-            </Button>
           </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(156px, 1fr))',
+            gap: '8px',
+            width: '100%',
+          }}>
+            {photos.map((photo, index) => {
+              // Convert wix:image URLs to HTTPS for display
+              const displayImageUrl = convertWixImageToHttps(photo.image) || photo.image;
+              
+              return (
+                <motion.div
+                  key={photo._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.01 }}
+                  className="relative rounded-none overflow-hidden border border-admin-line bg-admin-raise hover:border-oxblood/50 group aspect-[4/5]"
+                >
+                  {/* Position Badge */}
+                  <div className="absolute top-2 left-2 z-10 text-[10px] font-heading text-admin-faint tabular-nums">
+                    {index + 1}
+                  </div>
 
-          {photos.length === 0 ? (
-            <div className="w-full py-12 rounded-lg border-2 border-dashed border-slate-300 bg-white flex items-center justify-center">
-              <div className="text-center">
-                <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-500 text-sm">No carousel photos yet</p>
-                <p className="text-slate-400 text-xs mt-1">Upload photos above to get started</p>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {photos.map((photo, index) => {
-                // Convert wix:image URLs to HTTPS for display
-                const displayImageUrl = convertWixImageToHttps(photo.image) || photo.image;
-                
-                return (
-                  <motion.div
-                    key={photo._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="relative rounded-lg overflow-hidden border-2 border-slate-200 bg-white hover:border-purple-300 transition-colors group"
-                  >
-                    {/* Position Badge */}
-                    <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                      #{index + 1}
-                    </div>
-
-                    {/* Photo Thumbnail Preview */}
-                    {displayImageUrl && (
-                      <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
-                        <img
-                          src={displayImageUrl}
-                          alt={photo.imageName || 'Carousel photo'}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            console.warn('Failed to load image:', displayImageUrl);
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                  {/* Photo Thumbnail */}
+                  {displayImageUrl && (
+                    <div className="relative w-full h-full overflow-hidden bg-admin-raise">
+                      <img
+                        src={displayImageUrl}
+                        alt={photo.imageName || 'Carousel photo'}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          console.warn('Failed to load image:', displayImageUrl);
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      {/* Controls Overlay */}
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-160">
+                        <button
+                          type="button"
+                          onClick={() => window.open(displayImageUrl, '_blank')}
+                          className="p-1 bg-white/10 border border-white/15 text-white rounded-none hover:bg-white/20 hover:border-white/30 transition-colors duration-160"
+                          title="View full image"
+                        >
+                          <Eye className="w-3 h-3" />
+                        </button>
+                        <label className="cursor-pointer">
+                          <input
+                            ref={(el) => {
+                              if (el) replaceFileInputRefs.current[photo._id] = el;
+                            }}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleReplacePhoto(e, photo._id)}
+                            disabled={replacingId === photo._id}
+                            className="hidden"
+                          />
                           <button
-                            onClick={() => window.open(displayImageUrl, '_blank')}
-                            className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                            title="View full image"
+                            onClick={() => {
+                              const input = replaceFileInputRefs.current[photo._id];
+                              if (input) input.click();
+                            }}
+                            disabled={replacingId === photo._id}
+                            className="p-1 bg-white/10 border border-white/15 text-white rounded-none hover:bg-white/20 hover:border-white/30 transition-colors duration-160 disabled:opacity-50"
+                            title="Replace this image"
                           >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <label className="cursor-pointer">
-                            <input
-                              ref={(el) => {
-                                if (el) replaceFileInputRefs.current[photo._id] = el;
-                              }}
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => handleReplacePhoto(e, photo._id)}
-                              disabled={replacingId === photo._id}
-                              className="hidden"
-                            />
-                            <button
-                              onClick={() => {
-                                const input = replaceFileInputRefs.current[photo._id];
-                                if (input) input.click();
-                              }}
-                              disabled={replacingId === photo._id}
-                              className="p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50"
-                              title="Replace this image"
-                            >
-                              {replacingId === photo._id ? (
-                                <LoadingSpinner className="w-4 h-4" />
-                              ) : (
-                                <RefreshCw className="w-4 h-4" />
-                              )}
-                            </button>
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => handleDeletePhoto(photo._id)}
-                            disabled={isSaving}
-                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Delete this image"
-                          >
-                            {isSaving ? (
-                              <LoadingSpinner className="w-4 h-4" />
+                            {replacingId === photo._id ? (
+                              <LoadingSpinner className="w-3 h-3" />
                             ) : (
-                              <Trash2 className="w-4 h-4" />
+                              <RefreshCw className="w-3 h-3" />
                             )}
                           </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Photo Info */}
-                    <div className="p-3 space-y-2 bg-white">
-                      <p className="text-sm font-medium text-slate-900 truncate">
-                        {photo.imageName || 'Untitled'}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                        <span>Active in carousel</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePhoto(photo._id)}
+                          disabled={isSaving}
+                          className="p-1 bg-white/10 border border-white/15 text-white rounded-none hover:bg-white/20 hover:border-white/30 transition-colors duration-160 disabled:opacity-50"
+                          title="Delete this image"
+                        >
+                          {isSaving ? (
+                            <LoadingSpinner className="w-3 h-3" />
+                          ) : (
+                            <Trash2 className="w-3 h-3" />
+                          )}
+                        </button>
                       </div>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </Card>
+                  )}
+
+                  {/* Empty State */}
+                  {!displayImageUrl && (
+                    <div className="w-full h-full bg-admin-raise flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-admin-faint" />
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Info Box */}
-      <Card className="p-4 bg-blue-50 border border-blue-200">
-        <p className="text-sm text-blue-900">
-          <strong>Tip:</strong> Use high-quality images (1920x1080 or larger) for best results. Photos will appear in the rubber band carousel section on the homepage. Click the replace icon to update any carousel image.
+      <div className="bg-admin-raise rounded-none border border-admin-line p-4">
+        <p className="text-[13px] text-admin-text">
+          <strong className="text-oxblood">Tip:</strong> Use high-quality images (1920x1080 or larger) for best results. Photos appear in the rubber band carousel section on the homepage.
         </p>
-      </Card>
+      </div>
     </div>
   );
 }

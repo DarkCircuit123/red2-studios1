@@ -1,3 +1,13 @@
+/**
+ * Behind The Scenes Manager - Dark theme with admin styling
+ * 
+ * Features:
+ * - Manage behind-the-scenes photos and metadata
+ * - Quick upload overlay for rapid updates
+ * - Dark theme applied throughout
+ * - 4.5:1 contrast compliance
+ */
+
 import React, { useState, useEffect } from 'react';
 import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
@@ -6,11 +16,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
-import { Trash2, Plus, Edit2, X, Upload } from 'lucide-react';
+import { Trash2, Plus, Edit2, X, Upload, AlertCircle, CheckCircle } from 'lucide-react';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import { useToast } from '@/hooks/use-toast';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
+import { motion } from 'framer-motion';
 
 interface BehindTheScenesItem {
   _id: string;
@@ -23,6 +34,12 @@ interface BehindTheScenesItem {
   _updatedDate?: Date;
 }
 
+interface StatusMessage {
+  id: string;
+  type: 'info' | 'success' | 'error' | 'warning';
+  message: string;
+}
+
 export default function BehindTheScenesManager() {
   const { toast } = useToast();
   const [items, setItems] = useState<BehindTheScenesItem[]>([]);
@@ -31,6 +48,7 @@ export default function BehindTheScenesManager() {
   const [isAdding, setIsAdding] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
+  const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
   const [formData, setFormData] = useState({
     photo: '',
     title: '',
@@ -38,6 +56,14 @@ export default function BehindTheScenesManager() {
     order: 0,
     dateTaken: '',
   });
+
+  const addStatusMessage = (type: StatusMessage['type'], message: string) => {
+    const id = crypto.randomUUID();
+    setStatusMessages(prev => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setStatusMessages(prev => prev.filter(m => m.id !== id));
+    }, 5000);
+  };
 
   // Load items on mount
   useEffect(() => {
@@ -249,32 +275,69 @@ export default function BehindTheScenesManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Behind The Scenes</h3>
-        {!isAdding && !editingId && (
-          <Button onClick={handleAddNew} className="flex items-center gap-2">
-            <Plus size={16} />
-            Add New
-          </Button>
-        )}
+      {/* Status Messages */}
+      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+        {statusMessages.map(msg => (
+          <motion.div
+            key={msg.id}
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            className={`p-3 rounded-sm flex items-center gap-2 text-[13px] font-medium border transition-colors duration-160 ${
+              msg.type === 'success' ? 'bg-admin-raise border-ok/30 text-ok' :
+              msg.type === 'error' ? 'bg-admin-raise border-danger/30 text-danger' :
+              msg.type === 'warning' ? 'bg-admin-raise border-warn/30 text-warn' :
+              'bg-admin-raise border-admin-line text-admin-text'
+            }`}
+          >
+            {msg.type === 'success' && <CheckCircle className="w-4 h-4" />}
+            {msg.type === 'error' && <AlertCircle className="w-4 h-4" />}
+            {msg.message}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Header */}
+      <div className="bg-admin-surface rounded-none border border-admin-line p-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text flex items-center gap-2">
+              <Upload className="w-4 h-4 text-oxblood" />
+              Behind The Scenes
+            </h2>
+            <p className="text-[13px] text-admin-dim mt-2">Manage behind-the-scenes photos and metadata</p>
+          </div>
+          {!isAdding && !editingId && (
+            <Button onClick={handleAddNew} className="flex items-center gap-2 bg-oxblood hover:bg-oxblood/90 text-white rounded-none text-[11px] px-4 py-2 transition-colors duration-160">
+              <Plus className="w-4 h-4" />
+              Add New
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Add/Edit Form */}
       {(isAdding || editingId) && (
-        <div className="border rounded-lg p-6 bg-gray-50 space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-admin-raise rounded-none border border-admin-line p-6 space-y-4"
+        >
           <div className="flex justify-between items-center mb-4">
-            <h4 className="font-semibold">{editingId ? 'Edit' : 'Add New'} Behind The Scenes</h4>
-            <button onClick={handleCancel} className="text-gray-500 hover:text-gray-700">
-              <X size={20} />
+            <h3 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text">
+              {editingId ? 'Edit' : 'Add New'} Behind The Scenes
+            </h3>
+            <button onClick={handleCancel} className="p-1 text-admin-dim hover:text-admin-text transition-colors duration-160">
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Image Upload */}
           <div>
-            <label className="block text-sm font-medium mb-2">Photo</label>
+            <label className="block text-[11px] font-heading uppercase tracking-[0.1em] text-admin-text mb-2">Photo</label>
             <div className="flex gap-4">
               {formData.photo && (
-                <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
+                <div className="relative w-32 h-32 rounded-none overflow-hidden border border-admin-line">
                   <Image
                     src={convertWixImageToHttps(formData.photo) || formData.photo}
                     alt="Preview"
@@ -290,98 +353,132 @@ export default function BehindTheScenesManager() {
                   accept="image/*"
                   onChange={handleImageUpload}
                   disabled={isUploadingImage}
-                  className="block w-full text-sm text-gray-500
+                  className="block w-full text-[13px] text-admin-dim
                     file:mr-4 file:py-2 file:px-4
-                    file:rounded-md file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-primary file:text-white
-                    hover:file:bg-primary/90
+                    file:rounded-none file:border-0
+                    file:text-[11px] file:font-semibold
+                    file:bg-oxblood file:text-white
+                    hover:file:bg-oxblood/90
                     disabled:opacity-50 disabled:cursor-not-allowed"
                 />
-                {isUploadingImage && <p className="text-xs text-gray-500 mt-2">Uploading...</p>}
-                {!isUploadingImage && <p className="text-xs text-gray-500 mt-2">Upload a new image or use existing URL</p>}
+                {isUploadingImage && <p className="text-[11px] text-admin-dim mt-2">Uploading...</p>}
+                {!isUploadingImage && <p className="text-[11px] text-admin-faint mt-2">Upload a new image</p>}
               </div>
             </div>
           </div>
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium mb-2">Title</label>
+            <label className="block text-[11px] font-heading uppercase tracking-[0.1em] text-admin-text mb-2">Title *</label>
             <Input
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Enter title"
+              className="bg-admin-surface border-admin-line text-admin-text placeholder:text-admin-faint rounded-none"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-2">Description</label>
+            <label className="block text-[11px] font-heading uppercase tracking-[0.1em] text-admin-text mb-2">Description</label>
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Enter description"
               rows={3}
+              className="bg-admin-surface border-admin-line text-admin-text placeholder:text-admin-faint rounded-none"
             />
           </div>
 
-          {/* Order */}
+          {/* Order & Date */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Order</label>
+              <label className="block text-[11px] font-heading uppercase tracking-[0.1em] text-admin-text mb-2">Order</label>
               <Input
                 type="number"
                 value={formData.order}
                 onChange={(e) => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
                 placeholder="0"
+                className="bg-admin-surface border-admin-line text-admin-text placeholder:text-admin-faint rounded-none"
               />
             </div>
 
-            {/* Date Taken */}
             <div>
-              <label className="block text-sm font-medium mb-2">Date Taken</label>
+              <label className="block text-[11px] font-heading uppercase tracking-[0.1em] text-admin-text mb-2">Date Taken</label>
               <Input
                 type="date"
                 value={formData.dateTaken}
                 onChange={(e) => setFormData(prev => ({ ...prev, dateTaken: e.target.value }))}
+                className="bg-admin-surface border-admin-line text-admin-text rounded-none"
               />
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 justify-end pt-4">
-            <Button variant="outline" onClick={handleCancel}>
+          <div className="flex gap-2 justify-end pt-4 border-t border-admin-line">
+            <Button onClick={handleCancel} className="flex-1 bg-admin-line hover:bg-admin-line/60 text-admin-text rounded-none text-[11px] transition-colors duration-160">
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isUploadingImage}>
+            <Button onClick={handleSave} disabled={isUploadingImage} className="flex-1 bg-oxblood hover:bg-oxblood/90 text-white rounded-none text-[11px] transition-colors duration-160 disabled:opacity-50">
               {editingId ? 'Update' : 'Create'}
             </Button>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Items List */}
-      <div className="space-y-3">
-        {items.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No behind-the-scenes items yet. Add one to get started!</p>
+      <div className="bg-admin-surface rounded-none border border-admin-line p-6">
+        <h3 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text mb-4">
+          All Items ({items.length})
+        </h3>
+
+        {isLoading && items.length === 0 ? (
+          <div className="flex justify-center items-center py-8">
+            <LoadingSpinner />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="text-center py-8 text-admin-dim">
+            <p className="text-[13px]">No behind-the-scenes items yet. Add one to get started!</p>
           </div>
         ) : (
-          items.map((item) => (
-            <div key={item._id} className="border rounded-lg p-4 flex gap-4 items-start hover:bg-gray-50 transition">
-              {/* Thumbnail with Quick Upload */}
-              <div className="relative w-24 h-24 rounded-lg overflow-hidden border flex-shrink-0 bg-gray-100 group">
-                {item.photo ? (
-                  <>
-                    <Image
-                      src={convertWixImageToHttps(item.photo) || item.photo}
-                      alt={item.title || 'Behind the scenes'}
-                      width={96}
-                      height={96}
-                      className="w-full h-full object-cover"
-                    />
-                    {/* Quick Upload Overlay */}
-                    <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+          <div className="space-y-2">
+            {items.map((item) => (
+              <motion.div
+                key={item._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="border border-admin-line rounded-none p-4 flex gap-4 items-start bg-admin-raise hover:border-admin-line/60 transition-colors group"
+              >
+                {/* Thumbnail with Quick Upload */}
+                <div className="relative w-24 h-24 rounded-none overflow-hidden border border-admin-line flex-shrink-0 bg-admin-surface">
+                  {item.photo ? (
+                    <>
+                      <Image
+                        src={convertWixImageToHttps(item.photo) || item.photo}
+                        alt={item.title || 'Behind the scenes'}
+                        width={96}
+                        height={96}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {/* Quick Upload Overlay */}
+                      <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleQuickUpload(e, item._id)}
+                          disabled={isUploadingImage || uploadingItemId === item._id}
+                          className="hidden"
+                        />
+                        <Upload className="w-4 h-4 text-white" />
+                      </label>
+                      {uploadingItemId === item._id && (
+                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                          <LoadingSpinner className="w-4 h-4" />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <label className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-admin-line transition-colors">
                       <input
                         type="file"
                         accept="image/*"
@@ -389,64 +486,49 @@ export default function BehindTheScenesManager() {
                         disabled={isUploadingImage || uploadingItemId === item._id}
                         className="hidden"
                       />
-                      <Upload size={20} className="text-white" />
+                      <Upload className="w-4 h-4 text-admin-faint" />
                     </label>
-                    {uploadingItemId === item._id && (
-                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <label className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-200 transition">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleQuickUpload(e, item._id)}
-                      disabled={isUploadingImage || uploadingItemId === item._id}
-                      className="hidden"
-                    />
-                    <Upload size={20} className="text-gray-400" />
-                  </label>
-                )}
-              </div>
+                  )}
+                </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h4 className="font-semibold text-sm">{item.title || '(No title)'}</h4>
-                    <p className="text-xs text-gray-600 mt-1 line-clamp-2">{item.description || '(No description)'}</p>
-                    {item.dateTaken && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        Date: {new Date(item.dateTaken).toLocaleDateString()}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500">Order: {item.order}</p>
-                  </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-heading text-[13px] text-admin-text">{item.title || '(No title)'}</h4>
+                      <p className="text-[11px] text-admin-dim mt-1 line-clamp-2">{item.description || '(No description)'}</p>
+                      {item.dateTaken && (
+                        <p className="text-[11px] text-admin-faint mt-2">
+                          Date: {new Date(item.dateTaken).toLocaleDateString()}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-admin-faint">Order: {item.order}</p>
+                    </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => handleEdit(item)}
-                      className="p-2 hover:bg-gray-200 rounded-lg transition"
-                      title="Edit"
-                    >
-                      <Edit2 size={16} className="text-gray-600" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item._id)}
-                      className="p-2 hover:bg-red-100 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Delete"
-                      disabled={isLoading || uploadingItemId === item._id}
-                    >
-                      <Trash2 size={16} className="text-red-600" />
-                    </button>
+                    {/* Actions */}
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleEdit(item)}
+                        disabled={editingId !== null}
+                        className="p-2 bg-admin-line hover:bg-admin-line/60 text-admin-text rounded-none transition-colors duration-160 disabled:opacity-50"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        disabled={isLoading || uploadingItemId === item._id || editingId !== null}
+                        className="p-2 bg-admin-line hover:bg-danger/20 text-admin-text hover:text-danger rounded-none transition-colors duration-160 disabled:opacity-50"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))
+              </motion.div>
+            ))}
+          </div>
         )}
       </div>
     </div>
