@@ -5,7 +5,7 @@ import HomePageTab from './tabs/HomePageTab';
 import SplashpageTab from './tabs/SplashpageTab';
 import WorkGalleryManager from './sections/WorkGalleryManager';
 import ProfessionalPhotoLibrary from './sections/ProfessionalPhotoLibrary';
-import { Settings, Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Library } from 'lucide-react';
+import { Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Library } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('home');
@@ -20,35 +20,33 @@ export default function AdminDashboard() {
     { id: 'gallery', label: 'Work Gallery', icon: Briefcase, enabled: true },
     { id: 'photo-library', label: 'Photo Library', icon: Library, enabled: true },
     { id: 'about', label: 'About Page', icon: FileText, enabled: false },
-    { id: 'services', label: 'Services', icon: Settings, enabled: false },
+    { id: 'services', label: 'Services', icon: Cog, enabled: false },
     { id: 'booking', label: 'Booking', icon: Calendar, enabled: false },
     { id: 'contact', label: 'Contact', icon: Mail, enabled: false },
     { id: 'settings', label: 'Settings', icon: Cog, enabled: false },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-admin-bg">
       {/* Header */}
-      <div className="border-b border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-admin-line bg-admin-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-              <Settings className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-              <p className="text-sm text-slate-500">Manage your website content</p>
-            </div>
+            <h1 className="font-heading text-2xl uppercase tracking-[0.18em] text-admin-text">
+              RED<span className="text-oxblood">²</span>
+            </h1>
+            <div className="w-px h-6 bg-admin-line" />
+            <p className="text-xs uppercase tracking-[0.2em] text-admin-faint">CONTROL ROOM</p>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="border-0 shadow-lg">
+        <div className="bg-admin-surface rounded-none border border-admin-line">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Tabs List */}
-            <div className="border-b border-slate-200 bg-slate-50 rounded-t-lg overflow-x-auto">
+            <div className="border-b border-admin-line bg-admin-surface overflow-x-auto">
               <TabsList className="w-full justify-start bg-transparent p-0 h-auto rounded-none">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
@@ -59,16 +57,18 @@ export default function AdminDashboard() {
                       disabled={!tab.enabled}
                       className={`
                         flex items-center gap-2 px-4 py-3 border-b-2 rounded-none
-                        transition-colors duration-200
+                        transition-colors duration-160
+                        font-heading text-xs uppercase tracking-[0.12em]
                         ${!tab.enabled ? 'opacity-50 cursor-not-allowed' : ''}
-                        data-[state=active]:border-blue-600 data-[state=active]:text-blue-600
-                        data-[state=inactive]:border-transparent data-[state=inactive]:text-slate-600
-                        hover:text-slate-900 hover:bg-slate-100
+                        data-[state=active]:border-oxblood data-[state=active]:text-admin-text
+                        data-[state=inactive]:border-transparent data-[state=inactive]:text-admin-dim
+                        hover:text-admin-text hover:bg-white/[0.03]
+                        focus:outline-1 focus:outline-oxblood focus:outline-offset-2
                       `}
                     >
                       <Icon className="w-4 h-4" />
-                      <span className="text-sm font-medium">{tab.label}</span>
-                      {!tab.enabled && <span className="text-xs text-slate-400 ml-1">(Coming soon)</span>}
+                      <span>{tab.label}</span>
+                      {!tab.enabled && <span className="text-xs text-admin-faint ml-1">(Coming soon)</span>}
                     </TabsTrigger>
                   );
                 })}
@@ -97,13 +97,13 @@ export default function AdminDashboard() {
               {['about', 'services', 'booking', 'contact', 'settings'].map((tabId) => (
                 <TabsContent key={tabId} value={tabId} className="m-0">
                   <div className="text-center py-12">
-                    <p className="text-slate-500">This tab is coming soon.</p>
+                    <p className="text-admin-dim">This tab is coming soon.</p>
                   </div>
                 </TabsContent>
               ))}
             </div>
           </Tabs>
-        </Card>
+        </div>
       </div>
     </div>
   );

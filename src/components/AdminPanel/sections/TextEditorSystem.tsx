@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Type, Save, X } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
+import { getActiveHomepageImages } from '@/lib/get-active-homepage-images';
 
 interface TextFieldConfig {
   key: keyof HomepageImages;
@@ -43,10 +43,12 @@ export default function TextEditorSystem() {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
-      if (result.items.length > 0) {
-        setSettings(result.items[0]);
+      const item = await getActiveHomepageImages();
+      if (item) {
+        setSettings(item);
         setEditedSettings({});
+      } else {
+        setSettings(null);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -75,7 +77,11 @@ export default function TextEditorSystem() {
       setIsSaving(true);
       const updated = { ...settings, ...editedSettings };
       await adminCms.update('homepageimages', updated);
-      setSettings(updated);
+      // Re-read through the same helper so the editor reflects the row the site actually renders
+      const reloaded = await getActiveHomepageImages();
+      if (reloaded) {
+        setSettings(reloaded);
+      }
       setEditedSettings({});
       setHasChanges(false);
 
@@ -116,14 +122,14 @@ export default function TextEditorSystem() {
         const charCount = String(currentValue).length;
 
         return (
-          <Card key={field.key} className="p-6 border border-slate-200">
+          <div key={field.key} className="p-6 bg-admin-surface border border-admin-line rounded-sm">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                  <Type className="w-4 h-4 text-blue-600" />
+                <label className="font-heading text-xs uppercase tracking-[0.14em] text-admin-text flex items-center gap-2">
+                  <Type className="w-4 h-4 text-oxblood" />
                   {field.label}
                 </label>
-                <span className={`text-xs ${charCount > field.maxLength * 0.9 ? 'text-red-600' : 'text-slate-500'}`}>
+                <span className={`text-xs tabular-nums ${charCount > field.maxLength * 0.9 ? 'text-danger' : 'text-admin-faint'}`}>
                   {charCount} / {field.maxLength}
                 </span>
               </div>
@@ -135,7 +141,7 @@ export default function TextEditorSystem() {
                   placeholder={field.placeholder}
                   maxLength={field.maxLength}
                   rows={field.rows || 4}
-                  className="w-full resize-none border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full resize-none bg-admin-raise border border-admin-line rounded-sm p-3 text-xs text-admin-text placeholder-admin-faint focus:outline-1 focus:outline-oxblood focus:outline-offset-2 transition-colors duration-160"
                 />
               ) : (
                 <Input
@@ -144,23 +150,23 @@ export default function TextEditorSystem() {
                   onChange={(e) => handleFieldChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
                   maxLength={field.maxLength}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full bg-admin-raise border border-admin-line rounded-sm px-3 py-2 text-xs text-admin-text placeholder-admin-faint focus:outline-1 focus:outline-oxblood focus:outline-offset-2 transition-colors duration-160"
                 />
               )}
 
-              <p className="text-xs text-slate-500">{field.placeholder}</p>
+              <p className="text-xs text-admin-faint">{field.placeholder}</p>
             </div>
-          </Card>
+          </div>
         );
       })}
 
       {/* Action Buttons */}
       {hasChanges && (
-        <div className="flex gap-3 sticky bottom-0 bg-white p-4 rounded-lg border border-slate-200 shadow-lg">
+        <div className="flex gap-3 sticky bottom-0 bg-admin-surface p-4 rounded-sm border border-admin-line">
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
+            className="flex-1 bg-oxblood hover:bg-oxblood-hi text-white flex items-center justify-center gap-2 rounded-sm transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
           >
             {isSaving ? (
               <>
@@ -177,8 +183,7 @@ export default function TextEditorSystem() {
           <Button
             onClick={handleCancel}
             disabled={isSaving}
-            variant="outline"
-            className="flex items-center justify-center gap-2"
+            className="bg-admin-raise hover:bg-admin-line text-admin-text border border-admin-line rounded-sm transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
           >
             <X className="w-4 h-4" />
             Cancel
@@ -187,11 +192,11 @@ export default function TextEditorSystem() {
       )}
 
       {/* Info Box */}
-      <Card className="p-4 bg-blue-50 border border-blue-200">
-        <p className="text-sm text-blue-900">
+      <div className="p-4 bg-admin-raise border border-admin-line rounded-sm">
+        <p className="text-xs text-admin-dim">
           <strong>Tip:</strong> Changes are saved to the database immediately. You can preview changes in the Preview tab.
         </p>
-      </Card>
+      </div>
     </div>
   );
 }

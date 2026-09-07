@@ -31,30 +31,30 @@ export default function HomePageTab() {
     <div className="space-y-6">
       {/* Section Navigation */}
       <Tabs defaultValue="hero" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-slate-100 p-1 rounded-lg">
-          <TabsTrigger value="hero" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-6 bg-admin-raise p-1 rounded-sm border border-admin-line">
+          <TabsTrigger value="hero" className="flex items-center gap-2 rounded-sm data-[state=active]:bg-admin-surface data-[state=active]:text-admin-text data-[state=inactive]:text-admin-dim hover:text-admin-text transition-colors duration-160">
             <Image className="w-4 h-4" />
-            <span className="hidden sm:inline">Hero</span>
+            <span className="hidden sm:inline text-xs font-heading uppercase tracking-[0.12em]">Hero</span>
           </TabsTrigger>
-          <TabsTrigger value="text" className="flex items-center gap-2">
+          <TabsTrigger value="text" className="flex items-center gap-2 rounded-sm data-[state=active]:bg-admin-surface data-[state=active]:text-admin-text data-[state=inactive]:text-admin-dim hover:text-admin-text transition-colors duration-160">
             <Type className="w-4 h-4" />
-            <span className="hidden sm:inline">Text</span>
+            <span className="hidden sm:inline text-xs font-heading uppercase tracking-[0.12em]">Text</span>
           </TabsTrigger>
-          <TabsTrigger value="music" className="flex items-center gap-2">
+          <TabsTrigger value="music" className="flex items-center gap-2 rounded-sm data-[state=active]:bg-admin-surface data-[state=active]:text-admin-text data-[state=inactive]:text-admin-dim hover:text-admin-text transition-colors duration-160">
             <Music className="w-4 h-4" />
-            <span className="hidden sm:inline">Music</span>
+            <span className="hidden sm:inline text-xs font-heading uppercase tracking-[0.12em]">Music</span>
           </TabsTrigger>
-          <TabsTrigger value="photos" className="flex items-center gap-2">
+          <TabsTrigger value="photos" className="flex items-center gap-2 rounded-sm data-[state=active]:bg-admin-surface data-[state=active]:text-admin-text data-[state=inactive]:text-admin-dim hover:text-admin-text transition-colors duration-160">
             <Film className="w-4 h-4" />
-            <span className="hidden sm:inline">Photos</span>
+            <span className="hidden sm:inline text-xs font-heading uppercase tracking-[0.12em]">Photos</span>
           </TabsTrigger>
-          <TabsTrigger value="behind-scenes" className="flex items-center gap-2">
+          <TabsTrigger value="behind-scenes" className="flex items-center gap-2 rounded-sm data-[state=active]:bg-admin-surface data-[state=active]:text-admin-text data-[state=inactive]:text-admin-dim hover:text-admin-text transition-colors duration-160">
             <Camera className="w-4 h-4" />
-            <span className="hidden sm:inline">Behind Scenes</span>
+            <span className="hidden sm:inline text-xs font-heading uppercase tracking-[0.12em]">Behind</span>
           </TabsTrigger>
-          <TabsTrigger value="preview" className="flex items-center gap-2">
+          <TabsTrigger value="preview" className="flex items-center gap-2 rounded-sm data-[state=active]:bg-admin-surface data-[state=active]:text-admin-text data-[state=inactive]:text-admin-dim hover:text-admin-text transition-colors duration-160">
             <Eye className="w-4 h-4" />
-            <span className="hidden sm:inline">Preview</span>
+            <span className="hidden sm:inline text-xs font-heading uppercase tracking-[0.12em]">Preview</span>
           </TabsTrigger>
         </TabsList>
 

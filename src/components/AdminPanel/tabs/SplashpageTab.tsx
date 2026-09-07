@@ -9,8 +9,8 @@ export default function SplashpageTab({ onSave }: SplashpageTabProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Splash Page Logo</h2>
-        <p className="text-gray-600 mt-2">
+        <h2 className="font-heading text-sm uppercase tracking-[0.14em] text-admin-text">Splash Page Logo</h2>
+        <p className="text-admin-dim mt-2 text-xs">
           Manage your website's splash page branding and logo assets.
         </p>
       </div>

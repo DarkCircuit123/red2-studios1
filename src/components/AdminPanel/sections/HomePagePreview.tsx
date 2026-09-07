@@ -3,9 +3,9 @@ import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { RefreshCw, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BaseCrudService } from '@/integrations';
 import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
+import { getActiveHomepageImages } from '@/lib/get-active-homepage-images';
 
 export default function HomePagePreview() {
   const { toast } = useToast();
@@ -19,9 +19,11 @@ export default function HomePagePreview() {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 1 });
-      if (result.items.length > 0) {
-        setSettings(result.items[0]);
+      const item = await getActiveHomepageImages();
+      if (item) {
+        setSettings(item);
+      } else {
+        setSettings(null);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -57,8 +59,7 @@ export default function HomePagePreview() {
       <div className="flex justify-end">
         <Button
           onClick={handleRefresh}
-          variant="outline"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-admin-raise hover:bg-admin-line text-admin-text border border-admin-line rounded-sm transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh Preview
@@ -66,8 +67,8 @@ export default function HomePagePreview() {
       </div>
 
       {/* Hero Section Preview */}
-      <Card className="overflow-hidden border border-slate-200">
-        <div className="relative w-full h-96 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="overflow-hidden border border-admin-line rounded-sm bg-admin-raise">
+        <div className="relative w-full h-96 bg-gradient-to-br from-admin-bg to-admin-surface flex items-center justify-center">
           {settings?.heroImage ? (
             <>
               <img
@@ -79,44 +80,44 @@ export default function HomePagePreview() {
             </>
           ) : (
             <div className="text-center">
-              <Eye className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-              <p className="text-slate-400">No hero image</p>
+              <Eye className="w-12 h-12 text-admin-faint mx-auto mb-2" />
+              <p className="text-admin-dim">No hero image</p>
             </div>
           )}
         </div>
-      </Card>
+      </div>
 
       {/* Data Summary */}
-      <Card className="p-6 border border-slate-200 bg-slate-50">
-        <h3 className="font-semibold text-slate-900 mb-4">Data Summary</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+      <div className="p-6 bg-admin-surface border border-admin-line rounded-sm">
+        <h3 className="font-heading text-xs uppercase tracking-[0.14em] text-admin-text mb-4">Data Summary</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <div>
-            <p className="text-slate-600">Image Name</p>
-            <p className="font-medium text-slate-900">{settings?.imageName || '—'}</p>
+            <p className="text-admin-faint">Image Name</p>
+            <p className="text-admin-text font-medium">{settings?.imageName || '—'}</p>
           </div>
           <div>
-            <p className="text-slate-600">Hero Image</p>
-            <p className="font-medium text-slate-900">{settings?.heroImage ? '✓ Uploaded' : '—'}</p>
+            <p className="text-admin-faint">Hero Image</p>
+            <p className="text-admin-text font-medium">{settings?.heroImage ? '✓ Uploaded' : '—'}</p>
           </div>
           <div>
-            <p className="text-slate-600">Active</p>
-            <p className="font-medium text-slate-900">{settings?.isActive ? '✓ Yes' : '✗ No'}</p>
+            <p className="text-admin-faint">Active</p>
+            <p className="text-admin-text font-medium">{settings?.isActive ? '✓ Yes' : '✗ No'}</p>
           </div>
           <div>
-            <p className="text-slate-600">Last Updated</p>
-            <p className="font-medium text-slate-900">
+            <p className="text-admin-faint">Last Updated</p>
+            <p className="text-admin-text font-medium">
               {settings?._updatedDate ? new Date(settings._updatedDate).toLocaleDateString() : '—'}
             </p>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Info Box */}
-      <Card className="p-4 bg-blue-50 border border-blue-200">
-        <p className="text-sm text-blue-900">
+      <div className="p-4 bg-admin-raise border border-admin-line rounded-sm">
+        <p className="text-xs text-admin-dim">
           <strong>Tip:</strong> This preview shows how your home page will look with the current hero image. Changes are saved automatically when you update content in other tabs.
         </p>
-      </Card>
+      </div>
     </div>
   );
 }

@@ -59,7 +59,11 @@ export default function HeroSectionManager() {
       // Update existing homepageimages row's heroImage field only
       const updated = { ...settings, heroImage: result.mediaUrl };
       await adminCms.update('homepageimages', updated);
-      setSettings(updated);
+      // Re-read through the same helper so the editor reflects the row the site actually renders
+      const reloaded = await getActiveHomepageImages();
+      if (reloaded) {
+        setSettings(reloaded);
+      }
       setPreviewUrl(result.mediaUrl);
 
       toast({
@@ -85,7 +89,11 @@ export default function HeroSectionManager() {
       setIsSaving(true);
       const updated = { ...settings, heroImage: undefined };
       await adminCms.update('homepageimages', updated);
-      setSettings(updated);
+      // Re-read through the same helper so the editor reflects the row the site actually renders
+      const reloaded = await getActiveHomepageImages();
+      if (reloaded) {
+        setSettings(reloaded);
+      }
       setPreviewUrl(null);
 
       toast({
@@ -114,43 +122,43 @@ export default function HeroSectionManager() {
 
   if (!settings) {
     return (
-      <Card className="p-6 border border-slate-200">
+      <div className="p-6 bg-admin-surface border border-admin-line rounded-sm">
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-blue-600" />
+            <h3 className="font-heading text-sm uppercase tracking-[0.14em] text-admin-text flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-oxblood" />
               Hero Image
             </h3>
-            <p className="text-sm text-slate-500 mt-1">Upload or replace the main image for the hero section</p>
+            <p className="text-xs text-admin-dim mt-1">Upload or replace the main image for the hero section</p>
           </div>
-          <div className="w-full h-64 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center">
+          <div className="w-full h-64 rounded-sm border border-dashed border-admin-line bg-admin-raise flex items-center justify-center">
             <div className="text-center">
-              <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-              <p className="text-slate-500 text-sm">No homepage images row found</p>
-              <p className="text-slate-400 text-xs mt-1">Please create a homepageimages entry in the CMS</p>
+              <ImageIcon className="w-12 h-12 text-admin-faint mx-auto mb-2" />
+              <p className="text-admin-dim text-xs">No homepage images row found</p>
+              <p className="text-admin-faint text-xs mt-1">Please create a homepageimages entry in the CMS</p>
             </div>
           </div>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Hero Image */}
-      <Card className="p-6 border border-slate-200">
+      <div className="p-6 bg-admin-surface border border-admin-line rounded-sm">
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-blue-600" />
+            <h3 className="font-heading text-sm uppercase tracking-[0.14em] text-admin-text flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-oxblood" />
               Hero Image
             </h3>
-            <p className="text-sm text-slate-500 mt-1">Upload or replace the main image for the hero section</p>
+            <p className="text-xs text-admin-dim mt-1">Upload or replace the main image for the hero section</p>
           </div>
 
           {/* Preview */}
           {(previewUrl || settings?.heroImage) && (
-            <div className="relative w-full h-64 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+            <div className="relative w-full h-64 rounded-sm overflow-hidden border border-admin-line bg-admin-raise">
               <img
                 src={previewUrl || settings?.heroImage}
                 alt="Hero image preview"
@@ -163,10 +171,10 @@ export default function HeroSectionManager() {
           )}
 
           {!previewUrl && !settings?.heroImage && (
-            <div className="w-full h-64 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center">
+            <div className="w-full h-64 rounded-sm border border-dashed border-admin-line bg-admin-raise flex items-center justify-center">
               <div className="text-center">
-                <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-500 text-sm">No image uploaded yet</p>
+                <ImageIcon className="w-12 h-12 text-admin-faint mx-auto mb-2" />
+                <p className="text-admin-dim text-xs">No image uploaded yet</p>
               </div>
             </div>
           )}
@@ -184,7 +192,7 @@ export default function HeroSectionManager() {
               <Button
                 asChild
                 disabled={uploadingBg}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full bg-oxblood hover:bg-oxblood-hi text-white rounded-sm transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
               >
                 <span className="cursor-pointer flex items-center justify-center gap-2">
                   {uploadingBg ? (
@@ -206,22 +214,21 @@ export default function HeroSectionManager() {
               <Button
                 onClick={handleRemoveBackgroundImage}
                 disabled={isSaving}
-                variant="outline"
-                className="border-red-200 text-red-600 hover:bg-red-50"
+                className="w-10 h-10 p-0 bg-danger hover:bg-oxblood-hi text-white rounded-sm transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
             )}
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Info Box */}
-      <Card className="p-4 bg-blue-50 border border-blue-200">
-        <p className="text-sm text-blue-900">
+      <div className="p-4 bg-admin-raise border border-admin-line rounded-sm">
+        <p className="text-xs text-admin-dim">
           <strong>Tip:</strong> Use high-quality images (1920x1080 or larger) for best results. Supported formats: JPG, PNG, WebP. This image is displayed on the live site.
         </p>
-      </Card>
+      </div>
     </div>
   );
 }
