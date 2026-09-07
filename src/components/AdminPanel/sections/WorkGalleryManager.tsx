@@ -175,23 +175,19 @@ export default function WorkGalleryManager() {
       let newSlotCount = slotCount;
 
       for (const file of selectedFiles) {
-        let targetSlot = updatedSlots.find(s => !s.image);
-        
-        // If no empty slot found, grow the array
-        if (!targetSlot) {
-          const nextSlotNumber = updatedSlots.length + 1;
-          targetSlot = {
-            id: `slot-${nextSlotNumber}-${crypto.randomUUID()}`,
-            slotNumber: nextSlotNumber,
-            image: undefined,
-            filename: '',
-            caption: '',
-            altText: '',
-            uploadedAt: undefined,
-          };
-          updatedSlots.push(targetSlot);
-          newSlotCount = nextSlotNumber;
-        }
+        // Always append new photos to the end - create a new slot for each upload
+        const nextSlotNumber = updatedSlots.length + 1;
+        const targetSlot: SlotData = {
+          id: `slot-${nextSlotNumber}-${crypto.randomUUID()}`,
+          slotNumber: nextSlotNumber,
+          image: undefined,
+          filename: '',
+          caption: '',
+          altText: '',
+          uploadedAt: undefined,
+        };
+        updatedSlots.push(targetSlot);
+        newSlotCount = nextSlotNumber;
 
         try {
           // Step 1: Upload to Wix Media
