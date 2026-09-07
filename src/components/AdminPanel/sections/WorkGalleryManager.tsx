@@ -452,8 +452,7 @@ export default function WorkGalleryManager() {
           <div className="flex items-center gap-3">
             <Button
               onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="flex items-center gap-2 bg-oxblood hover:bg-oxblood/90 text-white border border-oxblood rounded-none text-[11px] px-3 py-2 transition-colors duration-160 disabled:opacity-50"
+              className="flex items-center gap-2 bg-oxblood hover:bg-oxblood/90 text-white border border-oxblood rounded-none text-[11px] px-3 py-2 transition-colors duration-160"
             >
               <Upload className="w-3 h-3" />
               Upload Photos
