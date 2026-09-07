@@ -247,19 +247,13 @@ export default function RubberBandPhotosManager() {
             disabled={uploading}
             className="hidden"
           />
-          <div className="w-full h-32 border-2 border-dashed border-admin-line bg-admin-raise rounded-none flex flex-col items-center justify-center cursor-pointer hover:border-oxblood/50 transition-colors duration-160 p-4">
-            <Upload className="w-6 h-6 text-admin-dim mb-2" />
+          <div className="w-full border-2 border-dashed border-admin-line bg-admin-raise rounded-none flex flex-col items-center justify-center cursor-pointer hover:border-oxblood/50 transition-colors duration-160 p-4" style={{ height: '128px' }}>
+            <Upload className="w-5 h-5 text-admin-dim mb-2" />
             <p className="text-[12px] font-medium text-admin-text text-center">
               Drag & drop or click to upload
             </p>
-            <p className="text-[11px] text-admin-faint text-center mt-1">
-              Destination: Homepage Carousel
-            </p>
-            <p className="text-[11px] text-admin-faint text-center">
-              Formats: JPG, PNG, WebP • Max 10MB
-            </p>
-            <p className="text-[11px] text-admin-faint text-center">
-              Recommended: 16:9 aspect ratio, 1920×1080px minimum
+            <p className="text-[10px] text-admin-faint text-center mt-1 leading-tight">
+              Destination: Homepage Carousel • Formats: JPG, PNG, WebP • Max 10MB • 16:9 aspect ratio, 1920×1080px minimum
             </p>
           </div>
         </label>
