@@ -2,8 +2,8 @@
  * Work Gallery Manager - DYNAMIC SLOT GALLERY WITH DATABASE PERSISTENCE
  * 
  * Features:
- * - Dynamic slot count (starts at 90, grows as needed)
- * - Derives slot count from data: max(90, highest displayOrder, filled + 12)
+ * - Dynamic slot count (starts at 100, grows as needed)
+ * - Derives slot count from data: max(100, highest displayOrder, filled + 12)
  * - Upload grows slots if no empty slots found
  * - Delete removes image but keeps empty box
  * - Loads every row from portfolioimages collection
@@ -45,8 +45,8 @@ interface StatusMessage {
 export default function WorkGalleryManager() {
   console.log('[WorkGalleryManager] Component rendering');
   
-  // DYNAMIC SLOT COUNT - starts at 90, grows as needed
-  const [slotCount, setSlotCount] = useState(90);
+  // DYNAMIC SLOT COUNT - starts at 100, grows as needed
+  const [slotCount, setSlotCount] = useState(100);
   
   // SLOTS WITH DATABASE PERSISTENCE
   const [slots, setSlots] = useState<SlotData[]>([]);
@@ -86,8 +86,8 @@ export default function WorkGalleryManager() {
         }
       });
       
-      // Derive slot count: max(90, highest, filled + 12)
-      const derivedSlotCount = Math.max(90, highestOrder, filledCount + 12);
+      // Derive slot count: max(100, highest, filled + 12)
+      const derivedSlotCount = Math.max(100, highestOrder, filledCount + 12);
       setSlotCount(derivedSlotCount);
       
       console.log('[WorkGalleryManager] Derived slot count:', { highestOrder, filledCount, derivedSlotCount });
