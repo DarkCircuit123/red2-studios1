@@ -50,20 +50,33 @@ export default function BookingPage() {
     const loadBookings = async () => {
       try {
         // Use backend API to fetch public available slots
+        console.log('[BookingPage] Starting to fetch public availability...');
         const result = await getPublicAvailability();
         
+        console.log('[BookingPage] Fetch result:', result);
+        
         if (!result.success) {
-          console.error('Error loading bookings:', result.error);
+          console.error('[BookingPage] Error loading bookings:', result.error);
           setLoadError(result.error || 'Availability is temporarily unavailable');
           setBookings([]);
         } else {
           const allBookings = result.data || [];
+          console.log('[BookingPage] Total bookings fetched:', allBookings.length);
+          console.log('[BookingPage] All bookings:', allBookings);
+          
           const today = getTodayString();
+          console.log('[BookingPage] Today\'s date:', today);
           
           // Filter for available bookings with valid dates/times and future dates only
           const validBookings = allBookings.filter(b => {
             // Check basic requirements
             if (b.isAvailable !== true || !b.bookingDate || !b.startTime || !b.endTime) {
+              console.warn('[BookingPage] Filtering out booking - missing required fields:', {
+                isAvailable: b.isAvailable,
+                bookingDate: b.bookingDate,
+                startTime: b.startTime,
+                endTime: b.endTime
+              });
               return false;
             }
             
@@ -72,18 +85,22 @@ export default function BookingPage() {
             
             // Ensure the booking date is today or in the future
             if (!bookingDateStr || bookingDateStr < today) {
-              console.warn('Filtering out past date:', bookingDateStr, 'today:', today);
+              console.warn('[BookingPage] Filtering out past date:', bookingDateStr, 'today:', today);
               return false;
             }
             
+            console.log('[BookingPage] Keeping booking:', bookingDateStr, b.startTime, b.endTime);
             return true;
           });
+          
+          console.log('[BookingPage] Valid bookings after filtering:', validBookings.length);
+          console.log('[BookingPage] Valid bookings:', validBookings);
           
           setBookings(validBookings);
           setLoadError(null);
         }
       } catch (error) {
-        console.error('Error loading bookings:', error);
+        console.error('[BookingPage] Error loading bookings:', error);
         setLoadError('Availability is temporarily unavailable');
         setBookings([]);
       } finally {

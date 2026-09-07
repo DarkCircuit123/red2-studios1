@@ -4,7 +4,7 @@ import { Check, X, Loader } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { generateRandomBookingDates } from '@/lib/generate-random-bookings';
-import { BaseCrudService } from '@/integrations';
+import { safeJson } from '@/lib/safeJson';
 
 export default function SeedBookingsPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -25,10 +25,34 @@ export default function SeedBookingsPage() {
 
       for (const booking of bookings) {
         try {
-          await BaseCrudService.create('bookingavailability', booking);
-          successCount++;
+          console.log(`[SeedBookings] Creating booking for ${booking.bookingDate}:`, booking);
+          
+          const response = await fetch('/api/booking-availability/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(booking),
+            credentials: 'include',
+          });
+
+          console.log(`[SeedBookings] Response status for ${booking.bookingDate}:`, response.status);
+
+          const data = await safeJson(response);
+          console.log(`[SeedBookings] Response data for ${booking.bookingDate}:`, data);
+
+          if (response.ok && data.success) {
+            successCount++;
+            console.log(`[SeedBookings] ✓ Successfully created booking for ${booking.bookingDate}`);
+          } else {
+            const errorMsg = data.message || data.error || 'Unknown error';
+            errors.push(`Failed to create booking for ${booking.bookingDate}: ${errorMsg}`);
+            console.error(`[SeedBookings] ✗ Failed to create booking for ${booking.bookingDate}:`, errorMsg);
+          }
         } catch (err) {
-          errors.push(`Failed to create booking for ${booking.bookingDate}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          errors.push(`Failed to create booking for ${booking.bookingDate}: ${errorMsg}`);
+          console.error(`[SeedBookings] ✗ Error creating booking for ${booking.bookingDate}:`, err);
         }
       }
 

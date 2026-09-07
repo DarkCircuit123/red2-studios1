@@ -8,6 +8,11 @@ import { BookingAvailability } from '@/entities/index';
 export function generateRandomBookingDates(): BookingAvailability[] {
   const bookings: BookingAvailability[] = [];
   const today = new Date();
+  
+  // Format today as YYYY-MM-DD for comparison
+  const todayStr = today.toISOString().split('T')[0];
+  console.log(`[GenerateBookings] Today's date: ${todayStr}`);
+  
   const sessionTypes = ['Portrait Session', 'Product Photography', 'Event Coverage', 'Headshots', 'Family Photos'];
   const timeSlots = [
     { start: '09:00', end: '10:00' },
@@ -23,34 +28,50 @@ export function generateRandomBookingDates(): BookingAvailability[] {
     const month = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
     const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
     
+    console.log(`[GenerateBookings] Month offset ${monthOffset}: ${month.toISOString().split('T')[0]}, days in month: ${daysInMonth}`);
+    
     // Generate 10 random dates for this month
     const randomDates = new Set<number>();
     while (randomDates.size < 10) {
-      // Start from day 1 if it's the current month, otherwise from day 1
-      const minDay = monthOffset === 0 ? Math.max(1, today.getDate()) : 1;
+      // For current month, start from today's date; for future months, start from day 1
+      let minDay = 1;
+      if (monthOffset === 0) {
+        minDay = today.getDate();
+      }
+      
       const randomDay = Math.floor(Math.random() * (daysInMonth - minDay + 1)) + minDay;
       randomDates.add(randomDay);
     }
 
     randomDates.forEach((day) => {
+      // Create date in local timezone (not UTC)
       const bookingDate = new Date(month.getFullYear(), month.getMonth(), day);
-      const dateStr = bookingDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      
+      // Format as YYYY-MM-DD using local timezone
+      const year = bookingDate.getFullYear();
+      const monthStr = String(bookingDate.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(bookingDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${monthStr}-${dayStr}`;
       
       // Pick random time slot
       const timeSlot = timeSlots[Math.floor(Math.random() * timeSlots.length)];
       const sessionType = sessionTypes[Math.floor(Math.random() * sessionTypes.length)];
 
-      bookings.push({
+      const booking = {
         _id: `booking-${dateStr}-${Math.random().toString(36).substr(2, 9)}`,
         bookingDate: dateStr,
         startTime: timeSlot.start,
         endTime: timeSlot.end,
         isAvailable: true,
         sessionType: sessionType,
-      });
+      };
+      
+      console.log(`[GenerateBookings] Generated booking: ${dateStr} ${timeSlot.start}-${timeSlot.end} (${sessionType})`);
+      bookings.push(booking);
     });
   }
 
+  console.log(`[GenerateBookings] Total bookings generated: ${bookings.length}`);
   return bookings;
 }
 
