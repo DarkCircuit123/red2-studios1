@@ -80,40 +80,38 @@ export default function AdminDashboard() {
             </div>
 
             {/* Tab Content */}
-            <div className="p-6">
-              <TabsContent value="home" className="m-0">
-                <HomePageTab />
-              </TabsContent>
+            <TabsContent value="home" className="m-0 p-6">
+              <HomePageTab />
+            </TabsContent>
 
-              <TabsContent value="splashpage" className="m-0">
-                <SplashpageTab />
-              </TabsContent>
+            <TabsContent value="splashpage" className="m-0 p-6">
+              <SplashpageTab />
+            </TabsContent>
 
-              <TabsContent value="gallery" className="m-0">
-                <WorkGalleryManager />
-              </TabsContent>
+            <TabsContent value="gallery" className="m-0 p-6">
+              <WorkGalleryManager />
+            </TabsContent>
 
-              <TabsContent value="photo-library" className="m-0">
-                <ProfessionalPhotoLibrary />
-              </TabsContent>
+            <TabsContent value="photo-library" className="m-0 p-6">
+              <ProfessionalPhotoLibrary />
+            </TabsContent>
 
-              <TabsContent value="music" className="m-0">
-                <MusicLibraryManager />
-              </TabsContent>
+            <TabsContent value="music" className="m-0 p-6">
+              <MusicLibraryManager />
+            </TabsContent>
 
-              <TabsContent value="sponsors" className="m-0">
-                <SponsorsManager />
-              </TabsContent>
+            <TabsContent value="sponsors" className="m-0 p-6">
+              <SponsorsManager />
+            </TabsContent>
 
-              {/* ... keep existing code (disabled tabs placeholder) ... */}
-              {['about', 'services', 'booking', 'contact', 'settings'].map((tabId) => (
-                <TabsContent key={tabId} value={tabId} className="m-0">
-                  <div className="text-center py-12">
-                    <p className="text-admin-dim text-[13px]">This tab is coming soon.</p>
-                  </div>
-                </TabsContent>
-              ))}
-            </div>
+            {/* ... keep existing code (disabled tabs placeholder) ... */}
+            {['about', 'services', 'booking', 'contact', 'settings'].map((tabId) => (
+              <TabsContent key={tabId} value={tabId} className="m-0 p-6">
+                <div className="text-center py-12">
+                  <p className="text-admin-dim text-[13px]">This tab is coming soon.</p>
+                </div>
+              </TabsContent>
+            ))}
           </Tabs>
         </div>
       </div>
