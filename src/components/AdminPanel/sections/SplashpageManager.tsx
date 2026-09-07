@@ -187,7 +187,7 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader className="w-8 h-8 animate-spin text-primary" />
+        <Loader className="w-8 h-8 animate-spin text-oxblood" />
       </div>
     );
   }
@@ -303,7 +303,7 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
           <Button
             onClick={handleCancel}
             disabled={isUploading || isSaving}
-            className="bg-white/10 hover:bg-white/20 text-admin-text border border-white/15 rounded-none transition-colors duration-160"
+            className="bg-admin-raise hover:bg-admin-line text-admin-text border border-admin-line rounded-none transition-colors duration-160"
           >
             Cancel
           </Button>
