@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import HeroSectionManager from '../sections/HeroSectionManager';
 import TextEditorSystem from '../sections/TextEditorSystem';
-import BackgroundMusicManager from '../sections/BackgroundMusicManager';
+import BackgroundMusicManager from '../sections/BackgroundMusicManager_NEW';
 import BehindTheScenesManager from '../sections/BehindTheScenesManager';
 import RubberBandPhotosManager from '../sections/RubberBandPhotosManager';
 import HomePagePreview from '../sections/HomePagePreview';

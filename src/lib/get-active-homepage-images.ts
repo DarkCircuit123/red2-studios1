@@ -3,7 +3,9 @@ import { HomepageImages } from '@/entities';
 
 /**
  * Shared helper to fetch the active homepage images row
- * Filters on isActive: true and sorts by _createdDate ascending
+ * - Limit to 100 items
+ * - Filter on isActive: true
+ * - Sort by _createdDate descending (newest first)
  * Returns the first (and typically only) active row
  */
 export async function getActiveHomepageImages(): Promise<HomepageImages | null> {
@@ -16,13 +18,13 @@ export async function getActiveHomepageImages(): Promise<HomepageImages | null> 
       return null;
     }
 
-    // Filter for active items and sort by _createdDate ascending
+    // Filter for active items and sort by _createdDate descending (newest first)
     const activeItems = result.items
       .filter(item => item.isActive === true)
       .sort((a, b) => {
         const dateA = new Date(a._createdDate || 0).getTime();
         const dateB = new Date(b._createdDate || 0).getTime();
-        return dateA - dateB;
+        return dateB - dateA; // Newest first
       });
 
     return activeItems.length > 0 ? activeItems[0] : null;

@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { AlertCircle, CheckCircle, Save } from 'lucide-react';
+import { AlertCircle, CheckCircle, Save, Palette } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { AboutSection } from '@/entities';
+import { isValidHexColor, meetsWCAGAA } from '@/lib/admin-helpers';
 
 export default function AboutPageManager() {
   const [aboutData, setAboutData] = useState<AboutSection | null>(null);
@@ -20,6 +21,8 @@ export default function AboutPageManager() {
   const [subheading, setSubheading] = useState('');
   const [aboutText, setAboutText] = useState('');
   const [fontFamily, setFontFamily] = useState('');
+  const [colorHex, setColorHex] = useState('#000000');
+  const [contrastWarning, setContrastWarning] = useState(false);
 
   useEffect(() => {
     loadAboutData();
@@ -36,6 +39,11 @@ export default function AboutPageManager() {
         setSubheading(data.subheading || '');
         setAboutText(data.aboutText || '');
         setFontFamily(data.fontFamily || '');
+        // Note: fontFamily field is repurposed for color storage
+        // Extract color if stored in fontFamily (legacy) or use default
+        if (data.fontFamily && isValidHexColor(data.fontFamily)) {
+          setColorHex(data.fontFamily);
+        }
       }
     } catch (error) {
       console.error('Error loading about data:', error);
@@ -58,12 +66,25 @@ export default function AboutPageManager() {
       setSaveStatus('idle');
       setErrorMessage('');
 
+      // Validate color
+      if (!isValidHexColor(colorHex)) {
+        setErrorMessage('Invalid hex color format');
+        setSaveStatus('error');
+        return;
+      }
+
+      // Check contrast
+      const hasGoodContrast = meetsWCAGAA(colorHex, '#FFFFFF');
+      if (!hasGoodContrast) {
+        setContrastWarning(true);
+      }
+
       await BaseCrudService.update<AboutSection>('about', {
         _id: aboutData._id,
         heading,
         subheading,
         aboutText,
-        fontFamily,
+        fontFamily: colorHex, // Store color in fontFamily field
       });
 
       setSaveStatus('success');
@@ -161,6 +182,61 @@ export default function AboutPageManager() {
               placeholder="e.g., Inter, Helvetica, Arial"
               className="w-full"
             />
+          </div>
+
+          {/* Color Picker Section */}
+          <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-2">
+              <Palette className="w-5 h-5 text-slate-600" />
+              <label className="block text-sm font-semibold text-slate-900">
+                Accent Color
+              </label>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Color Swatch */}
+              <div className="flex-shrink-0">
+                <input
+                  type="color"
+                  value={colorHex}
+                  onChange={(e) => {
+                    setColorHex(e.target.value.toUpperCase());
+                    setContrastWarning(false);
+                  }}
+                  className="w-12 h-12 rounded-lg cursor-pointer border-2 border-slate-300 hover:border-slate-400"
+                  title="Click to open color picker"
+                />
+              </div>
+
+              {/* Hex Input */}
+              <div className="flex-1">
+                <Input
+                  value={colorHex}
+                  onChange={(e) => {
+                    const val = e.target.value.toUpperCase();
+                    if (val.length <= 7 && (val === '' || val.startsWith('#'))) {
+                      setColorHex(val);
+                      setContrastWarning(false);
+                    }
+                  }}
+                  placeholder="#000000"
+                  maxLength={7}
+                  className="w-full font-mono text-sm"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Enter hex color (e.g., #FF0000)
+                </p>
+              </div>
+            </div>
+
+            {/* Contrast Warning */}
+            {contrastWarning && isValidHexColor(colorHex) && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-xs text-yellow-800">
+                  ⚠️ This color may have low contrast with white text. Consider a darker shade for better readability.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Save Button */}

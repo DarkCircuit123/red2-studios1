@@ -192,7 +192,7 @@ export default function HeroSectionManager() {
               <Button
                 asChild
                 disabled={uploadingBg}
-                className="w-full bg-oxblood hover:bg-oxblood/90 text-white rounded-none transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
+                className="w-full bg-oxblood hover:bg-oxblood-hi text-white font-heading text-[12px] uppercase tracking-[0.08em] rounded-none transition-colors duration-160"
               >
                 <span className="cursor-pointer flex items-center justify-center gap-2">
                   {uploadingBg ? (
@@ -203,7 +203,7 @@ export default function HeroSectionManager() {
                   ) : (
                     <>
                       <Upload className="w-4 h-4" />
-                      Upload Image
+                      Upload Hero Image
                     </>
                   )}
                 </span>
@@ -214,7 +214,7 @@ export default function HeroSectionManager() {
               <Button
                 onClick={handleRemoveBackgroundImage}
                 disabled={isSaving}
-                className="w-10 h-10 p-0 bg-danger hover:bg-danger/90 text-white rounded-none transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
+                className="w-10 h-10 p-0 bg-danger hover:bg-danger/90 text-white rounded-none transition-colors duration-160"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>

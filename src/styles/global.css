@@ -13,6 +13,8 @@
     display: block;
     visibility: visible;
     opacity: 1;
+    background-color: #000000;
+    color: #FFFFFF;
   }
 
   body {
@@ -20,7 +22,8 @@
     display: block;
     visibility: visible;
     opacity: 1;
-    background-color: #ffffff;
+    background-color: #000000;
+    color: #FFFFFF;
   }
 
   #root {

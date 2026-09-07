@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
+import { computeSlotCount } from '@/lib/admin-helpers';
 import { motion } from 'framer-motion';
 
 export default function RubberBandPhotosManager() {
@@ -19,6 +20,7 @@ export default function RubberBandPhotosManager() {
   const [photos, setPhotos] = useState<CarouselImages[]>([]);
   const [uploading, setUploading] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
+  const [slotCount, setSlotCount] = useState(90);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
@@ -36,6 +38,8 @@ export default function RubberBandPhotosManager() {
         .filter(item => item.isActive === true)
         .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
       setPhotos(activePhotos);
+      // Compute dynamic slot count
+      setSlotCount(computeSlotCount(activePhotos));
     } catch (error) {
       console.error('Error loading photos:', error);
       toast({
@@ -73,7 +77,9 @@ export default function RubberBandPhotosManager() {
       };
 
       await adminCms.create('carouselimages', newPhoto);
-      setPhotos([...photos, newPhoto]);
+      const updatedPhotos = [...photos, newPhoto];
+      setPhotos(updatedPhotos);
+      setSlotCount(computeSlotCount(updatedPhotos));
 
       toast({
         title: 'Success',
@@ -118,7 +124,9 @@ export default function RubberBandPhotosManager() {
         await adminCms.update('carouselimages', updatedPhoto);
         
         // Update local state
-        setPhotos(photos.map(p => p._id === photoId ? updatedPhoto : p));
+        const updatedPhotos = photos.map(p => p._id === photoId ? updatedPhoto : p);
+        setPhotos(updatedPhotos);
+        setSlotCount(computeSlotCount(updatedPhotos));
 
         toast({
           title: 'Success',
@@ -146,7 +154,9 @@ export default function RubberBandPhotosManager() {
     try {
       setIsSaving(true);
       await adminCms.delete('carouselimages', photoId);
-      setPhotos(photos.filter(p => p._id !== photoId));
+      const updatedPhotos = photos.filter(p => p._id !== photoId);
+      setPhotos(updatedPhotos);
+      setSlotCount(computeSlotCount(updatedPhotos));
 
       toast({
         title: 'Success',
@@ -162,6 +172,15 @@ export default function RubberBandPhotosManager() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleAddSlots = () => {
+    const newSlotCount = slotCount + 12;
+    setSlotCount(newSlotCount);
+    toast({
+      title: 'Slots Added',
+      description: `Work gallery expanded to ${newSlotCount} slots`,
+    });
   };
 
   if (isLoading) {
@@ -221,12 +240,22 @@ export default function RubberBandPhotosManager() {
       {/* Rubber Band Carousel Section */}
       <Card className="p-6 border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-purple-600" />
-              RUBBER BAND CAROUSEL
-            </h3>
-            <p className="text-sm text-slate-600 mt-1">Manage images displayed in the carousel on the homepage</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-purple-600" />
+                RUBBER BAND CAROUSEL
+              </h3>
+              <p className="text-sm text-slate-600 mt-1">Manage images displayed in the carousel on the homepage</p>
+              <p className="text-xs text-slate-500 mt-2">Current slots: <strong>{slotCount}</strong></p>
+            </div>
+            <Button
+              onClick={handleAddSlots}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add 12 Slots
+            </Button>
           </div>
 
           {photos.length === 0 ? (
