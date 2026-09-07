@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 
 // Lazy load all pages to prevent circular dependencies
 // Use dynamic imports with error handling
@@ -30,9 +30,12 @@ const Red2TerminalPage = lazy(() => import('./pages/Red2TerminalPage').catch(() 
 const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const SeedBookingsPage = lazy(() => import('./pages/SeedBookingsPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const SplashScreenAnimated = lazy(() => import('./SplashScreenAnimated').catch(() => ({ default: () => null })));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
+  const [splashComplete, setSplashComplete] = useState(false);
+
   useEffect(() => {
     // Enable reveal animations by adding js-reveal class to html element
     document.documentElement.classList.add('js-reveal');
@@ -99,6 +102,9 @@ function Layout() {
   return (
     <>
       <ScrollToTop />
+      <Suspense fallback={null}>
+        <SplashScreenAnimated onComplete={() => setSplashComplete(true)} />
+      </Suspense>
       <Suspense fallback={null}>
         <BackgroundMusicPlayer />
       </Suspense>
