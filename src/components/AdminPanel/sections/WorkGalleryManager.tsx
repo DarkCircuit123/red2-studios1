@@ -446,9 +446,19 @@ export default function WorkGalleryManager() {
             </h2>
             <p className="text-[13px] text-admin-dim mt-2">Upload photos with automatic CMS persistence</p>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-oxblood">{filledSlots}</p>
-            <p className="text-[11px] text-admin-faint font-medium">/ {slotCount} slots</p>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex items-center gap-2 bg-oxblood hover:bg-oxblood/90 text-white border border-oxblood rounded-none text-[11px] px-3 py-2 transition-colors duration-160 disabled:opacity-50"
+            >
+              <Upload className="w-3 h-3" />
+              Upload Photos
+            </Button>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-oxblood">{filledSlots}</p>
+              <p className="text-[11px] text-admin-faint font-medium">/ {slotCount} slots</p>
+            </div>
           </div>
         </div>
 
@@ -464,7 +474,7 @@ export default function WorkGalleryManager() {
         >
           <div className="text-center">
             <Upload className="w-8 h-8 text-oxblood mx-auto mb-2" />
-            <p className="text-[13px] font-medium text-admin-text">Click to upload or drag and drop</p>
+            <p className="text-[13px] font-medium text-admin-text">Drop photos here, or click to browse</p>
             <p className="text-[11px] text-admin-dim mt-1">PNG, JPG, GIF up to 10MB</p>
           </div>
         </div>
