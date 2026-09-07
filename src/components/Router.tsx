@@ -29,6 +29,7 @@ const ChatPage = lazy(() => import('./pages/ChatPage').catch(() => ({ default: (
 const Red2TerminalPage = lazy(() => import('./pages/Red2TerminalPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const ClientLoginPage = lazy(() => import('./pages/ClientLoginPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 const ClientGalleryDashboardPage = lazy(() => import('./pages/ClientGalleryDashboardPage').catch(() => ({ default: () => <div>Error loading page</div> })));
+const SeedBookingsPage = lazy(() => import('./pages/SeedBookingsPage').catch(() => ({ default: () => <div>Error loading page</div> })));
 
 // Layout component that includes ScrollToTop and BackgroundMusicPlayer
 function Layout() {
@@ -293,6 +294,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<div />}>
             <AdminPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "seed-bookings",
+        element: (
+          <Suspense fallback={<div />}>
+            <SeedBookingsPage />
           </Suspense>
         ),
       },
