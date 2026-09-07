@@ -205,12 +205,12 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className={`flex items-center gap-3 p-4 rounded-lg ${
+          className={`flex items-center gap-3 p-4 rounded-none border transition-colors duration-160 ${
             notification.type === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
+              ? 'bg-admin-raise text-ok border-ok/30'
               : notification.type === 'error'
-                ? 'bg-red-50 text-red-800 border border-red-200'
-                : 'bg-blue-50 text-blue-800 border border-blue-200'
+                ? 'bg-admin-raise text-danger border-danger/30'
+                : 'bg-admin-raise text-admin-text border-admin-line'
           }`}
         >
           {notification.type === 'success' && (
@@ -219,18 +219,18 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
           {notification.type === 'error' && (
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
           )}
-          <span className="text-sm font-medium">{notification.message}</span>
+          <span className="text-[13px] font-medium">{notification.message}</span>
         </motion.div>
       )}
 
       {/* Current Logo Preview */}
-      <div className="bg-white rounded-lg border border-gray-200 p-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-admin-surface rounded-none border border-admin-line p-6">
+        <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text mb-4">
           Current Logo
-        </h3>
+        </h2>
         {activeLogo && activeLogo.logoImage ? (
           <div className="flex flex-col items-center gap-4">
-            <div className="w-full max-w-xs h-40 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200">
+            <div className="w-full max-w-xs h-40 bg-admin-raise rounded-none overflow-hidden flex items-center justify-center border border-admin-line">
               <ImageComponent
                 src={convertWixImageToHttps(activeLogo.logoImage) || activeLogo.logoImage}
                 alt={activeLogo.altText || ''}
@@ -240,49 +240,49 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
               />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-[13px] font-medium text-admin-text">
                 {activeLogo.logoName}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-[11px] text-admin-faint mt-1">
                 Updated:{' '}
                 {new Date(activeLogo.updatedDate || '').toLocaleDateString()}
               </p>
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-40 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <p className="text-gray-500 text-sm">No logo uploaded yet</p>
+          <div className="flex items-center justify-center h-40 bg-admin-raise rounded-none border border-dashed border-admin-line">
+            <p className="text-[13px] text-admin-dim">No logo uploaded yet</p>
           </div>
         )}
       </div>
 
       {/* Upload Section */}
-      <div className="bg-white rounded-lg border border-gray-200 p-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-admin-surface rounded-none border border-admin-line p-6">
+        <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text mb-4">
           {selectedFile ? 'Preview New Logo' : 'Upload New Logo'}
-        </h3>
+        </h2>
 
         {selectedFile && previewUrl ? (
           <div className="space-y-4">
-            <div className="w-full max-w-xs h-40 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200 mx-auto">
+            <div className="w-full max-w-xs h-40 bg-admin-raise rounded-none overflow-hidden flex items-center justify-center border border-admin-line mx-auto">
               <img
                 src={previewUrl}
                 alt="Preview"
                 className="object-contain w-full h-full"
               />
             </div>
-            <p className="text-sm text-gray-600 text-center">
+            <p className="text-[13px] text-admin-dim text-center">
               {selectedFile.name}
             </p>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+          <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-admin-line rounded-none cursor-pointer hover:bg-admin-raise/50 transition-colors duration-160">
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <Upload className="w-8 h-8 text-gray-400 mb-2" />
-              <p className="text-sm font-medium text-gray-700">
+              <Upload className="w-8 h-8 text-admin-faint mb-2" />
+              <p className="text-[13px] font-medium text-admin-text">
                 Click to upload or drag and drop
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-[11px] text-admin-faint mt-1">
                 PNG, JPG, GIF up to 10MB
               </p>
             </div>
@@ -301,9 +301,9 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
       <div className="flex gap-3 justify-end">
         {selectedFile && (
           <Button
-            variant="outline"
             onClick={handleCancel}
             disabled={isUploading || isSaving}
+            className="bg-white/10 hover:bg-white/20 text-admin-text border border-white/15 rounded-none transition-colors duration-160"
           >
             Cancel
           </Button>
@@ -311,10 +311,9 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
 
         {activeLogo && !selectedFile && (
           <Button
-            variant="destructive"
             onClick={handleDeleteLogo}
             disabled={isSaving}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-danger hover:bg-danger/90 text-white rounded-none transition-colors duration-160"
           >
             <Trash2 className="w-4 h-4" />
             Delete Logo
@@ -325,7 +324,7 @@ export default function SplashpageManager({ onSave }: SplashpageManagerProps) {
           <Button
             onClick={handleUploadAndSave}
             disabled={isUploading || isSaving}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-oxblood hover:bg-oxblood/90 text-white rounded-none transition-colors duration-160"
           >
             {isUploading || isSaving ? (
               <>

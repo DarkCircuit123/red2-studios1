@@ -122,20 +122,20 @@ export default function HeroSectionManager() {
 
   if (!settings) {
     return (
-      <div className="p-6 bg-admin-surface border border-admin-line rounded-sm">
+      <div className="p-6 bg-admin-surface border border-admin-line rounded-none">
         <div className="space-y-4">
           <div>
-            <h3 className="font-heading text-sm uppercase tracking-[0.14em] text-admin-text flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-oxblood" />
+            <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-oxblood" />
               Hero Image
-            </h3>
-            <p className="text-xs text-admin-dim mt-1">Upload or replace the main image for the hero section</p>
+            </h2>
+            <p className="text-[13px] text-admin-dim mt-2">Upload or replace the main image for the hero section</p>
           </div>
-          <div className="w-full h-64 rounded-sm border border-dashed border-admin-line bg-admin-raise flex items-center justify-center">
+          <div className="w-full h-64 rounded-none border border-dashed border-admin-line bg-admin-raise flex items-center justify-center">
             <div className="text-center">
               <ImageIcon className="w-12 h-12 text-admin-faint mx-auto mb-2" />
-              <p className="text-admin-dim text-xs">No homepage images row found</p>
-              <p className="text-admin-faint text-xs mt-1">Please create a homepageimages entry in the CMS</p>
+              <p className="text-[13px] text-admin-dim">No homepage images row found</p>
+              <p className="text-[11px] text-admin-faint mt-1">Please create a homepageimages entry in the CMS</p>
             </div>
           </div>
         </div>
@@ -146,19 +146,19 @@ export default function HeroSectionManager() {
   return (
     <div className="space-y-6">
       {/* Hero Image */}
-      <div className="p-6 bg-admin-surface border border-admin-line rounded-sm">
+      <div className="p-6 bg-admin-surface border border-admin-line rounded-none">
         <div className="space-y-4">
           <div>
-            <h3 className="font-heading text-sm uppercase tracking-[0.14em] text-admin-text flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-oxblood" />
+            <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-oxblood" />
               Hero Image
-            </h3>
-            <p className="text-xs text-admin-dim mt-1">Upload or replace the main image for the hero section</p>
+            </h2>
+            <p className="text-[13px] text-admin-dim mt-2">Upload or replace the main image for the hero section</p>
           </div>
 
           {/* Preview */}
           {(previewUrl || settings?.heroImage) && (
-            <div className="relative w-full h-64 rounded-sm overflow-hidden border border-admin-line bg-admin-raise">
+            <div className="relative w-full h-64 rounded-none overflow-hidden border border-admin-line bg-admin-raise">
               <img
                 src={previewUrl || settings?.heroImage}
                 alt="Hero image preview"
@@ -171,10 +171,10 @@ export default function HeroSectionManager() {
           )}
 
           {!previewUrl && !settings?.heroImage && (
-            <div className="w-full h-64 rounded-sm border border-dashed border-admin-line bg-admin-raise flex items-center justify-center">
+            <div className="w-full h-64 rounded-none border border-dashed border-admin-line bg-admin-raise flex items-center justify-center">
               <div className="text-center">
                 <ImageIcon className="w-12 h-12 text-admin-faint mx-auto mb-2" />
-                <p className="text-admin-dim text-xs">No image uploaded yet</p>
+                <p className="text-[13px] text-admin-dim">No image uploaded yet</p>
               </div>
             </div>
           )}
@@ -192,7 +192,7 @@ export default function HeroSectionManager() {
               <Button
                 asChild
                 disabled={uploadingBg}
-                className="w-full bg-oxblood hover:bg-oxblood-hi text-white rounded-sm transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
+                className="w-full bg-oxblood hover:bg-oxblood/90 text-white rounded-none transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
               >
                 <span className="cursor-pointer flex items-center justify-center gap-2">
                   {uploadingBg ? (
@@ -214,7 +214,7 @@ export default function HeroSectionManager() {
               <Button
                 onClick={handleRemoveBackgroundImage}
                 disabled={isSaving}
-                className="w-10 h-10 p-0 bg-danger hover:bg-oxblood-hi text-white rounded-sm transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
+                className="w-10 h-10 p-0 bg-danger hover:bg-danger/90 text-white rounded-none transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -224,8 +224,8 @@ export default function HeroSectionManager() {
       </div>
 
       {/* Info Box */}
-      <div className="p-4 bg-admin-raise border border-admin-line rounded-sm">
-        <p className="text-xs text-admin-dim">
+      <div className="p-4 bg-admin-raise border border-admin-line rounded-none">
+        <p className="text-[11px] text-admin-dim">
           <strong>Tip:</strong> Use high-quality images (1920x1080 or larger) for best results. Supported formats: JPG, PNG, WebP. This image is displayed on the live site.
         </p>
       </div>

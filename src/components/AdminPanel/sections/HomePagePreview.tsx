@@ -59,7 +59,7 @@ export default function HomePagePreview() {
       <div className="flex justify-end">
         <Button
           onClick={handleRefresh}
-          className="flex items-center gap-2 bg-admin-raise hover:bg-admin-line text-admin-text border border-admin-line rounded-sm transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
+          className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-admin-text border border-white/15 rounded-none transition-colors duration-160 focus:outline-1 focus:outline-oxblood focus:outline-offset-2"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh Preview
@@ -67,7 +67,7 @@ export default function HomePagePreview() {
       </div>
 
       {/* Hero Section Preview */}
-      <div className="overflow-hidden border border-admin-line rounded-sm bg-admin-raise">
+      <div className="overflow-hidden border border-admin-line rounded-none bg-admin-raise">
         <div className="relative w-full h-96 bg-gradient-to-br from-admin-bg to-admin-surface flex items-center justify-center">
           {settings?.heroImage ? (
             <>

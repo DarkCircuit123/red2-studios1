@@ -369,11 +369,11 @@ export default function WorkGalleryManager() {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
-            className={`p-3 rounded-lg flex items-center gap-2 text-sm font-medium ${
-              msg.type === 'success' ? 'bg-green-100 text-green-800' :
-              msg.type === 'error' ? 'bg-red-100 text-red-800' :
-              msg.type === 'warning' ? 'bg-amber-100 text-amber-800' :
-              'bg-blue-100 text-blue-800'
+            className={`p-3 rounded-sm flex items-center gap-2 text-[13px] font-medium border transition-colors duration-160 ${
+              msg.type === 'success' ? 'bg-admin-raise border-ok/30 text-ok' :
+              msg.type === 'error' ? 'bg-admin-raise border-danger/30 text-danger' :
+              msg.type === 'warning' ? 'bg-admin-raise border-warn/30 text-warn' :
+              'bg-admin-raise border-admin-line text-admin-text'
             }`}
           >
             {msg.type === 'success' && <CheckCircle className="w-4 h-4" />}
@@ -386,114 +386,112 @@ export default function WorkGalleryManager() {
       </div>
 
       {/* Upload Section */}
-      <Card className="p-6 border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Upload className="w-5 h-5 text-blue-600" />
-                Work Gallery Manager (90 Slots - Safe Upsert)
-              </h3>
-              <p className="text-sm text-slate-600 mt-1">Upload photos with automatic CMS persistence (create or update)</p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-blue-600">{filledSlots}</p>
-              <p className="text-xs text-blue-600 font-medium">/ {MAX_SLOTS} slots</p>
-            </div>
+      <div className="bg-admin-surface rounded-none border border-admin-line p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text flex items-center gap-2">
+              <Upload className="w-4 h-4 text-oxblood" />
+              Work Gallery Manager
+            </h2>
+            <p className="text-[13px] text-admin-dim mt-2">Upload photos with automatic CMS persistence</p>
           </div>
-
-          {/* Upload Area */}
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`w-full h-40 rounded-lg border-2 border-dashed transition-colors ${
-              dragOverRef.current ? 'border-blue-500 bg-blue-100' : 'border-blue-300 bg-blue-50'
-            } flex items-center justify-center cursor-pointer`}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <div className="text-center">
-              <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-slate-900">Click to upload or drag and drop</p>
-              <p className="text-xs text-slate-600 mt-1">PNG, JPG, GIF up to 10MB</p>
-            </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-oxblood">{filledSlots}</p>
+            <p className="text-[11px] text-admin-faint font-medium">/ {MAX_SLOTS} slots</p>
           </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleInputChange}
-            disabled={isUploading}
-            multiple
-            className="hidden"
-          />
-
-          {/* Selected Files */}
-          {selectedFiles.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-900">
-                  {selectedFiles.length} file(s) selected
-                </p>
-                <button
-                  onClick={() => {
-                    setSelectedFiles([]);
-                    if (fileInputRef.current) {
-                      fileInputRef.current.value = '';
-                    }
-                  }}
-                  className="text-xs text-red-600 hover:text-red-700 font-medium"
-                >
-                  Clear All
-                </button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {selectedFiles.map((file, index) => (
-                  <div
-                    key={`${file.name}-${index}`}
-                    className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50"
-                  >
-                    <div className="w-full h-20 bg-slate-100 flex items-center justify-center">
-                      <ImageIcon className="w-4 h-4 text-slate-400" />
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1">
-                      <div className="truncate font-medium">{file.name}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Upload Button */}
-          <Button
-            onClick={handleUpload}
-            disabled={selectedFiles.length === 0 || isUploading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-          >
-            {isUploading ? (
-              <>
-                <LoadingSpinner className="w-4 h-4 mr-2" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload {selectedFiles.length > 0 ? `(${selectedFiles.length})` : ''}
-              </>
-            )}
-          </Button>
         </div>
-      </Card>
+
+        {/* Upload Area */}
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`w-full h-40 rounded-none border-2 border-dashed transition-colors ${
+            dragOverRef.current ? 'border-solid border-oxblood bg-admin-raise' : 'border-admin-line bg-admin-raise'
+          } flex items-center justify-center cursor-pointer`}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <div className="text-center">
+            <Upload className="w-8 h-8 text-oxblood mx-auto mb-2" />
+            <p className="text-[13px] font-medium text-admin-text">Click to upload or drag and drop</p>
+            <p className="text-[11px] text-admin-dim mt-1">PNG, JPG, GIF up to 10MB</p>
+          </div>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleInputChange}
+          disabled={isUploading}
+          multiple
+          className="hidden"
+        />
+
+        {/* Selected Files */}
+        {selectedFiles.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[13px] font-medium text-admin-text">
+                {selectedFiles.length} file(s) selected
+              </p>
+              <button
+                onClick={() => {
+                  setSelectedFiles([]);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                }}
+                className="text-[11px] text-danger hover:text-danger/80 font-medium transition-colors duration-160"
+              >
+                Clear All
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              {selectedFiles.map((file, index) => (
+                <div
+                  key={`${file.name}-${index}`}
+                  className="relative rounded-none overflow-hidden border border-admin-line bg-admin-raise"
+                >
+                  <div className="w-full h-20 bg-admin-raise flex items-center justify-center">
+                    <ImageIcon className="w-4 h-4 text-admin-faint" />
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[11px] p-1">
+                    <div className="truncate font-medium">{file.name}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Upload Button */}
+        <Button
+          onClick={handleUpload}
+          disabled={selectedFiles.length === 0 || isUploading}
+          className="w-full bg-oxblood hover:bg-oxblood/90 text-white disabled:opacity-50 rounded-none transition-colors duration-160"
+        >
+          {isUploading ? (
+            <>
+              <LoadingSpinner className="w-4 h-4 mr-2" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload {selectedFiles.length > 0 ? `(${selectedFiles.length})` : ''}
+            </>
+          )}
+        </Button>
+      </div>
 
       {/* Slots Grid */}
-      <Card className="p-6 border border-slate-200">
+      <div className="bg-admin-surface rounded-none border border-admin-line p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-slate-900">
+          <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text">
             90-Slot Gallery Grid ({filledSlots}/{MAX_SLOTS})
-          </h3>
-          <div className="text-xs text-slate-500 flex items-center gap-1">
+          </h2>
+          <div className="text-[11px] text-admin-faint flex items-center gap-1">
             <Info className="w-3 h-3" />
             Click info icon to view metadata
           </div>
@@ -508,32 +506,31 @@ export default function WorkGalleryManager() {
           /* Grid - ALWAYS RENDERS 90 SLOTS */
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-            gap: '12px',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(156px, 1fr))',
+            gap: '8px',
             width: '100%',
-            minHeight: '1200px'
           }}>
-          {slots.map((slot) => (
+          {slots.map((slot, index) => (
             <motion.div
               key={slot.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: (slot.slotNumber - 1) * 0.02 }}
-              className={`relative rounded-lg overflow-hidden border-2 transition-all ${
+              transition={{ delay: Math.min(index * 0.01, 0.3) }}
+              className={`relative rounded-none overflow-hidden border transition-all aspect-[4/5] ${
                 slot.image
-                  ? 'border-slate-200 bg-slate-50 hover:border-slate-300 group'
-                  : 'border-dashed border-slate-300 bg-slate-50 hover:border-slate-400'
+                  ? 'border-admin-line bg-admin-raise hover:border-oxblood/50 group'
+                  : 'border border-admin-line bg-admin-raise'
               }`}
             >
               {/* Slot Number Badge */}
-              <div className="absolute top-1 left-1 z-10 bg-slate-900 text-white px-1.5 py-0.5 rounded text-xs font-bold">
-                #{slot.slotNumber}
+              <div className="absolute top-2 left-2 z-10 text-[10px] font-heading text-admin-faint tabular-nums">
+                {slot.slotNumber}
               </div>
 
               {/* Metadata Info Button */}
               <button
                 onClick={() => setShowMetadata(showMetadata === slot.slotNumber ? null : slot.slotNumber)}
-                className="absolute top-1 right-1 z-10 p-1 bg-slate-700 text-white rounded hover:bg-slate-800 transition-colors"
+                className="absolute top-2 right-2 z-10 p-1 bg-white/10 border border-white/15 text-admin-text rounded-none hover:bg-white/20 hover:border-white/30 transition-colors duration-160"
                 title="View metadata"
               >
                 <Info className="w-3 h-3" />
@@ -542,18 +539,18 @@ export default function WorkGalleryManager() {
               {slot.image ? (
                 <>
                   {/* Image */}
-                  <div className="relative w-full aspect-square overflow-hidden bg-slate-100">
+                  <div className="relative w-full h-full overflow-hidden bg-admin-raise">
                     <img
                       src={slot.image}
                       alt={slot.caption || 'Gallery photo'}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     {/* Controls Overlay */}
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-160">
                       <button
                         type="button"
                         onClick={() => setPreviewImage({ url: slot.image!, slotNumber: slot.slotNumber })}
-                        className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                        className="p-1 bg-white/10 border border-white/15 text-white rounded-none hover:bg-white/20 hover:border-white/30 transition-colors duration-160"
                         title="Preview"
                       >
                         <Maximize2 className="w-3 h-3" />
@@ -561,7 +558,7 @@ export default function WorkGalleryManager() {
                       <button
                         type="button"
                         onClick={() => window.open(slot.image, '_blank')}
-                        className="p-1.5 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                        className="p-1 bg-white/10 border border-white/15 text-white rounded-none hover:bg-white/20 hover:border-white/30 transition-colors duration-160"
                         title="View"
                       >
                         <Eye className="w-3 h-3" />
@@ -584,7 +581,7 @@ export default function WorkGalleryManager() {
                             e.currentTarget.parentElement?.querySelector('input')?.click();
                           }}
                           disabled={replacingSlot === slot.slotNumber}
-                          className="p-1.5 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors disabled:opacity-50"
+                          className="p-1 bg-white/10 border border-white/15 text-white rounded-none hover:bg-white/20 hover:border-white/30 transition-colors duration-160 disabled:opacity-50"
                           title="Replace"
                         >
                           {replacingSlot === slot.slotNumber ? (
@@ -598,7 +595,7 @@ export default function WorkGalleryManager() {
                         type="button"
                         onClick={() => handleDeletePhoto(slot.slotNumber)}
                         disabled={deletingSlot === slot.slotNumber}
-                        className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50"
+                        className="p-1 bg-white/10 border border-white/15 text-white rounded-none hover:bg-white/20 hover:border-white/30 transition-colors duration-160 disabled:opacity-50"
                         title="Delete"
                       >
                         {deletingSlot === slot.slotNumber ? (
@@ -610,7 +607,7 @@ export default function WorkGalleryManager() {
                       <button
                         type="button"
                         onClick={() => copySlotMetadata(slot)}
-                        className="p-1.5 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+                        className="p-1 bg-white/10 border border-white/15 text-white rounded-none hover:bg-white/20 hover:border-white/30 transition-colors duration-160"
                         title="Copy metadata"
                       >
                         <Copy className="w-3 h-3" />
@@ -621,15 +618,15 @@ export default function WorkGalleryManager() {
               ) : (
                 <>
                   {/* Empty Slot */}
-                  <div className="w-full aspect-square bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center">
-                    <ImageIcon className="w-6 h-6 text-slate-300" />
+                  <div className="w-full h-full bg-admin-raise flex items-center justify-center">
+                    <ImageIcon className="w-6 h-6 text-admin-faint" />
                   </div>
                 </>
               )}
 
               {/* Metadata Panel */}
               {showMetadata === slot.slotNumber && slot.image && (
-                <div className="absolute inset-0 z-20 bg-black/90 text-white p-2 text-xs overflow-auto rounded-lg flex flex-col justify-between">
+                <div className="absolute inset-0 z-20 bg-admin-bg/95 text-admin-text p-2 text-[11px] overflow-auto flex flex-col justify-between border border-admin-line">
                   <div className="space-y-1">
                     <p><strong>ID:</strong> {slot.id.substring(0, 20)}...</p>
                     <p><strong>Slot:</strong> {slot.slotNumber}</p>
@@ -642,7 +639,7 @@ export default function WorkGalleryManager() {
                   </div>
                   <button
                     onClick={() => copySlotMetadata(slot)}
-                    className="mt-2 w-full bg-purple-600 hover:bg-purple-700 px-2 py-1 rounded text-xs font-medium flex items-center justify-center gap-1"
+                    className="mt-2 w-full bg-oxblood hover:bg-oxblood/90 text-white px-2 py-1 rounded-none text-[11px] font-medium flex items-center justify-center gap-1 transition-colors duration-160"
                   >
                     <Copy className="w-3 h-3" />
                     Copy All
@@ -652,7 +649,7 @@ export default function WorkGalleryManager() {
             </motion.div>
           ))}</div>
         )}
-      </Card>
+      </div>
 
       {/* Preview Modal */}
       {previewImage && (
@@ -663,12 +660,12 @@ export default function WorkGalleryManager() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden"
+            className="relative max-w-4xl max-h-[90vh] bg-admin-bg rounded-none overflow-hidden border border-admin-line"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setPreviewImage(null)}
-              className="absolute top-4 right-4 z-10 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              className="absolute top-4 right-4 z-10 p-2 bg-oxblood text-white rounded-none hover:bg-oxblood/90 transition-colors duration-160"
             >
               <X className="w-5 h-5" />
             </button>
