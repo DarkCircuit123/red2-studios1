@@ -122,7 +122,7 @@ export default function AboutSection() {
                 About
                 <br />
                 <motion.span
-                  className="text-primary"
+                  className="text-oxblood"
                   animate={{ opacity: [1, 0.8, 1] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 >Jordan</motion.span>
@@ -266,7 +266,7 @@ export default function AboutSection() {
                   className={`space-y-3 group reveal reveal-delay-${i + 1}`}
                 >
                   <motion.p
-                    className="text-5xl md:text-6xl font-heading font-black text-red-500"
+                    className="text-5xl md:text-6xl font-heading font-black text-oxblood"
                     animate={{ opacity: [1, 0.8, 1] }}
                     transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
                   >
