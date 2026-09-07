@@ -219,24 +219,26 @@ export default function RubberBandPhotosManager() {
         ))}
       </div>
 
+      {/* Page Header */}
+      <div className="space-y-2">
+        <h1 className="font-heading text-lg uppercase tracking-[0.12em] text-admin-text">
+          Carousel Photos
+        </h1>
+        <p className="text-[13px] text-admin-dim">
+          These images appear in the scrolling carousel section on the homepage
+        </p>
+      </div>
+
+      {/* Live Count */}
+      <div className="bg-admin-raise rounded-none border border-admin-line p-4 flex items-center justify-between">
+        <span className="text-[13px] text-admin-text font-medium">Currently Live:</span>
+        <span className="text-2xl font-bold text-oxblood">{filledSlots}</span>
+      </div>
+
       {/* Upload Section */}
       <div className="bg-admin-surface rounded-none border border-admin-line p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text flex items-center gap-2">
-              <Upload className="w-4 h-4 text-oxblood" />
-              Carousel Photos
-            </h2>
-            <p className="text-[13px] text-admin-dim mt-2">Upload photos for the rubber band carousel section</p>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-oxblood">{filledSlots}</p>
-            <p className="text-[11px] text-admin-faint font-medium">photos</p>
-          </div>
-        </div>
-
-        {/* Upload Button */}
-        <label>
+        {/* Upload Dropzone */}
+        <label className="block">
           <input
             ref={fileInputRef}
             type="file"
@@ -245,26 +247,41 @@ export default function RubberBandPhotosManager() {
             disabled={uploading}
             className="hidden"
           />
-          <Button
-            asChild
-            disabled={uploading}
-            className="w-full bg-oxblood hover:bg-oxblood/90 text-white rounded-none text-[13px] font-medium transition-colors duration-160 disabled:opacity-50"
-          >
-            <span className="cursor-pointer flex items-center justify-center gap-2">
-              {uploading ? (
-                <>
-                  <LoadingSpinner className="w-4 h-4" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4" />
-                  Upload Photo
-                </>
-              )}
-            </span>
-          </Button>
+          <div className="w-full h-32 border-2 border-dashed border-admin-line bg-admin-raise rounded-none flex flex-col items-center justify-center cursor-pointer hover:border-oxblood/50 transition-colors duration-160 p-4">
+            <Upload className="w-6 h-6 text-admin-dim mb-2" />
+            <p className="text-[12px] font-medium text-admin-text text-center">
+              Drag & drop or click to upload
+            </p>
+            <p className="text-[11px] text-admin-faint text-center mt-1">
+              Destination: Homepage Carousel
+            </p>
+            <p className="text-[11px] text-admin-faint text-center">
+              Formats: JPG, PNG, WebP • Max 10MB
+            </p>
+            <p className="text-[11px] text-admin-faint text-center">
+              Recommended: 16:9 aspect ratio, 1920×1080px minimum
+            </p>
+          </div>
         </label>
+
+        {/* Upload Button */}
+        <Button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="w-full bg-oxblood hover:bg-oxblood/90 text-white rounded-none text-[13px] font-medium transition-colors duration-160 disabled:opacity-50"
+        >
+          {uploading ? (
+            <>
+              <LoadingSpinner className="w-4 h-4 mr-2" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Photo
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Carousel Photos Grid */}
@@ -307,16 +324,11 @@ export default function RubberBandPhotosManager() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.01 }}
-                  className="relative rounded-none overflow-hidden border border-admin-line bg-admin-raise hover:border-oxblood/50 group aspect-[4/5]"
+                  className="relative rounded-none overflow-hidden border border-admin-line bg-admin-raise hover:border-oxblood/50 group aspect-[4/5] flex flex-col"
                 >
-                  {/* Position Badge */}
-                  <div className="absolute top-2 left-2 z-10 text-[10px] font-heading text-admin-faint tabular-nums">
-                    {index + 1}
-                  </div>
-
                   {/* Photo Thumbnail */}
                   {displayImageUrl && (
-                    <div className="relative w-full h-full overflow-hidden bg-admin-raise">
+                    <div className="relative flex-1 overflow-hidden bg-admin-raise">
                       <img
                         src={displayImageUrl}
                         alt={photo.imageName || 'Carousel photo'}
@@ -382,10 +394,23 @@ export default function RubberBandPhotosManager() {
 
                   {/* Empty State */}
                   {!displayImageUrl && (
-                    <div className="w-full h-full bg-admin-raise flex items-center justify-center">
+                    <div className="w-full flex-1 bg-admin-raise flex items-center justify-center">
                       <ImageIcon className="w-6 h-6 text-admin-faint" />
                     </div>
                   )}
+
+                  {/* Photo Label Footer */}
+                  <div className="bg-admin-raise border-t border-admin-line p-2 space-y-1">
+                    <p className="text-[10px] text-admin-text font-medium truncate" title={photo.imageName}>
+                      {photo.imageName || 'Untitled'}
+                    </p>
+                    <div className="flex items-center justify-between text-[10px] text-admin-faint">
+                      <span>Order: {photo.displayOrder || 0}</span>
+                      <span className={photo.isActive ? 'text-ok font-medium' : 'text-admin-faint'}>
+                        {photo.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
                 </motion.div>
               );
             })}
