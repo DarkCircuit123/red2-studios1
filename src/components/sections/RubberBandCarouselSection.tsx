@@ -100,6 +100,18 @@ const RubberBandCarouselSection: React.FC = () => {
           (a.displayOrder || 0) - (b.displayOrder || 0)
         );
 
+      console.log('[RubberBandCarousel] Fetched carousel images:', {
+        totalItems: result.items?.length || 0,
+        activeItems: activeItems.length,
+        items: activeItems.map((item: CarouselImages) => ({
+          id: item._id,
+          name: item.imageName,
+          isActive: item.isActive,
+          displayOrder: item.displayOrder,
+          hasImage: !!item.image,
+        })),
+      });
+
       activeItems.forEach((item: CarouselImages) => {
         if (item.image) {
           const httpsUrl = convertWixImageToHttps(item.image);
@@ -117,11 +129,23 @@ const RubberBandCarouselSection: React.FC = () => {
               name: item.imageName,
               url: httpsUrl,
               dims,
+              isActive: item.isActive,
+              displayOrder: item.displayOrder,
             });
           } else {
             console.warn('[RubberBandCarousel] Failed to convert image URL:', item.image);
           }
+        } else {
+          console.warn('[RubberBandCarousel] Item has no image:', {
+            id: item._id,
+            name: item.imageName,
+          });
         }
+      });
+
+      console.log('[RubberBandCarousel] Collected images:', {
+        count: collected.length,
+        usingFallback: collected.length === 0,
       });
 
       setSlides(collected.length > 0 ? collected : fallbackImages);
@@ -248,8 +272,8 @@ const RubberBandCarouselSection: React.FC = () => {
         const mediaId = match[1];
         const H = Math.min(1400, Math.round(620 * (window.devicePixelRatio || 1)));
         const W = Math.round(H * ((slide.originWidth || 1920) / (slide.originHeight || 1024)));
-        // Use the Wix image transformation API format
-        return `https://static.wixstatic.com/media/${mediaId}~c335x620/fill/w_${W},h_${H},al_c,q_85,enc_auto/file.webp`;
+        // Use the correct Wix image transformation format: media/ID~c{width}x{height}/...
+        return `https://static.wixstatic.com/media/${mediaId}~c${W}x${H}/file.webp`;
       }
     }
     // Fallback: return the original URL if we can't parse it
@@ -272,14 +296,29 @@ const RubberBandCarouselSection: React.FC = () => {
         {loop.map((image, index) => (
           <figure
             key={`${image.id}-${index}`}
-            className="relative m-0 h-full flex-[0_0_auto] overflow-hidden"
+            className="relative m-0 h-full flex-[0_0_auto] overflow-hidden bg-gray-900"
             style={{ aspectRatio: `${image.originWidth} / ${image.originHeight}` }}
           >
             <img
               src={carouselSrc(image)}
               alt={image.alt}
               decoding="async"
+              loading="lazy"
               className="block h-full w-full object-cover"
+              onError={(e) => {
+                console.error('[RubberBandCarousel] Image failed to load:', {
+                  src: (e.target as HTMLImageElement).src,
+                  alt: image.alt,
+                });
+                // Fallback: use the original URL if transformation fails
+                (e.target as HTMLImageElement).src = image.url;
+              }}
+              onLoad={() => {
+                console.log('[RubberBandCarousel] Image loaded successfully:', {
+                  src: carouselSrc(image),
+                  alt: image.alt,
+                });
+              }}
             />
           </figure>
         ))}
