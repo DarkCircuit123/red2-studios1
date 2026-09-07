@@ -4,7 +4,7 @@ import { ClientsPress } from '@/entities/index';
 
 export const GET: APIRoute = async () => {
   try {
-    const result = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 50 });
+    const result = await BaseCrudService.getAll<ClientsPress>('clientspress', {}, { limit: 46 });
     
     return new Response(
       JSON.stringify({
