@@ -449,12 +449,13 @@ export default function WorkGalleryManager() {
             </h2>
             <p className="text-[13px] text-admin-dim mt-2">Upload photos with automatic CMS persistence</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 bg-oxblood hover:bg-oxblood/90 text-white border border-oxblood rounded-none text-[11px] px-3 py-2 transition-colors duration-160"
+              disabled={isUploading}
+              className="flex items-center gap-2 bg-oxblood hover:bg-oxblood-hi text-white border-2 border-oxblood rounded-none text-[12px] font-semibold px-4 py-2.5 transition-all duration-160 disabled:opacity-50 shadow-md hover:shadow-lg"
             >
-              <Upload className="w-3 h-3" />
+              <Upload className="w-4 h-4" />
               Upload Photos
             </Button>
             <div className="text-right">
