@@ -1,36 +1,29 @@
 /**
- * Work Gallery Manager - 90 SLOT GALLERY WITH DATABASE PERSISTENCE
- * FIXED: Uses the safe upsert API for CMS persistence
+ * Work Gallery Manager - DYNAMIC SLOT GALLERY WITH DATABASE PERSISTENCE
  * 
- * This version manages 90 slots with full metadata tracking:
- * - Unique ID for each slot
- * - Image URL/link (persisted to Wix Media)
- * - Filename
- * - Caption and alt text
- * - Upload timestamp
- * - PERSISTED TO DATABASE (portfolioimages collection)
- * 
- * CRITICAL FIX:
- * - Uses /api/portfolio/upsert-slot for CMS persistence
- * - Handles both empty slots (CREATE) and occupied slots (UPDATE)
- * - Never requires itemId for empty slots
- * - Maintains 90 visible slots regardless of CMS record existence
+ * Features:
+ * - Dynamic slot count (starts at 90, grows as needed)
+ * - Derives slot count from data: max(90, highest displayOrder, filled + 12)
+ * - Upload grows slots if no empty slots found
+ * - Delete removes image but keeps empty box
+ * - Loads every row from portfolioimages collection
+ * - Add 12 slots button for manual extension
+ * - Fixed toast messages (only show success if uploaded > 0)
+ * - Dark theme applied throughout
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
   Upload, Trash2, Eye, X, RefreshCw, Maximize2, Image as ImageIcon,
-  AlertCircle, CheckCircle, Copy, Info
+  AlertCircle, CheckCircle, Copy, Info, Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Portfolio } from '@/entities';
 import { convertWixImageToHttps } from '@/lib/convert-wix-image';
-
-const MAX_SLOTS = 90;
 
 interface SlotData {
   id: string;
@@ -51,23 +44,11 @@ interface StatusMessage {
 export default function WorkGalleryManager() {
   console.log('[WorkGalleryManager] Component rendering');
   
-  // 90 SLOTS WITH DATABASE PERSISTENCE
-  const [slots, setSlots] = useState<SlotData[]>(() => {
-    const initialSlots = Array.from({ length: MAX_SLOTS }, (_, i) => {
-      const slotNumber = i + 1;
-      return {
-        id: `slot-${slotNumber}-${crypto.randomUUID()}`,
-        slotNumber,
-        image: undefined,
-        filename: '',
-        caption: '',
-        altText: '',
-        uploadedAt: undefined,
-      };
-    });
-    console.log('[WorkGalleryManager] Initial state created with', initialSlots.length, 'slots');
-    return initialSlots;
-  });
+  // DYNAMIC SLOT COUNT - starts at 90, grows as needed
+  const [slotCount, setSlotCount] = useState(90);
+  
+  // SLOTS WITH DATABASE PERSISTENCE
+  const [slots, setSlots] = useState<SlotData[]>([]);
 
   const [statusMessages, setStatusMessages] = useState<StatusMessage[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -94,23 +75,50 @@ export default function WorkGalleryManager() {
       
       console.log('[WorkGalleryManager] Loaded', dbPhotos.length, 'photos from database');
       
-      // Map database photos to slots based on displayOrder
-      const updatedSlots = slots.map(slot => {
-        const dbPhoto = dbPhotos.find(p => p.displayOrder === slot.slotNumber);
+      // Find highest displayOrder and count filled slots
+      let highestOrder = 0;
+      const filledCount = dbPhotos.length;
+      
+      dbPhotos.forEach(photo => {
+        if (photo.displayOrder && photo.displayOrder > highestOrder) {
+          highestOrder = photo.displayOrder;
+        }
+      });
+      
+      // Derive slot count: max(90, highest, filled + 12)
+      const derivedSlotCount = Math.max(90, highestOrder, filledCount + 12);
+      setSlotCount(derivedSlotCount);
+      
+      console.log('[WorkGalleryManager] Derived slot count:', { highestOrder, filledCount, derivedSlotCount });
+      
+      // Create slots for every row returned by query + up to derived count
+      const newSlots: SlotData[] = [];
+      for (let i = 1; i <= derivedSlotCount; i++) {
+        const dbPhoto = dbPhotos.find(p => p.displayOrder === i);
         if (dbPhoto && dbPhoto.image) {
-          return {
-            ...slot,
+          newSlots.push({
+            id: dbPhoto._id || `slot-${i}-${crypto.randomUUID()}`,
+            slotNumber: i,
             image: convertWixImageToHttps(dbPhoto.image) || dbPhoto.image,
             filename: dbPhoto.caption || '',
             caption: dbPhoto.caption || '',
             altText: dbPhoto.altText || '',
             uploadedAt: dbPhoto._updatedDate?.toString(),
-          };
+          });
+        } else {
+          newSlots.push({
+            id: `slot-${i}-${crypto.randomUUID()}`,
+            slotNumber: i,
+            image: undefined,
+            filename: '',
+            caption: '',
+            altText: '',
+            uploadedAt: undefined,
+          });
         }
-        return slot;
-      });
+      }
       
-      setSlots(updatedSlots);
+      setSlots(newSlots);
     } catch (error) {
       console.error('[WorkGalleryManager] Error loading photos:', error);
       addStatusMessage('error', 'Failed to load photos from database');
@@ -163,77 +171,99 @@ export default function WorkGalleryManager() {
 
       let filesAdded = 0;
       const updatedSlots = [...slots];
+      let newSlotCount = slotCount;
 
       for (const file of selectedFiles) {
-        const emptySlot = updatedSlots.find(s => !s.image);
-        if (emptySlot) {
-          try {
-            // Step 1: Upload to Wix Media
-            const formData = new FormData();
-            formData.append('file', file);
+        let targetSlot = updatedSlots.find(s => !s.image);
+        
+        // If no empty slot found, grow the array
+        if (!targetSlot) {
+          const nextSlotNumber = updatedSlots.length + 1;
+          targetSlot = {
+            id: `slot-${nextSlotNumber}-${crypto.randomUUID()}`,
+            slotNumber: nextSlotNumber,
+            image: undefined,
+            filename: '',
+            caption: '',
+            altText: '',
+            uploadedAt: undefined,
+          };
+          updatedSlots.push(targetSlot);
+          newSlotCount = nextSlotNumber;
+        }
 
-            const uploadResponse = await fetch('/api/media/upload-gallery', {
-              method: 'POST',
-              body: formData,
-            });
+        try {
+          // Step 1: Upload to Wix Media
+          const formData = new FormData();
+          formData.append('file', file);
 
-            if (!uploadResponse.ok) {
-              throw new Error('Upload failed');
-            }
+          const uploadResponse = await fetch('/api/media/upload-gallery', {
+            method: 'POST',
+            body: formData,
+          });
 
-            const uploadedData = await uploadResponse.json();
-            const imageUrl = uploadedData.mediaUrl || uploadedData.url;
-
-            if (!imageUrl) {
-              throw new Error('No image URL returned');
-            }
-
-            console.log('[WorkGalleryManager] Wix Media upload succeeded for slot', emptySlot.slotNumber, 'URL:', imageUrl);
-
-            // Step 2: Upsert to CMS using the safe upsert API
-            const upsertResponse = await fetch('/api/portfolio/upsert-slot', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                displayOrder: emptySlot.slotNumber,
-                image: imageUrl,
-                caption: file.name.replace(/\.[^/.]+$/, ''),
-                altText: file.name,
-                portfolioItemId: 'work-gallery',
-              }),
-            });
-
-            if (!upsertResponse.ok) {
-              const errorData = await upsertResponse.json();
-              throw new Error(`CMS upsert failed: ${errorData.error || 'Unknown error'}`);
-            }
-
-            const upsertData = await upsertResponse.json();
-            console.log('[WorkGalleryManager] CMS upsert succeeded for slot', emptySlot.slotNumber, 'itemId:', upsertData.itemId, 'action:', upsertData.action);
-
-            // Update local slot
-            emptySlot.image = convertWixImageToHttps(imageUrl) || imageUrl;
-            emptySlot.filename = file.name;
-            emptySlot.caption = file.name.replace(/\.[^/.]+$/, '');
-            emptySlot.altText = file.name;
-            emptySlot.uploadedAt = new Date().toISOString();
-            filesAdded++;
-
-            addStatusMessage('success', `Slot ${emptySlot.slotNumber}: ${upsertData.action === 'created' ? 'created' : 'updated'}`);
-          } catch (error) {
-            console.error('[WorkGalleryManager] Error uploading file:', error);
-            addStatusMessage('error', `Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          if (!uploadResponse.ok) {
+            throw new Error('Upload failed');
           }
+
+          const uploadedData = await uploadResponse.json();
+          const imageUrl = uploadedData.mediaUrl || uploadedData.url;
+
+          if (!imageUrl) {
+            throw new Error('No image URL returned');
+          }
+
+          console.log('[WorkGalleryManager] Wix Media upload succeeded for slot', targetSlot.slotNumber, 'URL:', imageUrl);
+
+          // Step 2: Upsert to CMS using the safe upsert API
+          const upsertResponse = await fetch('/api/portfolio/upsert-slot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              displayOrder: targetSlot.slotNumber,
+              image: imageUrl,
+              caption: file.name.replace(/\.[^/.]+$/, ''),
+              altText: file.name,
+              portfolioItemId: 'work-gallery',
+            }),
+          });
+
+          if (!upsertResponse.ok) {
+            const errorData = await upsertResponse.json();
+            throw new Error(`CMS upsert failed: ${errorData.error || 'Unknown error'}`);
+          }
+
+          const upsertData = await upsertResponse.json();
+          console.log('[WorkGalleryManager] CMS upsert succeeded for slot', targetSlot.slotNumber, 'itemId:', upsertData.itemId, 'action:', upsertData.action);
+
+          // Update local slot
+          targetSlot.image = convertWixImageToHttps(imageUrl) || imageUrl;
+          targetSlot.filename = file.name;
+          targetSlot.caption = file.name.replace(/\.[^/.]+$/, '');
+          targetSlot.altText = file.name;
+          targetSlot.uploadedAt = new Date().toISOString();
+          filesAdded++;
+
+          addStatusMessage('success', `Slot ${targetSlot.slotNumber}: ${upsertData.action === 'created' ? 'created' : 'updated'}`);
+        } catch (error) {
+          console.error('[WorkGalleryManager] Error uploading file:', error);
+          addStatusMessage('error', `Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
 
       setSlots(updatedSlots);
+      setSlotCount(newSlotCount);
       setSelectedFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
 
-      addStatusMessage('success', `Successfully uploaded ${filesAdded} file(s)`);
+      // Only show success if at least one file was uploaded
+      if (filesAdded > 0) {
+        addStatusMessage('success', `Successfully uploaded ${filesAdded} file(s)`);
+      } else if (selectedFiles.length > 0) {
+        addStatusMessage('error', `No files were uploaded (${selectedFiles.length} selected)`);
+      }
     } catch (error) {
       console.error('[WorkGalleryManager] Upload error:', error);
       addStatusMessage('error', 'Upload failed');
@@ -321,7 +351,7 @@ export default function WorkGalleryManager() {
         await BaseCrudService.delete('portfolioimages', photoToDelete._id);
       }
 
-      // Update local slot
+      // Update local slot - DELETE removes image, not the box
       const updatedSlots = [...slots];
       const slot = updatedSlots.find(s => s.slotNumber === slotNumber);
       if (slot) {
@@ -339,6 +369,27 @@ export default function WorkGalleryManager() {
     } finally {
       setDeletingSlot(null);
     }
+  };
+
+  const handleAddSlots = () => {
+    const newCount = slotCount + 12;
+    setSlotCount(newCount);
+    
+    // Add new empty slots
+    const updatedSlots = [...slots];
+    for (let i = slots.length + 1; i <= newCount; i++) {
+      updatedSlots.push({
+        id: `slot-${i}-${crypto.randomUUID()}`,
+        slotNumber: i,
+        image: undefined,
+        filename: '',
+        caption: '',
+        altText: '',
+        uploadedAt: undefined,
+      });
+    }
+    setSlots(updatedSlots);
+    addStatusMessage('info', `Added 12 slots. Total: ${newCount}`);
   };
 
   const copySlotMetadata = (slot: SlotData) => {
@@ -397,7 +448,7 @@ export default function WorkGalleryManager() {
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-oxblood">{filledSlots}</p>
-            <p className="text-[11px] text-admin-faint font-medium">/ {MAX_SLOTS} slots</p>
+            <p className="text-[11px] text-admin-faint font-medium">/ {slotCount} slots</p>
           </div>
         </div>
 
@@ -489,12 +540,15 @@ export default function WorkGalleryManager() {
       <div className="bg-admin-surface rounded-none border border-admin-line p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text">
-            90-Slot Gallery Grid ({filledSlots}/{MAX_SLOTS})
+            Gallery Grid ({filledSlots}/{slotCount})
           </h2>
-          <div className="text-[11px] text-admin-faint flex items-center gap-1">
-            <Info className="w-3 h-3" />
-            Click info icon to view metadata
-          </div>
+          <Button
+            onClick={handleAddSlots}
+            className="flex items-center gap-2 bg-admin-raise hover:bg-admin-line text-admin-text border border-admin-line rounded-none text-[11px] px-3 py-2 transition-colors duration-160"
+          >
+            <Plus className="w-3 h-3" />
+            Add 12 Slots
+          </Button>
         </div>
 
         {/* Loading State */}
@@ -503,7 +557,7 @@ export default function WorkGalleryManager() {
             <LoadingSpinner className="w-6 h-6" />
           </div>
         ) : (
-          /* Grid - ALWAYS RENDERS 90 SLOTS */
+          /* Grid - RENDERS ALL SLOTS */
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(156px, 1fr))',

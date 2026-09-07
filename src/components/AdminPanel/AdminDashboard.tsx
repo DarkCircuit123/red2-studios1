@@ -5,7 +5,9 @@ import HomePageTab from './tabs/HomePageTab';
 import SplashpageTab from './tabs/SplashpageTab';
 import WorkGalleryManager from './sections/WorkGalleryManager';
 import ProfessionalPhotoLibrary from './sections/ProfessionalPhotoLibrary';
-import { Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Library } from 'lucide-react';
+import MusicLibraryManager from './sections/MusicLibraryManager';
+import SponsorsManager from './sections/SponsorsManager';
+import { Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Library, Music, Users } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('home');
@@ -19,6 +21,8 @@ export default function AdminDashboard() {
     { id: 'splashpage', label: 'Splash Page', icon: Image, enabled: true },
     { id: 'gallery', label: 'Work Gallery', icon: Briefcase, enabled: true },
     { id: 'photo-library', label: 'Photo Library', icon: Library, enabled: true },
+    { id: 'music', label: 'Music Library', icon: Music, enabled: true },
+    { id: 'sponsors', label: 'Sponsors', icon: Users, enabled: true },
     { id: 'about', label: 'About Page', icon: FileText, enabled: false },
     { id: 'services', label: 'Services', icon: Cog, enabled: false },
     { id: 'booking', label: 'Booking', icon: Calendar, enabled: false },
@@ -91,6 +95,14 @@ export default function AdminDashboard() {
 
               <TabsContent value="photo-library" className="m-0">
                 <ProfessionalPhotoLibrary />
+              </TabsContent>
+
+              <TabsContent value="music" className="m-0">
+                <MusicLibraryManager />
+              </TabsContent>
+
+              <TabsContent value="sponsors" className="m-0">
+                <SponsorsManager />
               </TabsContent>
 
               {/* ... keep existing code (disabled tabs placeholder) ... */}
