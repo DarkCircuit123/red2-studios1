@@ -136,7 +136,6 @@ export default function ContactSection() {
           }}
         />
       )}
-
       {/* Animated background overlay */}
       <div className="absolute inset-0 z-0">
         <motion.div
@@ -151,7 +150,6 @@ export default function ContactSection() {
           className="absolute inset-0"
         />
       </div>
-
       <div className="max-w-[120rem] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
           {/* Contact Info */}
@@ -164,7 +162,7 @@ export default function ContactSection() {
               Get in
               <br />
               <motion.span
-                className="text-primary"
+                className="text-oxblood"
                 animate={{ opacity: [1, 0.8, 1] }}
                 transition={{ duration: 3, repeat: Infinity }}
               >

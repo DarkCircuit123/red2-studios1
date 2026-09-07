@@ -42,8 +42,8 @@ export default function Footer() {
                 onClick={playClickSound}
                 className="relative flex items-center gap-0 group w-fit"
               >
-                <span className="text-2xl font-heading font-black text-white tracking-tight hover:text-primary transition-colors duration-300">
-                  RED<span className="text-secondary">²</span>
+                <span className="text-2xl font-heading font-black tracking-tight hover:text-primary transition-colors duration-300 text-secondary">
+                  RED<span className="text-oxblood">²</span>
                 </span>
               </Link>
             </motion.div>
@@ -202,14 +202,14 @@ export default function Footer() {
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs md:text-sm font-mono text-white/40 hover:text-white/70 transition-colors duration-300 uppercase tracking-widest"
+                className="text-xs md:text-sm font-mono hover:text-white/70 transition-colors duration-300 uppercase tracking-widest text-primary"
               >
                 Terms
               </a>
               <a
                 href="#about"
                 onClick={(e) => handleAnchorClick(e, '#about')}
-                className="text-xs md:text-sm font-mono text-white/40 hover:text-white/70 transition-colors duration-300 uppercase tracking-widest"
+                className="text-xs md:text-sm font-mono hover:text-white/70 transition-colors duration-300 uppercase tracking-widest text-primary"
               >
                 Cookies
               </a>
