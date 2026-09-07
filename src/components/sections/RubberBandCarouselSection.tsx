@@ -112,6 +112,14 @@ const RubberBandCarouselSection: React.FC = () => {
               originWidth: dims.width,
               originHeight: dims.height,
             });
+            console.log('[RubberBandCarousel] Loaded image:', {
+              id: item._id,
+              name: item.imageName,
+              url: httpsUrl,
+              dims,
+            });
+          } else {
+            console.warn('[RubberBandCarousel] Failed to convert image URL:', item.image);
           }
         }
       });
@@ -232,11 +240,20 @@ const RubberBandCarouselSection: React.FC = () => {
 
   // Helper to generate optimized image URL based on viewport height
   const carouselSrc = useCallback((slide: CarouselImage): string => {
-    const H = Math.min(1400, Math.round(620 * (window.devicePixelRatio || 1)));
-    const W = Math.round(H * ((slide.originWidth || 1920) / (slide.originHeight || 1024)));
-    const match = slide.url.match(/media\/([^/]+)\//);
-    const id = match ? match[1] : 'e9d727_dc338c865879444cab6ecb545a8e8d0b';
-    return `https://static.wixstatic.com/media/${id}/v1/fill/w_${W},h_${H},al_c,q_85,enc_auto/${id}`;
+    // If the URL is already a valid Wix static URL, use it directly with optimization params
+    if (slide.url.includes('static.wixstatic.com/media/')) {
+      // Extract the media ID from the URL (e.g., e9d727_xxxxx from the URL)
+      const match = slide.url.match(/media\/([^~?]+)/);
+      if (match) {
+        const mediaId = match[1];
+        const H = Math.min(1400, Math.round(620 * (window.devicePixelRatio || 1)));
+        const W = Math.round(H * ((slide.originWidth || 1920) / (slide.originHeight || 1024)));
+        // Use the Wix image transformation API format
+        return `https://static.wixstatic.com/media/${mediaId}~c335x620/fill/w_${W},h_${H},al_c,q_85,enc_auto/file.webp`;
+      }
+    }
+    // Fallback: return the original URL if we can't parse it
+    return slide.url;
   }, []);
 
   return (
