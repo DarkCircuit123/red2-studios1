@@ -14,12 +14,26 @@ export async function GET({ request }: { request: Request }) {
   try {
     console.log('[Backend] GET /api/booking-availability/get-public - Fetching public available slots');
 
+    // Build today's date as YYYY-MM-DD string for comparison
+    const todayString = new Date().toISOString().slice(0, 10);
+    console.log('[Backend] Today\'s date:', todayString);
+
     // Use BaseCrudService to fetch available slots with suppressAuth to bypass permission restrictions
     // No authentication required for public endpoint
-    const result = await BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { suppressAuth: true });
+    // Fetch up to 500 rows and filter/sort in handler
+    const result = await BaseCrudService.getAll<BookingAvailability>('bookingavailability', {}, { suppressAuth: true, limit: 500 });
 
-    // Filter for available slots only
-    const availableSlots = (result.items || []).filter(slot => slot.isAvailable === true);
+    // Filter for available slots only and dates >= today
+    const availableSlots = (result.items || [])
+      .filter(slot => slot.isAvailable === true && slot.bookingDate && slot.bookingDate >= todayString)
+      .sort((a, b) => {
+        // Sort by bookingDate ascending first
+        if (a.bookingDate !== b.bookingDate) {
+          return (a.bookingDate || '').localeCompare(b.bookingDate || '');
+        }
+        // Then sort by startTime ascending
+        return (a.startTime || '').localeCompare(b.startTime || '');
+      });
 
     console.log('[Backend] Fetched available slots:', availableSlots.length);
 
