@@ -98,8 +98,8 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    // Validate displayOrder is in valid range (1-90)
-    if (body.displayOrder < 1 || body.displayOrder > 90) {
+    // Validate displayOrder is positive (allows unlimited growth beyond 90)
+    if (body.displayOrder < 1) {
       console.warn(`[PORTFOLIO_UPSERT] Request ${requestId} invalid displayOrder`, {
         displayOrder: body.displayOrder,
         timestamp: new Date().toISOString(),
@@ -107,7 +107,7 @@ export const POST: APIRoute = async (context) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Invalid displayOrder: must be between 1 and 90, received ${body.displayOrder}`,
+          error: `Invalid displayOrder: must be >= 1, received ${body.displayOrder}`,
         } as ErrorResponse),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
