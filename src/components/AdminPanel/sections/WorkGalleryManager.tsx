@@ -470,9 +470,11 @@ export default function WorkGalleryManager() {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`w-full h-40 rounded-none border-2 border-dashed transition-colors ${
-            dragOverRef.current ? 'border-solid border-oxblood bg-admin-raise' : 'border-admin-line bg-admin-raise'
-          } flex items-center justify-center cursor-pointer`}
+          className={`w-full h-40 rounded-none border-2 border-dashed transition-colors flex items-center justify-center cursor-pointer`}
+          style={{
+            borderColor: dragOverRef.current ? '#A83A3A' : 'rgba(255,255,255,0.28)',
+            backgroundColor: dragOverRef.current ? 'var(--admin-raise, #181818)' : 'var(--admin-raise, #181818)',
+          }}
           onClick={() => fileInputRef.current?.click()}
         >
           <div className="text-center">
