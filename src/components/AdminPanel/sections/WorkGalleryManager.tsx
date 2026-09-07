@@ -406,7 +406,10 @@ export default function WorkGalleryManager() {
     addStatusMessage('success', `Slot ${slot.slotNumber} metadata copied to clipboard`);
   };
 
-  const filledSlots = slots.filter(s => s.image).length;
+  // Calculate filled slots from current state - updates in real-time
+  const filledSlots = useMemo(() => {
+    return slots.filter(s => s.image).length;
+  }, [slots]);
 
   console.log('[WorkGalleryManager] Rendering with', slots.length, 'slots, filled:', filledSlots);
 
