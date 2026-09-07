@@ -86,11 +86,11 @@ export default function WorkGalleryManager() {
         }
       });
       
-      // Derive slot count: max(100, highest, filled + 12)
+      // Derive slot count: ALWAYS at least 100, then max(highest, filled + 12)
       const derivedSlotCount = Math.max(100, highestOrder, filledCount + 12);
       setSlotCount(derivedSlotCount);
       
-      console.log('[WorkGalleryManager] Derived slot count:', { highestOrder, filledCount, derivedSlotCount });
+      console.log('[WorkGalleryManager] Derived slot count:', { highestOrder, filledCount, derivedSlotCount, totalSlots: derivedSlotCount });
       
       // Create slots for every row returned by query + up to derived count
       const newSlots: SlotData[] = [];
@@ -119,6 +119,7 @@ export default function WorkGalleryManager() {
         }
       }
       
+      console.log('[WorkGalleryManager] Created', newSlots.length, 'total slots');
       setSlots(newSlots);
     } catch (error) {
       console.error('[WorkGalleryManager] Error loading photos:', error);
