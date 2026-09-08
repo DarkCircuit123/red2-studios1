@@ -108,6 +108,18 @@ export default function HeroSection() {
     <section
       ref={containerRef}
       className="relative w-full h-screen flex items-center justify-center overflow-hidden bg-black"
+      onMouseEnter={() => {
+        const logo2Front = document.querySelector('.logo-2-front') as HTMLElement;
+        if (logo2Front) {
+          logo2Front.style.color = '#ffffff';
+        }
+      }}
+      onMouseLeave={() => {
+        const logo2Front = document.querySelector('.logo-2-front') as HTMLElement;
+        if (logo2Front) {
+          logo2Front.style.color = '#A31621';
+        }
+      }}
     >
       {heroImage && (
         <div 
