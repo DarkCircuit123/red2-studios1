@@ -8,37 +8,21 @@ import { requireAdmin } from '@/lib/auth-security';
 const MAX_REQUEST_BYTES = 64 * 1024;
 const PROBE_TIMEOUT_MS = 12_000;
 
-interface ImportFromUrlResponse {
-  success: true;
-  mediaUrl: string;
-  mediaId: string;
-  fileName: string;
-  detectedType: string;
-  detectedSizeBytes?: number;
-  pending: boolean;
-  message: string;
-}
-
-interface ErrorResponse {
-  error: string;
+function jsonResponse(body: Record<string, unknown>, status: number): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+  });
 }
 
 function extensionMimeGuess(url: string): string | undefined {
   const ext = url.split('?')[0].split('#')[0].split('.').pop()?.toLowerCase();
   const map: Record<string, string> = {
-    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
-    gif: 'image/gif', tiff: 'image/tiff', tif: 'image/tiff', bmp: 'image/bmp',
-    ico: 'image/x-icon', heic: 'image/heic', heif: 'image/heif',
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+    tiff: 'image/tiff', tif: 'image/tiff', bmp: 'image/bmp', ico: 'image/x-icon', heic: 'image/heic', heif: 'image/heif',
     mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', webm: 'audio/webm',
   };
   return ext ? map[ext] : undefined;
-}
-
-function jsonResponse(body: ErrorResponse | ImportFromUrlResponse, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-  });
 }
 
 function safeMediaUrl(value: unknown): value is string {
@@ -55,15 +39,8 @@ async function probeUrl(url: string): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
   try {
-    let response = await fetch(url, {
-      method: 'HEAD',
-      redirect: 'manual',
-      signal: controller.signal,
-    });
-
+    let response = await fetch(url, { method: 'HEAD', redirect: 'manual', signal: controller.signal });
     if (response.status === 405 || response.status === 501) {
-      // Revalidate the URL before the fallback request and explicitly disallow
-      // redirects. This prevents a probe redirect from turning into SSRF.
       if (!isSafeExternalUrl(url)) throw new Error('Unsafe URL');
       response = await fetch(url, {
         method: 'GET',
@@ -72,11 +49,7 @@ async function probeUrl(url: string): Promise<Response> {
         signal: controller.signal,
       });
     }
-
-    if (response.status >= 300 && response.status < 400) {
-      throw new Error('External URL redirects are not supported. Use the final file URL.');
-    }
-
+    if (response.status >= 300 && response.status < 400) throw new Error('External URL redirects are not supported.');
     return response;
   } finally {
     clearTimeout(timeout);
@@ -92,11 +65,9 @@ export const POST: APIRoute = async (context) => {
     if (denied) return denied;
 
     const contentLength = Number(context.request.headers.get('content-length') || 0);
-    if (contentLength > MAX_REQUEST_BYTES) {
-      return jsonResponse({ error: 'Request is too large.' }, 413);
-    }
+    if (contentLength > MAX_REQUEST_BYTES) return jsonResponse({ error: 'Request is too large.' }, 413);
 
-    const body = await context.request.json().catch(() => null);
+    const body = await context.request.json().catch(() => null) as { url?: unknown; kind?: unknown } | null;
     const rawUrl = body?.url;
     const kind = body?.kind === 'music' ? 'music' : 'image';
     const config = kind === 'music' ? MUSIC_UPLOAD_CONFIG : IMAGE_UPLOAD_CONFIG;
@@ -121,21 +92,13 @@ export const POST: APIRoute = async (context) => {
     try {
       probeResponse = await probeUrl(parsed.toString());
     } catch (error) {
-      const timedOut = error instanceof Error && error.name === 'AbortError';
       console.warn(`[IMPORT_FROM_URL] ${requestId} URL probe failed`, {
-        timedOut,
         reason: error instanceof Error ? error.message : String(error),
       });
-      return jsonResponse({
-        error: timedOut
-          ? 'That link took too long to respond.'
-          : 'The link could not be safely reached. Use the direct file URL without redirects.',
-      }, 400);
+      return jsonResponse({ error: 'The link could not be safely reached. Use a direct file URL without redirects.' }, 400);
     }
 
-    if (!probeResponse.ok) {
-      return jsonResponse({ error: `That link returned HTTP ${probeResponse.status}.` }, 400);
-    }
+    if (!probeResponse.ok) return jsonResponse({ error: `That link returned HTTP ${probeResponse.status}.` }, 400);
 
     const headerContentType = probeResponse.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
     const contentLengthHeader = probeResponse.headers.get('content-length');
@@ -143,18 +106,11 @@ export const POST: APIRoute = async (context) => {
     const detectedSize = Number.isSafeInteger(parsedSize) && parsedSize >= 0 ? parsedSize : undefined;
     const detectedType = headerContentType || extensionMimeGuess(parsed.pathname);
 
-    if (!detectedType) {
-      return jsonResponse({ error: 'The file type could not be determined. Use a direct file URL with a recognizable extension.' }, 400);
-    }
-
-    if (detectedSize === undefined) {
-      return jsonResponse({ error: 'The source did not provide a file size, so it cannot be safely imported.' }, 400);
-    }
+    if (!detectedType) return jsonResponse({ error: 'The file type could not be determined.' }, 400);
+    if (detectedSize === undefined) return jsonResponse({ error: 'The source did not provide a file size, so it cannot be safely imported.' }, 400);
 
     const validation = validateFileAgainstConfig({ type: detectedType, size: detectedSize }, config);
-    if (!validation.valid) {
-      return jsonResponse({ error: validation.error }, 400);
-    }
+    if (!validation.valid) return jsonResponse({ error: validation.error }, 400);
 
     let fileName: string;
     try {
