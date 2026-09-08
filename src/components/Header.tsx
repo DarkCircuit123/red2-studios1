@@ -195,7 +195,7 @@ export default function Header() {
               <motion.span 
                 className="logo-2-card text-4xl inline-block"
                 style={{ transform: 'translateY(-0.75em)' }}
-                animate={{ rotate: 360 }}
+                animate={{ rotateY: 360 }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
               >
                 <span className="logo-2-front text-oxblood">²</span>
