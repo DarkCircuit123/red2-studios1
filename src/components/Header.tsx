@@ -166,7 +166,7 @@ export default function Header() {
           .logo-2-card {
             display: inline-block;
             transform-style: preserve-3d;
-            transition: transform 600ms ease;
+            transition: transform 600ms ease, color 300ms ease;
           }
           .logo-wrap:hover .logo-2-card {
             transform: rotateY(180deg);
@@ -176,6 +176,7 @@ export default function Header() {
             display: inline-block;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
+            transition: color 300ms ease;
           }
           .logo-2-front {
             color: #A31621;
@@ -183,6 +184,12 @@ export default function Header() {
           .logo-2-back {
             color: #ffffff;
             transform: rotateY(180deg);
+          }
+          .logo-wrap:hover .logo-2-front {
+            color: #ffffff;
+          }
+          .logo-wrap:hover .logo-2-back {
+            color: #A31621;
           }
         `}</style>
         <motion.div
