@@ -19,66 +19,26 @@ export default defineConfig({
       name: "framewire",
       hooks: {
         "astro:config:setup": ({ injectScript, command }) => {
-          if (command === "dev") {
-            injectScript(
-              "page",
-              `import loadFramewire from "framewire.js";
-              loadFramewire(true);`
-            );
-          }
+          if (command === "dev") injectScript("page", `import loadFramewire from "framewire.js"; loadFramewire(true);`);
         },
       },
     },
     tailwind(),
-    wix({
-      htmlEmbeds: isBuild,
-      auth: true,
-    }),
+    wix({ htmlEmbeds: isBuild, auth: true }),
     ...(isBuild ? [monitoring()] : []),
-    react(isBuild ? {} : {
-      babel: { plugins: [sourceAttrsPlugin, dynamicDataPlugin] },
-    }),
+    react(isBuild ? {} : { babel: { plugins: [sourceAttrsPlugin, dynamicDataPlugin] } }),
   ],
   vite: {
     plugins: [customErrorOverlayPlugin()],
     cacheDir: 'node_modules/.cache/.vite',
     optimizeDeps: {
-      include: [
-        'react',
-        'react-dom',
-        'zustand',
-        'framer-motion',
-        'date-fns',
-        'clsx',
-        'class-variance-authority',
-        'tailwind-merge',
-        '@radix-ui/*',
-        '@wix/*',
-        'zod',
-      ],
+      include: ['react', 'react-dom', 'zustand', 'framer-motion', 'date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge', 'zod'],
     },
-    css: !isBuild ? {
-      postcss: {
-        plugins: [postcssPseudoToData()],
-      },
-    } : undefined,
+    css: !isBuild ? { postcss: { plugins: [postcssPseudoToData()] } } : undefined,
   },
   ...(isBuild && { adapter: cloudProviderFetchAdapter({}) }),
-  devToolbar: {
-    enabled: false,
-  },
-  image: {
-    domains: ["static.wixstatic.com"],
-  },
-  server: {
-    allowedHosts: true,
-    host: true,
-  },
-  security: {
-    // Keep Astro's CSRF origin validation enabled for server-side POST/PUT/
-    // PATCH/DELETE routes. Individual cross-origin integrations should use
-    // explicit, narrowly scoped handling rather than disabling the global
-    // protection.
-    checkOrigin: true,
-  },
+  devToolbar: { enabled: false },
+  image: { domains: ["static.wixstatic.com"] },
+  server: { host: true },
+  security: { checkOrigin: true },
 });
