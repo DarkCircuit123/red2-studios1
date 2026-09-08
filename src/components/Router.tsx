@@ -2,10 +2,11 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import { lazy, Suspense, useEffect } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 // Keep lazy-route failures visible to React Router's error boundary instead of
 // converting a real module/chunk failure into a misleading "Error loading page".
-function lazyPage<T extends { default: React.ComponentType<any> }>(loader: () => Promise<T>, name: string) {
+function lazyPage<T extends { default: ComponentType<any> }>(loader: () => Promise<T>, name: string) {
   return lazy(async () => {
     try {
       return await loader();
@@ -106,7 +107,7 @@ function Layout() {
   );
 }
 
-const routeSuspense = (element: React.ReactNode) => (
+const routeSuspense = (element: ReactNode) => (
   <Suspense fallback={<div />}>
     {element}
   </Suspense>
