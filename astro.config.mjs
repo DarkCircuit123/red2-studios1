@@ -10,9 +10,8 @@ import dynamicDataPlugin from "@wix/babel-plugin-jsx-dynamic-data";
 import customErrorOverlayPlugin from "./vite-error-overlay-plugin.js";
 import postcssPseudoToData from "@wix/postcss-pseudo-to-data";
 
-const isBuild = process.env.NODE_ENV == "production";
+const isBuild = process.env.NODE_ENV === "production";
 
-// https://astro.build/config
 export default defineConfig({
   output: "server",
   integrations: [
@@ -60,9 +59,7 @@ export default defineConfig({
     },
     css: !isBuild ? {
       postcss: {
-        plugins: [
-          postcssPseudoToData(),
-        ],
+        plugins: [postcssPseudoToData()],
       },
     } : undefined,
   },
@@ -78,6 +75,10 @@ export default defineConfig({
     host: true,
   },
   security: {
-    checkOrigin: false
-  }
+    // Keep Astro's CSRF origin validation enabled for server-side POST/PUT/
+    // PATCH/DELETE routes. Individual cross-origin integrations should use
+    // explicit, narrowly scoped handling rather than disabling the global
+    // protection.
+    checkOrigin: true,
+  },
 });
