@@ -201,7 +201,7 @@ export default function Header() {
               </span>
               <span 
                 className="logo-2-card text-4xl"
-                style={{ transform: 'translateY(-0.5em)' }}
+                style={{ transform: 'translateY(-0.75em)' }}
               >
                 <span className="logo-2-front">²</span>
                 <span className="logo-2-back" aria-hidden="true">²</span>
