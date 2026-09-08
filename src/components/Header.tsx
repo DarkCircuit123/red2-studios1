@@ -141,7 +141,6 @@ export default function Header() {
         onClose={handleLoginModalClose}
         onLoginSuccess={handleLoginSuccess}
       />
-      
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-6 ${
           scrolled
@@ -197,7 +196,7 @@ export default function Header() {
                 className="logo-2-card text-4xl"
                 style={{ transform: 'translateY(-0.75em)' }}
               >
-                <span className="logo-2-front">²</span>
+                <span className="logo-2-front text-oxblood">²</span>
               </span>
             </span>
           </Link>
