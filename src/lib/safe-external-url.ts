@@ -1,9 +1,9 @@
 /**
- * Safe External URL Validator
- * Prevents SSRF attacks by rejecting local, private, link-local and reserved targets.
+ * URL-level SSRF guard for admin-controlled external imports.
  *
- * This is a URL-level guard. DNS rebinding cannot be fully prevented here without
- * resolving and pinning the destination address at the point of the actual fetch.
+ * This intentionally rejects local/private/reserved address forms before any
+ * outbound request. DNS rebinding cannot be fully prevented here because the
+ * final resolver/fetcher is outside this helper.
  */
 import { isIP } from 'node:net';
 
@@ -19,6 +19,7 @@ function isBlockedIPv4(hostname: string): boolean {
     (a === 192 && b === 0 && c === 0) ||
     (a === 192 && b === 0 && c === 2) ||
     (a === 192 && b === 168) ||
+    (a === 192 && b === 88 && c === 99) ||
     (a === 198 && (b === 18 || b === 19)) ||
     (a === 198 && b === 51 && c === 100) ||
     (a === 203 && b === 0 && c === 113) ||
@@ -26,13 +27,30 @@ function isBlockedIPv4(hostname: string): boolean {
   );
 }
 
+function hexToIPv4(value: string): string | null {
+  const n = Number.parseInt(value, 16);
+  if (!Number.isFinite(n) || n < 0 || n > 0xffffffff) return null;
+  return `${(n >>> 24) & 255}.${(n >>> 16) & 255}.${(n >>> 8) & 255}.${n & 255}`;
+}
+
 function isBlockedIPv6(hostname: string): boolean {
   const normalized = hostname.toLowerCase();
   if (isIP(normalized) !== 6) return false;
+
   if (normalized === '::' || normalized === '::1') return true;
-  if (/^fe[89ab]/.test(normalized) || /^(?:fc|fd|ff)/.test(normalized)) return true;
-  const mapped = normalized.match(/:ffff:(\d+(?:\.\d+){3})$/i);
-  return Boolean(mapped?.[1] && isBlockedIPv4(mapped[1]));
+  if (/^(?:fe[89ab]|fc|fd|ff)/.test(normalized)) return true;
+
+  // IPv4-mapped IPv6 may appear in either dotted-decimal or hexadecimal form.
+  const mappedDotted = normalized.match(/^(?:0*:){0,6}ffff:(\d+(?:\.\d+){3})$/i)?.[1];
+  if (mappedDotted) return isBlockedIPv4(mappedDotted);
+
+  const mappedHex = normalized.match(/^(?:0*:){0,6}ffff:([0-9a-f]{4}):([0-9a-f]{4})$/i);
+  if (mappedHex) {
+    const ipv4 = hexToIPv4(`${mappedHex[1]}${mappedHex[2]}`);
+    return ipv4 ? isBlockedIPv4(ipv4) : true;
+  }
+
+  return false;
 }
 
 export function isSafeExternalUrl(urlString: string): boolean {
@@ -40,8 +58,8 @@ export function isSafeExternalUrl(urlString: string): boolean {
     const url = new URL(urlString.trim());
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
     if (url.username || url.password || !url.hostname) return false;
-    const hostname = url.hostname.toLowerCase().replace(/\.$/, '');
 
+    const hostname = url.hostname.toLowerCase().replace(/^\[/, '').replace(/\]$/, '').replace(/\.$/, '');
     if (
       hostname === 'localhost' || hostname.endsWith('.localhost') ||
       hostname === 'local' || hostname.endsWith('.local') ||
@@ -51,6 +69,9 @@ export function isSafeExternalUrl(urlString: string): boolean {
     const ipVersion = isIP(hostname);
     if (ipVersion === 4) return !isBlockedIPv4(hostname);
     if (ipVersion === 6) return !isBlockedIPv6(hostname);
+
+    // Reject alternate numeric IPv4 spellings (decimal/octal/hex) rather than
+    // letting a parser/fetcher reinterpret them as a private address.
     if (/^(?:0x[0-9a-f]+|0[0-7]+|\d+)$/.test(hostname)) return false;
     return true;
   } catch {
