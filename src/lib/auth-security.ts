@@ -4,7 +4,6 @@
  */
 
 import { auth } from '@wix/essentials';
-import { secrets } from '@wix/secrets';
 
 export async function readSecret(...candidateEnvNames: string[]): Promise<string | undefined> {
   for (const name of candidateEnvNames) {
@@ -20,19 +19,7 @@ export async function readSecret(...candidateEnvNames: string[]): Promise<string
         }
       }
     } catch {
-      // Continue to Wix Secrets Manager if the environment is unavailable.
-    }
-
-    try {
-      // Keep elevation inside the guarded server-side call. A runtime
-      // authorization/configuration exception during module initialization
-      // must not turn every endpoint importing this utility into HTTP 500.
-      const getSecretValue = auth.elevate(secrets.getSecretValue);
-      const result = await getSecretValue(name);
-      const value = typeof result === 'string' ? result : result?.value;
-      if (typeof value === 'string' && value.trim()) return value.trim();
-    } catch {
-      // Continue to the next configured source/name without exposing secret details.
+      // Continue to next source if environment is unavailable.
     }
   }
 
