@@ -1,160 +1,79 @@
 /**
  * Portfolio Update Endpoint (ADMIN ONLY)
- * Updates portfolio items with new Wix media URLs after migration
- * 
- * Security:
- * - Requires admin authentication
- * - Requires valid migration secret key
- * - Creates legacyImageBackup before updating (rollback safety)
- * - Rate limited to prevent abuse
+ * Applies the one-time base64 migration updates with a durable backup.
  */
 
 import type { APIRoute } from 'astro';
-import { readSecret } from '@/lib/auth-security';
+import { cmsService } from '@/integrations/cms/service';
+import { requireAdmin, readSecret, constantTimeEqual } from '@/lib/auth-security';
 
-interface UpdateRequest {
-  itemId: string;
-  updates: Record<string, string>;
+const MAX_BODY_BYTES = 256 * 1024;
+const ALLOWED_FIELDS = new Set(['mainImage', 'galleryImage1', 'galleryImage2', 'galleryImage3']);
+const JSON_HEADERS = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+
+async function verifyMigrationAccess(context: Parameters<APIRoute>[0]): Promise<Response | null> {
+  const denied = await requireAdmin(context.cookies, context.request, 'portfolio-update');
+  if (denied) return denied;
+
+  const supplied = context.request.headers.get('x-migration-secret') || '';
+  const expected = await readSecret('PORTFOLIO_MIGRATION_SECRET');
+  if (!expected) {
+    console.error('[PORTFOLIO_UPDATE] PORTFOLIO_MIGRATION_SECRET is not configured');
+    return new Response(JSON.stringify({ success: false, error: 'Migration is not configured.' }), { status: 503, headers: JSON_HEADERS });
+  }
+  if (!supplied || !constantTimeEqual(supplied, expected)) {
+    return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), { status: 401, headers: JSON_HEADERS });
+  }
+  return null;
 }
 
-/**
- * Verify admin authentication and migration secret
- */
-async function verifyAdminAccess(request: Request): Promise<{ valid: boolean; error?: string; status?: number }> {
-  // Check for migration secret key
-  const migrationSecret = request.headers.get('x-migration-secret');
-  const expectedSecret = await readSecret('PORTFOLIO_MIGRATION_SECRET');
+export const POST: APIRoute = async (context) => {
+  const denied = await verifyMigrationAccess(context);
+  if (denied) return denied;
 
-  if (!expectedSecret) {
-    console.error('[PORTFOLIO_UPDATE] PORTFOLIO_MIGRATION_SECRET not configured');
-    return {
-      valid: false,
-      error: 'Server configuration error: PORTFOLIO_MIGRATION_SECRET is not set',
-      status: 500,
-    };
-  }
-
-  if (!migrationSecret || migrationSecret !== expectedSecret) {
-    console.warn('[PORTFOLIO_UPDATE] Invalid migration secret provided');
-    return { valid: false, error: 'Unauthorized: Invalid migration secret', status: 401 };
-  }
-
-  return { valid: true };
-}
-
-export const POST: APIRoute = async ({ request }) => {
   try {
-    // Verify admin access
-    const authCheck = await verifyAdminAccess(request);
-    if (!authCheck.valid) {
-      console.warn('[PORTFOLIO_UPDATE] Unauthorized access attempt');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: authCheck.error,
-        }),
-        {
-          status: authCheck.status ?? 401,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+    const contentLength = Number(context.request.headers.get('content-length') || 0);
+    if (contentLength > MAX_BODY_BYTES) return new Response(JSON.stringify({ success: false, error: 'Request too large.' }), { status: 413, headers: JSON_HEADERS });
+
+    const contentType = context.request.headers.get('content-type') || '';
+    if (!contentType.toLowerCase().startsWith('application/json')) return new Response(JSON.stringify({ success: false, error: 'Content-Type must be application/json.' }), { status: 415, headers: JSON_HEADERS });
+
+    const raw = await context.request.text();
+    if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) return new Response(JSON.stringify({ success: false, error: 'Request too large.' }), { status: 413, headers: JSON_HEADERS });
+
+    const body = JSON.parse(raw) as { itemId?: unknown; updates?: unknown };
+    const itemId = typeof body.itemId === 'string' ? body.itemId.trim() : '';
+    const updates = body.updates && typeof body.updates === 'object' && !Array.isArray(body.updates) ? body.updates as Record<string, unknown> : null;
+    if (!itemId || itemId.length > 100 || !updates) return new Response(JSON.stringify({ success: false, error: 'Invalid migration update.' }), { status: 400, headers: JSON_HEADERS });
+
+    const sanitizedUpdates: Record<string, string> = {};
+    for (const [field, value] of Object.entries(updates)) {
+      if (!ALLOWED_FIELDS.has(field) || typeof value !== 'string' || value.length > 4096) {
+        return new Response(JSON.stringify({ success: false, error: 'Invalid migration field.' }), { status: 400, headers: JSON_HEADERS });
+      }
+      sanitizedUpdates[field] = value;
     }
+    if (Object.keys(sanitizedUpdates).length === 0) return new Response(JSON.stringify({ success: false, error: 'No valid fields supplied.' }), { status: 400, headers: JSON_HEADERS });
 
-    if (!request.body) {
-      return new Response(
-        JSON.stringify({ error: 'No request body provided' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    const currentResult = await cmsService.getAll<Record<string, unknown>>('portfolio', { _id: itemId }, { limit: 1, suppressAuth: true });
+    const currentItem = currentResult.items?.[0];
+    if (!currentItem) return new Response(JSON.stringify({ success: false, error: 'Portfolio item not found.' }), { status: 404, headers: JSON_HEADERS });
 
-    const { itemId, updates } = (await request.json()) as UpdateRequest;
-
-    if (!itemId || !updates) {
-      return new Response(
-        JSON.stringify({ error: 'Missing itemId or updates' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`[PORTFOLIO_UPDATE] Updating portfolio item ${itemId}...`);
-
-    // Dynamically import BaseCrudService
-    const { BaseCrudService } = await import('@/integrations');
-    const { Portfolio, PortfolioImageBackups } = await import('@/entities/index');
-
-    // First, fetch the current item to create a backup
-    const currentItem = await BaseCrudService.getById<Portfolio>('portfolio', itemId);
-
-    if (!currentItem) {
-      return new Response(
-        JSON.stringify({ error: 'Portfolio item not found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Create backup of original image data for rollback safety
-    const legacyImageBackup = {
-      mainImage: currentItem.mainImage,
-      galleryImage1: currentItem.galleryImage1,
-      galleryImage2: currentItem.galleryImage2,
-      galleryImage3: currentItem.galleryImage3,
-      backupCreatedAt: new Date().toISOString(),
-    };
-
-    // Actually persist the backup to a dedicated CMS collection before the
-    // destructive update runs. Previously this object was only logged and
-    // returned in the response body - never written anywhere durable - so
-    // the "rollback safety" claimed above did not actually exist once the
-    // process exited or the response was discarded.
-    await BaseCrudService.create<PortfolioImageBackups>('portfolioimagebackups', {
+    await cmsService.create('portfolioimagebackups', {
       _id: crypto.randomUUID(),
       portfolioItemId: itemId,
-      mainImage: legacyImageBackup.mainImage,
-      galleryImage1: legacyImageBackup.galleryImage1,
-      galleryImage2: legacyImageBackup.galleryImage2,
-      galleryImage3: legacyImageBackup.galleryImage3,
-      backupCreatedAt: legacyImageBackup.backupCreatedAt,
-    });
+      mainImage: typeof currentItem.mainImage === 'string' ? currentItem.mainImage : '',
+      galleryImage1: typeof currentItem.galleryImage1 === 'string' ? currentItem.galleryImage1 : '',
+      galleryImage2: typeof currentItem.galleryImage2 === 'string' ? currentItem.galleryImage2 : '',
+      galleryImage3: typeof currentItem.galleryImage3 === 'string' ? currentItem.galleryImage3 : '',
+      backupCreatedAt: new Date().toISOString(),
+    }, { suppressAuth: true });
 
-    console.log(`[PORTFOLIO_UPDATE] Persisted backup to portfolioimagebackups for rollback safety`);
+    await cmsService.update('portfolio', { _id: itemId, ...sanitizedUpdates }, { suppressAuth: true });
 
-    // Prepare update object
-    const updateData: Partial<Portfolio> = {
-      _id: itemId,
-      ...updates,
-    };
-
-    // Update the portfolio item
-    await BaseCrudService.update<Portfolio>('portfolio', updateData);
-
-    console.log(`[PORTFOLIO_UPDATE] Successfully updated portfolio item ${itemId}`);
-    console.log(`[PORTFOLIO_UPDATE] Backup stored for rollback: ${JSON.stringify(legacyImageBackup)}`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        itemId,
-        updatedFields: Object.keys(updates),
-        backup: legacyImageBackup,
-      }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ success: true, itemId, updatedFields: Object.keys(sanitizedUpdates) }), { status: 200, headers: JSON_HEADERS });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[PORTFOLIO_UPDATE] Error:', error);
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: message,
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    console.error('[PORTFOLIO_UPDATE] Update failed:', error instanceof Error ? error.message : String(error));
+    return new Response(JSON.stringify({ success: false, error: 'Could not update portfolio item.' }), { status: 500, headers: JSON_HEADERS });
   }
 };
