@@ -157,15 +157,15 @@ export default function AboutSection() {
                     initial="hidden"
                     animate={sectionVisible ? "visible" : "hidden"}
                     variants={{
-                      hidden: { x: 100, opacity: 0 },
+                      hidden: { x: 500, opacity: 0 },
                       visible: {
                         x: 0,
                         opacity: 1,
                         transition: {
                           type: 'spring',
-                          stiffness: 80,
-                          damping: 15,
-                          duration: 0.8
+                          stiffness: 60,
+                          damping: 20,
+                          duration: 1.2
                         }
                       }
                     }}
