@@ -1,17 +1,5 @@
-/**
- * Wix Media Upload Service - Client-side browser uploads
- * 
- * This service handles:
- * 1. Requesting signed upload URLs from the backend (server-only SDK logic)
- * 2. Uploading files directly from the browser to Wix Media Manager
- * 3. Returning media URLs from the upload response
- * 
- * Server-side SDK logic (auth.elevate, media client) is confined to backend endpoints.
- * No file bytes pass through our backend - only metadata for URL generation.
- */
-
-import { safeJson } from './safeJson';
-import { UploadConfig, validateFileAgainstConfig } from './upload-config';
+import type { UploadConfig } from './upload-config';
+import { validateFileAgainstConfig } from './upload-config';
 
 export interface UploadProgress {
   loaded: number;
@@ -33,425 +21,219 @@ export interface UploadError {
   details?: string;
 }
 
-/**
- * Request a signed upload URL from the backend
- * The backend uses server-only Wix SDK to generate the URL
- */
-async function generateUploadUrl(
-  file: File,
-  kind: 'image' | 'music'
-): Promise<{ uploadUrl: string; fileName: string }> {
-  console.log(`[WIX_MEDIA] Requesting upload URL for ${kind}: ${file.name}`);
-  
+interface UploadUrlResponse {
+  uploadUrl?: unknown;
+  fileName?: unknown;
+}
+
+const MAX_FILE_NAME_LENGTH = 255;
+
+function sanitizeFilename(value: string): string {
+  const trimmed = value.trim().replace(/[\r\n]/g, '');
+  const lastDot = trimmed.lastIndexOf('.');
+  const ext = lastDot > 0 ? trimmed.slice(lastDot).toLowerCase().replace(/[^a-z0-9.]/g, '') : '';
+  const base = (lastDot > 0 ? trimmed.slice(0, lastDot) : trimmed)
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, MAX_FILE_NAME_LENGTH - ext.length);
+  return `${base || `upload_${Date.now()}`}${ext}`;
+}
+
+function isSafeUploadUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || !value) return false;
   try {
-    // Call backend endpoint to generate signed URL (server-only SDK logic)
-    const response = await fetch('/api/media/generate-upload-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fileName: file.name,
-        fileType: file.type,
-        kind
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `Failed to generate upload URL: HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (!data.uploadUrl) {
-      throw new Error('Backend did not return an upload URL');
-    }
-    
-    console.log('[WIX_MEDIA] Successfully received upload URL from backend');
-    return { uploadUrl: data.uploadUrl, fileName: file.name };
-  } catch (error) {
-    console.error('[WIX_MEDIA] Failed to generate upload URL:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw {
-      code: 'GENERATE_URL_FAILED',
-      message: `Failed to generate upload URL: ${errorMessage}`,
-      details: 'Check server logs for more information'
-    } as UploadError;
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password;
+  } catch {
+    return false;
   }
 }
 
-/**
- * Build a renderable HTTPS URL for audio files.
- * Audio files are returned as static HTTPS URLs from Wix Media Manager.
- * Unlike images, audio does NOT need wix:image:// URLs - it needs direct HTTPS URLs.
- */
-function buildWixAudioUrl(response: any, file: File): string | undefined {
-  console.log('[WIX_MEDIA] buildWixAudioUrl - full upload response:', JSON.stringify(response, null, 2));
-  
-  const f = response?.file;
-  if (!f) {
-    console.error('[WIX_MEDIA] buildWixAudioUrl - no file in response', {
-      responseKeys: Object.keys(response || {}),
-      response
-    });
-    return undefined;
+function isSafeMediaUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || !value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password;
+  } catch {
+    return false;
   }
-
-  console.log('[WIX_MEDIA] buildWixAudioUrl - file object:', {
-    fileKeys: Object.keys(f),
-    file: f
-  });
-
-  // For audio, we want the direct HTTPS URL from the response
-  const staticUrl = f?.url;
-  if (!staticUrl) {
-    console.error('[WIX_MEDIA] buildWixAudioUrl - no URL in response', {
-      fileKeys: Object.keys(f),
-      file: f
-    });
-    return undefined;
-  }
-
-  console.log('[WIX_MEDIA] buildWixAudioUrl - returning HTTPS audio URL', { 
-    staticUrl,
-    isHttps: staticUrl.startsWith('https://'),
-    domain: new URL(staticUrl).hostname,
-    urlLength: staticUrl.length
-  });
-  return staticUrl;
 }
 
-/**
- * Turn the upload response into a URL the site can actually RENDER.
- *
- * This is the difference between "saved" and "visible".
- *
- * The bare `file.url` that Wix returns looks like:
- *   https://static.wixstatic.com/media/e9d727_abc~mv2.jpg
- *
- * The site's <Image> component (src/components/ui/image.tsx, getImageData)
- * only understands two shapes:
- *   1. wix:image://v1/<id>/<filename>#originWidth=W&originHeight=H
- *   2. a static.wixstatic.com URL that ALREADY carries ?originWidth=&originHeight=
- *
- * A bare static URL matches neither, so getImageData returns undefined, Wix's
- * image SDK cannot compute a scaled src, and the image does not render - even
- * though the value is correctly stored in the CMS. Every image on this site
- * that works is in form 1; that is why the pre-existing ones render and freshly
- * uploaded ones did not.
- *
- * The upload response already contains the id and the real pixel dimensions
- * under file.media.image.image, so we assemble form 1 here. If metadata is
- * missing, we extract the media ID from the static URL and build a valid
- * wix:image://v1 URL. We never return a bare static URL.
- */
-function buildWixMediaUrl(response: any, file: File): string | undefined {
-  console.log('[WIX_MEDIA] buildWixMediaUrl - upload response:', response);
-  
-  const f = response?.file;
-  if (!f) {
-    console.error('[WIX_MEDIA] buildWixMediaUrl - no file in response');
-    return undefined;
-  }
-
-  const img = f?.media?.image?.image;
-  let id: string | undefined = img?.id || f?.id;
-  const width = Number(img?.width);
-  const height = Number(img?.height);
-  const filename: string = img?.filename || f?.displayName || file.name;
-
-  // If we have complete metadata, build the wix:image://v1 URL
-  if (id && Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
-    const url =
-      `wix:image://v1/${id}/${encodeURIComponent(filename)}` +
-      `#originWidth=${width}&originHeight=${height}`;
-    console.log('[WIX_MEDIA] built renderable media URL from metadata', { id, width, height, url });
-    return url;
-  }
-
-  // Metadata is missing - try to extract media ID from the static URL
-  const staticUrl = f?.url;
-  if (!staticUrl) {
-    console.error('[WIX_MEDIA] buildWixMediaUrl - no URL in response');
-    return undefined;
-  }
-
-  console.warn('[WIX_MEDIA] upload response missing image dimensions, attempting to extract media ID from static URL');
-
-  // Extract media ID from static URL
-  // Formats:
-  //   Images: https://static.wixstatic.com/media/{mediaId}~{variant}.{ext}
-  //   Music:  https://music.wixstatic.com/mp3/{mediaId}.mp3
-  // Examples:
-  //   https://static.wixstatic.com/media/e9d727_abc~mv2.jpg
-  //   https://music.wixstatic.com/mp3/e9d727_948e0828bec8409fa0e9ff724b1806ae.mp3
-  
-  // Try image format first (with ~ separator)
-  let mediaIdMatch = staticUrl.match(/\/media\/([^~]+)/);
-  
-  // If not found, try music format (direct filename without ~)
-  if (!mediaIdMatch || !mediaIdMatch[1]) {
-    mediaIdMatch = staticUrl.match(/\/(media|mp3)\/([^.]+)/);
-    if (mediaIdMatch && mediaIdMatch[2]) {
-      mediaIdMatch = [mediaIdMatch[0], mediaIdMatch[2]]; // Normalize to [fullMatch, id]
-    }
-  }
-  
-  if (!mediaIdMatch || !mediaIdMatch[1]) {
-    console.error('[WIX_MEDIA] buildWixMediaUrl - could not extract media ID from static URL', { staticUrl });
-    return undefined;
-  }
-
-  id = mediaIdMatch[1];
-  console.log('[WIX_MEDIA] extracted media ID from static URL', { extractedId: id, staticUrl });
-
-  // If we have dimensions, use them; otherwise use placeholder dimensions
-  // (This ensures the image is at least renderable, even if not perfectly sized)
-  const finalWidth = Number.isFinite(width) && width > 0 ? width : 1200;
-  const finalHeight = Number.isFinite(height) && height > 0 ? height : 800;
-
-  const url =
-    `wix:image://v1/${id}/${encodeURIComponent(filename)}` +
-    `#originWidth=${finalWidth}&originHeight=${finalHeight}`;
-  
-  console.log('[WIX_MEDIA] built renderable media URL from extracted ID', { 
-    id, 
-    width: finalWidth, 
-    height: finalHeight, 
-    url,
-    usedPlaceholderDimensions: !(Number.isFinite(width) && width > 0)
+async function generateUploadUrl(file: File, kind: 'image' | 'music'): Promise<{ uploadUrl: string; fileName: string }> {
+  const fileName = sanitizeFilename(file.name);
+  const response = await fetch('/api/media/generate-upload-url', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ fileName, fileType: file.type, kind }),
   });
-  
-  return url;
+
+  const payload = await response.json().catch(() => null) as UploadUrlResponse | { error?: unknown } | null;
+  if (!response.ok || !payload || !isSafeUploadUrl(payload.uploadUrl)) {
+    const message = payload && 'error' in payload && typeof payload.error === 'string'
+      ? payload.error
+      : 'Could not prepare the upload.';
+    throw { code: 'GENERATE_URL_FAILED', message } as UploadError;
+  }
+
+  return {
+    uploadUrl: payload.uploadUrl,
+    fileName: typeof payload.fileName === 'string' ? payload.fileName : fileName,
+  };
 }
 
-/**
- * Upload file directly to Wix Media Manager using signed URL
- * Returns the media URL from the upload response
- * 
- * For audio files, uses buildWixAudioUrl() to get HTTPS URL
- * For image files, uses buildWixMediaUrl() to get wix:image:// URL
- */
+function parseUploadResponse(responseText: string, file: File): { mediaUrl: string; mediaId?: string } {
+  let payload: any;
+  try {
+    payload = JSON.parse(responseText);
+  } catch {
+    throw new Error('Wix returned an invalid upload response.');
+  }
+
+  const fileRecord = payload?.file;
+  const mediaUrl = fileRecord?.url;
+  if (!isSafeMediaUrl(mediaUrl)) throw new Error('Wix returned an invalid media URL.');
+
+  return {
+    mediaUrl,
+    mediaId: typeof fileRecord?.id === 'string' ? fileRecord.id : undefined,
+  };
+}
+
 function uploadToWix(
   file: File,
   uploadUrl: string,
-  kind: 'image' | 'music' = 'image',
-  onProgress?: (progress: UploadProgress) => void
-): Promise<string> {
+  onProgress?: (progress: UploadProgress) => void,
+): Promise<{ mediaUrl: string; mediaId?: string }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    
+    xhr.timeout = 300_000;
+
     xhr.addEventListener('load', () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        console.log('[WIX_MEDIA] File uploaded successfully');
-        try {
-          const response = JSON.parse(xhr.responseText);
-          
-          // Use appropriate URL builder based on file kind
-          const mediaUrl = kind === 'music' 
-            ? buildWixAudioUrl(response, file)
-            : buildWixMediaUrl(response, file);
-          
-          if (mediaUrl) {
-            resolve(mediaUrl);
-          } else {
-            reject(new Error('Upload response missing media URL'));
-          }
-        } catch (e) {
-          reject(new Error(`Failed to parse upload response: ${e instanceof Error ? e.message : String(e)}`));
-        }
-      } else {
-        console.error(`[WIX_MEDIA] Upload failed with status ${xhr.status}`);
-        reject(new Error(`Upload failed with status ${xhr.status}`));
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(new Error(`Upload failed with status ${xhr.status}.`));
+        return;
+      }
+      try {
+        resolve(parseUploadResponse(xhr.responseText, file));
+      } catch (error) {
+        reject(error);
       }
     });
+    xhr.addEventListener('error', () => reject(new Error('Network error during upload.')));
+    xhr.addEventListener('abort', () => reject(new Error('Upload was aborted.')));
+    xhr.addEventListener('timeout', () => reject(new Error('Upload timed out.')));
 
-    xhr.addEventListener('error', () => {
-      console.error('[WIX_MEDIA] Network error during upload');
-      reject(new Error('Network error during upload'));
-    });
-
-    xhr.addEventListener('abort', () => {
-      console.error('[WIX_MEDIA] Upload was aborted');
-      reject(new Error('Upload was aborted'));
-    });
-
-    xhr.addEventListener('timeout', () => {
-      console.error('[WIX_MEDIA] Upload timed out');
-      reject(new Error('Upload timed out'));
-    });
-
-    if (onProgress) {
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const percentage = Math.round((event.loaded / event.total) * 100);
-          onProgress({
-            loaded: event.loaded,
-            total: event.total,
-            percentage
-          });
-        }
+    xhr.upload.addEventListener('progress', (event) => {
+      if (!event.lengthComputable) return;
+      onProgress?.({
+        loaded: event.loaded,
+        total: event.total,
+        percentage: Math.round((event.loaded / event.total) * 100),
       });
-    }
+    });
 
-    xhr.timeout = 300000; // 5 minutes
     xhr.open('PUT', uploadUrl);
     xhr.setRequestHeader('Content-Type', file.type);
     xhr.send(file);
   });
 }
 
-/**
- * Main upload function - handles both images and music
- */
 export async function uploadMedia(
   file: File,
   kind: 'image' | 'music',
   config: UploadConfig,
-  onProgress?: (progress: UploadProgress) => void
+  onProgress?: (progress: UploadProgress) => void,
 ): Promise<UploadResult> {
-  console.log(`[WIX_MEDIA] Starting ${kind} upload: ${file.name} (${file.size} bytes)`);
-
-  // Validate file against config
   const validation = validateFileAgainstConfig({ type: file.type, size: file.size }, config);
   if (!validation.valid) {
-    console.error(`[WIX_MEDIA] Validation failed: ${validation.error}`);
-    throw {
-      code: 'INVALID_FILE',
-      message: validation.error
-    } as UploadError;
+    throw { code: 'INVALID_FILE', message: validation.error } as UploadError;
   }
 
   try {
-    // Step 1: Request signed upload URL from backend
     const { uploadUrl, fileName } = await generateUploadUrl(file, kind);
-    console.log(`[WIX_MEDIA] Received upload URL for ${kind}:`, {
-      uploadUrlDomain: new URL(uploadUrl).hostname,
-      fileName
-    });
-
-    // Step 2: Upload file directly to Wix and get media URL from response
-    // Pass 'kind' to uploadToWix so it uses the correct URL builder
-    const mediaUrl = await uploadToWix(file, uploadUrl, kind, onProgress);
-    console.log(`[WIX_MEDIA] ${kind} upload complete:`, { 
-      mediaUrl, 
-      fileName,
-      mediaUrlLength: mediaUrl.length,
-      mediaUrlIsHttps: mediaUrl.startsWith('https://')
-    });
-
+    const result = await uploadToWix(file, uploadUrl, onProgress);
     return {
-      mediaUrl,
+      mediaUrl: result.mediaUrl,
+      mediaId: result.mediaId,
       fileName,
       fileSize: file.size,
-      mimeType: file.type
+      mimeType: file.type,
     };
   } catch (error) {
-    console.error(`[WIX_MEDIA] ${kind} upload failed:`, error);
-    
-    if (error && typeof error === 'object' && 'code' in error) {
-      throw error;
-    }
-    
+    if (error && typeof error === 'object' && 'code' in error) throw error;
     throw {
       code: 'UPLOAD_FAILED',
-      message: error instanceof Error ? error.message : 'Upload failed',
-      details: 'Check server logs for more information'
+      message: error instanceof Error ? error.message : 'Upload failed.',
     } as UploadError;
   }
 }
 
-/**
- * Simple upload function for direct use in components
- * Returns just the media URL string
- */
-export async function uploadToWixMedia(
-  file: File,
-  kind: 'image' | 'music'
-): Promise<string> {
-  console.log(`[WIX_MEDIA] uploadToWixMedia - Starting ${kind} upload: ${file.name}`);
+export async function uploadToWixMedia(file: File, kind: 'image' | 'music'): Promise<string> {
+  const config: UploadConfig = kind === 'music'
+    ? {
+        label: 'audio',
+        acceptedMimeTypes: ['audio/mpeg', 'audio/mp3', 'audio/x-mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'],
+        acceptedPrefix: 'audio/',
+        maxSizeBytes: 500 * 1024 * 1024,
+        maxSizeLabel: '500MB',
+      }
+    : {
+        label: 'image',
+        acceptedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/tiff', 'image/bmp', 'image/x-icon', 'image/heic', 'image/heif'],
+        acceptedPrefix: 'image/',
+        maxSizeBytes: 100 * 1024 * 1024,
+        maxSizeLabel: '100MB',
+      };
 
-  try {
-    // Request signed upload URL from backend
-    const { uploadUrl } = await generateUploadUrl(file, kind);
-    
-    // Upload file directly to Wix and get media URL
-    // Pass 'kind' to uploadToWix so it uses the correct URL builder
-    const mediaUrl = await uploadToWix(file, uploadUrl, kind);
-    
-    console.log(`[WIX_MEDIA] uploadToWixMedia - Upload successful, returning URL: ${mediaUrl}`);
-    return mediaUrl;
-  } catch (error) {
-    console.error(`[WIX_MEDIA] uploadToWixMedia - Upload failed:`, error);
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to upload ${kind}: ${errorMsg}`);
-  }
+  const result = await uploadMedia(file, kind, config);
+  return result.mediaUrl;
 }
 
-/**
- * Import media from external URL
- */
-export async function importMediaFromUrl(
-  url: string,
-  kind: 'image' | 'music'
-): Promise<UploadResult> {
-  console.log(`[WIX_MEDIA] Importing ${kind} from URL:`, url);
+export async function importMediaFromUrl(url: string, kind: 'image' | 'music'): Promise<UploadResult> {
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl || trimmedUrl.length > 2048) {
+    throw { code: 'IMPORT_FAILED', message: 'Please provide a valid file URL.' } as UploadError;
+  }
 
   try {
-    // Fetch the file from the URL
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL: HTTP ${response.status}`);
+    const response = await fetch('/api/media/import-from-url', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ url: trimmedUrl, kind }),
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload?.success || !isSafeMediaUrl(payload.mediaUrl)) {
+      throw new Error(typeof payload?.error === 'string' ? payload.error : 'Media import failed.');
     }
 
-    const contentType = response.headers.get('content-type');
-    const contentLength = response.headers.get('content-length');
-
-    if (!contentType) {
-      throw new Error('URL did not return a content-type header');
-    }
-
-    const fileSize = contentLength ? parseInt(contentLength, 10) : 0;
-
-    // Create a File object from the response
-    const blob = await response.blob();
-    const fileName = url.split('/').pop() || `imported-${kind}-${Date.now()}`;
-    const file = new File([blob], fileName, { type: contentType });
-
-    // Upload the file
-    return await uploadMedia(file, kind, { maxSize: 100 * 1024 * 1024, mimeTypes: [] });
+    return {
+      mediaUrl: payload.mediaUrl,
+      mediaId: typeof payload.mediaId === 'string' ? payload.mediaId : undefined,
+      fileName: typeof payload.fileName === 'string' ? payload.fileName : `imported-${kind}`,
+      fileSize: typeof payload.detectedSizeBytes === 'number' ? payload.detectedSizeBytes : 0,
+      mimeType: typeof payload.detectedType === 'string' ? payload.detectedType : '',
+    };
   } catch (error) {
-    console.error(`[WIX_MEDIA] Failed to import ${kind} from URL:`, error);
-    
-    if (error && typeof error === 'object' && 'code' in error) {
-      throw error;
-    }
-
+    if (error && typeof error === 'object' && 'code' in error) throw error;
     throw {
       code: 'IMPORT_FAILED',
-      message: error instanceof Error ? error.message : 'Failed to import from URL',
-      details: 'Check server logs for more information'
+      message: error instanceof Error ? error.message : 'Failed to import from URL.',
     } as UploadError;
   }
 }
 
-/**
- * Create a preview URL from a File object (memory-efficient, not base64)
- */
 export function createPreviewUrl(file: File): string {
   return URL.createObjectURL(file);
 }
 
-/**
- * Revoke a preview URL to free memory
- */
 export function revokePreviewUrl(url: string): void {
   URL.revokeObjectURL(url);
 }
 
-/**
- * Check if a URL is a data URL (base64)
- */
 export function isDataUrl(url: string): boolean {
-  return url.startsWith('data:');
+  return url.trim().toLowerCase().startsWith('data:');
 }
