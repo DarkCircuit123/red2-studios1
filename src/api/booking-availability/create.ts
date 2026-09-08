@@ -1,199 +1,146 @@
 /**
  * POST /api/booking-availability/create
- * 
- * Creates a new booking availability slot with production hardening:
- * - Duplicate slot protection (checks bookingDate + startTime + endTime)
- * - Server-side data normalization and validation
- * - Comprehensive logging for audit trail
- * 
- * Request Payload:
- * {
- *   bookingDate: string (YYYY-MM-DD format, required)
- *   startTime: string (HH:mm format, required)
- *   endTime: string (HH:mm format, required)
- *   sessionType: string (optional, trimmed, defaults to 'Session')
- *   isAvailable: boolean (optional, defaults to true)
- * }
- * 
- * Success Response (201):
- * {
- *   success: true,
- *   data: { _id: string, bookingDate, startTime, endTime, sessionType, isAvailable, _createdDate, _updatedDate }
- * }
- * 
- * Error Responses:
- * 400: Missing/invalid required fields
- * 409: Duplicate slot already exists
- * 500: Server error
+ * Creates a new booking availability slot with server-side validation.
  */
 
 import { BookingAvailability } from '@/entities/index';
 import { BaseCrudService } from '@/integrations';
 import { requireAdmin } from '@/lib/auth-security';
 
-// Validation helpers
 function validateDateFormat(date: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(date);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
 }
 
 function validateTimeFormat(time: string): boolean {
-  return /^\d{2}:\d{2}$/.test(time);
+  if (!/^\d{2}:\d{2}$/.test(time)) return false;
+  const [hour, minute] = time.split(':').map(Number);
+  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
 }
 
 function isTimeAfter(startTime: string, endTime: string): boolean {
   const [startHour, startMin] = startTime.split(':').map(Number);
   const [endHour, endMin] = endTime.split(':').map(Number);
-  const startTotalMin = startHour * 60 + startMin;
-  const endTotalMin = endHour * 60 + endMin;
-  return endTotalMin > startTotalMin;
+  return endHour * 60 + endMin > startHour * 60 + startMin;
 }
 
-async function checkDuplicateSlot(bookingDate: string, startTime: string, endTime: string): Promise<boolean> {
-  try {
-    const { items } = await BaseCrudService.getAll<BookingAvailability>('bookingavailability');
-    return items.some(item => 
-      item.bookingDate === bookingDate && 
-      item.startTime === startTime && 
+async function checkDuplicateSlot(
+  bookingDate: string,
+  startTime: string,
+  endTime: string
+): Promise<boolean> {
+  const { items } = await BaseCrudService.getAll<BookingAvailability>(
+    'bookingavailability',
+    {},
+    { limit: 1000 }
+  );
+
+  return items.some(
+    item =>
+      item.bookingDate === bookingDate &&
+      item.startTime === startTime &&
       item.endTime === endTime
-    );
-  } catch (error) {
-    console.error('[Backend] Error checking for duplicate slot:', error);
-    throw error;
-  }
+  );
 }
 
 export async function POST({ request, cookies }: { request: Request; cookies: any }) {
-  // ADMIN GATE: this route mutates the availability calendar with
-  // suppressAuth: true, bypassing collection permissions entirely.
-  // It previously had no auth at all - anyone who knew the URL could
-  // add, alter or wipe the entire booking calendar.
   const denied = await requireAdmin(cookies, request, 'create booking availability');
   if (denied) return denied;
 
-  const startTime = new Date();
-  const requestId = Math.random().toString(36).substring(7);
-  
+  const requestId = crypto.randomUUID();
+
   try {
-    console.log(`[CREATE:${requestId}] POST /api/booking-availability/create - Starting`);
-    
     const availability = await request.json() as BookingAvailability;
-    console.log(`[CREATE:${requestId}] Received payload:`, JSON.stringify(availability, null, 2));
 
-    // Validate required fields exist
-    if (!availability.bookingDate) {
-      console.warn(`[CREATE:${requestId}] Validation failed: Missing bookingDate`);
-      return new Response(
-        JSON.stringify({ success: false, message: 'Missing required field: bookingDate' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (!availability || typeof availability !== 'object') {
+      return new Response(JSON.stringify({ success: false, message: 'Invalid request body' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    if (!availability.startTime) {
-      console.warn(`[CREATE:${requestId}] Validation failed: Missing startTime`);
-      return new Response(
-        JSON.stringify({ success: false, message: 'Missing required field: startTime' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (typeof availability.bookingDate !== 'string' || !availability.bookingDate.trim()) {
+      return new Response(JSON.stringify({ success: false, message: 'Missing required field: bookingDate' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (typeof availability.startTime !== 'string' || !availability.startTime.trim()) {
+      return new Response(JSON.stringify({ success: false, message: 'Missing required field: startTime' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (typeof availability.endTime !== 'string' || !availability.endTime.trim()) {
+      return new Response(JSON.stringify({ success: false, message: 'Missing required field: endTime' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    if (!availability.endTime) {
-      console.warn(`[CREATE:${requestId}] Validation failed: Missing endTime`);
-      return new Response(
-        JSON.stringify({ success: false, message: 'Missing required field: endTime' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Normalize and validate data
     const bookingDate = availability.bookingDate.trim();
-    const startTimeNorm = availability.startTime.trim();
-    const endTimeNorm = availability.endTime.trim();
-    const sessionType = (availability.sessionType || 'Session').trim();
+    const startTime = availability.startTime.trim();
+    const endTime = availability.endTime.trim();
+    const sessionType = typeof availability.sessionType === 'string' && availability.sessionType.trim()
+      ? availability.sessionType.trim().slice(0, 120)
+      : 'Session';
 
-    // Validate date format
     if (!validateDateFormat(bookingDate)) {
-      console.warn(`[CREATE:${requestId}] Validation failed: Invalid bookingDate format (expected YYYY-MM-DD): ${bookingDate}`);
-      return new Response(
-        JSON.stringify({ success: false, message: 'Invalid bookingDate format. Expected YYYY-MM-DD' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ success: false, message: 'Invalid bookingDate format. Expected YYYY-MM-DD' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (!validateTimeFormat(startTime)) {
+      return new Response(JSON.stringify({ success: false, message: 'Invalid startTime format. Expected HH:mm' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (!validateTimeFormat(endTime)) {
+      return new Response(JSON.stringify({ success: false, message: 'Invalid endTime format. Expected HH:mm' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (!isTimeAfter(startTime, endTime)) {
+      return new Response(JSON.stringify({ success: false, message: 'endTime must be after startTime' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Validate time formats
-    if (!validateTimeFormat(startTimeNorm)) {
-      console.warn(`[CREATE:${requestId}] Validation failed: Invalid startTime format (expected HH:mm): ${startTimeNorm}`);
-      return new Response(
-        JSON.stringify({ success: false, message: 'Invalid startTime format. Expected HH:mm' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (await checkDuplicateSlot(bookingDate, startTime, endTime)) {
+      return new Response(JSON.stringify({ success: false, message: 'This availability slot already exists' }), {
+        status: 409,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
-
-    if (!validateTimeFormat(endTimeNorm)) {
-      console.warn(`[CREATE:${requestId}] Validation failed: Invalid endTime format (expected HH:mm): ${endTimeNorm}`);
-      return new Response(
-        JSON.stringify({ success: false, message: 'Invalid endTime format. Expected HH:mm' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate endTime is after startTime
-    if (!isTimeAfter(startTimeNorm, endTimeNorm)) {
-      console.warn(`[CREATE:${requestId}] Validation failed: endTime (${endTimeNorm}) is not after startTime (${startTimeNorm})`);
-      return new Response(
-        JSON.stringify({ success: false, message: 'endTime must be after startTime' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check for duplicate slot
-    console.log(`[CREATE:${requestId}] Checking for duplicate slot: ${bookingDate} ${startTimeNorm}-${endTimeNorm}`);
-    const isDuplicate = await checkDuplicateSlot(bookingDate, startTimeNorm, endTimeNorm);
-    
-    if (isDuplicate) {
-      console.warn(`[CREATE:${requestId}] Duplicate slot detected: ${bookingDate} ${startTimeNorm}-${endTimeNorm}`);
-      return new Response(
-        JSON.stringify({ success: false, message: 'This availability slot already exists' }),
-        { status: 409, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Prepare normalized data for insertion
-    const dataToInsert = {
-      bookingDate,
-      startTime: startTimeNorm,
-      endTime: endTimeNorm,
-      isAvailable: availability.isAvailable !== false,
-      sessionType
-    };
-
-    console.log(`[CREATE:${requestId}] Inserting normalized data:`, JSON.stringify(dataToInsert, null, 2));
 
     const result = await BaseCrudService.create<BookingAvailability>('bookingavailability', {
-      ...dataToInsert,
-      _id: crypto.randomUUID()
+      _id: crypto.randomUUID(),
+      bookingDate,
+      startTime,
+      endTime,
+      isAvailable: availability.isAvailable !== false,
+      sessionType,
     });
 
-    const duration = new Date().getTime() - startTime.getTime();
-    console.log(`[CREATE:${requestId}] ✓ Successfully created slot ${result._id} in ${duration}ms`);
+    console.log(`[CREATE:${requestId}] Created booking availability ${result._id}`);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: result
-      }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ success: true, data: result }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    });
   } catch (error) {
-    const duration = new Date().getTime() - startTime.getTime();
-    console.error(`[CREATE:${requestId}] ✗ Failed after ${duration}ms:`, error);
-    console.error(`[CREATE:${requestId}] Error details:`, error instanceof Error ? error.message : 'Unknown error');
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to create booking availability'
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    console.error(`[CREATE:${requestId}] Failed:`, error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create booking availability',
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    });
   }
 }
