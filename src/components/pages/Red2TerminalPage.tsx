@@ -405,7 +405,7 @@ const Red2TerminalPage: React.FC = () => {
                 animation: 'fade-in 1s ease-in forwards',
               }}
             >
-              WELCOME TO RED2
+              WELCOME TO RED<sup className="text-4xl md:text-6xl align-super">2</sup>
             </div>
           </div>
         )}
