@@ -10,8 +10,9 @@ import dynamicDataPlugin from "@wix/babel-plugin-jsx-dynamic-data";
 import customErrorOverlayPlugin from "./vite-error-overlay-plugin.js";
 import postcssPseudoToData from "@wix/postcss-pseudo-to-data";
 
-const isBuild = process.env.NODE_ENV === "production";
+const isBuild = process.env.NODE_ENV == "production";
 
+// https://astro.build/config
 export default defineConfig({
   output: "server",
   integrations: [
@@ -35,37 +36,35 @@ export default defineConfig({
       auth: true,
     }),
     ...(isBuild ? [monitoring()] : []),
-    react(
-      isBuild
-        ? {}
-        : {
-            babel: { plugins: [sourceAttrsPlugin, dynamicDataPlugin] },
-          }
-    ),
+    react(isBuild ? {} : {
+      babel: { plugins: [sourceAttrsPlugin, dynamicDataPlugin] },
+    }),
   ],
   vite: {
     plugins: [customErrorOverlayPlugin()],
-    cacheDir: "node_modules/.cache/.vite",
+    cacheDir: 'node_modules/.cache/.vite',
     optimizeDeps: {
       include: [
-        "react",
-        "react-dom",
-        "zustand",
-        "framer-motion",
-        "date-fns",
-        "clsx",
-        "class-variance-authority",
-        "tailwind-merge",
-        "zod",
+        'react',
+        'react-dom',
+        'zustand',
+        'framer-motion',
+        'date-fns',
+        'clsx',
+        'class-variance-authority',
+        'tailwind-merge',
+        '@radix-ui/*',
+        '@wix/*',
+        'zod',
       ],
     },
-    css: !isBuild
-      ? {
-          postcss: {
-            plugins: [postcssPseudoToData()],
-          },
-        }
-      : undefined,
+    css: !isBuild ? {
+      postcss: {
+        plugins: [
+          postcssPseudoToData(),
+        ],
+      },
+    } : undefined,
   },
   ...(isBuild && { adapter: cloudProviderFetchAdapter({}) }),
   devToolbar: {
@@ -75,10 +74,10 @@ export default defineConfig({
     domains: ["static.wixstatic.com"],
   },
   server: {
-    allowedHosts: [".remote-machine.wix-code.com"],
+    allowedHosts: true,
     host: true,
   },
   security: {
-    checkOrigin: true,
-  },
+    checkOrigin: false
+  }
 });

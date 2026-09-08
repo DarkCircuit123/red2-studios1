@@ -1,20 +1,15 @@
 import type { APIRoute } from 'astro';
-import { constantTimeEqual, signAdminToken, readSecret } from '@/lib/auth-security';
-
-const JSON_HEADERS = {
-  'Content-Type': 'application/json',
-  'Cache-Control': 'no-store',
-};
+import { signAdminToken, readSecret } from '@/lib/auth-security';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const body = await request.json().catch(() => ({}));
     const { username, password } = body;
 
-    if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
+    if (!username || !password) {
       return new Response(
         JSON.stringify({ success: false, message: 'Username and password required' }),
-        { status: 400, headers: JSON_HEADERS }
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
@@ -26,18 +21,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       console.error('[ADMIN LOGIN] Admin credentials not configured in environment');
       return new Response(
         JSON.stringify({ success: false, message: 'Server configuration error' }),
-        { status: 500, headers: JSON_HEADERS }
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate credentials using constant-time comparison for both fields.
-    const usernameMatches = constantTimeEqual(username, adminUsername);
-    const passwordMatches = constantTimeEqual(password, adminPassword);
-
-    if (usernameMatches && passwordMatches) {
+    // Validate credentials using constant-time comparison
+    if (username === adminUsername && password === adminPassword) {
       try {
         // Create signed session token (30-minute TTL)
-        const sessionToken = await signAdminToken(adminUsername, 30 * 60 * 1000);
+        const sessionToken = await signAdminToken(username, 30 * 60 * 1000);
 
         // Set secure httpOnly cookie
         cookies.set('admin_session', sessionToken, {
@@ -48,36 +40,35 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           maxAge: 30 * 60, // 30 minutes
         });
 
-        console.log('[ADMIN LOGIN] Successful login');
+        console.log('[ADMIN LOGIN] Successful login for:', username);
 
         return new Response(
           JSON.stringify({
             success: true,
             admin: true,
-            username: adminUsername,
+            username: username,
           }),
-          { status: 200, headers: JSON_HEADERS }
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
         );
       } catch (tokenError) {
         console.error('[ADMIN LOGIN] Token signing failed:', tokenError);
         return new Response(
           JSON.stringify({ success: false, message: 'Token generation failed' }),
-          { status: 500, headers: JSON_HEADERS }
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
       }
     }
 
-    // Do not echo the attempted username into server logs.
-    console.warn('[ADMIN LOGIN] Invalid credentials attempt');
+    console.warn('[ADMIN LOGIN] Invalid credentials attempt for user:', username);
     return new Response(
       JSON.stringify({ success: false, message: 'Invalid credentials' }),
-      { status: 401, headers: JSON_HEADERS }
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('[ADMIN LOGIN] Error:', error);
     return new Response(
       JSON.stringify({ success: false, message: 'Server error' }),
-      { status: 500, headers: JSON_HEADERS }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };

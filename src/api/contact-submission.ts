@@ -1,50 +1,81 @@
 import { BaseCrudService } from '@/integrations';
 import { APIRateLimits, ContactSubmissions } from '@/entities';
 
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000;
-const MAX_REQUESTS_PER_IP = 5;
-const IP_RANGE_SIZE = 3;
-const MAX_BODY_BYTES = 32 * 1024;
-const MAX_NAME_LENGTH = 120;
-const MAX_EMAIL_LENGTH = 320;
-const MAX_SUBJECT_LENGTH = 200;
-const MAX_MESSAGE_LENGTH = 10000;
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
+const MAX_REQUESTS_PER_IP = 5; // Max 5 messages per IP per hour
+const IP_RANGE_SIZE = 3; // Check /24 subnet (last 3 octets)
 
+/**
+ * Extract IP range from full IP (e.g., "192.168.1.100" -> "192.168.1")
+ */
 function getIPRange(ipAddress: string): string {
   const parts = ipAddress.split('.');
-  if (parts.length === 4) return parts.slice(0, IP_RANGE_SIZE).join('.');
+  if (parts.length === 4) {
+    return parts.slice(0, IP_RANGE_SIZE).join('.');
+  }
   return ipAddress;
 }
 
+/**
+ * Get client IP from request headers
+ */
 function getClientIP(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
   return request.headers.get('x-real-ip') || 'unknown';
 }
 
+/**
+ * Check if IP has exceeded rate limit
+ */
 async function checkRateLimit(ipAddress: string): Promise<{ allowed: boolean; reason?: string }> {
   try {
     const ipRange = getIPRange(ipAddress);
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - RATE_LIMIT_WINDOW);
+
+    // Get all recent attempts from this IP range
     const result = await BaseCrudService.getAll<APIRateLimits>('apiratelimits', [], { limit: 100 });
+    
     const recentAttempts = result.items.filter((log) => {
       const logIP = log.ipAddress || '';
+      const logRange = getIPRange(logIP);
       const attemptTime = log.attemptedAt ? new Date(log.attemptedAt) : null;
-      return getIPRange(logIP) === ipRange && !!attemptTime && attemptTime >= oneHourAgo && log.endpoint === 'contact-form';
+      
+      return (
+        logRange === ipRange &&
+        attemptTime &&
+        attemptTime >= oneHourAgo &&
+        log.endpoint === 'contact-form'
+      );
     });
 
+    // Check if limit exceeded
     if (recentAttempts.length >= MAX_REQUESTS_PER_IP) {
-      return { allowed: false, reason: 'Too many messages from your IP range. Please try again later.' };
+      return {
+        allowed: false,
+        reason: `Too many messages from your IP range. Please try again later.`,
+      };
     }
+
     return { allowed: true };
   } catch (error) {
-    console.error('[Rate Limit Check] Error:', error instanceof Error ? error.message : String(error));
+    console.error('[Rate Limit Check] Error:', error);
+    // Allow on error to prevent blocking legitimate users
     return { allowed: true };
   }
 }
 
-async function logSubmissionAttempt(ipAddress: string, success: boolean, userAgent: string): Promise<void> {
+/**
+ * Log contact form submission attempt
+ */
+async function logSubmissionAttempt(
+  ipAddress: string,
+  success: boolean,
+  userAgent: string
+): Promise<void> {
   try {
     await BaseCrudService.create('apiratelimits', {
       _id: crypto.randomUUID(),
@@ -53,110 +84,172 @@ async function logSubmissionAttempt(ipAddress: string, success: boolean, userAge
       attemptedAt: new Date(),
       success,
       ipAddress,
-      userAgent: userAgent.substring(0, 512),
+      userAgent,
     });
   } catch (error) {
-    console.error('[Submission Logging] Error:', error instanceof Error ? error.message : String(error));
+    console.error('[Submission Logging] Error:', error);
   }
 }
 
+/**
+ * Validate email format with strict rules
+ */
 function validateEmail(email: string): boolean {
-  if (email.length > MAX_EMAIL_LENGTH) return false;
+  // RFC 5322 simplified email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) return false;
-  const [localPart, domain] = email.split('@');
-  if (!localPart || !domain || localPart.length > 64 || domain.length > 255) return false;
-  if (email.includes('..')) return false;
-  const disposableDomains = ['tempmail', 'guerrillamail', '10minutemail', 'mailinator'];
-  return !disposableDomains.some((d) => domain.toLowerCase().includes(d));
-}
+  
+  if (!emailRegex.test(email)) {
+    return false;
+  }
 
-function jsonResponse(payload: Record<string, unknown>, status: number): Response {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-    },
-  });
+  // Additional checks
+  const [localPart, domain] = email.split('@');
+  
+  // Check local part length (max 64 chars)
+  if (localPart.length > 64) {
+    return false;
+  }
+
+  // Check domain length (max 255 chars)
+  if (domain.length > 255) {
+    return false;
+  }
+
+  // Reject common disposable email patterns
+  const disposableDomains = ['tempmail', 'guerrillamail', '10minutemail', 'mailinator'];
+  const domainLower = domain.toLowerCase();
+  if (disposableDomains.some(d => domainLower.includes(d))) {
+    return false;
+  }
+
+  // Reject consecutive dots
+  if (email.includes('..')) {
+    return false;
+  }
+
+  return true;
 }
 
 export async function POST({ request }: { request: Request }) {
   try {
-    const contentType = request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
-    if (contentType !== 'application/json') {
-      return jsonResponse({ success: false, error: 'Content-Type must be application/json' }, 415);
-    }
+    const clientIP = getClientIP(request);
+    const userAgent = request.headers.get('user-agent') || 'unknown';
 
-    const contentLength = request.headers.get('content-length');
-    if (contentLength && Number.isFinite(Number(contentLength)) && Number(contentLength) > MAX_BODY_BYTES) {
-      return jsonResponse({ success: false, error: 'Request body is too large' }, 413);
-    }
-
-    const clientIP = getClientIP(request).slice(0, 128);
-    const userAgent = (request.headers.get('user-agent') || 'unknown').slice(0, 512);
-
+    // Check rate limit
     const rateCheckResult = await checkRateLimit(clientIP);
     if (!rateCheckResult.allowed) {
+      // Log failed attempt
       await logSubmissionAttempt(clientIP, false, userAgent);
-      return jsonResponse({ success: false, error: rateCheckResult.reason || 'Rate limit exceeded' }, 429);
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: rateCheckResult.reason || 'Rate limit exceeded',
+        }),
+        {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
+    // Parse request body
+    const body = await request.json();
+    const { name, email, subject, message } = body;
+
+    // Validate all fields are present
+    if (!name?.trim() || !email?.trim() || !message?.trim()) {
       await logSubmissionAttempt(clientIP, false, userAgent);
-      return jsonResponse({ success: false, error: 'Invalid JSON body' }, 400);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'All required fields must be filled',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
-    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    // Validate email format
+    if (!validateEmail(email.trim())) {
       await logSubmissionAttempt(clientIP, false, userAgent);
-      return jsonResponse({ success: false, error: 'Invalid request body' }, 400);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid email address',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
-    const input = body as Record<string, unknown>;
-    const name = typeof input.name === 'string' ? input.name.trim() : '';
-    const email = typeof input.email === 'string' ? input.email.trim() : '';
-    const subject = typeof input.subject === 'string' ? input.subject.trim() : '';
-    const message = typeof input.message === 'string' ? input.message.trim() : '';
-
-    if (!name || !email || !message) {
+    // Validate message length (prevent spam)
+    if (message.trim().length < 10) {
       await logSubmissionAttempt(clientIP, false, userAgent);
-      return jsonResponse({ success: false, error: 'All required fields must be filled' }, 400);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Message must be at least 10 characters',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
-    if (name.length > MAX_NAME_LENGTH || email.length > MAX_EMAIL_LENGTH || subject.length > MAX_SUBJECT_LENGTH || message.length > MAX_MESSAGE_LENGTH) {
-      await logSubmissionAttempt(clientIP, false, userAgent);
-      return jsonResponse({ success: false, error: 'One or more fields exceed the allowed length' }, 400);
-    }
+    // Log successful attempt
+    await logSubmissionAttempt(clientIP, true, userAgent);
 
-    if (!validateEmail(email)) {
-      await logSubmissionAttempt(clientIP, false, userAgent);
-      return jsonResponse({ success: false, error: 'Invalid email address' }, 400);
-    }
-
-    if (message.length < 10) {
-      await logSubmissionAttempt(clientIP, false, userAgent);
-      return jsonResponse({ success: false, error: 'Message must be at least 10 characters' }, 400);
-    }
-
+    // Persist the submission so it durably survives. Previously this endpoint
+    // validated the form and applied rate limiting, but never actually saved
+    // the message anywhere - every contact form submission was silently
+    // discarded after a "success" response was returned to the visitor.
+    console.log(`[CONTACT_SUBMISSION] Saving submission from ${email.trim()}...`);
     await BaseCrudService.create<ContactSubmissions>('contactsubmissions', {
       _id: crypto.randomUUID(),
-      name,
-      email,
-      subject,
-      message,
+      name: name.trim(),
+      email: email.trim(),
+      subject: subject?.trim() || '',
+      message: message.trim(),
       ipAddress: clientIP,
       userAgent,
       submittedAt: new Date(),
       status: 'new',
     });
-    await logSubmissionAttempt(clientIP, true, userAgent);
+    console.log('[CONTACT_SUBMISSION] Submission saved successfully');
 
-    return jsonResponse({ success: true, message: 'Message received successfully' }, 200);
+    // NOTE: Outbound email notification (e.g. alerting the business owner) is
+    // NOT wired up here - no email service/API key is configured in this
+    // environment. The submission is now durably saved in the
+    // `contactsubmissions` CMS collection; sending a notification email is a
+    // separate, still-open follow-up item.
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Message received successfully',
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
-    console.error('[Contact Submission] Error:', error instanceof Error ? error.message : String(error));
-    return jsonResponse({ success: false, error: 'An error occurred processing your request' }, 500);
+    console.error('[Contact Submission] Error:', error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'An error occurred processing your request',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }

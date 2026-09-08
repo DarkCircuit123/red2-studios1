@@ -20,21 +20,59 @@ export const useWixAdminAccess = create<AdminAccessState>((set) => ({
 
   checkAdminAccess: async (memberId: string) => {
     set({ isLoading: true, error: null });
+
     try {
-      const response = await fetch('/api/auth/admin-check', { method: 'GET', credentials: 'include', headers: { Accept: 'application/json' } });
-      const data = await response.json().catch(() => null);
-      if (response.ok && data?.authenticated === true) {
-        set({ isAdmin: true, isLoading: false, memberId, memberEmail: typeof data.username === 'string' ? data.username : null, error: null });
+      // Use the admin-check endpoint which verifies admin session
+      const response = await fetch('/api/auth/admin-check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for admin session verification
+      });
+
+      const data = await response.json();
+
+      // Check if the response indicates admin status
+      if (response.ok && data.authenticated) {
+        set({
+          isAdmin: true,
+          isLoading: false,
+          memberId,
+          error: null,
+        });
         return true;
+      } else {
+        // Not admin or authentication failed
+        set({
+          isAdmin: false,
+          isLoading: false,
+          error: data.error || 'You do not have admin permissions',
+        });
+        return false;
       }
-      set({ isAdmin: false, isLoading: false, error: data?.error || 'You do not have admin permissions' });
-      return false;
     } catch (error) {
-      set({ isAdmin: false, isLoading: false, error: error instanceof Error ? error.message : 'Failed to verify admin access' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to verify admin access';
+      set({
+        isAdmin: false,
+        isLoading: false,
+        error: errorMessage,
+      });
       return false;
     }
   },
 
-  clearError: () => set({ error: null }),
-  reset: () => set({ isAdmin: false, isLoading: false, error: null, memberId: null, memberEmail: null }),
+  clearError: () => {
+    set({ error: null });
+  },
+
+  reset: () => {
+    set({
+      isAdmin: false,
+      isLoading: false,
+      error: null,
+      memberId: null,
+      memberEmail: null,
+    });
+  },
 }));

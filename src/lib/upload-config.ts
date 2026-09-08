@@ -1,9 +1,20 @@
-/** Single source of truth for upload validation rules. */
+/**
+ * Single source of truth for upload validation rules.
+ *
+ * Root cause this fixes: the image upload limit (50MB) and the music
+ * upload limit (200MB, later 500MB) used to be declared separately in
+ * three different files - the frontend component, and the backend route
+ * - and drifted out of sync with each other for months. The same thing
+ * happened with accepted MIME types (audio/x-mpeg was missing from some
+ * copies but not others). Import from here everywhere instead of
+ * hard-coding a list/number again - if it only exists in one place, it
+ * can't disagree with itself.
+ */
 
 export interface UploadConfig {
   label: string;
   acceptedMimeTypes: string[];
-  /** Kept for backwards compatibility; validation requires an explicit MIME match. */
+  /** Prefix fallback - e.g. any 'image/*' is accepted even if not in acceptedMimeTypes explicitly */
   acceptedPrefix: string;
   maxSizeBytes: number;
   maxSizeLabel: string;
@@ -16,6 +27,7 @@ export const IMAGE_UPLOAD_CONFIG: UploadConfig = {
     'image/png',
     'image/webp',
     'image/gif',
+    'image/svg+xml',
     'image/tiff',
     'image/bmp',
     'image/x-icon',
@@ -46,26 +58,19 @@ export function validateFileAgainstConfig(
   file: { type: string; size: number },
   config: UploadConfig
 ): { valid: true } | { valid: false; error: string } {
-  const normalizedType = file.type.trim().toLowerCase();
-  const typeOk = config.acceptedMimeTypes.includes(normalizedType);
-
+  const typeOk =
+    config.acceptedMimeTypes.includes(file.type) || file.type.startsWith(config.acceptedPrefix);
   if (!typeOk) {
     return {
       valid: false,
       error: `Unsupported ${config.label} file type: ${file.type || 'unknown'}. Supported: ${config.acceptedMimeTypes.join(', ')}`,
     };
   }
-
-  if (!Number.isFinite(file.size) || file.size <= 0) {
-    return { valid: false, error: 'File is empty or has an invalid size.' };
-  }
-
   if (file.size > config.maxSizeBytes) {
     return {
       valid: false,
       error: `File size exceeds ${config.maxSizeLabel} limit. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`,
     };
   }
-
   return { valid: true };
 }

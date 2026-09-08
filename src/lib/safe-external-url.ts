@@ -1,85 +1,80 @@
 /**
- * URL-level SSRF guard for admin-controlled external imports.
- *
- * This intentionally rejects local/private/reserved address forms before any
- * outbound request. DNS rebinding cannot be fully prevented here because the
- * final resolver/fetcher is outside this helper.
+ * Safe External URL Validator
+ * Prevents SSRF attacks by validating URLs before server-side fetches
  */
-import { isIP } from 'node:net';
 
-function isBlockedIPv4(hostname: string): boolean {
-  const parts = hostname.split('.').map((part) => Number(part));
-  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return true;
-  const [a, b, c] = parts;
-  return (
-    a === 0 || a === 10 || a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 0 && c === 0) ||
-    (a === 192 && b === 0 && c === 2) ||
-    (a === 192 && b === 168) ||
-    (a === 192 && b === 88 && c === 99) ||
-    (a === 198 && (b === 18 || b === 19)) ||
-    (a === 198 && b === 51 && c === 100) ||
-    (a === 203 && b === 0 && c === 113) ||
-    a >= 224
-  );
-}
-
-function hexToIPv4(value: string): string | null {
-  const n = Number.parseInt(value, 16);
-  if (!Number.isFinite(n) || n < 0 || n > 0xffffffff) return null;
-  return `${(n >>> 24) & 255}.${(n >>> 16) & 255}.${(n >>> 8) & 255}.${n & 255}`;
-}
-
-function isBlockedIPv6(hostname: string): boolean {
-  const normalized = hostname.toLowerCase();
-  if (isIP(normalized) !== 6) return false;
-
-  if (normalized === '::' || normalized === '::1') return true;
-  if (/^(?:fe[89ab]|fc|fd|ff)/.test(normalized)) return true;
-
-  // IPv4-mapped IPv6 may appear in either dotted-decimal or hexadecimal form.
-  const mappedDotted = normalized.match(/^(?:0*:){0,6}ffff:(\d+(?:\.\d+){3})$/i)?.[1];
-  if (mappedDotted) return isBlockedIPv4(mappedDotted);
-
-  const mappedHex = normalized.match(/^(?:0*:){0,6}ffff:([0-9a-f]{4}):([0-9a-f]{4})$/i);
-  if (mappedHex) {
-    const ipv4 = hexToIPv4(`${mappedHex[1]}${mappedHex[2]}`);
-    return ipv4 ? isBlockedIPv4(ipv4) : true;
-  }
-
-  return false;
-}
-
+/**
+ * Validates that a URL is safe to fetch server-side
+ * Blocks: loopback (127.0.0.1, localhost), private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16),
+ * link-local (169.254.0.0/16), cloud metadata (169.254.169.254), and other reserved ranges
+ */
 export function isSafeExternalUrl(urlString: string): boolean {
   try {
-    const url = new URL(urlString.trim());
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
-    if (url.username || url.password || !url.hostname) return false;
+    const url = new URL(urlString);
 
-    const hostname = url.hostname.toLowerCase().replace(/^\[/, '').replace(/\]$/, '').replace(/\.$/, '');
-    if (
-      hostname === 'localhost' || hostname.endsWith('.localhost') ||
-      hostname === 'local' || hostname.endsWith('.local') ||
-      hostname.endsWith('.internal') || hostname.endsWith('.home.arpa')
-    ) return false;
+    // Only allow http and https
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      return false;
+    }
 
-    const ipVersion = isIP(hostname);
-    if (ipVersion === 4) return !isBlockedIPv4(hostname);
-    if (ipVersion === 6) return !isBlockedIPv6(hostname);
+    const hostname = url.hostname;
 
-    // Reject alternate numeric IPv4 spellings (decimal/octal/hex) rather than
-    // letting a parser/fetcher reinterpret them as a private address.
-    if (/^(?:0x[0-9a-f]+|0[0-7]+|\d+)$/.test(hostname)) return false;
+    // Block loopback
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+      return false;
+    }
+
+    // Parse as IPv4 if it looks like one
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+      const parts = hostname.split('.').map(Number);
+      if (parts.some(p => p > 255)) return false;
+
+      const [a, b, c, d] = parts;
+
+      // 10.0.0.0/8
+      if (a === 10) return false;
+
+      // 172.16.0.0/12
+      if (a === 172 && b >= 16 && b <= 31) return false;
+
+      // 192.168.0.0/16
+      if (a === 192 && b === 168) return false;
+
+      // 169.254.0.0/16 (link-local)
+      if (a === 169 && b === 254) return false;
+
+      // 127.0.0.0/8 (loopback)
+      if (a === 127) return false;
+
+      // 0.0.0.0/8
+      if (a === 0) return false;
+
+      // 255.255.255.255 (broadcast)
+      if (a === 255 && b === 255 && c === 255 && d === 255) return false;
+    }
+
+    // Block IPv6 loopback and link-local
+    if (hostname === '::1' || hostname.startsWith('fe80:')) {
+      return false;
+    }
+
     return true;
   } catch {
     return false;
   }
 }
 
-export async function fetchSafeUrl(urlString: string, options?: RequestInit): Promise<Response> {
-  if (!isSafeExternalUrl(urlString)) throw new Error('URL is not safe to fetch');
+/**
+ * Fetches a URL safely, with SSRF protection
+ * Returns the response if safe, throws if URL is unsafe
+ */
+export async function fetchSafeUrl(
+  urlString: string,
+  options?: RequestInit
+): Promise<Response> {
+  if (!isSafeExternalUrl(urlString)) {
+    throw new Error('URL is not safe to fetch');
+  }
+
   return fetch(urlString, options);
 }

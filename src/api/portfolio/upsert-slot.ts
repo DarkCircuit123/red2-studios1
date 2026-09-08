@@ -1,27 +1,266 @@
 import type { APIRoute } from 'astro';
-import { cmsService } from '@/integrations/cms/service';
-import type { Portfolio } from '@/entities';
+import { BaseCrudService } from '@/integrations';
+import { Portfolio } from '@/entities';
 import { requireAdmin } from '@/lib/auth-security';
 
-const MAX_SLOT = 1000;
-const MAX_BODY_BYTES = 32 * 1024;
-const options = { suppressAuth: true };
-interface UpsertRequest { displayOrder: number; image: string; caption?: string; altText?: string; portfolioItemId?: string; }
-interface UpsertResponse { success: true; itemId: string; action: 'created' | 'updated'; displayOrder: number; }
-interface ErrorResponse { success: false; error: string; }
-const jsonResponse = (body: UpsertResponse | ErrorResponse, status: number) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
-const isAllowedMediaUrl = (value: string) => { if (value.startsWith('wix:image://')) return true; try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password; } catch { return false; } };
+/**
+ * PORTFOLIO SLOT UPSERT API
+ * 
+ * Implements the critical upsert logic for 90-slot gallery:
+ * 1. Query portfolioimages collection by displayOrder (slot number)
+ * 2. If record exists → UPDATE with new image URL
+ * 3. If no record exists → INSERT new record with displayOrder
+ * 
+ * This ensures empty slots can create their first CMS record without requiring an _id.
+ * 
+ * Request body:
+ * {
+ *   displayOrder: number,        // Slot number (1-90)
+ *   image: string,               // Wix Media URL
+ *   caption?: string,            // Optional caption
+ *   altText?: string,            // Optional alt text
+ *   portfolioItemId?: string     // Optional portfolio item ID
+ * }
+ * 
+ * Response:
+ * {
+ *   success: true,
+ *   itemId: string,              // The _id of the created/updated record
+ *   action: 'created' | 'updated',
+ *   displayOrder: number
+ * }
+ */
+
+interface UpsertRequest {
+  displayOrder: number;
+  image: string;
+  caption?: string;
+  altText?: string;
+  portfolioItemId?: string;
+}
+
+interface UpsertResponse {
+  success: true;
+  itemId: string;
+  action: 'created' | 'updated';
+  displayOrder: number;
+}
+
+interface ErrorResponse {
+  success: false;
+  error: string;
+}
 
 export const POST: APIRoute = async (context) => {
-  const denied = await requireAdmin(context.cookies, context.request, 'portfolio-upsert'); if (denied) return denied;
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+
   try {
-    const contentLength = Number(context.request.headers.get('content-length') || 0); if (contentLength > MAX_BODY_BYTES) return jsonResponse({ success: false, error: 'Request is too large.' }, 413);
-    const body = await context.request.json().catch(() => null) as Partial<UpsertRequest> | null; if (!body) return jsonResponse({ success: false, error: 'Invalid request body.' }, 400);
-    const displayOrder = Number(body.displayOrder); const image = typeof body.image === 'string' ? body.image.trim() : ''; const caption = typeof body.caption === 'string' ? body.caption.trim().slice(0, 500) : ''; const altText = typeof body.altText === 'string' ? body.altText.trim().slice(0, 500) : ''; const portfolioItemId = typeof body.portfolioItemId === 'string' ? body.portfolioItemId.trim().slice(0, 200) : 'work-gallery';
-    if (!Number.isInteger(displayOrder) || displayOrder < 1 || displayOrder > MAX_SLOT) return jsonResponse({ success: false, error: `Slot number must be an integer from 1 to ${MAX_SLOT}.` }, 400);
-    if (!image || image.length > 4096 || !isAllowedMediaUrl(image)) return jsonResponse({ success: false, error: 'A valid HTTPS or WixMedia image URL is required.' }, 400);
-    const result = await cmsService.getAll<Portfolio>('portfolioimages', {}, { limit: MAX_SLOT, suppressAuth: true }); const existingRecord = result.items?.find((item) => item.displayOrder === displayOrder);
-    if (existingRecord?._id) { await cmsService.update('portfolioimages', { _id: existingRecord._id, image, caption: caption || existingRecord.caption || '', altText: altText || existingRecord.altText || '', displayOrder, portfolioItemId: portfolioItemId || existingRecord.portfolioItemId || 'work-gallery' }, options); return jsonResponse({ success: true, itemId: existingRecord._id, action: 'updated', displayOrder }, 200); }
-    const itemId = crypto.randomUUID(); await cmsService.create('portfolioimages', { _id: itemId, displayOrder, image, caption, altText, portfolioItemId }, undefined, options); return jsonResponse({ success: true, itemId, action: 'created', displayOrder }, 200);
-  } catch (error) { console.error('[PORTFOLIO_UPSERT] Failed:', error instanceof Error ? error.message : String(error)); return jsonResponse({ success: false, error: 'Could not save the gallery slot.' }, 500); }
+    // Check admin authentication
+    const denied = await requireAdmin(context.cookies, context.request, 'portfolio-upsert');
+    if (denied) return denied;
+
+    console.log(`[PORTFOLIO_UPSERT] Request ${requestId} started`, {
+      timestamp: new Date().toISOString(),
+    });
+
+    // Parse request body
+    let body: UpsertRequest;
+    try {
+      body = await context.request.json();
+    } catch (parseError) {
+      console.warn(`[PORTFOLIO_UPSERT] Request ${requestId} invalid JSON`, {
+        error: parseError instanceof Error ? parseError.message : String(parseError),
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid request body',
+        } as ErrorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate required fields
+    if (!body.displayOrder || !body.image) {
+      console.warn(`[PORTFOLIO_UPSERT] Request ${requestId} missing required fields`, {
+        displayOrder: body.displayOrder,
+        hasImage: !!body.image,
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing required fields: displayOrder, image',
+        } as ErrorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate displayOrder is positive (allows unlimited growth beyond 90)
+    if (body.displayOrder < 1) {
+      console.warn(`[PORTFOLIO_UPSERT] Request ${requestId} invalid displayOrder`, {
+        displayOrder: body.displayOrder,
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Invalid displayOrder: must be >= 1, received ${body.displayOrder}`,
+        } as ErrorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[PORTFOLIO_UPSERT] Request ${requestId} validated`, {
+      displayOrder: body.displayOrder,
+      imageLength: body.image.length,
+      hasCaption: !!body.caption,
+      hasAltText: !!body.altText,
+      timestamp: new Date().toISOString(),
+    });
+
+    // CRITICAL: Query by displayOrder to find existing record
+    console.log(`[PORTFOLIO_UPSERT] Request ${requestId} querying for existing record`, {
+      displayOrder: body.displayOrder,
+      timestamp: new Date().toISOString(),
+    });
+
+    let existingRecord: Portfolio | undefined;
+    try {
+      const result = await BaseCrudService.getAll<Portfolio>(
+        'portfolioimages',
+        {},
+        { limit: 1000 }
+      );
+      
+      existingRecord = result.items?.find(item => item.displayOrder === body.displayOrder);
+      
+      console.log(`[PORTFOLIO_UPSERT] Request ${requestId} query completed`, {
+        totalRecords: result.items?.length || 0,
+        foundExisting: !!existingRecord,
+        existingId: existingRecord?._id,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (queryError) {
+      console.error(`[PORTFOLIO_UPSERT] Request ${requestId} query failed`, {
+        error: queryError instanceof Error ? queryError.message : String(queryError),
+        timestamp: new Date().toISOString(),
+      });
+      throw queryError;
+    }
+
+    let itemId: string;
+    let action: 'created' | 'updated';
+
+    if (existingRecord && existingRecord._id) {
+      // PATH B: OCCUPIED SLOT - UPDATE existing record
+      console.log(`[PORTFOLIO_UPSERT] Request ${requestId} PATH B: updating existing record`, {
+        itemId: existingRecord._id,
+        displayOrder: body.displayOrder,
+        timestamp: new Date().toISOString(),
+      });
+
+      try {
+        await BaseCrudService.update<Portfolio>('portfolioimages', {
+          _id: existingRecord._id,
+          image: body.image,
+          caption: body.caption || existingRecord.caption || '',
+          altText: body.altText || existingRecord.altText || '',
+          displayOrder: body.displayOrder,
+          portfolioItemId: body.portfolioItemId || existingRecord.portfolioItemId || '',
+        });
+
+        itemId = existingRecord._id;
+        action = 'updated';
+
+        console.log(`[PORTFOLIO_UPSERT] Request ${requestId} update successful`, {
+          itemId,
+          displayOrder: body.displayOrder,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (updateError) {
+        console.error(`[PORTFOLIO_UPSERT] Request ${requestId} update failed`, {
+          itemId: existingRecord._id,
+          error: updateError instanceof Error ? updateError.message : String(updateError),
+          timestamp: new Date().toISOString(),
+        });
+        throw updateError;
+      }
+    } else {
+      // PATH A: EMPTY SLOT - CREATE new record
+      console.log(`[PORTFOLIO_UPSERT] Request ${requestId} PATH A: creating new record`, {
+        displayOrder: body.displayOrder,
+        timestamp: new Date().toISOString(),
+      });
+
+      itemId = crypto.randomUUID();
+
+      const newRecord: Portfolio = {
+        _id: itemId,
+        displayOrder: body.displayOrder,
+        image: body.image,
+        caption: body.caption || '',
+        altText: body.altText || '',
+        portfolioItemId: body.portfolioItemId || 'work-gallery',
+      };
+
+      try {
+        await BaseCrudService.create('portfolioimages', newRecord);
+        action = 'created';
+
+        console.log(`[PORTFOLIO_UPSERT] Request ${requestId} create successful`, {
+          itemId,
+          displayOrder: body.displayOrder,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (createError) {
+        console.error(`[PORTFOLIO_UPSERT] Request ${requestId} create failed`, {
+          itemId,
+          error: createError instanceof Error ? createError.message : String(createError),
+          timestamp: new Date().toISOString(),
+        });
+        throw createError;
+      }
+    }
+
+    const duration = Date.now() - startTime;
+
+    console.log(`[PORTFOLIO_UPSERT] Request ${requestId} completed successfully`, {
+      itemId,
+      action,
+      displayOrder: body.displayOrder,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        itemId,
+        action,
+        displayOrder: body.displayOrder,
+      } as UpsertResponse),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    const duration = Date.now() - startTime;
+
+    console.error(`[PORTFOLIO_UPSERT] Request ${requestId} failed`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString(),
+    });
+
+    const errorMessage = error instanceof Error ? error.message : 'Upsert failed';
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: errorMessage,
+      } as ErrorResponse),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 };

@@ -3,84 +3,275 @@ import { files } from '@wix/media';
 import { auth } from '@wix/essentials';
 import { requireAdmin } from '@/lib/auth-security';
 
+/**
+ * Hero Image Upload API - Clean, reliable upload flow
+ * 
+ * This endpoint:
+ * 1. Validates the file (JPEG, PNG, WebP only; max 10MB)
+ * 2. Generates a signed upload URL from Wix Media Manager with auth.elevate()
+ * 3. Receives the file bytes and uploads to Wix
+ * 4. Returns { success, mediaUrl, fileId, error }
+ * 5. Enforces admin authentication
+ * 6. Includes structured logging for debugging
+ */
+
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
-interface UploadHeroResponse { success: true; mediaUrl: string; fileId: string; }
-interface ErrorResponse { success: false; error: string; }
-
-function isSafeUploadUrl(value: unknown): value is string {
-  if (typeof value !== 'string' || !value) return false;
-  try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password; }
-  catch { return false; }
+interface UploadHeroResponse {
+  success: true;
+  mediaUrl: string;
+  fileId: string;
 }
 
-function isSafeMediaUrl(value: unknown): value is string {
-  if (typeof value !== 'string' || !value) return false;
-  if (value.startsWith('wix:image://')) return true;
-  try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password; }
-  catch { return false; }
-}
-
-function sanitizeFilename(filename: string): string {
-  const lastDotIndex = filename.lastIndexOf('.');
-  const ext = lastDotIndex > 0 ? filename.slice(lastDotIndex).toLowerCase() : '.jpg';
-  const nameWithoutExt = lastDotIndex > 0 ? filename.slice(0, lastDotIndex) : filename;
-  const sanitized = nameWithoutExt.replace(/[()[\]{}]/g, '_').replace(/\s+/g, '_')
-    .replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '').slice(0, 180);
-  return `${sanitized || `hero_${Date.now()}`}${ext}`;
-}
-
-function jsonResponse(body: ErrorResponse | UploadHeroResponse, status: number): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+interface ErrorResponse {
+  success: false;
+  error: string;
 }
 
 export const POST: APIRoute = async (context) => {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
+
   try {
+    // Check admin authentication
     const denied = await requireAdmin(context.cookies, context.request, 'upload-hero');
     if (denied) return denied;
 
-    const contentLength = Number(context.request.headers.get('content-length') || 0);
-    if (contentLength > MAX_SIZE_BYTES + 1024 * 1024) return jsonResponse({ success: false, error: 'Upload is too large. Maximum file size is 10MB.' }, 413);
+    // Structured logging: request started
+    console.log(`[UPLOAD_HERO] Request ${requestId} started`, {
+      timestamp: new Date().toISOString(),
+    });
 
     const formData = await context.request.formData();
-    const entry = formData.get('file');
-    if (!(entry instanceof File)) return jsonResponse({ success: false, error: 'No image file was provided.' }, 400);
-    if (entry.size <= 0 || entry.size > MAX_SIZE_BYTES) return jsonResponse({ success: false, error: entry.size > MAX_SIZE_BYTES ? 'Image is too large. Maximum file size is 10MB.' : 'Image file is empty.' }, 400);
+    const file = formData.get('file') as File;
 
-    const mimeType = entry.type.trim().toLowerCase();
-    if (!ALLOWED_TYPES.includes(mimeType)) return jsonResponse({ success: false, error: 'File type not supported. Allowed: JPEG, PNG, WebP.' }, 400);
-
-    const sanitizedFileName = sanitizeFilename(entry.name);
-    const generateUploadUrl = auth.elevate(files.generateFileUploadUrl);
-    const uploadUrlResponse = await generateUploadUrl(mimeType, { fileName: sanitizedFileName });
-    if (!isSafeUploadUrl(uploadUrlResponse?.uploadUrl)) {
-      console.error(`[UPLOAD_HERO] ${requestId} generated an invalid upload URL`);
-      return jsonResponse({ success: false, error: 'Wix returned an invalid upload destination.' }, 502);
+    if (!file) {
+      console.warn(`[UPLOAD_HERO] Request ${requestId} no file provided`, {
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({ success: false, error: 'No file provided' } as ErrorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    const uploadUrl = new URL(uploadUrlResponse.uploadUrl);
-    uploadUrl.searchParams.set('filename', sanitizedFileName);
-    const uploadResponse = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': mimeType }, body: await entry.arrayBuffer() });
+    // Structured logging: file info
+    console.log(`[UPLOAD_HERO] Request ${requestId} file received`, {
+      fileName: file.name,
+      mimeType: file.type,
+      fileSizeBytes: file.size,
+      fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
+      timestamp: new Date().toISOString(),
+    });
+
+    // Validate file type
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      console.warn(`[UPLOAD_HERO] Request ${requestId} invalid file type`, {
+        fileName: file.name,
+        mimeType: file.type,
+        allowedTypes: ALLOWED_TYPES,
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `File type not supported. Allowed: JPEG, PNG, WebP. Received: ${file.type}` 
+        } as ErrorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate file size
+    if (file.size > MAX_SIZE_BYTES) {
+      console.warn(`[UPLOAD_HERO] Request ${requestId} file too large`, {
+        fileName: file.name,
+        fileSizeBytes: file.size,
+        maxSizeBytes: MAX_SIZE_BYTES,
+        fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `File too large. Max 10MB, received ${(file.size / 1024 / 1024).toFixed(2)}MB` 
+        } as ErrorResponse),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Generate upload URL with elevated permissions
+    console.log(`[UPLOAD_HERO] Request ${requestId} calling generateFileUploadUrl with auth.elevate()`, {
+      fileName: file.name,
+      mimeType: file.type,
+      timestamp: new Date().toISOString(),
+    });
+
+    let uploadUrlResponse;
+    try {
+      // Use auth.elevate to get elevated permissions for file operations
+      const elevatedGenerateUrl = auth.elevate(files.generateFileUploadUrl);
+      uploadUrlResponse = await elevatedGenerateUrl(file.type, {
+        fileName: file.name,
+      });
+    } catch (apiError) {
+      console.error(`[UPLOAD_HERO] Request ${requestId} generateFileUploadUrl failed`, {
+        fileName: file.name,
+        mimeType: file.type,
+        error: apiError instanceof Error ? apiError.message : String(apiError),
+        stack: apiError instanceof Error ? apiError.stack : undefined,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Failed to generate upload URL: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+    }
+
+    if (!uploadUrlResponse.uploadUrl) {
+      console.error(`[UPLOAD_HERO] Request ${requestId} no uploadUrl in response`, {
+        fileName: file.name,
+        response: uploadUrlResponse,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error('Failed to generate upload URL from Wix Media Manager');
+    }
+
+    // Verify upload URL is a real Wix domain
+    const uploadUrlObj = new URL(uploadUrlResponse.uploadUrl);
+    const isValidWixDomain = 
+      uploadUrlObj.hostname.includes('wix') ||
+      uploadUrlObj.hostname.includes('files') ||
+      uploadUrlObj.hostname.includes('media');
+
+    if (!isValidWixDomain) {
+      console.error(`[UPLOAD_HERO] Request ${requestId} invalid upload URL domain`, {
+        uploadUrl: uploadUrlResponse.uploadUrl,
+        hostname: uploadUrlObj.hostname,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Invalid upload URL domain: ${uploadUrlObj.hostname}`);
+    }
+
+    console.log(`[UPLOAD_HERO] Request ${requestId} upload URL generated`, {
+      fileName: file.name,
+      uploadUrlDomain: uploadUrlObj.hostname,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Upload file to Wix
+    console.log(`[UPLOAD_HERO] Request ${requestId} uploading file to Wix`, {
+      fileName: file.name,
+      fileSizeBytes: file.size,
+      timestamp: new Date().toISOString(),
+    });
+
+    const buffer = await file.arrayBuffer();
+    let uploadResponse;
+    try {
+      uploadResponse = await fetch(
+        `${uploadUrlResponse.uploadUrl}?filename=${encodeURIComponent(file.name)}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: buffer,
+        }
+      );
+    } catch (fetchError) {
+      console.error(`[UPLOAD_HERO] Request ${requestId} fetch to upload URL failed`, {
+        fileName: file.name,
+        uploadUrlDomain: uploadUrlObj.hostname,
+        error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+        stack: fetchError instanceof Error ? fetchError.stack : undefined,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Upload failed: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
+    }
+
     if (!uploadResponse.ok) {
-      console.error(`[UPLOAD_HERO] ${requestId} Wix upload returned HTTP ${uploadResponse.status}`);
-      return jsonResponse({ success: false, error: 'Wix rejected the hero image upload. Please try again.' }, 502);
+      const errorText = await uploadResponse.text().catch(() => '');
+      console.error(`[UPLOAD_HERO] Request ${requestId} upload HTTP error`, {
+        fileName: file.name,
+        status: uploadResponse.status,
+        statusText: uploadResponse.statusText,
+        errorText: errorText.substring(0, 500),
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Upload failed: ${uploadResponse.status} ${errorText}`);
     }
 
-    const uploadResult = await uploadResponse.json().catch(() => null);
+    let uploadResult;
+    try {
+      uploadResult = await uploadResponse.json();
+    } catch (parseError) {
+      console.error(`[UPLOAD_HERO] Request ${requestId} failed to parse upload response`, {
+        fileName: file.name,
+        error: parseError instanceof Error ? parseError.message : String(parseError),
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error('Failed to parse upload response');
+    }
+
     const mediaUrl = uploadResult?.file?.url;
     const fileId = uploadResult?.file?.id;
-    if (!isSafeMediaUrl(mediaUrl) || typeof fileId !== 'string' || !fileId) {
-      console.error(`[UPLOAD_HERO] ${requestId} Wix returned an invalid media result`);
-      return jsonResponse({ success: false, error: 'Wix returned an invalid media result.' }, 502);
+
+    if (!mediaUrl) {
+      console.error(`[UPLOAD_HERO] Request ${requestId} no media URL in response`, {
+        fileName: file.name,
+        response: uploadResult,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error('No media URL returned from Wix Media Manager');
     }
 
-    console.log(`[UPLOAD_HERO] ${requestId} completed`, { mimeType, sizeBytes: entry.size, fileId, durationMs: Date.now() - startTime });
-    return jsonResponse({ success: true, mediaUrl, fileId }, 200);
+    // Verify media URL is a real Wix domain
+    const mediaUrlObj = new URL(mediaUrl);
+    const isValidMediaDomain = 
+      mediaUrlObj.hostname.includes('wix') ||
+      mediaUrlObj.hostname.includes('files') ||
+      mediaUrlObj.hostname.includes('media');
+
+    if (!isValidMediaDomain) {
+      console.error(`[UPLOAD_HERO] Request ${requestId} invalid media URL domain`, {
+        mediaUrl,
+        hostname: mediaUrlObj.hostname,
+        timestamp: new Date().toISOString(),
+      });
+      throw new Error(`Invalid media URL domain: ${mediaUrlObj.hostname}`);
+    }
+
+    const duration = Date.now() - startTime;
+
+    // Structured logging: success
+    console.log(`[UPLOAD_HERO] Request ${requestId} completed successfully`, {
+      fileName: file.name,
+      fileSizeBytes: file.size,
+      fileId: fileId || 'unknown',
+      mediaUrlDomain: mediaUrlObj.hostname,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        mediaUrl,
+        fileId: fileId || '',
+      } as UploadHeroResponse),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
-    console.error(`[UPLOAD_HERO] ${requestId} failed`, { error: error instanceof Error ? error.message : String(error), durationMs: Date.now() - startTime });
-    return jsonResponse({ success: false, error: 'Hero image upload failed. Please try again.' }, 500);
+    const duration = Date.now() - startTime;
+
+    // Structured logging: error with full stack
+    console.error(`[UPLOAD_HERO] Request ${requestId} failed`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString(),
+    });
+
+    const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+    return new Response(
+      JSON.stringify({ success: false, error: errorMessage } as ErrorResponse),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 };

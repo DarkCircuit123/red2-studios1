@@ -1,33 +1,61 @@
 /**
  * CENTRALIZED IMAGE URL MANAGER
- *
- * Single source of truth for image URL handling across the application.
- * Browser rendering always receives a normal HTTP(S) URL.
+ * 
+ * Single source of truth for all image URL handling across the application.
+ * Replaces scattered implementations of URL conversion and validation.
+ * 
+ * Handles:
+ * - wix:image://v1/ format (Wix Media Manager native)
+ * - https://static.wixstatic.com/ format (Wix CDN)
+ * - Legacy base64 data URLs (converts to fallback)
+ * - Blob URLs (temporary previews - converts to fallback)
+ * - HTTP/HTTPS URLs (validates and passes through)
+ * 
+ * All image rendering should route through this manager.
  */
 
 import { STATIC_MEDIA_URL } from '@wix/image-kit';
 
 export interface ImageUrlResolution {
+  /** The final URL to render */
   url: string;
+  /** Whether this is a valid Wix URL */
   isValid: boolean;
+  /** The original format detected */
   format: 'wix-image' | 'static-wixstatic' | 'https' | 'base64' | 'blob' | 'unknown';
+  /** Whether this is a fallback/placeholder */
   isFallback: boolean;
+  /** Error message if resolution failed */
   error?: string;
+  /** Original URL that was resolved */
   originalUrl?: string;
 }
 
 const FALLBACK_IMAGE_URL = 'https://static.wixstatic.com/media/12d367_4f26ccd17f8f4e3a8958306ea08c2332~mv2.png';
 const IS_DEVELOPMENT = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
 
+/**
+ * ImageUrlManager - Centralized URL handling
+ * 
+ * Usage:
+ * ```typescript
+ * const resolved = ImageUrlManager.resolve(imageUrl);
+ * if (resolved.isValid) {
+ *   <img src={resolved.url} alt="..." />
+ * } else {
+ *   console.warn(`Image failed to resolve: ${resolved.error}`);
+ * }
+ * ```
+ */
 export class ImageUrlManager {
   /**
-   * Resolve any supported image value to a browser-renderable URL.
-   * wix:image:// URLs are converted to the Wix static CDN here rather than
-   * being returned directly to <img src>, which avoids browser/CSP failures.
+   * Resolve any image URL to a valid, renderable format
+   * This is the main entry point for all image rendering
    */
   static resolve(url: string | undefined | null, context?: { recordId?: string; fieldName?: string }): ImageUrlResolution {
     const originalUrl = url;
 
+    // Handle empty/null URLs
     if (!url || typeof url !== 'string' || url.trim() === '') {
       return {
         url: FALLBACK_IMAGE_URL,
@@ -41,20 +69,18 @@ export class ImageUrlManager {
 
     const trimmedUrl = url.trim();
 
+    // Check for wix:image://v1/ format (Wix Media Manager native)
     if (trimmedUrl.startsWith('wix:image://v1/')) {
-      const resolvedUrl = this.convertWixToHttps(trimmedUrl);
-      const conversionSucceeded = resolvedUrl.startsWith('https://');
-
       return {
-        url: conversionSucceeded ? resolvedUrl : FALLBACK_IMAGE_URL,
-        isValid: conversionSucceeded,
+        url: trimmedUrl,
+        isValid: true,
         format: 'wix-image',
-        isFallback: !conversionSucceeded,
-        error: conversionSucceeded ? undefined : 'Unable to convert Wix image URL',
+        isFallback: false,
         originalUrl,
       };
     }
 
+    // Check for static.wixstatic.com format (Wix CDN)
     if (trimmedUrl.startsWith('https://static.wixstatic.com/')) {
       return {
         url: trimmedUrl,
@@ -65,6 +91,7 @@ export class ImageUrlManager {
       };
     }
 
+    // Check for HTTPS URLs (pass through)
     if (trimmedUrl.startsWith('https://')) {
       return {
         url: trimmedUrl,
@@ -75,6 +102,7 @@ export class ImageUrlManager {
       };
     }
 
+    // Check for HTTP URLs (pass through but warn)
     if (trimmedUrl.startsWith('http://')) {
       if (IS_DEVELOPMENT) {
         console.warn(`[ImageUrlManager] HTTP URL detected (should be HTTPS): ${trimmedUrl.substring(0, 100)}`);
@@ -88,9 +116,10 @@ export class ImageUrlManager {
       };
     }
 
+    // Check for base64 data URLs (legacy - convert to fallback)
     if (trimmedUrl.startsWith('data:')) {
       if (IS_DEVELOPMENT) {
-        console.warn('[ImageUrlManager] Base64 data URL detected; using fallback');
+        console.warn(`[ImageUrlManager] Base64 data URL detected (legacy format): ${trimmedUrl.substring(0, 50)}...`);
       }
       return {
         url: FALLBACK_IMAGE_URL,
@@ -102,9 +131,10 @@ export class ImageUrlManager {
       };
     }
 
+    // Check for blob URLs (temporary previews - convert to fallback)
     if (trimmedUrl.startsWith('blob:')) {
       if (IS_DEVELOPMENT) {
-        console.warn('[ImageUrlManager] Blob URL detected; using fallback');
+        console.warn(`[ImageUrlManager] Blob URL detected (temporary preview): ${trimmedUrl.substring(0, 50)}...`);
       }
       return {
         url: FALLBACK_IMAGE_URL,
@@ -116,10 +146,10 @@ export class ImageUrlManager {
       };
     }
 
+    // Unknown format
     if (IS_DEVELOPMENT) {
       console.warn(`[ImageUrlManager] Unknown URL format: ${trimmedUrl.substring(0, 100)}`);
     }
-
     return {
       url: FALLBACK_IMAGE_URL,
       isValid: false,
@@ -130,38 +160,58 @@ export class ImageUrlManager {
     };
   }
 
-  /** Convert wix:image://v1/{mediaId}/... to a Wix static CDN URL. */
+  /**
+   * Convert wix:image://v1/ URLs to HTTPS URLs for browser rendering
+   * This resolves the CSP issue where browsers cannot load wix:image:// directly
+   * 
+   * Usage:
+   * ```typescript
+   * const httpsUrl = ImageUrlManager.convertWixToHttps(wixImageUrl);
+   * ```
+   */
   static convertWixToHttps(url: string): string {
-    const prefix = 'wix:image://v1/';
-    if (!url.startsWith(prefix)) return url;
+    const wixImagePrefix = 'wix:image://v1/';
+    if (!url.startsWith(wixImagePrefix)) {
+      return url; // Not a wix:image URL, return as-is
+    }
 
     try {
-      const withoutPrefix = url.slice(prefix.length);
-      const [uriPart, paramsString] = withoutPrefix.split('#', 2);
+      // Extract the URI and parameters from wix:image://v1/{uri}/{filename}#{params}
+      const withoutPrefix = url.replace(wixImagePrefix, '');
+      const [uriPart, paramsString] = withoutPrefix.split('#');
       const uri = uriPart.split('/')[0];
 
-      if (!uri) return FALLBACK_IMAGE_URL;
-
+      // Parse origin dimensions if available
       const params = new URLSearchParams(paramsString || '');
       const originWidth = params.get('originWidth');
       const originHeight = params.get('originHeight');
 
+      // Build HTTPS URL using Wix static CDN
       let httpsUrl = `${STATIC_MEDIA_URL}${uri}`;
+
+      // Add origin dimensions if available
       if (originWidth && originHeight) {
-        httpsUrl += `?originWidth=${encodeURIComponent(originWidth)}&originHeight=${encodeURIComponent(originHeight)}`;
+        httpsUrl += `?originWidth=${originWidth}&originHeight=${originHeight}`;
       }
 
       return httpsUrl;
     } catch (error) {
       if (IS_DEVELOPMENT) {
-        console.warn('[ImageUrlManager] Failed to convert wix:image URL', error);
+        console.warn(`[ImageUrlManager] Failed to convert wix:image URL: ${url}`, error);
       }
-      return FALLBACK_IMAGE_URL;
+      return url; // Return original on error
     }
   }
 
+  /**
+   * Validate that a URL is in a supported format
+   * Returns true if URL can be rendered
+   */
   static isValidFormat(url: string | undefined | null): boolean {
-    if (!url || typeof url !== 'string' || url.trim() === '') return false;
+    if (!url || typeof url !== 'string' || url.trim() === '') {
+      return false;
+    }
+
     const trimmedUrl = url.trim();
     return (
       trimmedUrl.startsWith('wix:image://v1/') ||
@@ -171,31 +221,56 @@ export class ImageUrlManager {
     );
   }
 
+  /**
+   * Check if URL is a Wix Media Manager URL (wix:image://)
+   */
   static isWixImageUrl(url: string | undefined | null): boolean {
-    return typeof url === 'string' && url.trim().startsWith('wix:image://v1/');
+    if (!url || typeof url !== 'string') return false;
+    return url.trim().startsWith('wix:image://v1/');
   }
 
+  /**
+   * Check if URL is a Wix CDN URL (static.wixstatic.com)
+   */
   static isWixCdnUrl(url: string | undefined | null): boolean {
-    return typeof url === 'string' && url.trim().startsWith('https://static.wixstatic.com/');
+    if (!url || typeof url !== 'string') return false;
+    return url.trim().startsWith('https://static.wixstatic.com/');
   }
 
+  /**
+   * Check if URL is an HTTPS URL
+   */
   static isHttpsUrl(url: string | undefined | null): boolean {
-    return typeof url === 'string' && url.trim().startsWith('https://');
+    if (!url || typeof url !== 'string') return false;
+    return url.trim().startsWith('https://');
   }
 
+  /**
+   * Check if URL is a fallback/placeholder
+   */
   static isFallback(url: string | undefined | null): boolean {
-    return typeof url === 'string' && url.trim() === FALLBACK_IMAGE_URL;
+    if (!url || typeof url !== 'string') return false;
+    return url.trim() === FALLBACK_IMAGE_URL;
   }
 
+  /**
+   * Get the fallback image URL
+   */
   static getFallbackUrl(): string {
     return FALLBACK_IMAGE_URL;
   }
 
+  /**
+   * Normalize URL for comparison (removes trailing slashes, query params, etc.)
+   */
   static normalize(url: string | undefined | null): string {
     if (!url || typeof url !== 'string') return '';
     return url.trim().split('?')[0].split('#')[0];
   }
 
+  /**
+   * Check if two URLs refer to the same image (after normalization)
+   */
   static isSameUrl(url1: string | undefined | null, url2: string | undefined | null): boolean {
     return this.normalize(url1) === this.normalize(url2);
   }

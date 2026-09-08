@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/sections/HeroSection';
@@ -9,34 +9,12 @@ import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
 import SEOHead from '@/components/SEOHead';
 
+// Fallback component for sections
 function SectionFallback() {
-  return <div className="w-full h-screen bg-black animate-pulse" aria-hidden="true" />;
+  return <div className="w-full h-screen bg-black animate-pulse" />;
 }
 
-class SectionErrorBoundary extends React.Component<
-  { children: React.ReactNode; name: string },
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error) {
-    console.error(`[HOME] Failed to render ${this.props.name}`, error);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      // A broken optional section must not take down the entire homepage.
-      return <div className="w-full min-h-[1px] bg-black" aria-hidden="true" />;
-    }
-    return this.props.children;
-  }
-}
-
-function Section({ children, name }: { children: React.ReactNode; name: string }) {
+function Section({ children }: { children: React.ReactNode }) {
   return (
     <section
       className="snap-start snap-always"
@@ -45,13 +23,9 @@ function Section({ children, name }: { children: React.ReactNode; name: string }
         scrollSnapStop: 'always',
       }}
     >
-      <SectionErrorBoundary name={name}>{children}</SectionErrorBoundary>
+      {children}
     </section>
   );
-}
-
-function ShellBoundary({ children, name }: { children: React.ReactNode; name: string }) {
-  return <SectionErrorBoundary name={name}>{children}</SectionErrorBoundary>;
 }
 
 export default function HomePage() {
@@ -68,33 +42,33 @@ export default function HomePage() {
           scrollSnapType: 'y mandatory',
         }}
       >
-        <ShellBoundary name="Header"><Header /></ShellBoundary>
+        <Header />
 
-        <Suspense fallback={<SectionFallback />}>
-          <Section name="HeroSection"><HeroSection /></Section>
-        </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <Section><HeroSection /></Section>
+      </Suspense>
 
-        <Suspense fallback={<SectionFallback />}>
-          <Section name="AboutSection"><AboutSection /></Section>
-        </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <Section><AboutSection /></Section>
+      </Suspense>
 
-        <Suspense fallback={<SectionFallback />}>
-          <Section name="RubberBandCarouselSection"><RubberBandCarouselSection /></Section>
-        </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <Section><RubberBandCarouselSection /></Section>
+      </Suspense>
 
-        <Suspense fallback={<SectionFallback />}>
-          <Section name="BehindTheScenesSection"><BehindTheScenesSection /></Section>
-        </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <Section><BehindTheScenesSection /></Section>
+      </Suspense>
 
-        <Suspense fallback={<SectionFallback />}>
-          <Section name="SponsorsSection"><SponsorsSection /></Section>
-        </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <Section><SponsorsSection /></Section>
+      </Suspense>
 
-        <Suspense fallback={<SectionFallback />}>
-          <Section name="ContactSection"><ContactSection /></Section>
-        </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <Section><ContactSection /></Section>
+      </Suspense>
 
-        <ShellBoundary name="Footer"><Footer /></ShellBoundary>
+      <Footer />
       </main>
     </>
   );
