@@ -37,7 +37,9 @@ export default defineConfig({
     css: !isBuild ? { postcss: { plugins: [postcssPseudoToData()] } } : undefined,
     server: {
       host: true,
-      allowedHosts: true,
+      // Wix Vibe/remote development uses ephemeral *.remote-machine.wix-code.com
+      // hosts. Allow only that Wix-controlled suffix rather than every hostname.
+      allowedHosts: ['.remote-machine.wix-code.com'],
     },
   },
   ...(isBuild && { adapter: cloudProviderFetchAdapter({}) }),
