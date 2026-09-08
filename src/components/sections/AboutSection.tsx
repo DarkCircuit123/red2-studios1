@@ -1,7 +1,7 @@
 import { Image } from '@/components/ui/image';
 import { AboutSection as AboutSectionType } from '@/entities/index';
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import FashionTicker from '@/components/FashionTicker';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { scrollAnimationVariants, getStaggeredVariant } from '@/lib/scroll-animation-variants';
@@ -13,6 +13,17 @@ export default function AboutSection() {
   const [fontFamily, setFontFamily] = useState('font-cormorant-garamond-v2');
   const [isLoading, setIsLoading] = useState(true);
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
+  const imageRef = useRef<HTMLDivElement>(null);
+  
+  // Scroll-based animations for the image
+  const { scrollYProgress } = useScroll({
+    target: imageRef,
+    offset: ['start 80%', 'end 20%'],
+  });
+  
+  const imageY = useTransform(scrollYProgress, [0, 0.5, 1], [80, 0, -80]);
+  const imageScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 0.8]);
+  const imageOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
 
   const loadAboutData = async () => {
     try {
@@ -150,28 +161,19 @@ export default function AboutSection() {
               transition={{ delay: 0.2 }}
               className="relative reveal mx-auto max-w-4xl"
             >
-              {/* Desktop/tablet floated image */}
+              {/* Desktop/tablet floated image with scroll snap */}
               {aboutImage && (
                 <figure className="hidden sm:block float-right w-44 md:w-52 lg:w-64 ml-6 md:ml-8 mb-5 flex-shrink-0 [shape-outside:inset(0_round_1rem)] [shape-margin:1rem] m-0">
                   <motion.div
-                    initial="hidden"
-                    animate={sectionVisible ? "visible" : "hidden"}
-                    variants={{
-                      hidden: { x: 100, opacity: 0 },
-                      visible: {
-                        x: 0,
-                        opacity: 1,
-                        transition: {
-                          type: 'spring',
-                          stiffness: 80,
-                          damping: 15,
-                          duration: 0.8
-                        }
-                      }
+                    ref={imageRef}
+                    style={{ 
+                      y: imageY, 
+                      scale: imageScale,
+                      opacity: imageOpacity 
                     }}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.3 }}
-                    className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"
+                    className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe sticky top-1/2 -translate-y-1/2"
                   >
                     {!isLoading && (
                       <motion.div
