@@ -46,6 +46,6 @@ export default function AdminAccessGate({ children, onAccessDenied }: AdminAcces
       <p className="text-white/60 text-sm mb-5">{error || 'Sign in with the admin credentials to continue.'}</p>
       <button onClick={() => setShowLogin(true)} className="px-5 py-3 bg-primary text-white rounded-lg font-mono text-sm uppercase tracking-widest">Admin Login</button>
     </motion.div>
-    <AdminLoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} onLoginSuccess={() => setShowLogin(false)} />
+    <AdminLoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} onLoginSuccess={() => { setShowLogin(false); setHasCheckedMemberAccess(false); }} />
   </div>;
 }

@@ -61,8 +61,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const configuredUsername = await readSecret('ADMIN_USERNAME');
     const configuredPassword = await readSecret('ADMIN_PASSWORD');
     if (!configuredUsername || !configuredPassword) {
-      console.error('[ADMIN LOGIN] Admin credentials are not configured');
-      return jsonResponse({ success: false, message: 'Admin authentication is not configured' }, 503);
+      console.error('[ADMIN LOGIN] Admin credentials are not configured. Please set ADMIN_USERNAME and ADMIN_PASSWORD in your Wix Secrets Manager.');
+      return jsonResponse({ 
+        success: false, 
+        message: 'Admin credentials are not configured. Please contact your administrator to set up ADMIN_USERNAME and ADMIN_PASSWORD in Wix Secrets Manager.' 
+      }, 503);
     }
 
     const credentialsValid = constantTimeEqual(username, configuredUsername) && constantTimeEqual(password, configuredPassword);
