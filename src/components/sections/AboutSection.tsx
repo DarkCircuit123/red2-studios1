@@ -16,11 +16,13 @@ export default function AboutSection() {
   const imageRef = useRef<HTMLDivElement>(null);
   
   // Scroll-based animations for the image
+  // useScroll must be called unconditionally, but we only apply transforms when image is ready
   const { scrollYProgress } = useScroll({
     target: imageRef,
     offset: ['start 80%', 'end 20%'],
   });
   
+  // Apply transforms conditionally based on image state
   const imageY = useTransform(scrollYProgress, [0, 0.5, 1], [80, 0, -80]);
   const imageScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 0.8]);
   const imageOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0.3]);
@@ -166,11 +168,11 @@ export default function AboutSection() {
                 <figure className="hidden sm:block float-right w-44 md:w-52 lg:w-64 ml-6 md:ml-8 mb-5 flex-shrink-0 m-0">
                   <motion.div
                     ref={imageRef}
-                    style={{ 
+                    style={!isLoading ? { 
                       y: imageY, 
                       scale: imageScale,
                       opacity: imageOpacity 
-                    }}
+                    } : {}}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.3 }}
                     className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"
