@@ -35,10 +35,13 @@ export default defineConfig({
       include: ['react', 'react-dom', 'zustand', 'framer-motion', 'date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge', 'zod'],
     },
     css: !isBuild ? { postcss: { plugins: [postcssPseudoToData()] } } : undefined,
+    server: {
+      host: true,
+      allowedHosts: true,
+    },
   },
   ...(isBuild && { adapter: cloudProviderFetchAdapter({}) }),
   devToolbar: { enabled: false },
   image: { domains: ["static.wixstatic.com"] },
-  server: { host: true },
   security: { checkOrigin: true },
 });
