@@ -411,7 +411,10 @@ const Red2TerminalPage: React.FC = () => {
                   fontSize: '0.5em',
                   verticalAlign: 'super',
                   marginLeft: '-0.1em',
+                  color: '#ef4444',
+                  transition: 'color 0.3s ease-in-out',
                 }}
+                className="hover:text-white"
               >
                 2
               </sup>

@@ -210,7 +210,7 @@ export default function AboutSection() {
                     ) : (
                       <span key={index}>
                         {part}
-                        RED<sup className="text-sm align-super">2</sup> Studios
+                        RED<sup className="text-sm align-super text-red-500 group-hover:text-white transition-colors duration-300">2</sup> Studios
                       </span>
                     )
                   ))}
