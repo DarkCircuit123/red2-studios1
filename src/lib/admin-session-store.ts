@@ -1,12 +1,14 @@
 /**
  * Admin Session Store - Robust State Machine
- * Fixes race conditions and implements proper session management
+ *
+ * Client-side UI state only. The authoritative admin session is the
+ * server-issued httpOnly cookie; session credentials are never persisted.
  */
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type AdminAuthState = 
+export type AdminAuthState =
   | 'idle'
   | 'loading'
   | 'authenticated'
@@ -14,25 +16,23 @@ export type AdminAuthState =
   | 'expired';
 
 interface AdminSessionStore {
-  // State
   state: AdminAuthState;
   adminUsername: string | null;
   sessionToken: string | null;
   failedAttempts: number;
   error: string | null;
   lastActivityTime: number | null;
-  
-  // Actions
+
   setLoading: () => void;
-  setAuthenticated: (username: string, sessionToken: string) => void;
+  setAuthenticated: (username: string, sessionToken?: string | null) => void;
   setFailed: (error: string) => void;
   setExpired: () => void;
   reset: () => void;
+  recordFailedAttempt: () => void;
   recordSuccessfulAttempt: () => void;
   updateActivityTime: () => void;
   logout: () => void;
-  
-  // Queries
+
   isAuthenticated: () => boolean;
   isLoading: () => boolean;
   isLocked: () => boolean;
@@ -40,12 +40,11 @@ interface AdminSessionStore {
   canAttemptLogin: () => boolean;
 }
 
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 export const useAdminSession = create<AdminSessionStore>()(
   persist(
     (set, get) => ({
-      // Initial state
       state: 'idle',
       adminUsername: null,
       sessionToken: null,
@@ -53,12 +52,11 @@ export const useAdminSession = create<AdminSessionStore>()(
       error: null,
       lastActivityTime: null,
 
-      // State transitions
       setLoading: () => {
         set({ state: 'loading', error: null });
       },
 
-      setAuthenticated: (username: string, sessionToken: string) => {
+      setAuthenticated: (username: string, sessionToken: string | null = null) => {
         set({
           state: 'authenticated',
           adminUsername: username,
@@ -67,7 +65,6 @@ export const useAdminSession = create<AdminSessionStore>()(
           error: null,
           lastActivityTime: Date.now(),
         });
-        console.log('[ADMIN SESSION] Authenticated:', username);
       },
 
       setFailed: (error: string) => {
@@ -75,15 +72,14 @@ export const useAdminSession = create<AdminSessionStore>()(
           state: 'failed',
           error,
         });
-        console.warn(`[ADMIN SESSION] Login failed: ${error}`);
       },
 
       setExpired: () => {
         set({
           state: 'expired',
+          sessionToken: null,
           error: 'Session expired. Please log in again.',
         });
-        console.warn('[ADMIN SESSION] Session expired');
       },
 
       reset: () => {
@@ -95,13 +91,13 @@ export const useAdminSession = create<AdminSessionStore>()(
           error: null,
           lastActivityTime: null,
         });
-        console.log('[ADMIN SESSION] Reset to idle state');
       },
 
       recordFailedAttempt: () => {
-        set({
+        set((current) => ({
+          failedAttempts: current.failedAttempts + 1,
           error: 'Login failed. Please try again.',
-        });
+        }));
       },
 
       recordSuccessfulAttempt: () => {
@@ -121,18 +117,16 @@ export const useAdminSession = create<AdminSessionStore>()(
           state: 'idle',
           adminUsername: null,
           sessionToken: null,
+          failedAttempts: 0,
           error: null,
           lastActivityTime: null,
         });
-        console.log('[ADMIN SESSION] Logged out');
       },
 
-      // Query methods
       isAuthenticated: () => {
         const current = get();
         if (current.state !== 'authenticated') return false;
-        
-        // Check session timeout
+
         if (current.lastActivityTime) {
           const elapsed = Date.now() - current.lastActivityTime;
           if (elapsed > SESSION_TIMEOUT_MS) {
@@ -140,23 +134,24 @@ export const useAdminSession = create<AdminSessionStore>()(
             return false;
           }
         }
-        
+
         return true;
       },
 
       isLoading: () => get().state === 'loading',
       isExpired: () => get().state === 'expired',
 
-      canAttemptLogin: () => {
-        const current = get();
-        return current.state !== 'loading';
-      },
+      // Lockout is enforced server-side. This store must never be the source
+      // of truth for authentication or brute-force protection.
+      isLocked: () => false,
+
+      canAttemptLogin: () => get().state !== 'loading',
     }),
     {
       name: 'admin-session-storage',
+      // Never persist the session credential. Authentication remains server-side.
       partialize: (state) => ({
         adminUsername: state.adminUsername,
-        sessionToken: state.sessionToken,
         failedAttempts: state.failedAttempts,
         lastActivityTime: state.lastActivityTime,
       }),
