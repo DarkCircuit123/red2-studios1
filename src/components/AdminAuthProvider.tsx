@@ -96,3 +96,5 @@ export function useAdminAuth() {
   if (!context) throw new Error('useAdminAuth must be used within AdminAuthProvider');
   return context;
 }
+
+export default AdminAuthProvider;
