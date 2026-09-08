@@ -261,8 +261,10 @@ export default function Header() {
           {/* STATE 1: Not Authenticated - Show ONLY Login icon */}
           {!isAuthenticated && !isLoading && (
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.15, rotate: 5 }}
+              whileTap={{ scale: 0.9 }}
+              animate={{ y: [0, -3, 0] }}
+              transition={{ duration: 2, repeat: Infinity, repeatType: 'loop' }}
               onClick={handleLoginClick}
               className="p-2 hover:bg-white/10 transition-colors duration-300 rounded-lg hidden md:flex items-center justify-center relative z-50"
               aria-label="Sign in"

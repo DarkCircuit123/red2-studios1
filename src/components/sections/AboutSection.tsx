@@ -156,7 +156,19 @@ export default function AboutSection() {
                   <motion.div
                     initial="hidden"
                     animate={sectionVisible ? "visible" : "hidden"}
-                    variants={scrollAnimationVariants.imageSlideInRight}
+                    variants={{
+                      hidden: { x: 100, opacity: 0 },
+                      visible: {
+                        x: 0,
+                        opacity: 1,
+                        transition: {
+                          type: 'spring',
+                          stiffness: 80,
+                          damping: 15,
+                          duration: 0.8
+                        }
+                      }
+                    }}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.3 }}
                     className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"
@@ -223,7 +235,19 @@ export default function AboutSection() {
                   <motion.div
                     initial="hidden"
                     animate={sectionVisible ? "visible" : "hidden"}
-                    variants={scrollAnimationVariants.imageSlideInLeft}
+                    variants={{
+                      hidden: { x: -100, opacity: 0 },
+                      visible: {
+                        x: 0,
+                        opacity: 1,
+                        transition: {
+                          type: 'spring',
+                          stiffness: 80,
+                          damping: 15,
+                          duration: 0.8
+                        }
+                      }
+                    }}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.3 }}
                     className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"

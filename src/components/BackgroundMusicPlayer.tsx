@@ -238,6 +238,8 @@ export default function BackgroundMusicPlayer() {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.5 }}
+        whileHover={{ scale: 1.15, rotate: 10 }}
+        whileTap={{ scale: 0.9 }}
         onClick={toggleMute}
         className={`fixed bottom-8 right-8 z-40 p-2 rounded-full transition-all duration-300 backdrop-blur-md border border-white/20 ${
           isMuted 
@@ -247,11 +249,23 @@ export default function BackgroundMusicPlayer() {
         aria-label={isMuted ? 'Unmute music' : 'Mute music'}
         title={isMuted ? 'Click to unmute background music' : 'Click to mute background music'}
       >
-        {isMuted ? (
-          <VolumeX className="w-4 h-4" />
-        ) : (
-          <Volume2 className="w-4 h-4" />
-        )}
+        <motion.div
+          animate={{ 
+            scale: isPlaying && !isMuted ? [1, 1.1, 1] : 1,
+            opacity: isPlaying && !isMuted ? [1, 0.8, 1] : 1
+          }}
+          transition={{ 
+            duration: 1.5, 
+            repeat: isPlaying && !isMuted ? Infinity : 0,
+            repeatType: 'loop'
+          }}
+        >
+          {isMuted ? (
+            <VolumeX className="w-4 h-4" />
+          ) : (
+            <Volume2 className="w-4 h-4" />
+          )}
+        </motion.div>
       </motion.button>
     </>
   );
