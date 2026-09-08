@@ -157,6 +157,8 @@
   "overrides": {
     "@wix/services-definitions": "^1.0.1",
     "@wix/services-manager": "^1.0.2",
-    "@wix/services-manager-react": "^1.0.3"
+    "@wix/services-manager-react": "^1.0.3",
+    "@wix/locale-dataset-javascript": "npm:empty-npm-package@1.0.0",
+    "@wix/editor-elements-definitions": "npm:empty-npm-package@1.0.0"
   }
 }
