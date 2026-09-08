@@ -10,8 +10,9 @@ import dynamicDataPlugin from "@wix/babel-plugin-jsx-dynamic-data";
 import customErrorOverlayPlugin from "./vite-error-overlay-plugin.js";
 import postcssPseudoToData from "@wix/postcss-pseudo-to-data";
 
-const isBuild = process.env.NODE_ENV === "production";
+const isBuild = process.env.NODE_ENV == "production";
 
+// https://astro.build/config
 export default defineConfig({
   output: "server",
   integrations: [
@@ -19,31 +20,64 @@ export default defineConfig({
       name: "framewire",
       hooks: {
         "astro:config:setup": ({ injectScript, command }) => {
-          if (command === "dev") injectScript("page", `import loadFramewire from "framewire.js"; loadFramewire(true);`);
+          if (command === "dev") {
+            injectScript(
+              "page",
+              `import loadFramewire from "framewire.js";
+              loadFramewire(true);`
+            );
+          }
         },
       },
     },
     tailwind(),
-    wix({ htmlEmbeds: isBuild, auth: true }),
+    wix({
+      htmlEmbeds: isBuild,
+      auth: true,
+    }),
     ...(isBuild ? [monitoring()] : []),
-    react(isBuild ? {} : { babel: { plugins: [sourceAttrsPlugin, dynamicDataPlugin] } }),
+    react(isBuild ? {} : {
+      babel: { plugins: [sourceAttrsPlugin, dynamicDataPlugin] },
+    }),
   ],
   vite: {
     plugins: [customErrorOverlayPlugin()],
     cacheDir: 'node_modules/.cache/.vite',
     optimizeDeps: {
-      include: ['react', 'react-dom', 'zustand', 'framer-motion', 'date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge', 'zod'],
+      include: [
+        'react',
+        'react-dom',
+        'zustand',
+        'framer-motion',
+        'date-fns',
+        'clsx',
+        'class-variance-authority',
+        'tailwind-merge',
+        '@radix-ui/*',
+        '@wix/*',
+        'zod',
+      ],
     },
-    css: !isBuild ? { postcss: { plugins: [postcssPseudoToData()] } } : undefined,
-    server: {
-      host: true,
-      // Wix Vibe/remote development uses ephemeral *.remote-machine.wix-code.com
-      // hosts. Allow only that Wix-controlled suffix rather than every hostname.
-      allowedHosts: ['.remote-machine.wix-code.com'],
-    },
+    css: !isBuild ? {
+      postcss: {
+        plugins: [
+          postcssPseudoToData(),
+        ],
+      },
+    } : undefined,
   },
   ...(isBuild && { adapter: cloudProviderFetchAdapter({}) }),
-  devToolbar: { enabled: false },
-  image: { domains: ["static.wixstatic.com"] },
-  security: { checkOrigin: true },
+  devToolbar: {
+    enabled: false,
+  },
+  image: {
+    domains: ["static.wixstatic.com"],
+  },
+  server: {
+    allowedHosts: true,
+    host: true,
+  },
+  security: {
+    checkOrigin: false
+  }
 });
