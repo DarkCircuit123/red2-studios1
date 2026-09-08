@@ -136,8 +136,8 @@ export default function HeroSection() {
         }}
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLElement;
-          el.style.borderColor = '#A31621';
-          el.style.backgroundColor = '#A31621';
+          el.style.borderColor = 'rgba(163, 22, 33, 0.6)';
+          el.style.backgroundColor = 'rgba(163, 22, 33, 0.6)';
           el.style.color = '#ffffff';
         }}
         onMouseLeave={(e) => {
