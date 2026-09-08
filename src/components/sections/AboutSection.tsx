@@ -204,7 +204,16 @@ export default function AboutSection() {
               {/* Text content with wrapping */}
               <div className="space-y-5">
                 <p className={`text-base md:text-lg text-white/75 leading-relaxed whitespace-pre-wrap ${fontFamily}`}>
-                  {aboutText}
+                  {aboutText.split('RED2 Studios').map((part, index, arr) => (
+                    index === arr.length - 1 ? (
+                      part
+                    ) : (
+                      <span key={index}>
+                        {part}
+                        RED<sup className="text-sm align-super">2</sup> Studios
+                      </span>
+                    )
+                  ))}
                 </p>
               </div>
 
