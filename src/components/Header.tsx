@@ -165,31 +165,18 @@ export default function Header() {
           }
           .logo-2-card {
             display: inline-block;
-            transform-style: preserve-3d;
-            transition: transform 600ms ease, color 300ms ease;
-          }
-          .logo-wrap:hover .logo-2-card {
-            transform: rotateY(180deg);
-          }
-          .logo-2-front,
-          .logo-2-back {
-            display: inline-block;
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
             transition: color 300ms ease;
           }
           .logo-2-front {
+            display: inline-block;
             color: #A31621;
-          }
-          .logo-2-back {
-            color: #ffffff;
-            transform: rotateY(180deg);
+            transition: color 300ms ease;
           }
           .logo-wrap:hover .logo-2-front {
             color: #ffffff;
           }
-          .logo-wrap:hover .logo-2-back {
-            color: #A31621;
+          .logo-2-back {
+            display: none;
           }
         `}</style>
         <motion.div
@@ -211,7 +198,6 @@ export default function Header() {
                 style={{ transform: 'translateY(-0.75em)' }}
               >
                 <span className="logo-2-front">²</span>
-                <span className="logo-2-back" aria-hidden="true">²</span>
               </span>
             </span>
           </Link>
