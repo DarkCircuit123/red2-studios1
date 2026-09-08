@@ -16,6 +16,7 @@ export default function HeroSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [imageDimensions, setImageDimensions] = useState({ width: 1920, height: 1080 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
 
   const { fitting } = useImageFitting({
     imageWidth: imageDimensions.width,
@@ -68,6 +69,33 @@ export default function HeroSection() {
     loadHeroImage();
   }, []);
 
+  // Ken Burns / Parallax effect on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (imageRef.current && containerRef.current) {
+        const scrollY = window.scrollY;
+        const containerTop = containerRef.current.offsetTop;
+        const containerHeight = containerRef.current.offsetHeight;
+        
+        // Only apply effect while hero is in view or just passed
+        if (scrollY < containerTop + containerHeight) {
+          // Subtle zoom and pan effect (Ken Burns style)
+          // Scale from 1 to 1.08 as you scroll through the hero
+          const scrollProgress = Math.max(0, scrollY / (containerHeight * 0.5));
+          const scale = 1 + Math.min(scrollProgress * 0.08, 0.08);
+          
+          // Subtle vertical pan (moves up slightly as you scroll)
+          const panY = scrollProgress * 15; // moves up max 15px
+          
+          imageRef.current.style.transform = `scale(${scale}) translateY(-${panY}px)`;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     setImageDimensions({
@@ -82,7 +110,13 @@ export default function HeroSection() {
       className="relative w-full h-screen flex items-center justify-center overflow-hidden bg-black"
     >
       {heroImage && (
-        <div className="absolute inset-0 w-full h-full">
+        <div 
+          ref={imageRef}
+          className="absolute inset-0 w-full h-full"
+          style={{
+            transition: 'transform 0.1s ease-out',
+          }}
+        >
           <Image
             src={heroImage}
             alt="Hero background"
