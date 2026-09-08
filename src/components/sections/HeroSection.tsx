@@ -142,7 +142,7 @@ export default function HeroSection() {
       <div className="absolute bottom-0 left-0 z-10" style={{ paddingLeft: '8vw', paddingBottom: '12vh' }}>
         <div style={{ letterSpacing: '0.3em' }} className="text-sm uppercase">
           <div style={{ color: 'rgba(255,255,255,0.7)' }}>
-            FASHION. EDITORIA<sup style={{ fontSize: '0.6em', verticalAlign: 'super' }}>L²</sup>. BOUDOIR.
+            FASHION. EDITORIAL. BOUDOIR.
           </div>
           <div style={{ color: 'rgba(255,255,255,0.35)' }}>
             LOS ANGELES
