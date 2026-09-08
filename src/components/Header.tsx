@@ -173,7 +173,7 @@ export default function Header() {
             transition: color 300ms ease;
           }
           .logo-wrap:hover .logo-2-front {
-            color: #A31621;
+            color: #ffffff;
           }
           .logo-2-back {
             display: none;
