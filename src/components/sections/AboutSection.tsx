@@ -23,7 +23,7 @@ export default function AboutSection() {
   
   const imageY = useTransform(scrollYProgress, [0, 0.5, 1], [80, 0, -80]);
   const imageScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 0.8]);
-  const imageOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+  const imageOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0.3]);
 
   const loadAboutData = async () => {
     try {
@@ -163,7 +163,7 @@ export default function AboutSection() {
             >
               {/* Desktop/tablet floated image with scroll snap */}
               {aboutImage && (
-                <figure className="hidden sm:block float-right w-44 md:w-52 lg:w-64 ml-6 md:ml-8 mb-5 flex-shrink-0 [shape-outside:inset(0_round_1rem)] [shape-margin:1rem] m-0">
+                <figure className="hidden sm:block float-right w-44 md:w-52 lg:w-64 ml-6 md:ml-8 mb-5 flex-shrink-0 m-0">
                   <motion.div
                     ref={imageRef}
                     style={{ 
@@ -173,7 +173,7 @@ export default function AboutSection() {
                     }}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.3 }}
-                    className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe sticky top-1/2 -translate-y-1/2"
+                    className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"
                   >
                     {!isLoading && (
                       <motion.div
