@@ -3,27 +3,46 @@
  * Implements constant-time comparison and signed session validation.
  */
 
+import { auth } from '@wix/essentials';
+import { secrets } from '@wix/secrets';
+
+const getWixSecretValue = auth.elevate(secrets.getSecretValue);
+
 /**
- * Read a secret from environment variables.
- * Never logs the secret itself.
+ * Read a secret from the server environment first, then fall back to Wix
+ * Secrets Manager. Wix-hosted Astro endpoints do not expose Secrets Manager
+ * values through process.env, so relying on environment variables alone makes
+ * correctly configured Wix secrets appear to be missing at runtime.
+ *
+ * Never logs or returns a secret to client-side code.
  */
 export async function readSecret(...candidateEnvNames: string[]): Promise<string | undefined> {
   for (const name of candidateEnvNames) {
     try {
       const raw = typeof process !== 'undefined' && process.env ? process.env[name] : undefined;
-      if (!raw) continue;
-
-      const trimmed = raw.trim();
-      if (!trimmed) continue;
-
-      // Tolerate an accidentally pasted KEY=value environment entry, but only
-      // when the prefix exactly matches the key being requested.
-      const selfPrefix = new RegExp(`^${name}\\s*=\\s*([\\s\\S]*)$`);
-      const match = trimmed.match(selfPrefix);
-      const value = match ? match[1].trim() : trimmed;
-      if (value) return value;
+      if (raw) {
+        const trimmed = raw.trim();
+        if (trimmed) {
+          // Tolerate an accidentally pasted KEY=value environment entry, but
+          // only when the prefix exactly matches the key being requested.
+          const selfPrefix = new RegExp(`^${name}\\s*=\\s*([\\s\\S]*)$`);
+          const match = trimmed.match(selfPrefix);
+          const value = match ? match[1].trim() : trimmed;
+          if (value) return value;
+        }
+      }
     } catch {
-      continue;
+      // Continue to Wix Secrets Manager if the environment is unavailable.
+    }
+
+    try {
+      const result = await getWixSecretValue(name);
+      const value = typeof result === 'string' ? result : result?.value;
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    } catch {
+      // The secret may not exist, may be unavailable in local development, or
+      // the current runtime may not have Wix secret-manager access. Fall back
+      // to the next configured source/name without exposing secret details.
     }
   }
 
