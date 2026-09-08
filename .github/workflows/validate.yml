@@ -10,6 +10,11 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # @wix/astro requires WIX_CLIENT_ID while loading the config, even for
+      # static validation. The real Wix-managed runtime values stay in Wix
+      # environment configuration and are never committed to GitHub.
+      WIX_CLIENT_ID: ci-validation-placeholder
     steps:
       - name: Checkout
         uses: actions/checkout@v4
