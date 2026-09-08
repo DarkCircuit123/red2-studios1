@@ -1,11 +1,6 @@
 /**
- * Backend endpoint for submitting a public booking
- * Creates a booking record and marks the availability slot as booked
- * Uses elevated permissions to bypass frontend restrictions
- * 
- * This endpoint is called from the public booking page and uses
- * backend-only APIs with elevated permissions to write to both
- * the bookings and bookingavailability collections.
+ * Backend endpoint for submitting a public booking.
+ * Validates the requested availability slot server-side before writing the booking.
  */
 
 import { Bookings, BookingAvailability } from '@/entities/index';
@@ -20,102 +15,166 @@ interface BookingSubmission {
   bookingDate?: string | Date;
   bookingTime?: string;
   clientMessage?: string;
-  slotId: string; // ID of the availability slot being booked
+  slotId: string;
+}
+
+const JSON_HEADERS = {
+  'Content-Type': 'application/json',
+  'Cache-Control': 'no-store',
+};
+
+function cleanString(value: unknown, maxLength: number): string {
+  return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+}
+
+function validEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
+}
+
+function validTime(value: string): boolean {
+  if (!/^\d{2}:\d{2}$/.test(value)) return false;
+  const [hour, minute] = value.split(':').map(Number);
+  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
 }
 
 export async function POST({ request }: { request: Request }) {
+  const requestId = crypto.randomUUID();
+
   try {
-    console.log('[Backend] POST /api/booking-availability/submit-booking - Submitting booking');
-    
-    const body = await request.json() as BookingSubmission;
-    console.log('[Backend] Received booking submission:', JSON.stringify(body, null, 2));
-
-    // Validate required fields
-    if (!body.clientName) {
-      console.error('[Backend] Missing clientName');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing required field: clientName' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    const contentLength = Number(request.headers.get('content-length') || 0);
+    if (contentLength > 32_000) {
+      return new Response(JSON.stringify({ success: false, error: 'Request is too large' }), {
+        status: 413,
+        headers: JSON_HEADERS,
+      });
     }
 
-    if (!body.clientEmail) {
-      console.error('[Backend] Missing clientEmail');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing required field: clientEmail' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    const body = await request.json() as Partial<BookingSubmission>;
+
+    const clientName = cleanString(body.clientName, 120);
+    const clientEmail = cleanString(body.clientEmail, 254).toLowerCase();
+    const clientPhone = cleanString(body.clientPhone, 40);
+    const sessionType = cleanString(body.sessionType, 120);
+    const clientMessage = cleanString(body.clientMessage, 4000);
+    const slotId = cleanString(body.slotId, 100);
+    const bookingTime = cleanString(body.bookingTime, 5);
+
+    if (!clientName || !clientEmail || !slotId) {
+      return new Response(JSON.stringify({ success: false, error: 'Name, email, and booking slot are required' }), {
+        status: 400,
+        headers: JSON_HEADERS,
+      });
     }
 
-    if (!body.slotId) {
-      console.error('[Backend] Missing slotId');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing required field: slotId' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (!validEmail(clientEmail)) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid email address' }), {
+        status: 400,
+        headers: JSON_HEADERS,
+      });
     }
 
-    // Validate that the booking date is today or in the future
-    if (body.bookingDate) {
-      const bookingDateStr = normalizeDateString(body.bookingDate);
-      const today = getTodayString();
-      if (bookingDateStr < today) {
-        console.error('[Backend] Booking date is in the past:', bookingDateStr);
-        return new Response(
-          JSON.stringify({ success: false, error: 'Cannot book for past dates' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
+    if (bookingTime && !validTime(bookingTime)) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid booking time' }), {
+        status: 400,
+        headers: JSON_HEADERS,
+      });
     }
 
-    // Create booking record
+    const requestedDate = body.bookingDate ? normalizeDateString(body.bookingDate) : '';
+    if (requestedDate && requestedDate < getTodayString()) {
+      return new Response(JSON.stringify({ success: false, error: 'Cannot book for past dates' }), {
+        status: 400,
+        headers: JSON_HEADERS,
+      });
+    }
+
+    // Read the slot first. Never trust the client-supplied date/time or status.
+    const slot = await BaseCrudService.getById<BookingAvailability>('bookingavailability', slotId);
+    if (!slot) {
+      return new Response(JSON.stringify({ success: false, error: 'Booking slot not found' }), {
+        status: 404,
+        headers: JSON_HEADERS,
+      });
+    }
+
+    if (slot.isAvailable !== true) {
+      return new Response(JSON.stringify({ success: false, error: 'That booking slot is no longer available' }), {
+        status: 409,
+        headers: JSON_HEADERS,
+      });
+    }
+
+    const slotDate = typeof slot.bookingDate === 'string' ? slot.bookingDate : normalizeDateString(slot.bookingDate);
+    const slotTime = typeof slot.startTime === 'string' ? slot.startTime : '';
+
+    if (requestedDate && requestedDate !== slotDate) {
+      return new Response(JSON.stringify({ success: false, error: 'Booking date does not match the selected slot' }), {
+        status: 400,
+        headers: JSON_HEADERS,
+      });
+    }
+
+    if (bookingTime && slotTime && bookingTime !== slotTime) {
+      return new Response(JSON.stringify({ success: false, error: 'Booking time does not match the selected slot' }), {
+        status: 400,
+        headers: JSON_HEADERS,
+      });
+    }
+
+    if (slotDate < getTodayString()) {
+      return new Response(JSON.stringify({ success: false, error: 'That booking slot has expired' }), {
+        status: 409,
+        headers: JSON_HEADERS,
+      });
+    }
+
     const booking: Bookings = {
       _id: crypto.randomUUID(),
-      clientName: body.clientName,
-      clientEmail: body.clientEmail,
-      clientPhone: body.clientPhone,
-      sessionType: body.sessionType,
-      bookingDate: body.bookingDate,
-      bookingTime: body.bookingTime,
-      clientMessage: body.clientMessage,
-      bookingStatus: 'Pending'
+      clientName,
+      clientEmail,
+      clientPhone,
+      sessionType: sessionType || slot.sessionType || 'Session',
+      bookingDate: body.bookingDate || slot.bookingDate,
+      bookingTime: bookingTime || slot.startTime,
+      clientMessage,
+      bookingStatus: 'Pending',
     };
 
-    console.log('[Backend] Creating booking record:', JSON.stringify(booking, null, 2));
+    // BaseCrudService is already server-side; its signatures do not accept
+    // suppressAuth arguments. Authorization is handled by the endpoint boundary.
+    const bookingResult = await BaseCrudService.create<Bookings>('bookings', booking);
 
-    // Save booking to CMS with suppressAuth to bypass permission restrictions
-    const bookingResult = await BaseCrudService.create<Bookings>('bookings', booking, undefined, { suppressAuth: true });
-    console.log('[Backend] Booking created successfully:', JSON.stringify(bookingResult, null, 2));
+    try {
+      await BaseCrudService.update<BookingAvailability>('bookingavailability', {
+        ...slot,
+        _id: slotId,
+        isAvailable: false,
+      });
+    } catch (slotUpdateError) {
+      // Compensate for a partial write so a booking is not left without a
+      // corresponding unavailable slot.
+      try {
+        await BaseCrudService.delete<Bookings>('bookings', bookingResult._id);
+      } catch (rollbackError) {
+        console.error(`[BOOKING:${requestId}] Rollback failed:`, rollbackError);
+      }
+      throw slotUpdateError;
+    }
 
-    // Mark the availability slot as booked
-    const updateData = {
-      _id: body.slotId,
-      isAvailable: false
-    };
+    console.log(`[BOOKING:${requestId}] Booking ${bookingResult._id} created for slot ${slotId}`);
 
-    console.log('[Backend] Updating availability slot:', JSON.stringify(updateData, null, 2));
-
-    const updateResult = await BaseCrudService.update<BookingAvailability>('bookingavailability', updateData, { suppressAuth: true });
-    console.log('[Backend] Availability slot updated successfully:', JSON.stringify(updateResult, null, 2));
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: booking
-      }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ success: true, data: bookingResult }), {
+      status: 201,
+      headers: JSON_HEADERS,
+    });
   } catch (error) {
-    console.error('[Backend] Error submitting booking:', error);
-    console.error('[Backend] Error details:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('[Backend] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to submit booking'
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    console.error(`[BOOKING:${requestId}] Failed:`, error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to submit booking',
+    }), {
+      status: 500,
+      headers: JSON_HEADERS,
+    });
   }
 }
