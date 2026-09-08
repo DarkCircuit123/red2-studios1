@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { SyntheticEvent } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { MusicSettings } from '@/entities/index';
@@ -142,7 +143,7 @@ export default function BackgroundMusicPlayer() {
 
   const handleAudioPause = () => setIsPlaying(false);
 
-  const handleAudioError = (event: React.SyntheticEvent<HTMLAudioElement>) => {
+  const handleAudioError = (event: SyntheticEvent<HTMLAudioElement>) => {
     const audio = event.currentTarget;
     console.error('[MUSIC_PLAYER] Audio playback error:', {
       errorCode: audio.error?.code,
