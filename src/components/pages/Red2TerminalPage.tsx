@@ -400,12 +400,21 @@ const Red2TerminalPage: React.FC = () => {
         {showWelcome && (
           <div className="text-center">
             <div
-              className="text-6xl md:text-8xl font-mono font-bold text-green-400"
+              className="text-6xl md:text-8xl font-mono font-bold text-green-400 inline-block"
               style={{
                 animation: 'fade-in 1s ease-in forwards',
               }}
             >
-              WELCOME TO RED<sup className="text-4xl md:text-6xl align-super">2</sup>
+              WELCOME TO RED
+              <sup
+                style={{
+                  fontSize: '0.5em',
+                  verticalAlign: 'super',
+                  marginLeft: '-0.1em',
+                }}
+              >
+                2
+              </sup>
             </div>
           </div>
         )}
