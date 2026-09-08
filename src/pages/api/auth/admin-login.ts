@@ -4,12 +4,17 @@ import { constantTimeEqual, getClientIP, readSecret, signAdminToken } from '@/li
 const MAX_BODY_BYTES = 4 * 1024;
 const MAX_FAILURES = 8;
 const LOCKOUT_MS = 15 * 60 * 1000;
+const MAX_TRACKED_IPS = 2048;
 const failedAttempts = new Map<string, { count: number; firstFailureAt: number }>();
 
-function jsonResponse(payload: Record<string, unknown>, status: number): Response {
+function jsonResponse(payload: Record<string, unknown>, status: number, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      ...headers,
+    },
   });
 }
 
@@ -27,6 +32,10 @@ function recordFailure(ip: string): void {
   const now = Date.now();
   const existing = failedAttempts.get(ip);
   if (!existing || now - existing.firstFailureAt >= LOCKOUT_MS) {
+    if (!existing && failedAttempts.size >= MAX_TRACKED_IPS) {
+      const oldestKey = failedAttempts.keys().next().value;
+      if (oldestKey) failedAttempts.delete(oldestKey);
+    }
     failedAttempts.set(ip, { count: 1, firstFailureAt: now });
   } else {
     existing.count += 1;
@@ -40,7 +49,13 @@ function clearFailures(ip: string): void {
 export const POST: APIRoute = async ({ request, cookies }) => {
   const ip = getClientIP(request.headers);
   try {
-    if (isRateLimited(ip)) return jsonResponse({ success: false, message: 'Too many login attempts. Try again later.' }, 429);
+    if (isRateLimited(ip)) {
+      return jsonResponse(
+        { success: false, message: 'Too many login attempts. Try again later.' },
+        429,
+        { 'Retry-After': String(Math.ceil(LOCKOUT_MS / 1000)) }
+      );
+    }
 
     const contentType = request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
     if (contentType !== 'application/json') return jsonResponse({ success: false, message: 'Content-Type must be application/json' }, 415);
@@ -61,11 +76,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const configuredUsername = await readSecret('ADMIN_USERNAME');
     const configuredPassword = await readSecret('ADMIN_PASSWORD');
     if (!configuredUsername || !configuredPassword) {
-      console.error('[ADMIN LOGIN] Admin credentials are not configured. Please set ADMIN_USERNAME and ADMIN_PASSWORD in your Wix Secrets Manager.');
-      return jsonResponse({ 
-        success: false, 
-        message: 'Admin credentials are not configured. Please contact your administrator to set up ADMIN_USERNAME and ADMIN_PASSWORD in Wix Secrets Manager.' 
-      }, 503);
+      console.error('[ADMIN LOGIN] Admin credentials are not configured in Wix Secrets Manager.');
+      return jsonResponse({ success: false, message: 'Admin authentication is not configured. Please contact your administrator.' }, 503);
     }
 
     const credentialsValid = constantTimeEqual(username, configuredUsername) && constantTimeEqual(password, configuredPassword);
@@ -74,8 +86,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return jsonResponse({ success: false, message: 'Invalid credentials' }, 401);
     }
 
+    let sessionToken: string;
+    try {
+      sessionToken = await signAdminToken(username, 86400 * 7 * 1000);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('SESSION_SECRET is not configured')) {
+        console.error('[ADMIN LOGIN] SESSION_SECRET is not configured in Wix Secrets Manager.');
+        return jsonResponse({ success: false, message: 'Admin authentication is not fully configured. Please contact your administrator.' }, 503);
+      }
+      throw error;
+    }
+
     clearFailures(ip);
-    const sessionToken = await signAdminToken(username, 86400 * 7 * 1000);
     cookies.set('admin_session', sessionToken, {
       path: '/', httpOnly: true, secure: true, sameSite: 'none', partitioned: true, maxAge: 86400 * 7,
     });
