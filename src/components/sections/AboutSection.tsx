@@ -12,27 +12,18 @@ export default function AboutSection() {
   const [aboutText, setAboutText] = useState('Jordan Michael Zuñiga He does not shoot what you look like. He shoots what you actually are. Born into it. Father behind a lens for 40 years. Mother with paint on her hands. Los Angeles in his blood. Amsterdam sharpened what LA started. He came back different and never stopped moving. Miami made him known. Wynwood before it was cool. Runway. Editorial. Three years of Fashion Week for fashiontv reaching 100 million viewers worldwide. Elite Model Management. Ford. Next. Irene Marie. Stefano Versace Holdings. Warner Brothers. He was not knocking on doors. He was already inside. 2011 he shot Women in Cages for PETA. It went everywhere. HuffPost. People. Getty. The opening was packed. Hulk Hogan showed up, saw the work on the walls, and put Jordan in a choke hold. That is what happens when an image lands that hard. Same year. Art Basel. Haiti: Hope in Progress. 500 collectors and diplomats through the door. World Bank. American Red Cross. The photographs funded lives rebuilt. Started on Pentax film. Shoots Sony A1 II now. The camera changed. The eye did not. RED2 Studios has no address. It is a standard of work that travels. Fully mobile across the United States, shooting hotel suites, private estates, city streets and locations that cannot be planned in advance. He is already where the shot needs to happen. Right now he is looking for new faces. Not models who have a look. Models who have something underneath it. Presence. Realness. The thing the camera either finds or it does not. Twenty-five years in. 500 projects. Still hunting for the next frame that stops people cold. If that sounds like a shoot you want to be part of, it probably is.');
   const [fontFamily, setFontFamily] = useState('font-cormorant-garamond-v2');
   const [isLoading, setIsLoading] = useState(true);
-  const [isHydrated, setIsHydrated] = useState(false);
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ triggerOnce: true });
   const imageRef = useRef<HTMLDivElement>(null);
   
   // Scroll-based animations for the image
-  // CRITICAL: Only call useScroll after hydration to prevent "Target ref is defined but not hydrated" error
-  // useScroll must be called unconditionally at component level, but we guard the target ref
   const { scrollYProgress } = useScroll({
-    target: isHydrated ? imageRef : null,
+    target: imageRef,
     offset: ['start 80%', 'end 20%'],
   });
   
-  // Apply transforms conditionally based on image state
   const imageY = useTransform(scrollYProgress, [0, 0.5, 1], [80, 0, -80]);
   const imageScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 0.8]);
   const imageOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0.3]);
-  
-  // Ensure hydration is complete before using scroll tracking
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
 
   const loadAboutData = async () => {
     try {
@@ -175,11 +166,11 @@ export default function AboutSection() {
                 <figure className="hidden sm:block float-right w-44 md:w-52 lg:w-64 ml-6 md:ml-8 mb-5 flex-shrink-0 m-0">
                   <motion.div
                     ref={imageRef}
-                    style={!isLoading ? { 
+                    style={{ 
                       y: imageY, 
                       scale: imageScale,
                       opacity: imageOpacity 
-                    } : {}}
+                    }}
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.3 }}
                     className="aspect-[1320/2346] overflow-hidden bg-white/5 rounded-2xl border-2 border-primary/50 hover:border-primary transition-all duration-500 group flex items-center justify-center relative reveal-wipe"

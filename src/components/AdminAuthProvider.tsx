@@ -50,22 +50,16 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
             setIsAuthenticated(false);
             setAdminUsername(null);
           }
-        } else if (response.status === 401) {
-          // 401 is expected for anonymous/unauthenticated users - not an error
-          console.debug('[AdminAuthProvider] Unauthenticated (401) - expected for anonymous users');
-          setIsAuthenticated(false);
-          setAdminUsername(null);
         } else {
-          // Other non-ok statuses
           setIsAuthenticated(false);
           setAdminUsername(null);
         }
       } catch (err) {
         // Handle network errors gracefully - don't crash the app
         if (err instanceof Error && err.name === 'AbortError') {
-          console.debug('[AdminAuthProvider] Session check timeout');
+          console.warn('[AdminAuthProvider] Session check timeout');
         } else {
-          console.debug('[AdminAuthProvider] Session check error:', err instanceof Error ? err.message : String(err));
+          console.warn('[AdminAuthProvider] Session check error:', err instanceof Error ? err.message : String(err));
         }
         // Fail safely - treat as unauthenticated
         setIsAuthenticated(false);

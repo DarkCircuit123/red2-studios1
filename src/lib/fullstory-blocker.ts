@@ -14,9 +14,6 @@
 
 const IS_DEVELOPMENT = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
 
-// Track if blocker has been initialized to prevent duplicate initialization
-let fullStoryBlockerInitialized = false;
-
 // CRITICAL: Block FullStory BEFORE any other code runs
 // This must execute synchronously at the very start
 if (typeof window !== 'undefined') {
@@ -54,22 +51,11 @@ if (typeof window !== 'undefined') {
 /**
  * Initialize FullStory blocker
  * Call this once during app initialization, BEFORE any other scripts load
- * Idempotent - safe to call multiple times (React Strict Mode, remounts, etc.)
  */
 export function initializeFullStoryBlocker() {
   if (typeof window === 'undefined') {
     return; // Not in browser
   }
-
-  // Guard against duplicate initialization
-  if (fullStoryBlockerInitialized) {
-    if (IS_DEVELOPMENT) {
-      console.debug('[FullStoryBlocker] Already initialized, skipping duplicate initialization');
-    }
-    return;
-  }
-
-  fullStoryBlockerInitialized = true;
 
   if (IS_DEVELOPMENT) {
     console.log('[FullStoryBlocker] Initializing comprehensive FullStory blocker');
