@@ -220,7 +220,7 @@ export default function Header() {
                   href={item.href}
                   onClick={(e) => handleAnchorClick(e, item.href)}
                   onMouseEnter={playHoverSound}
-                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-oxblood hover:scale-[1.08] transition-all duration-300 uppercase rounded-lg hover:bg-white/5 block"
+                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase rounded-lg hover:bg-white/5 block"
                   style={{ letterSpacing: '0.18em', fontWeight: 500 }}
                 >
                   {item.label}
@@ -246,7 +246,7 @@ export default function Header() {
                     }
                   }}
                   onMouseEnter={playHoverSound}
-                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-oxblood hover:scale-[1.08] transition-all duration-300 uppercase rounded-lg hover:bg-white/5 block"
+                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary hover:scale-[1.08] transition-all duration-300 uppercase rounded-lg hover:bg-white/5 block"
                   style={{ letterSpacing: '0.18em', fontWeight: 500 }}
                 >
                   {item.label}
@@ -392,7 +392,7 @@ export default function Header() {
                 {item.isAnchor ? (
                   <a
                     href={item.href}
-                    className="px-4 py-3 text-xs font-mono text-white/60 hover:text-oxblood transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 block"
+                    className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 block"
                     onMouseEnter={playHoverSound}
                     onClick={(e) => {
                       handleAnchorClick(e, item.href);
@@ -404,7 +404,7 @@ export default function Header() {
                 ) : (
                   <Link
                     to={item.href}
-                    className="px-4 py-3 text-xs font-mono text-white/60 hover:text-oxblood transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 block"
+                    className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 block"
                     onMouseEnter={playHoverSound}
                     onClick={() => {
                       handleLinkClick();
