@@ -12,7 +12,7 @@ const validId = (value: unknown): value is string => typeof value === 'string' &
 export const GET: APIRoute = async (context) => {
   const denied = await requireAdmin(context.cookies, context.request, 'admin-music-read'); if (denied) return denied;
   try {
-    const elevatedQuery = auth.elevate(items.query);
+    const elevatedQuery = items.query.suppressAuth();
     const result = await elevatedQuery('musicsettings').find();
     return json({ success: true, items: result.items || [] });
   }
@@ -26,10 +26,12 @@ export const POST: APIRoute = async (context) => {
     const body = await context.request.json().catch(() => null) as { action?: unknown; track?: Partial<MusicSettings>; trackId?: unknown } | null;
     if (!body || typeof body.action !== 'string') return json({ success: false, error: 'Invalid music request.' }, 400);
     
-    const elevatedQuery = auth.elevate(items.query);
-    const elevatedInsert = auth.elevate(items.insert);
-    const elevatedUpdate = auth.elevate(items.update);
-    const elevatedRemove = auth.elevate(items.remove);
+    // Use suppressAuth: true to bypass collection permissions entirely
+    // This is safe because we've already verified admin access via requireAdmin()
+    const elevatedQuery = items.query.suppressAuth();
+    const elevatedInsert = items.insert.suppressAuth();
+    const elevatedUpdate = items.update.suppressAuth();
+    const elevatedRemove = items.remove.suppressAuth();
     
     if (body.action === 'create') {
       if (!body.track || typeof body.track !== 'object') return json({ success: false, error: 'Track data is required.' }, 400);
