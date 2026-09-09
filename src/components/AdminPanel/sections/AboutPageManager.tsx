@@ -5,7 +5,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AlertCircle, CheckCircle, Save, Palette } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
 import { AboutSection } from '@/entities';
 import { isValidHexColor, meetsWCAGAA } from '@/lib/admin-helpers';
 
@@ -31,7 +30,11 @@ export default function AboutPageManager() {
   const loadAboutData = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<AboutSection>('about');
+      const response = await fetch('/api/cms/get-about');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch about data: ${response.statusText}`);
+      }
+      const result = await response.json();
       if (result.items && result.items.length > 0) {
         const data = result.items[0];
         setAboutData(data);
@@ -79,19 +82,35 @@ export default function AboutPageManager() {
         setContrastWarning(true);
       }
 
-      await BaseCrudService.update<AboutSection>('about', {
-        _id: aboutData._id,
-        heading,
-        subheading,
-        aboutText,
-        fontFamily: colorHex, // Store color in fontFamily field
+      const response = await fetch('/api/cms/mutate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'update',
+          collectionId: 'about',
+          itemId: aboutData._id,
+          itemData: {
+            _id: aboutData._id,
+            heading,
+            subheading,
+            aboutText,
+            fontFamily: colorHex, // Store color in fontFamily field
+          },
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to save: ${response.statusText}`);
+      }
 
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (error) {
       console.error('Error saving about data:', error);
-      setErrorMessage('Failed to save changes');
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to save changes');
       setSaveStatus('error');
     } finally {
       setIsSaving(false);
