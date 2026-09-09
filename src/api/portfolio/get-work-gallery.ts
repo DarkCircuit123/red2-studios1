@@ -13,6 +13,13 @@ export const GET: APIRoute = async (context) => {
       .filter((item) => Number.isInteger(item.displayOrder) && item.displayOrder >= 1)
       .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
+    // Log the actual count for debugging
+    console.log('[portfolio-get-work-gallery] Loaded items:', {
+      totalCount: items.length,
+      highestSlot: items.length > 0 ? items[items.length - 1].displayOrder : 0,
+      timestamp: new Date().toISOString(),
+    });
+
     return new Response(JSON.stringify({ success: true, items }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
