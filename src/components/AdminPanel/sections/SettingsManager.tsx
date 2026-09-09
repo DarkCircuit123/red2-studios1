@@ -49,7 +49,7 @@ export default function SettingsManager() {
   // Load settings on mount
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track changes
   useEffect(() => {
@@ -84,6 +84,10 @@ export default function SettingsManager() {
       }
 
       const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to load settings');
+      }
 
       if (data && data.items && data.items.length > 0) {
         const loadedSettings = data.items[0];
@@ -211,7 +215,15 @@ export default function SettingsManager() {
       const data = await response.json();
       
       // Handle the response structure - API returns { success: true, data: result }
-      const savedSettings = data.data || data;
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save settings');
+      }
+      
+      const savedSettings = data.data;
+      if (!savedSettings) {
+        throw new Error('No data returned from server');
+      }
+      
       setSettings(savedSettings);
       setOriginalSettings(savedSettings);
       setSuccessMessage('Settings saved successfully!');

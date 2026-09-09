@@ -46,8 +46,21 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    console.log('[API_MUTATE] Received request:', {
+      action: body.action,
+      collectionId: body.collectionId,
+      itemId: body.itemId,
+      itemDataKeys: body.itemData ? Object.keys(body.itemData) : [],
+    });
+
     // Call the server-side mutate function
     const result = await mutate(body);
+
+    console.log('[API_MUTATE] Mutate result:', {
+      success: result.success,
+      error: result.error,
+      dataKeys: result.data ? Object.keys(result.data) : [],
+    });
 
     if (!result.success) {
       return new Response(JSON.stringify({ error: result.error }), {
@@ -62,6 +75,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[API_MUTATE] Error:', errorMessage);
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

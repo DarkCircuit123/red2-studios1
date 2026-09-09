@@ -26,16 +26,24 @@ export default function AboutPageManager() {
 
   useEffect(() => {
     loadAboutData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadAboutData = async () => {
     try {
       setIsLoading(true);
+      setSaveStatus('idle');
+      setErrorMessage('');
+      
       const response = await fetch('/api/cms/get-about');
       if (!response.ok) {
         throw new Error(`Failed to fetch about data: ${response.statusText}`);
       }
       const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch about data');
+      }
+      
       if (result.items && result.items.length > 0) {
         const data = result.items[0];
         setAboutData(data);
@@ -48,10 +56,13 @@ export default function AboutPageManager() {
         if (data.fontFamily && isValidHexColor(data.fontFamily)) {
           setColorHex(data.fontFamily);
         }
+      } else {
+        throw new Error('No about page data found');
       }
     } catch (error) {
       console.error('Error loading about data:', error);
-      setErrorMessage('Failed to load about page data');
+      const errorMsg = error instanceof Error ? error.message : 'Failed to load about page data';
+      setErrorMessage(errorMsg);
       setSaveStatus('error');
     } finally {
       setIsLoading(false);
@@ -83,28 +94,34 @@ export default function AboutPageManager() {
         setContrastWarning(true);
       }
 
+      const payload = {
+        action: 'update',
+        collectionId: 'about',
+        itemId: aboutData._id,
+        itemData: {
+          _id: aboutData._id,
+          heading,
+          subheading,
+          aboutText,
+          fontFamily: colorHex, // Store color in fontFamily field
+        },
+      };
+
+      console.log('[AboutPageManager] Sending save request:', payload);
+
       const response = await fetch('/api/cms/mutate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          action: 'update',
-          collectionId: 'about',
-          itemId: aboutData._id,
-          itemData: {
-            _id: aboutData._id,
-            heading,
-            subheading,
-            aboutText,
-            fontFamily: colorHex, // Store color in fontFamily field
-          },
-        }),
+        body: JSON.stringify(payload),
       });
 
+      const responseData = await response.json();
+      console.log('[AboutPageManager] Response:', responseData);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to save: ${response.statusText}`);
+        throw new Error(responseData.error || `Failed to save: ${response.statusText}`);
       }
 
       setSaveStatus('success');
