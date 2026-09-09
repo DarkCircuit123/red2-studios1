@@ -106,24 +106,14 @@ export default function ContactManager() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           className={`flex items-center gap-3 p-4 rounded-lg border ${
-            msg.type === 'success' ? 'bg-green-50 border-green-200' :
-            msg.type === 'error' ? 'bg-red-50 border-red-200' :
-            msg.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
-            'bg-blue-50 border-blue-200'
+            msg.type === 'success' ? 'bg-ok/20 border-ok text-ok' :
+            msg.type === 'error' ? 'bg-danger/20 border-danger text-danger' :
+            msg.type === 'warning' ? 'bg-warn/20 border-warn text-warn' :
+            'bg-blue-500/20 border-blue-500 text-blue-400'
           }`}
         >
-          <AlertCircle className={`w-5 h-5 ${
-            msg.type === 'success' ? 'text-green-600' :
-            msg.type === 'error' ? 'text-red-600' :
-            msg.type === 'warning' ? 'text-yellow-600' :
-            'text-blue-600'
-          }`} />
-          <p className={`text-sm ${
-            msg.type === 'success' ? 'text-green-700' :
-            msg.type === 'error' ? 'text-red-700' :
-            msg.type === 'warning' ? 'text-yellow-700' :
-            'text-blue-700'
-          }`}>{msg.message}</p>
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm font-medium">{msg.message}</p>
         </motion.div>
       ))}
 

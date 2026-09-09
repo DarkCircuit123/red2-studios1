@@ -100,8 +100,24 @@ export default function ContactSection() {
         return;
       }
 
-      // Simulate form submission (in production, this would send to a backend)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Submit to API
+      const response = await fetch('/api/contact-submission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          subject: formData.subject.trim(),
+          message: formData.message.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        showStatus('error', errorData.error || 'Failed to send message. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
 
       showStatus('success', 'Thank you for your message! We will get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
