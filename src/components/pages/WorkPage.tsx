@@ -203,7 +203,26 @@ export default function WorkPage() {
           )
         );
 
-        setAllImages(imagesWithDimensions);
+        // Create 100 slots total - fill with valid images, pad with empty slots
+         const totalSlots = 100;
+         const allSlots: ImageWithDimensions[] = [];
+         
+         // Add all valid images first
+         allSlots.push(...imagesWithDimensions);
+         
+         // Fill remaining slots with empty placeholders
+         for (let i = allSlots.length; i < totalSlots; i++) {
+           allSlots.push({
+             _id: `empty-slot-${i}`,
+             image: '', // Empty image
+             aspectRatio: 0.75, // Default 3:4 portrait
+             caption: '',
+             altText: 'Empty photo slot',
+             portfolioItemId: '',
+           });
+         }
+
+         setAllImages(allSlots);
       } catch (error) {
         console.error('Failed to fetch portfolio images:', error);
         setAllImages([]);
