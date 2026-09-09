@@ -590,6 +590,37 @@ export interface Services {
 
 
 /**
+ * Collection ID: sitesettings
+ * Interface for SiteSettings
+ */
+export interface SiteSettings {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  siteName?: string;
+  /** @wixFieldType text */
+  seoTitle?: string;
+  /** @wixFieldType text */
+  seoDescription?: string;
+  /** @wixFieldType url */
+  instagramLink?: string;
+  /** @wixFieldType url */
+  twitterLink?: string;
+  /** @wixFieldType url */
+  facebookLink?: string;
+  /** @wixFieldType url */
+  linkedInLink?: string;
+  /** @wixFieldType text */
+  contactEmail?: string;
+  /** @wixFieldType text */
+  contactPhone?: string;
+  /** @wixFieldType text */
+  primaryColor?: string;
+}
+
+
+/**
  * Collection ID: splashpage
  * Interface for Splashpage
  */

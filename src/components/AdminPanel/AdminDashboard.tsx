@@ -9,7 +9,8 @@ import AboutPageManager from './sections/AboutPageManager';
 import ServicesManager from './sections/ServicesManager';
 import BookingManager from './sections/BookingManager';
 import ContactManager from './sections/ContactManager';
-import { Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Music, Users } from 'lucide-react';
+import SettingsManager from './sections/SettingsManager';
+import { Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Music, Users, Settings } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('home');
@@ -28,7 +29,7 @@ export default function AdminDashboard() {
     { id: 'services', label: 'Services', icon: Cog, enabled: true },
     { id: 'booking', label: 'Booking', icon: Calendar, enabled: true },
     { id: 'contact', label: 'Contact', icon: Mail, enabled: true },
-    { id: 'settings', label: 'Settings', icon: Cog, enabled: false },
+    { id: 'settings', label: 'Settings', icon: Settings, enabled: true },
   ];
 
   return (
@@ -70,12 +71,7 @@ export default function AdminDashboard() {
             <TabsContent value="services" className="m-0 p-6"><ServicesManager /></TabsContent>
             <TabsContent value="booking" className="m-0 p-6"><BookingManager /></TabsContent>
             <TabsContent value="contact" className="m-0 p-6"><ContactManager /></TabsContent>
-
-            {['settings'].map((tabId) => (
-              <TabsContent key={tabId} value={tabId} className="m-0 p-6">
-                <div className="text-center py-12"><p className="text-admin-dim text-[13px]">This tab is coming soon.</p></div>
-              </TabsContent>
-            ))}
+            <TabsContent value="settings" className="m-0 p-6"><SettingsManager /></TabsContent>
           </Tabs>
         </div>
       </div>
