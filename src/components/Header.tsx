@@ -64,7 +64,6 @@ export default function Header() {
     try {
       await logout();
       setIsOpen(false);
-      setIsAdminOpen(false);
     } catch (error) {
       // Silently handle logout errors
     }
