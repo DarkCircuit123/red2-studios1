@@ -5,6 +5,10 @@ import SplashpageTab from './tabs/SplashpageTab';
 import WorkGalleryManager from './sections/WorkGalleryManagerFixed';
 import MusicLibraryManager from './sections/MusicLibraryManager';
 import SponsorsManager from './sections/SponsorsManager';
+import AboutPageManager from './sections/AboutPageManager';
+import ServicesManager from './sections/ServicesManager';
+import BookingManager from './sections/BookingManager';
+import ContactManager from './sections/ContactManager';
 import { Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Music, Users } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -20,10 +24,10 @@ export default function AdminDashboard() {
     { id: 'gallery', label: 'Work Gallery', icon: Briefcase, enabled: true },
     { id: 'music', label: 'Music Library', icon: Music, enabled: true },
     { id: 'sponsors', label: 'Sponsors', icon: Users, enabled: true },
-    { id: 'about', label: 'About Page', icon: FileText, enabled: false },
-    { id: 'services', label: 'Services', icon: Cog, enabled: false },
-    { id: 'booking', label: 'Booking', icon: Calendar, enabled: false },
-    { id: 'contact', label: 'Contact', icon: Mail, enabled: false },
+    { id: 'about', label: 'About Page', icon: FileText, enabled: true },
+    { id: 'services', label: 'Services', icon: Cog, enabled: true },
+    { id: 'booking', label: 'Booking', icon: Calendar, enabled: true },
+    { id: 'contact', label: 'Contact', icon: Mail, enabled: true },
     { id: 'settings', label: 'Settings', icon: Cog, enabled: false },
   ];
 
@@ -62,8 +66,12 @@ export default function AdminDashboard() {
             <TabsContent value="gallery" className="m-0 p-6"><WorkGalleryManager /></TabsContent>
             <TabsContent value="music" className="m-0 p-6"><MusicLibraryManager /></TabsContent>
             <TabsContent value="sponsors" className="m-0 p-6"><SponsorsManager /></TabsContent>
+            <TabsContent value="about" className="m-0 p-6"><AboutPageManager /></TabsContent>
+            <TabsContent value="services" className="m-0 p-6"><ServicesManager /></TabsContent>
+            <TabsContent value="booking" className="m-0 p-6"><BookingManager /></TabsContent>
+            <TabsContent value="contact" className="m-0 p-6"><ContactManager /></TabsContent>
 
-            {['about', 'services', 'booking', 'contact', 'settings'].map((tabId) => (
+            {['settings'].map((tabId) => (
               <TabsContent key={tabId} value={tabId} className="m-0 p-6">
                 <div className="text-center py-12"><p className="text-admin-dim text-[13px]">This tab is coming soon.</p></div>
               </TabsContent>
