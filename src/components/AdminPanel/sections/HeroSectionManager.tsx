@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image as ImageIcon, Upload, Trash2, Eye } from 'lucide-react';
+import { Image } from '@/components/ui/image';
 import { adminCms } from '@/lib/admin-cms';
 import { HomepageImages } from '@/entities';
 import { useToast } from '@/hooks/use-toast';
@@ -159,9 +160,11 @@ export default function HeroSectionManager() {
           {/* Preview */}
           {(previewUrl || settings?.heroImage) && (
             <div className="relative w-full h-64 rounded-none overflow-hidden border border-admin-line bg-admin-raise">
-              <img
-                src={previewUrl || settings?.heroImage}
+              <Image
+                src={previewUrl || settings?.heroImage || ''}
                 alt="Hero image preview"
+                width={800}
+                height={256}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
