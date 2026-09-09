@@ -6,9 +6,8 @@ import TextEditorSystem from '../sections/TextEditorSystem';
 import BackgroundMusicManager from '../sections/BackgroundMusicManager_NEW';
 import BehindTheScenesManager from '../sections/BehindTheScenesManager';
 import RubberBandPhotosManager from '../sections/RubberBandPhotosManager';
-import HomePagePreview from '../sections/HomePagePreview';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Image, Type, Music, Eye, Camera, Film } from 'lucide-react';
+import { Image, Type, Music, Camera, Film } from 'lucide-react';
 
 export default function HomePageTab() {
   const [isLoading, setIsLoading] = useState(true);
@@ -53,10 +52,6 @@ export default function HomePageTab() {
               <Camera className="w-4 h-4" />
               <span className="hidden sm:inline">Behind</span>
             </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-2 px-4 py-3 border-b-2 rounded-none transition-colors duration-160 font-heading text-[11px] uppercase tracking-[0.12em] data-[state=active]:border-b-2 data-[state=active]:border-oxblood data-[state=active]:text-admin-text data-[state=inactive]:border-b-2 data-[state=inactive]:border-transparent data-[state=inactive]:text-admin-dim hover:text-admin-text hover:bg-white/[0.03]">
-              <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">Preview</span>
-            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -83,11 +78,6 @@ export default function HomePageTab() {
         {/* Behind The Scenes Manager */}
         <TabsContent value="behind-scenes" className="mt-6">
           <BehindTheScenesManager />
-        </TabsContent>
-
-        {/* Home Page Preview */}
-        <TabsContent value="preview" className="mt-6">
-          <HomePagePreview />
         </TabsContent>
       </Tabs>
     </div>
