@@ -31,13 +31,13 @@ export async function getActiveHomepageImagesHelper() {
 
 /**
  * Compute dynamic slot count for work gallery
- * - Minimum 90 slots
+ * - Minimum 300 slots
  * - Expand based on highest displayOrder
  * - Add 12 more slots beyond current count
  */
 export function computeSlotCount(items: any[]): number {
   if (!items || items.length === 0) {
-    return 90;
+    return 300;
   }
 
   const highestDisplayOrder = Math.max(

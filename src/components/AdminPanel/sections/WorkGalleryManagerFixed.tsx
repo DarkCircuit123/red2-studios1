@@ -27,7 +27,7 @@ interface Slot {
 type StatusType = 'info' | 'success' | 'error';
 interface StatusMessage { id: string; type: StatusType; message: string; }
 
-const INITIAL_SLOTS = 100;
+const INITIAL_SLOTS = 300;
 const SLOT_INCREMENT = 12;
 
 function makeEmptySlot(slotNumber: number): Slot {
@@ -244,7 +244,7 @@ export default function WorkGalleryManagerFixed() {
 
       <div className="bg-admin-surface border border-admin-line p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <div><h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text">Work Gallery Manager</h2><p className="text-[13px] text-admin-dim mt-2">100 persistent slots, expandable in groups of 12.</p></div>
+          <div><h2 className="font-heading text-[13px] uppercase tracking-[0.12em] text-admin-text">Work Gallery Manager</h2><p className="text-[13px] text-admin-dim mt-2">300 persistent slots, expandable in groups of 12.</p></div>
           <div className="flex items-center gap-3"><Button onClick={() => fileInputRef.current?.click()} disabled={isUploading}> <Upload className="w-4 h-4 mr-2" /> Select Photos</Button><div className="text-right"><div className="text-2xl font-bold text-oxblood">{filledSlots}</div><div className="text-[11px] text-admin-faint">/ {slotCount} slots</div></div></div>
         </div>
         <div className="border-2 border-dashed border-admin-line p-8 text-center cursor-pointer" onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFileSelect(event.dataTransfer.files); }}>

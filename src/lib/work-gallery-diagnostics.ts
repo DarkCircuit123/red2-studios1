@@ -1,6 +1,6 @@
 /**
  * Work Gallery Diagnostics & Repair System
- * Comprehensive audit, validation, and repair for 90-slot gallery
+ * Comprehensive audit, validation, and repair for 300-slot gallery
  */
 
 import { BaseCrudService } from '@/integrations';
@@ -31,7 +31,7 @@ export interface RepairResult {
   report: DiagnosticReport;
 }
 
-const MAX_SLOTS = 100;
+const MAX_SLOTS = 300;
 
 /**
  * Validate image URL - check if it's a valid Wix image format or HTTPS URL

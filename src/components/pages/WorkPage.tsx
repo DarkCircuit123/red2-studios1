@@ -203,8 +203,8 @@ export default function WorkPage() {
           )
         );
 
-        // Create 100 slots total - fill with valid images, pad with empty slots
-         const totalSlots = 100;
+        // Create 300 slots total - fill with valid images, pad with empty slots
+         const totalSlots = 300;
          const allSlots: ImageWithDimensions[] = [];
          
          // Add all valid images first
