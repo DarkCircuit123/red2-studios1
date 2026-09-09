@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Trash2, Eye, X, AlertCircle, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { BaseCrudService } from '@/integrations';
 import { ContactSubmissions } from '@/entities';
 
 interface StatusMessage {
@@ -27,12 +26,25 @@ export default function ContactManager() {
   const loadSubmissions = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<ContactSubmissions>('contactsubmissions', {}, { limit: 100 });
-      setSubmissions(result.items || []);
-      console.log('[ContactManager] Loaded', result.items?.length || 0, 'submissions');
+      const response = await fetch('/api/contact-submissions-list');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setSubmissions(data.items || []);
+        console.log('[ContactManager] Loaded', data.items?.length || 0, 'submissions');
+      } else {
+        throw new Error(data.error || 'Failed to load submissions');
+      }
     } catch (error) {
       console.error('[ContactManager] Error loading submissions:', error);
       addStatusMessage('error', 'Failed to load contact submissions');
+      // Set empty array on error to prevent loading state from persisting
+      setSubmissions([]);
     } finally {
       setIsLoading(false);
     }
@@ -49,10 +61,16 @@ export default function ContactManager() {
   const handleMarkAsRead = async (id: string) => {
     try {
       setIsSaving(true);
-      await BaseCrudService.update<ContactSubmissions>('contactsubmissions', {
-        _id: id,
-        status: 'read',
+      const response = await fetch(`/api/contact-submissions-list`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ _id: id, status: 'read' }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       addStatusMessage('success', 'Marked as read');
       await loadSubmissions();
     } catch (error) {
@@ -68,7 +86,16 @@ export default function ContactManager() {
 
     try {
       setIsSaving(true);
-      await BaseCrudService.delete('contactsubmissions', id);
+      const response = await fetch(`/api/contact-submissions-list`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ _id: id }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       addStatusMessage('success', 'Submission deleted successfully');
       await loadSubmissions();
       setViewingId(null);
