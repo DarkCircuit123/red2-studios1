@@ -204,12 +204,16 @@ export default function SettingsManager() {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to save settings: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to save settings: ${response.statusText}`);
       }
 
       const data = await response.json();
-      setSettings(data);
-      setOriginalSettings(data);
+      
+      // Handle the response structure - API returns { success: true, data: result }
+      const savedSettings = data.data || data;
+      setSettings(savedSettings);
+      setOriginalSettings(savedSettings);
       setSuccessMessage('Settings saved successfully!');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save settings';
