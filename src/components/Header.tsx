@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings, LogIn, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -7,24 +7,13 @@ import { playClickSound, playHoverSound } from '@/lib/click-sound';
 import { respectReducedMotion } from '@/lib/performance-enhancements';
 import AdminLoginModal from './AdminLoginModal';
 
-// Lazy load AdminPanel to prevent loading upload code on every page
-const AdminPanel = lazy(() => import('./AdminPanel'));
-
 export default function Header() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { isAuthenticated, isLoading, logout } = useAdminAuth();
   const prefersReducedMotion = useMemo(() => respectReducedMotion(), []);
-
-  // Close admin panel when user logs out
-  useEffect(() => {
-    if (!isAuthenticated && isAdminOpen) {
-      setIsAdminOpen(false);
-    }
-  }, [isAuthenticated]);
 
   // Optimized throttled scroll handler
   useEffect(() => {
@@ -48,9 +37,10 @@ export default function Header() {
   const handleAdminClick = useCallback(() => {
     playClickSound();
     if (isAuthenticated) {
-      setIsAdminOpen(true);
+      // Navigate to /admin page instead of opening modal
+      navigate('/admin');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
 
   const handleLoginClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -66,8 +56,8 @@ export default function Header() {
   }, [isLoading]);
 
   const handleLoginSuccess = useCallback(() => {
-    setIsAdminOpen(true);
-  }, []);
+    navigate('/admin');
+  }, [navigate]);
 
   const handleLogoutClick = useCallback(async () => {
     playClickSound();
@@ -320,12 +310,6 @@ export default function Header() {
           </motion.button>
         </div>
       </nav>
-      {/* Admin Panel - Lazy loaded to prevent loading upload code on every page */}
-      {isAdminOpen && (
-        <Suspense fallback={null}>
-          <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
-        </Suspense>
-      )}
       {/* Mobile Navigation */}
       {isOpen && (
         <motion.div
