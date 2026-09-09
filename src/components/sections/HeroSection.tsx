@@ -144,7 +144,20 @@ export default function HeroSection() {
         </div>
       )}
       {!heroImage && !isLoading && (
-        <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-slate-900 to-black" />
+        <div className="absolute inset-0 w-full h-full">
+          <Image
+            src="https://static.wixstatic.com/media/e9d727_211c8a7064e046b1899d133e7bf293dd~mv2.png"
+            alt="Hero background"
+            onLoad={handleImageLoad}
+            className="w-full h-full hero-image-drift"
+            style={{
+              objectFit: 'cover',
+              objectPosition: '50% 50%',
+            }}
+            width={1920}
+            height={1080}
+          />
+        </div>
       )}
       {isLoading && (
         <div className="absolute inset-0 w-full h-full bg-black" />

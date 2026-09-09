@@ -21,7 +21,7 @@ import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { IMAGE_UPLOAD_CONFIG } from '@/lib/upload-config';
 import { useToast } from '@/hooks/use-toast';
 
-const MAX_GALLERY_SLOTS = 90;
+const MAX_GALLERY_SLOTS = 100;
 
 interface AdminPanelProps {
   isOpen: boolean;

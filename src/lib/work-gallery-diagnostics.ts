@@ -31,7 +31,7 @@ export interface RepairResult {
   report: DiagnosticReport;
 }
 
-const MAX_SLOTS = 90;
+const MAX_SLOTS = 100;
 
 /**
  * Validate image URL - check if it's a valid Wix image format or HTTPS URL
