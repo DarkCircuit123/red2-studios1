@@ -1,4 +1,6 @@
+import type { APIRoute } from 'astro';
 import { BaseCrudService } from '@/integrations';
+import { requireAdmin } from '@/lib/auth-security';
 
 interface SiteSettingsPayload {
   _id?: string;
@@ -20,8 +22,12 @@ interface SiteSettingsPayload {
  * If _id is provided, updates the existing record
  * Otherwise, creates a new record
  */
-export async function POST(request: Request) {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
+    // Verify admin authorization
+    const denied = await requireAdmin(cookies, request, 'mutate-sitesettings');
+    if (denied) return denied;
+
     const payload: SiteSettingsPayload = await request.json();
 
     // Validate required fields
@@ -98,4 +104,4 @@ export async function POST(request: Request) {
       }
     );
   }
-}
+};
