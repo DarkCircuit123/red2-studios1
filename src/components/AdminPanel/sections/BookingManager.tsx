@@ -404,7 +404,7 @@ export default function BookingManager() {
                         type="date"
                         value={editingAvailabilityForm.bookingDate}
                         onChange={(e) => setEditingAvailabilityForm({ ...editingAvailabilityForm, bookingDate: e.target.value })}
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -416,7 +416,7 @@ export default function BookingManager() {
                         value={editingAvailabilityForm.sessionType}
                         onChange={(e) => setEditingAvailabilityForm({ ...editingAvailabilityForm, sessionType: e.target.value })}
                         placeholder="e.g., Portrait Session"
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -428,7 +428,7 @@ export default function BookingManager() {
                         type="time"
                         value={editingAvailabilityForm.startTime}
                         onChange={(e) => setEditingAvailabilityForm({ ...editingAvailabilityForm, startTime: e.target.value })}
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -440,7 +440,7 @@ export default function BookingManager() {
                         type="time"
                         value={editingAvailabilityForm.endTime}
                         onChange={(e) => setEditingAvailabilityForm({ ...editingAvailabilityForm, endTime: e.target.value })}
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -450,7 +450,7 @@ export default function BookingManager() {
                           type="checkbox"
                           checked={editingAvailabilityForm.isAvailable}
                           onChange={(e) => setEditingAvailabilityForm({ ...editingAvailabilityForm, isAvailable: e.target.checked })}
-                          className="w-4 h-4"
+                          className="w-4 h-4 accent-blue-600"
                         />
                         <span className="text-sm font-semibold text-admin-text">Available for booking</span>
                       </label>
@@ -594,7 +594,7 @@ export default function BookingManager() {
                         value={editingForm.clientName}
                         onChange={(e) => setEditingForm({ ...editingForm, clientName: e.target.value })}
                         placeholder="Full name"
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -607,7 +607,7 @@ export default function BookingManager() {
                         value={editingForm.clientEmail}
                         onChange={(e) => setEditingForm({ ...editingForm, clientEmail: e.target.value })}
                         placeholder="email@example.com"
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -619,7 +619,7 @@ export default function BookingManager() {
                         value={editingForm.clientPhone}
                         onChange={(e) => setEditingForm({ ...editingForm, clientPhone: e.target.value })}
                         placeholder="+1 (555) 000-0000"
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -631,7 +631,7 @@ export default function BookingManager() {
                         value={editingForm.sessionType}
                         onChange={(e) => setEditingForm({ ...editingForm, sessionType: e.target.value })}
                         placeholder="e.g., Portrait Session"
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -643,7 +643,7 @@ export default function BookingManager() {
                         type="date"
                         value={editingForm.bookingDate}
                         onChange={(e) => setEditingForm({ ...editingForm, bookingDate: e.target.value })}
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -655,7 +655,7 @@ export default function BookingManager() {
                         type="time"
                         value={editingForm.bookingTime}
                         onChange={(e) => setEditingForm({ ...editingForm, bookingTime: e.target.value })}
-                        className="w-full"
+                        className="w-full bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                       />
                     </div>
 
@@ -683,7 +683,7 @@ export default function BookingManager() {
                       value={editingForm.clientMessage}
                       onChange={(e) => setEditingForm({ ...editingForm, clientMessage: e.target.value })}
                       placeholder="Any special requests or notes..."
-                      className="w-full min-h-24"
+                      className="w-full min-h-24 bg-admin-raise border-admin-line text-admin-text placeholder:text-admin-faint"
                     />
                   </div>
 
