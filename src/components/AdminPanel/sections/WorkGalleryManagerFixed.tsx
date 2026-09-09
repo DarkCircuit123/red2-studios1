@@ -63,7 +63,7 @@ export default function WorkGalleryManagerFixed() {
       const highestOrder = items.reduce((max, item) => Math.max(max, Number(item.displayOrder) || 0), 0);
       const filledCount = items.filter((item) => item.image && item.displayOrder).length;
       
-      // CRITICAL: Always use INITIAL_SLOTS (100) as minimum, never derive lower
+      // CRITICAL: Always use INITIAL_SLOTS (300) as minimum, never derive lower
       const derivedCount = Math.max(INITIAL_SLOTS, highestOrder, filledCount + SLOT_INCREMENT);
       const byOrder = new Map(items.map((item) => [Number(item.displayOrder), item]));
 

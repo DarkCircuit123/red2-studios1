@@ -8,7 +8,7 @@ import type { BehindTheScenes } from '@/entities';
 
 export const GET: APIRoute = async () => {
   try {
-    const result = await BaseCrudService.getAll<BehindTheScenes>('behindthescenes', {}, { limit: 100 });
+    const result = await BaseCrudService.getAll<BehindTheScenes>('behindthescenes', {}, { limit: 300 });
 
     // Sort by order field and return all items
     const items = result.items

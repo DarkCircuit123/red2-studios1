@@ -43,7 +43,7 @@ export async function detectOversizedImages(): Promise<ImageCleanupReport> {
 
   try {
     // Fetch all portfolio items
-    const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 100 });
+    const result = await BaseCrudService.getAll<Portfolio>('portfolioimages', {}, { limit: 300 });
     const items = result?.items || [];
     
     report.totalRecords = items.length;

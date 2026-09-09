@@ -13,7 +13,7 @@ interface CarouselImage {
 
 export const GET: APIRoute = async () => {
   try {
-    const data = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
+    const data = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 300 });
     const collected: CarouselImage[] = [];
 
     data.items?.forEach((item) => {

@@ -3,7 +3,7 @@ import { HomepageImages } from '@/entities';
 
 /**
  * Shared helper to fetch the active homepage images row
- * - Limit to 100 items
+ * - Limit to 300 items
  * - Filter on isActive: true
  * - Sort by _createdDate descending (newest first)
  * Returns the first (and typically only) active row
@@ -12,7 +12,7 @@ export async function getActiveHomepageImages(): Promise<HomepageImages | null> 
   try {
     // Fetch all homepage images and filter client-side
     // (BaseCrudService.getAll doesn't support server-side filtering yet)
-    const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 100 });
+    const result = await BaseCrudService.getAll<HomepageImages>('homepageimages', {}, { limit: 300 });
     
     if (!result.items || result.items.length === 0) {
       return null;

@@ -13,7 +13,7 @@ export const GET: APIRoute = async (context) => {
   try {
     console.log('[GET_CAROUSEL_IMAGES] Request started');
 
-    const result = await BaseCrudService.getAll<CarouselImages>('carouselimages', {}, { limit: 100 });
+    const result = await BaseCrudService.getAll<CarouselImages>('carouselimages', {}, { limit: 300 });
 
     // Filter for active items and sort by displayOrder ascending
     const activeItems = (result.items || [])

@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/auth-security';
 /**
  * PORTFOLIO SLOT UPSERT API
  * 
- * Implements the critical upsert logic for 90-slot gallery:
+ * Implements the critical upsert logic for 300-slot gallery:
  * 1. Query portfolioimages collection by displayOrder (slot number)
  * 2. If record exists → UPDATE with new image URL
  * 3. If no record exists → INSERT new record with displayOrder
@@ -15,7 +15,7 @@ import { requireAdmin } from '@/lib/auth-security';
  * 
  * Request body:
  * {
- *   displayOrder: number,        // Slot number (1-90)
+ *   displayOrder: number,        // Slot number (1-300)
  *   image: string,               // Wix Media URL
  *   caption?: string,            // Optional caption
  *   altText?: string,            // Optional alt text

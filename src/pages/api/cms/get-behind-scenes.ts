@@ -12,7 +12,7 @@ interface BehindTheScenesItem {
 
 export const GET: APIRoute = async () => {
   try {
-    const result = await BaseCrudService.getAll<BehindTheScenesItem>('behindthescenes', {}, { limit: 100 });
+    const result = await BaseCrudService.getAll<BehindTheScenesItem>('behindthescenes', {}, { limit: 300 });
     
     const items = result?.items || [];
     const sorted = items.sort((a, b) => (a.order || 0) - (b.order || 0));
