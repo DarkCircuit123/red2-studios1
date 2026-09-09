@@ -63,8 +63,9 @@ export default function WorkGalleryManagerFixed() {
       const highestOrder = items.reduce((max, item) => Math.max(max, Number(item.displayOrder) || 0), 0);
       const filledCount = items.filter((item) => item.image && item.displayOrder).length;
       
-      // CRITICAL: Always use INITIAL_SLOTS (300) as minimum, never derive lower
-      const derivedCount = Math.max(INITIAL_SLOTS, highestOrder, filledCount + SLOT_INCREMENT);
+      // CRITICAL: ALWAYS use INITIAL_SLOTS (300) - this is the minimum and default
+      // Never allow derivedCount to be less than INITIAL_SLOTS
+      const derivedCount = INITIAL_SLOTS;
       const byOrder = new Map(items.map((item) => [Number(item.displayOrder), item]));
 
       console.log('[WorkGalleryManager] Gallery loaded:', {
@@ -73,6 +74,7 @@ export default function WorkGalleryManagerFixed() {
         filledCount,
         derivedCount,
         INITIAL_SLOTS,
+        forcedTo300: true,
       });
 
       setSlotCount(derivedCount);
@@ -93,6 +95,9 @@ export default function WorkGalleryManagerFixed() {
     } catch (error) {
       console.error('[WorkGalleryManager] Failed to load gallery:', error);
       addStatus('error', error instanceof Error ? error.message : 'Failed to load work gallery');
+      // On error, still initialize with INITIAL_SLOTS
+      setSlotCount(INITIAL_SLOTS);
+      setSlots(Array.from({ length: INITIAL_SLOTS }, (_, i) => makeEmptySlot(i + 1)));
     } finally {
       setIsLoading(false);
     }
