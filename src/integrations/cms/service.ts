@@ -51,7 +51,7 @@ const dedupedGetAll = async function<T>(
 ) {
   // On the server, skip caching entirely to prevent cross-visitor data leakage
   if (!isBrowser) {
-    return originalGetAll<T>(collectionId, refs || {}, options || { limit: 50 });
+    return originalGetAll<T>(collectionId, refs || {}, options || { limit: 10000 });
   }
 
   const cacheKey = getCacheKey(collectionId, refs, options);
@@ -75,7 +75,7 @@ const dedupedGetAll = async function<T>(
   const requestPromise = (async () => {
     try {
       const refsParam = refs || {};
-      const optionsParam = options || { limit: 50 };
+      const optionsParam = options || { limit: 10000 };
       
       // Add timeout to prevent hanging requests
       const timeoutPromise = new Promise((_, reject) =>
