@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AlertCircle, CheckCircle, Save, Palette } from 'lucide-react';
 import { AboutSection } from '@/entities';
 import { isValidHexColor, meetsWCAGAA } from '@/lib/admin-helpers';
+import FontFamilySelector from '@/components/FontFamilySelector';
 
 export default function AboutPageManager() {
   const [aboutData, setAboutData] = useState<AboutSection | null>(null);
@@ -190,16 +191,15 @@ export default function AboutPageManager() {
             </p>
           </div>
 
-          {/* Font Family */}
+          {/* Font Family Selector */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Font Family
             </label>
-            <Input
+            <FontFamilySelector
               value={fontFamily}
-              onChange={(e) => setFontFamily(e.target.value)}
-              placeholder="e.g., Inter, Helvetica, Arial"
-              className="w-full"
+              onChange={setFontFamily}
+              placeholder="Select a font family"
             />
           </div>
 
