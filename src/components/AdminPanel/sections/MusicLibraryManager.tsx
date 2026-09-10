@@ -7,6 +7,9 @@
  * - Track list with play/pause, set active, and delete
  * - isActive logic for background music
  * - Dark theme applied
+ * 
+ * CRITICAL FIX: All CMS operations now use API endpoints instead of direct BaseCrudService calls
+ * This ensures admin auth elevation is applied server-side, preventing WDE0027 permission errors
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -17,7 +20,6 @@ import {
   Music, Upload, Trash2, Play, Pause, Volume2, RotateCw, Zap, Check, X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { BaseCrudService } from '@/integrations';
 import { MusicSettings } from '@/entities';
 import { uploadMedia } from '@/lib/wix-media-upload-service';
 import { MUSIC_UPLOAD_CONFIG } from '@/lib/upload-config';
@@ -44,9 +46,11 @@ export default function MusicLibraryManager() {
   const loadTracks = async () => {
     try {
       setIsLoading(true);
-      const result = await BaseCrudService.getAll<MusicSettings>('musicsettings', {}, { limit: 100 });
-      setTracks(result.items || []);
-      console.log('[MusicLibraryManager] Loaded', result.items?.length || 0, 'tracks');
+      const response = await fetch('/api/admin/music', { method: 'GET' });
+      if (!response.ok) throw new Error('Failed to load tracks');
+      const data = await response.json();
+      setTracks(data.items || []);
+      console.log('[MusicLibraryManager] Loaded', data.items?.length || 0, 'tracks');
     } catch (error) {
       console.error('[MusicLibraryManager] Error loading tracks:', error);
       addStatusMessage('error', 'Failed to load music tracks');
@@ -92,8 +96,23 @@ export default function MusicLibraryManager() {
         volume: 50,
       };
 
-      // Save to CMS
-      await BaseCrudService.create('musicsettings', newTrack);
+      // Save to CMS via API endpoint (client-side cannot use BaseCrudService directly)
+      // The API endpoint has admin auth elevation, so WDE0027 won't occur
+      const response = await fetch('/api/admin/music', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', track: newTrack }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Upload failed');
+      }
       
       setTracks(prev => [...prev, newTrack]);
       addStatusMessage('success', `Track "${newTrack.musicTitle}" added to library`);
@@ -111,35 +130,34 @@ export default function MusicLibraryManager() {
 
   const handleSetActive = async (trackId: string) => {
     try {
-      // Disable all other tracks
-      const updatedTracks = await Promise.all(
-        tracks.map(async (track) => {
-          if (track._id === trackId) {
-            // Enable this track
-            await BaseCrudService.update('musicsettings', {
-              _id: track._id,
-              isEnabled: true,
-              isDefaultHomepageTrack: true,
-            });
-            return { ...track, isEnabled: true, isDefaultHomepageTrack: true };
-          } else if (track.isEnabled || track.isDefaultHomepageTrack) {
-            // Disable other tracks
-            await BaseCrudService.update('musicsettings', {
-              _id: track._id,
-              isEnabled: false,
-              isDefaultHomepageTrack: false,
-            });
-            return { ...track, isEnabled: false, isDefaultHomepageTrack: false };
-          }
-          return track;
-        })
-      );
-      
+      // Use API endpoint to set active track (admin auth elevated on server)
+      const response = await fetch('/api/admin/music', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-active', trackId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to set active track');
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to set active track');
+      }
+
+      // Update local state
+      const updatedTracks = tracks.map(track => ({
+        ...track,
+        isEnabled: track._id === trackId,
+        isDefaultHomepageTrack: track._id === trackId,
+      }));
       setTracks(updatedTracks);
       addStatusMessage('success', 'Active track updated');
     } catch (error) {
       console.error('[MusicLibraryManager] Error setting active track:', error);
-      addStatusMessage('error', 'Failed to set active track');
+      addStatusMessage('error', `Failed to set active track: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -165,7 +183,23 @@ export default function MusicLibraryManager() {
     if (!confirm('Delete this track?')) return;
 
     try {
-      await BaseCrudService.delete('musicsettings', trackId);
+      // Use API endpoint to delete track (admin auth elevated on server)
+      const response = await fetch('/api/admin/music', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', trackId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete track');
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete track');
+      }
+
       setTracks(prev => prev.filter(t => t._id !== trackId));
       if (playingTrackId === trackId) {
         setPlayingTrackId(null);
@@ -176,16 +210,28 @@ export default function MusicLibraryManager() {
       addStatusMessage('success', 'Track deleted');
     } catch (error) {
       console.error('[MusicLibraryManager] Delete error:', error);
-      addStatusMessage('error', 'Failed to delete track');
+      addStatusMessage('error', `Failed to delete track: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   const handleUpdateTrack = async (trackId: string, updates: Partial<MusicSettings>) => {
     try {
-      await BaseCrudService.update('musicsettings', {
-        _id: trackId,
-        ...updates,
+      // Use API endpoint to update track (admin auth elevated on server)
+      const response = await fetch('/api/admin/music', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', trackId, track: updates }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update track');
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to update track');
+      }
       
       setTracks(prev => prev.map(t => 
         t._id === trackId ? { ...t, ...updates } : t
@@ -193,7 +239,7 @@ export default function MusicLibraryManager() {
       addStatusMessage('success', 'Track updated');
     } catch (error) {
       console.error('[MusicLibraryManager] Update error:', error);
-      addStatusMessage('error', 'Failed to update track');
+      addStatusMessage('error', `Failed to update track: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
