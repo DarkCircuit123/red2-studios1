@@ -142,22 +142,34 @@ export default function BlogManager() {
         const postVideos = videos[postId] || [];
         const postMusic = music[postId] || [];
 
-        console.log('[BlogManager] Deleting post:', {
-          postId,
+        console.log('[BlogManager] ===== DELETE POST REQUEST =====');
+        console.log('[BlogManager] Post ID:', postId);
+        console.log('[BlogManager] Associated media:', {
           photoCount: postPhotos.length,
+          photoIds: postPhotos.map(p => p._id),
           videoCount: postVideos.length,
+          videoIds: postVideos.map(v => v._id),
           musicCount: postMusic.length,
+          musicIds: postMusic.map(m => m._id),
         });
+
+        const requestBody = {
+          postId,
+          photoIds: postPhotos.map(p => p._id),
+          videoIds: postVideos.map(v => v._id),
+          musicIds: postMusic.map(m => m._id),
+        };
+        console.log('[BlogManager] Request body:', requestBody);
 
         const response = await fetch('/api/admin/blog-delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            postId,
-            photoIds: postPhotos.map(p => p._id),
-            videoIds: postVideos.map(v => v._id),
-            musicIds: postMusic.map(m => m._id),
-          }),
+          body: JSON.stringify(requestBody),
+        });
+
+        console.log('[BlogManager] Response status:', response.status);
+        console.log('[BlogManager] Response headers:', {
+          contentType: response.headers.get('content-type'),
         });
 
         // Safely parse response - check content-type first
@@ -179,20 +191,26 @@ export default function BlogManager() {
           throw new Error(`Server returned ${contentType || 'unknown'} instead of JSON: ${text.substring(0, 100)}`);
         }
 
-        console.log('[BlogManager] Delete response:', data);
+        console.log('[BlogManager] Delete response data:', data);
 
         if (!response.ok) {
+          console.error('[BlogManager] Response not OK:', {
+            status: response.status,
+            error: data.error,
+            details: data.details,
+          });
           throw new Error(data.error || `Server error (${response.status}): Failed to delete post`);
         }
 
         if (!data.success) {
+          console.error('[BlogManager] Delete not successful:', data);
           throw new Error(data.error || 'Delete operation failed');
         }
 
-        console.log('[BlogManager] Delete successful, reloading content');
+        console.log('[BlogManager] ✓ Delete successful, reloading content');
         await loadBlogContent();
       } catch (error) {
-        console.error('Error deleting post:', error);
+        console.error('[BlogManager] ✗ Error deleting post:', error);
         alert(error instanceof Error ? error.message : 'Failed to delete post');
       }
     }

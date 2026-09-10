@@ -217,21 +217,30 @@ export const cmsService = {
 
   /**
    * Delete an item
+   * 
+   * CRITICAL: Pass suppressAuth: true to bypass collection-level permissions
+   * for collections with ADMIN-only delete permissions (e.g., blogposts, blogphotos, etc.)
    */
   delete: async (collectionId: string, itemId: string, options?: { suppressAuth?: boolean }) => {
     try {
       console.log(`[CMS] Deleting item from ${collectionId}:`, {
         itemId,
-        hasOptions: !!options,
+        suppressAuth: options?.suppressAuth || false,
       });
-      const result = await WixBaseCrudService.delete(collectionId, itemId, options || {});
-      console.log(`[CMS] Successfully deleted item from ${collectionId}`);
+      
+      // Ensure options object exists and pass suppressAuth if provided
+      const deleteOptions = { suppressAuth: options?.suppressAuth || false };
+      console.log(`[CMS] Delete options being passed:`, deleteOptions);
+      
+      const result = await WixBaseCrudService.delete(collectionId, itemId, deleteOptions);
+      console.log(`[CMS] Successfully deleted item from ${collectionId}:`, { itemId, result });
       return result;
     } catch (error) {
       console.error(`[CMS] Error deleting from ${collectionId}:`, {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         itemId,
+        suppressAuth: options?.suppressAuth || false,
       });
       throw error;
     }
