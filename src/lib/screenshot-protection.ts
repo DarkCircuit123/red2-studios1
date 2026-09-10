@@ -38,9 +38,6 @@ export class ScreenshotProtection {
 
     // Layer 9: Disable text selection and copying
     this.restrictTextSelection();
-
-    // Layer 10: Add visual deterrent
-    this.addVisualDeterrent();
   }
 
   private static disableContextMenu() {
@@ -559,28 +556,7 @@ export class ScreenshotProtection {
     }
   }
 
-  private static addVisualDeterrent() {
-    // Add watermark or visual indicator
-    const style = document.createElement('style');
-    style.textContent = `
-      body::before {
-        content: 'Protected Content - Screenshots Disabled';
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(-45deg);
-        font-size: 4rem;
-        color: rgba(255, 0, 0, 0.1);
-        font-weight: bold;
-        z-index: 1;
-        pointer-events: none;
-        white-space: nowrap;
-        width: 200%;
-        text-align: center;
-      }
-    `;
-    document.head.appendChild(style);
-  }
+
 }
 
 // Auto-initialize on module load
