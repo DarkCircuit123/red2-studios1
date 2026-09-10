@@ -131,7 +131,7 @@ export default function HeroSection() {
         >
           <Image
             src={heroImage}
-            alt="Hero background"
+            alt="Professional fashion and editorial photography hero image - RED² Studios"
             onLoad={handleImageLoad}
             className="w-full h-full hero-image-drift"
             style={{
@@ -147,7 +147,7 @@ export default function HeroSection() {
         <div className="absolute inset-0 w-full h-full">
           <Image
             src="https://static.wixstatic.com/media/e9d727_211c8a7064e046b1899d133e7bf293dd~mv2.png"
-            alt="Hero background"
+            alt="Professional photography studio background - RED² Studios"
             onLoad={handleImageLoad}
             className="w-full h-full hero-image-drift"
             style={{

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookingAvailability } from '@/entities/index';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
 import { formatDateShort, normalizeDateString, formatDateForDisplay, getTodayString } from '@/lib/date-formatter';
 import { getPublicAvailability, submitPublicBooking } from '@/api/booking-availability';
 
@@ -202,6 +203,26 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <SEOHead
+        title="Book a Photography Session | Professional Photographer | RED² Studios"
+        description="Schedule your professional photography session. Available for fashion, editorial, and commercial photography projects. Book your session with RED² Studios today."
+        canonical="https://red2studios.com/booking"
+        schema={{
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          name: 'Photography Session Booking',
+          description: 'Professional photography session booking service',
+          provider: {
+            '@type': 'Organization',
+            name: 'RED² Studios',
+          },
+          offers: {
+            '@type': 'Offer',
+            availability: 'https://schema.org/InStock',
+            priceCurrency: 'USD',
+          },
+        }}
+      />
       <Header />
 
       <section id="booking-form" className="relative w-full min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20">
@@ -213,10 +234,10 @@ export default function BookingPage() {
             className="mb-16"
           >
             <h1 className="text-6xl md:text-7xl font-heading font-black text-white mb-4 uppercase">
-              Book a Session
+              Book Your Photography Session
             </h1>
             <p className="text-lg text-white/60 max-w-2xl">
-              Select your preferred date and time for your photography session.
+              Select your preferred date and time for your professional photography session. Available for fashion, editorial, and commercial projects.
             </p>
             <div className="mt-6 p-4 bg-white/5 border border-white/10 rounded-lg inline-block">
               <p className="text-sm text-white/60">Today's Date</p>

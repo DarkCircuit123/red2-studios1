@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import ScreenshotProtectionProvider from './ScreenshotProtectionProvider';
+import SEOProvider from './SEOProvider';
 import { lazy, Suspense, useEffect, useState } from 'react';
 
 // Lazy load all pages to prevent circular dependencies
@@ -103,6 +104,7 @@ function Layout() {
   return (
     <>
       <ScrollToTop />
+      <SEOProvider />
       <Suspense fallback={null}>
         <SplashScreenAnimated onComplete={() => setSplashComplete(true)} />
       </Suspense>

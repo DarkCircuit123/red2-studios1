@@ -1,191 +1,195 @@
 /**
- * SEO Keywords & Content Strategy
- * Optimized keywords for photography studio and photographer rankings
+ * SEO Keywords and Content Strategy
+ * Optimized for AI and search engine ranking
  */
 
-export const PRIMARY_KEYWORDS = [
-  'photography studio',
-  'professional photographer',
-  'portrait photography',
-  'commercial photography',
-  'studio photography',
-  'photography services',
-  'professional headshots',
-  'event photography',
-  'product photography',
-  'photography booking',
-];
+export const SEO_KEYWORDS = {
+  primary: [
+    'fashion photographer',
+    'editorial photographer',
+    'campaign photography',
+    'Los Angeles photographer',
+    'professional photography',
+    'commercial photographer',
+    'portrait photographer',
+    'fashion photography services',
+  ],
+  secondary: [
+    'fashion photoshoot',
+    'editorial photography services',
+    'campaign photographer',
+    'LA photographer',
+    'professional photo services',
+    'commercial photography',
+    'portrait photography',
+    'photography booking',
+    'photographer for hire',
+    'professional photographer',
+  ],
+  longTail: [
+    'fashion photographer in Los Angeles',
+    'professional editorial photography services',
+    'campaign photography for brands',
+    'book a fashion photographer',
+    'commercial photography Los Angeles',
+    'professional portrait photographer',
+    'fashion photoshoot Los Angeles',
+    'editorial photography portfolio',
+    'hire a professional photographer',
+    'fashion photography portfolio',
+  ],
+  technical: [
+    'photography portfolio',
+    'photographer services',
+    'photography booking system',
+    'professional photography',
+    'photography gallery',
+  ],
+};
 
-export const SECONDARY_KEYWORDS = [
-  'photography studio near me',
-  'professional photographer near me',
-  'best photography studio',
-  'affordable photography services',
-  'studio rental',
-  'photo session booking',
-  'professional portraits',
-  'commercial photo shoot',
-  'photography portfolio',
-  'photographer for hire',
-  'studio equipment rental',
-  'photography editing services',
-  'digital photography',
-  'photography consultation',
-  'photo retouching',
-];
+export const PAGE_KEYWORDS = {
+  home: [
+    'fashion photographer',
+    'editorial photographer',
+    'Los Angeles photographer',
+    'professional photography',
+    'photography services',
+  ],
+  portfolio: [
+    'photography portfolio',
+    'fashion photography',
+    'editorial photography',
+    'photography gallery',
+    'professional work',
+  ],
+  booking: [
+    'book photographer',
+    'photography booking',
+    'schedule photoshoot',
+    'hire photographer',
+    'photography session',
+  ],
+  contact: [
+    'contact photographer',
+    'photography inquiry',
+    'hire photographer',
+    'photography services',
+    'get in touch',
+  ],
+};
 
-export const LONG_TAIL_KEYWORDS = [
-  'professional photography studio for portraits',
-  'commercial photography services near me',
-  'book a professional photo session',
-  'affordable studio photography services',
-  'professional headshot photography studio',
-  'event photography services',
-  'product photography for e-commerce',
-  'photography studio with equipment rental',
-  'professional photographer for corporate events',
-  'photography editing and retouching services',
-  'studio photography for small business',
-  'professional photography portfolio showcase',
-  'photography booking system online',
-  'high-quality portrait photography services',
-  'commercial photography for marketing',
-];
-
-export const LOCAL_KEYWORDS = [
-  'photography studio [city]',
-  'professional photographer [city]',
-  'portrait photography [city]',
-  'commercial photography [city]',
-  'photography services [city]',
-  'studio rental [city]',
-  'photographer for hire [city]',
-  'professional headshots [city]',
-  'event photography [city]',
-  'product photography [city]',
-];
+export const CONTENT_STRATEGY = {
+  homepage: {
+    h1: 'Professional Fashion & Editorial Photographer | RED² Studios',
+    description: 'Jordan Michael Zuniga - 25 years of experience, 500+ projects. Fashion, editorial, and campaign photography. Fully mobile across the US. Book your session today.',
+    keywords: PAGE_KEYWORDS.home.join(', '),
+  },
+  portfolio: {
+    h1: 'Photography Portfolio | Fashion & Editorial Work',
+    description: 'Explore our extensive portfolio of fashion, editorial, and campaign photography projects. Professional work showcasing 25 years of experience.',
+    keywords: PAGE_KEYWORDS.portfolio.join(', '),
+  },
+  booking: {
+    h1: 'Book a Photography Session | RED² Studios',
+    description: 'Schedule your professional photography session. Available for fashion, editorial, and commercial photography projects.',
+    keywords: PAGE_KEYWORDS.booking.join(', '),
+  },
+  contact: {
+    h1: 'Contact RED² Studios | Get in Touch',
+    description: 'Contact us for photography inquiries, bookings, or collaborations. Professional photography services available.',
+    keywords: PAGE_KEYWORDS.contact.join(', '),
+  },
+};
 
 /**
- * Generate keyword-rich content suggestions
+ * Generate AI-optimized meta description
  */
-export function generateContentSuggestions() {
-  return {
-    homepage: {
-      title: 'RED² - Professional Photography & Studio Services | Award-Winning Photographer',
-      description: 'Discover RED² - a premier photography studio offering professional portraits, commercial shoots, and studio services. Award-winning photographer specializing in high-quality imagery.',
-      h1: 'Professional Photography Studio & Services',
-      keywords: PRIMARY_KEYWORDS.slice(0, 5),
+export const generateAIOptimizedDescription = (
+  baseDescription: string,
+  keywords: string[]
+): string => {
+  // Ensure description includes primary keywords naturally
+  let optimized = baseDescription;
+  
+  // Add keyword emphasis if not already present
+  const primaryKeyword = keywords[0];
+  if (!optimized.toLowerCase().includes(primaryKeyword.toLowerCase())) {
+    optimized = `${primaryKeyword}. ${optimized}`;
+  }
+  
+  // Ensure length is optimal for search engines (150-160 chars)
+  if (optimized.length > 160) {
+    optimized = optimized.substring(0, 157) + '...';
+  }
+  
+  return optimized;
+};
+
+/**
+ * Generate semantic HTML heading structure
+ */
+export const getHeadingStructure = (page: string) => {
+  const structures: Record<string, { h1: string; h2: string[] }> = {
+    home: {
+      h1: 'Professional Fashion & Editorial Photographer',
+      h2: [
+        'About My Work',
+        'Featured Projects',
+        'Behind the Scenes',
+        'Client Testimonials',
+        'Book a Session',
+      ],
     },
     portfolio: {
-      title: 'Photography Portfolio - RED² Studio | Professional Work Showcase',
-      description: 'Explore RED² photography portfolio featuring professional portraits, commercial work, and studio photography. See our award-winning projects and creative vision.',
-      h1: 'Professional Photography Portfolio',
-      keywords: ['photography portfolio', 'professional photography examples', 'portrait gallery'],
+      h1: 'Photography Portfolio',
+      h2: [
+        'Fashion Photography',
+        'Editorial Work',
+        'Campaign Projects',
+        'Recent Work',
+      ],
     },
     booking: {
-      title: 'Book Your Photography Session - RED² Studio | Easy Online Booking',
-      description: 'Schedule your photography session with RED² studio. Easy online booking for portraits, headshots, commercial shoots, and more. Professional photography services available.',
-      h1: 'Book Your Professional Photography Session',
-      keywords: ['book photographer', 'photography appointment', 'schedule photo session'],
+      h1: 'Book Your Photography Session',
+      h2: [
+        'Available Sessions',
+        'Pricing',
+        'Session Details',
+        'Booking Process',
+      ],
     },
-    services: {
-      title: 'Photography Services - RED² Studio | Professional Solutions',
-      description: 'Explore our comprehensive photography services including portraits, commercial photography, studio rental, and more. Professional solutions for all your photography needs.',
-      h1: 'Professional Photography Services',
-      keywords: ['photography services', 'professional photography', 'studio services'],
+    contact: {
+      h1: 'Get in Touch',
+      h2: [
+        'Contact Information',
+        'Send a Message',
+        'Follow Us',
+      ],
     },
   };
-}
+  
+  return structures[page] || structures.home;
+};
 
 /**
- * SEO checklist for photographers
+ * Generate rich text content for AI understanding
  */
-export const SEO_CHECKLIST = [
-  {
-    category: 'On-Page SEO',
-    items: [
-      'Unique, keyword-rich title tags (50-60 characters)',
-      'Compelling meta descriptions (150-160 characters)',
-      'Proper heading hierarchy (H1, H2, H3)',
-      'Keyword optimization in content (2-3% density)',
-      'Image alt text with keywords',
-      'Internal linking strategy',
-      'Mobile-friendly design',
-      'Fast page load speed',
-    ],
-  },
-  {
-    category: 'Technical SEO',
-    items: [
-      'XML sitemap submission',
-      'Robots.txt optimization',
-      'Structured data markup (Schema.org)',
-      'Mobile responsiveness',
-      'SSL certificate (HTTPS)',
-      'Core Web Vitals optimization',
-      'Canonical URLs',
-      'Breadcrumb navigation',
-    ],
-  },
-  {
-    category: 'Content Strategy',
-    items: [
-      'Blog posts about photography tips',
-      'Before/after portfolio showcases',
-      'Client testimonials and reviews',
-      'FAQ section for common questions',
-      'Service pages with detailed descriptions',
-      'Location-based content',
-      'Video content (portfolio videos)',
-      'Regular content updates',
-    ],
-  },
-  {
-    category: 'Link Building',
-    items: [
-      'Local business directory listings',
-      'Photography association memberships',
-      'Guest blogging opportunities',
-      'Social media profiles',
-      'Press releases',
-      'Partnerships with complementary businesses',
-      'Client testimonials with links',
-      'Industry awards and recognition',
-    ],
-  },
-  {
-    category: 'Local SEO',
-    items: [
-      'Google Business Profile optimization',
-      'Local keyword targeting',
-      'Location-specific landing pages',
-      'Local citations and NAP consistency',
-      'Local reviews and ratings',
-      'Local schema markup',
-      'Service area pages',
-      'Local link building',
-    ],
-  },
-];
-
-/**
- * Generate meta tags for different pages
- */
-export function generateMetaTags(page: string) {
-  const suggestions = generateContentSuggestions();
-  const pageData = suggestions[page as keyof typeof suggestions];
-
-  if (!pageData) return null;
-
-  return {
-    title: pageData.title,
-    description: pageData.description,
-    keywords: pageData.keywords.join(', '),
-    ogTitle: pageData.title,
-    ogDescription: pageData.description,
-    ogType: 'website',
-    twitterCard: 'summary_large_image',
-    twitterTitle: pageData.title,
-    twitterDescription: pageData.description,
+export const generateRichContent = (section: string): string => {
+  const content: Record<string, string> = {
+    about: `
+      Professional photographer with 25 years of experience specializing in fashion, editorial, and campaign photography.
+      Completed over 500 projects for leading brands and publications. Available for bookings across the United States.
+      Expertise in fashion photography, editorial photography, commercial photography, and portrait photography.
+    `,
+    services: `
+      Services include: Fashion Photography, Editorial Photography, Campaign Photography, Commercial Photography,
+      Portrait Photography, Product Photography, Event Photography, and Corporate Photography.
+    `,
+    portfolio: `
+      Extensive portfolio showcasing professional fashion photography, editorial work, and campaign projects.
+      Each project demonstrates expertise in lighting, composition, and creative direction.
+    `,
   };
-}
+  
+  return content[section] || '';
+};
