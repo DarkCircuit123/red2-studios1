@@ -385,22 +385,26 @@ export default function WorkPage() {
                         playClickSound();
                         setSelectedImage(image.image || '');
                       }}
-                      style={{ display: 'block', position: 'relative', zIndex: 'auto' }}
+                      style={{ 
+                        display: 'block', 
+                        position: 'relative', 
+                        zIndex: 'auto',
+                        overflow: 'hidden',
+                      }}
                     >
                       {/* Image Container with Cinematic Hover Effect */}
                       <motion.div
                         className="relative w-full bg-black/30"
-                        whileHover={{ scale: 1.15, zIndex: 50 }}
+                        whileHover={{ scale: 1.15 }}
                         transition={{
                           scale: { duration: 0.5, ease: 'easeOut' },
-                          zIndex: { duration: 0.1 },
                         }}
                         style={{
                           paddingBottom: image.aspectRatio
                             ? `${(1 / (image.aspectRatio || 1)) * 100}%`
                             : '133.33%', // 3:4 default
                           transformOrigin: 'center center',
-                          overflow: 'visible',
+                          overflow: 'hidden',
                           position: 'relative',
                         }}
                       >
@@ -423,7 +427,7 @@ export default function WorkPage() {
                           initial={{ opacity: 0 }}
                           whileHover={{ opacity: 1 }}
                           transition={{ duration: 0.3 }}
-                          className="absolute inset-0 bg-black/40 flex items-center justify-center"
+                          className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none"
                         >
                           <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
