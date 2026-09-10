@@ -160,11 +160,29 @@ export default function BlogManager() {
           }),
         });
 
-        const data = await response.json();
+        // Safely parse response - check content-type first
+        let data: any;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            data = await response.json();
+          } catch (parseError) {
+            console.error('[BlogManager] Failed to parse JSON response:', parseError);
+            const text = await response.text();
+            console.error('[BlogManager] Response text:', text.substring(0, 200));
+            throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
+          }
+        } else {
+          const text = await response.text();
+          console.error('[BlogManager] Non-JSON response received:', contentType, text.substring(0, 200));
+          throw new Error(`Server returned ${contentType || 'unknown'} instead of JSON: ${text.substring(0, 100)}`);
+        }
+
         console.log('[BlogManager] Delete response:', data);
 
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to delete post');
+          throw new Error(data.error || `Server error (${response.status}): Failed to delete post`);
         }
 
         if (!data.success) {
@@ -194,11 +212,29 @@ export default function BlogManager() {
         }),
       });
 
-      const data = await response.json();
+      // Safely parse response - check content-type first
+      let data: any;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          console.error('[BlogManager] Failed to parse JSON response:', parseError);
+          const text = await response.text();
+          console.error('[BlogManager] Response text:', text.substring(0, 200));
+          throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
+        }
+      } else {
+        const text = await response.text();
+        console.error('[BlogManager] Non-JSON response received:', contentType, text.substring(0, 200));
+        throw new Error(`Server returned ${contentType || 'unknown'} instead of JSON: ${text.substring(0, 100)}`);
+      }
+
       console.log('[BlogManager] Delete photo response:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete photo');
+        throw new Error(data.error || `Server error (${response.status}): Failed to delete photo`);
       }
 
       if (!data.success) {
@@ -227,11 +263,29 @@ export default function BlogManager() {
         }),
       });
 
-      const data = await response.json();
+      // Safely parse response - check content-type first
+      let data: any;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          console.error('[BlogManager] Failed to parse JSON response:', parseError);
+          const text = await response.text();
+          console.error('[BlogManager] Response text:', text.substring(0, 200));
+          throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
+        }
+      } else {
+        const text = await response.text();
+        console.error('[BlogManager] Non-JSON response received:', contentType, text.substring(0, 200));
+        throw new Error(`Server returned ${contentType || 'unknown'} instead of JSON: ${text.substring(0, 100)}`);
+      }
+
       console.log('[BlogManager] Delete video response:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete video');
+        throw new Error(data.error || `Server error (${response.status}): Failed to delete video`);
       }
 
       if (!data.success) {
@@ -260,11 +314,29 @@ export default function BlogManager() {
         }),
       });
 
-      const data = await response.json();
+      // Safely parse response - check content-type first
+      let data: any;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          console.error('[BlogManager] Failed to parse JSON response:', parseError);
+          const text = await response.text();
+          console.error('[BlogManager] Response text:', text.substring(0, 200));
+          throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
+        }
+      } else {
+        const text = await response.text();
+        console.error('[BlogManager] Non-JSON response received:', contentType, text.substring(0, 200));
+        throw new Error(`Server returned ${contentType || 'unknown'} instead of JSON: ${text.substring(0, 100)}`);
+      }
+
       console.log('[BlogManager] Delete music response:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete music');
+        throw new Error(data.error || `Server error (${response.status}): Failed to delete music`);
       }
 
       if (!data.success) {

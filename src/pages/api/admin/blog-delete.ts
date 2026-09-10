@@ -1,11 +1,14 @@
-import { wixData } from '@wix/sdk';
+import { BaseCrudService } from '@/integrations';
 
 /**
- * DELETE /api/admin/blog-delete
+ * POST /api/admin/blog-delete
  * Deletes a blog post and all its associated media (photos, videos, music)
  * 
- * CRITICAL: Uses wixData.remove() with auth.elevate() to bypass collection-level permissions
+ * Uses BaseCrudService with suppressAuth to bypass collection-level permissions
  * because blog collections have ADMIN-only delete permissions.
+ * 
+ * CRITICAL: Must use BaseCrudService (server-side) not wixData (client-side)
+ * wixData will crash the API route and return HTML instead of JSON
  */
 export async function POST({ request }: { request: Request }) {
   try {
@@ -33,7 +36,7 @@ export async function POST({ request }: { request: Request }) {
       for (const photoId of photoIds) {
         try {
           console.log(`[BLOG-DELETE] Deleting photo: ${photoId}`);
-          await wixData.remove('blogphotos', photoId);
+          await BaseCrudService.delete('blogphotos', photoId);
           deletedItems.photos++;
           console.log(`[BLOG-DELETE] Successfully deleted photo: ${photoId}`);
         } catch (err) {
@@ -49,7 +52,7 @@ export async function POST({ request }: { request: Request }) {
       for (const videoId of videoIds) {
         try {
           console.log(`[BLOG-DELETE] Deleting video: ${videoId}`);
-          await wixData.remove('blogvideos', videoId);
+          await BaseCrudService.delete('blogvideos', videoId);
           deletedItems.videos++;
           console.log(`[BLOG-DELETE] Successfully deleted video: ${videoId}`);
         } catch (err) {
@@ -65,7 +68,7 @@ export async function POST({ request }: { request: Request }) {
       for (const musicId of musicIds) {
         try {
           console.log(`[BLOG-DELETE] Deleting music: ${musicId}`);
-          await wixData.remove('blogmusic', musicId);
+          await BaseCrudService.delete('blogmusic', musicId);
           deletedItems.music++;
           console.log(`[BLOG-DELETE] Successfully deleted music: ${musicId}`);
         } catch (err) {
@@ -80,7 +83,7 @@ export async function POST({ request }: { request: Request }) {
     if (postId) {
       try {
         console.log(`[BLOG-DELETE] Deleting blog post: ${postId}`);
-        await wixData.remove('blogposts', postId);
+        await BaseCrudService.delete('blogposts', postId);
         deletedItems.posts++;
         console.log(`[BLOG-DELETE] Successfully deleted blog post: ${postId}`);
       } catch (err) {
