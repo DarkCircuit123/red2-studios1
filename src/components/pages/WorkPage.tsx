@@ -391,12 +391,12 @@ export default function WorkPage() {
                         zIndex: 'auto',
                       }}
                     >
-                      {/* Image Container with Cinematic Hover Effect */}
+                      {/* Image Container with Cinematic Hover Effect - MASSIVE SCALE */}
                       <motion.div
                         className="relative w-full bg-black/30"
-                        whileHover={{ scale: 1.8, zIndex: 50 }}
+                        whileHover={{ scale: 3.5, zIndex: 100 }}
                         transition={{
-                          scale: { duration: 0.4, ease: 'easeOut' },
+                          scale: { duration: 0.5, ease: 'easeOut' },
                           zIndex: { duration: 0 },
                         }}
                         style={{
