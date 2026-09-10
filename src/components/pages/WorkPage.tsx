@@ -249,7 +249,7 @@ export default function WorkPage() {
   }, [selectedImage]);
 
   return (
-    <div className="min-h-screen bg-black overflow-hidden">
+    <div className="min-h-screen bg-black">
       <Header />
 
       {/* Lightbox Modal */}
@@ -292,7 +292,7 @@ export default function WorkPage() {
         </motion.div>
       )}
 
-      <main ref={containerRef} className="max-w-[120rem] mx-auto px-4 md:px-8 py-24 md:py-32">
+      <main ref={containerRef} className="max-w-[120rem] mx-auto px-4 md:px-8 py-24 md:py-32" style={{ overflow: 'visible' }}>
         {/* Page Header - Minimal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -358,6 +358,7 @@ export default function WorkPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: `${GAP}px`,
+                  overflow: 'visible',
                 }}
               >
                 {column.map((image, imgIndex) => {
