@@ -269,7 +269,7 @@ export default function PortfolioPage() {
                     >
                       <motion.div
                         className="relative w-full rounded-lg"
-                        whileHover={{ scale: 1.5, zIndex: 50 }}
+                        whileHover={{ scale: 1.15, zIndex: 50 }}
                         transition={{ duration: 0.4, ease: 'easeOut' }}
                         style={{
                           paddingBottom: image.aspectRatio
