@@ -389,22 +389,21 @@ export default function WorkPage() {
                         display: 'block', 
                         position: 'relative', 
                         zIndex: 'auto',
-                        overflow: 'hidden',
                       }}
                     >
                       {/* Image Container with Cinematic Hover Effect */}
                       <motion.div
                         className="relative w-full bg-black/30"
-                        whileHover={{ scale: 1.15 }}
+                        whileHover={{ scale: 1.8, zIndex: 50 }}
                         transition={{
-                          scale: { duration: 0.5, ease: 'easeOut' },
+                          scale: { duration: 0.4, ease: 'easeOut' },
+                          zIndex: { duration: 0 },
                         }}
                         style={{
                           paddingBottom: image.aspectRatio
                             ? `${(1 / (image.aspectRatio || 1)) * 100}%`
                             : '133.33%', // 3:4 default
                           transformOrigin: 'center center',
-                          overflow: 'hidden',
                           position: 'relative',
                         }}
                       >
