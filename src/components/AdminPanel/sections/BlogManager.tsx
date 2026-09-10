@@ -138,57 +138,106 @@ export default function BlogManager() {
   const handleDeletePost = async (postId: string) => {
     if (confirm('Are you sure you want to delete this post and all its media?')) {
       try {
-        // Delete associated photos
         const postPhotos = photos[postId] || [];
-        for (const photo of postPhotos) {
-          await BaseCrudService.delete('blogphotos', photo._id);
-        }
-
-        // Delete associated videos
         const postVideos = videos[postId] || [];
-        for (const video of postVideos) {
-          await BaseCrudService.delete('blogvideos', video._id);
-        }
-
-        // Delete associated music
         const postMusic = music[postId] || [];
-        for (const track of postMusic) {
-          await BaseCrudService.delete('blogmusic', track._id);
+
+        const response = await fetch('/api/admin/blog-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            postId,
+            photoIds: postPhotos.map(p => p._id),
+            videoIds: postVideos.map(v => v._id),
+            musicIds: postMusic.map(m => m._id),
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to delete post');
         }
 
-        // Delete the post
-        await BaseCrudService.delete('blogposts', postId);
         loadBlogContent();
       } catch (error) {
         console.error('Error deleting post:', error);
+        alert(error instanceof Error ? error.message : 'Failed to delete post');
       }
     }
   };
 
   const handleDeletePhoto = async (photoId: string) => {
     try {
-      await BaseCrudService.delete('blogphotos', photoId);
+      const response = await fetch('/api/admin/blog-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: null,
+          photoIds: [photoId],
+          videoIds: [],
+          musicIds: [],
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete photo');
+      }
+
       loadBlogContent();
     } catch (error) {
       console.error('Error deleting photo:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete photo');
     }
   };
 
   const handleDeleteVideo = async (videoId: string) => {
     try {
-      await BaseCrudService.delete('blogvideos', videoId);
+      const response = await fetch('/api/admin/blog-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: null,
+          photoIds: [],
+          videoIds: [videoId],
+          musicIds: [],
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete video');
+      }
+
       loadBlogContent();
     } catch (error) {
       console.error('Error deleting video:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete video');
     }
   };
 
   const handleDeleteMusic = async (musicId: string) => {
     try {
-      await BaseCrudService.delete('blogmusic', musicId);
+      const response = await fetch('/api/admin/blog-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: null,
+          photoIds: [],
+          videoIds: [],
+          musicIds: [musicId],
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete music');
+      }
+
       loadBlogContent();
     } catch (error) {
       console.error('Error deleting music:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete music');
     }
   };
 
