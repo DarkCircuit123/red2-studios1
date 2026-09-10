@@ -3,6 +3,7 @@ import { BaseCrudService } from '@/integrations';
 import { BlogPosts } from '@/entities/index';
 import { motion } from 'framer-motion';
 import { Trash2, Edit2, Plus, ChevronDown, Upload, X } from 'lucide-react';
+import { deleteBlogPost, deleteBlogMedia } from '@/api/admin/blog-operations.web';
 
 interface BlogPhoto {
   _id: string;
@@ -138,45 +139,17 @@ export default function BlogManager() {
   const handleDeletePost = async (postId: string) => {
     if (confirm('Are you sure you want to delete this post and all its media?')) {
       try {
-        console.log('[BlogManager] ===== DELETE POST REQUEST =====');
+        console.log('[BlogManager] ===== DELETE POST (DIRECT VELO CALL) =====');
         console.log('[BlogManager] Post ID:', postId);
 
-        const response = await fetch('/api/admin/blog-delete-secure', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postId }),
-        });
+        // Direct Velo backend call - NO fetch(), NO HTTP
+        const result = await deleteBlogPost(postId);
 
-        console.log('[BlogManager] Response status:', response.status);
-        console.log('[BlogManager] Response headers:', {
-          contentType: response.headers.get('content-type'),
-        });
+        console.log('[BlogManager] Delete result:', result);
 
-        // Read response body ONCE as text, then parse
-        const rawText = await response.text();
-        let data: any;
-        try {
-          data = JSON.parse(rawText);
-        } catch (parseError) {
-          console.error('[BlogManager] Failed to parse JSON response:', parseError);
-          console.error('[BlogManager] Response text:', rawText.substring(0, 200));
-          throw new Error(`Invalid JSON response from server: ${rawText.substring(0, 100)}`);
-        }
-
-        console.log('[BlogManager] Delete response data:', data);
-
-        if (!response.ok) {
-          console.error('[BlogManager] Response not OK:', {
-            status: response.status,
-            error: data.error,
-            id: data.id,
-          });
-          throw new Error(data.error || `Server error (${response.status}): Failed to delete post`);
-        }
-
-        if (!data.success) {
-          console.error('[BlogManager] Delete not successful:', data);
-          throw new Error(data.error || 'Delete operation failed');
+        if (!result.success) {
+          console.error('[BlogManager] Delete not successful:', result);
+          throw new Error(result.error || 'Delete operation failed');
         }
 
         console.log('[BlogManager] ✓ Delete successful, reloading content');
@@ -190,35 +163,15 @@ export default function BlogManager() {
 
   const handleDeletePhoto = async (photoId: string) => {
     try {
-      console.log('[BlogManager] Deleting photo:', photoId);
-      const response = await fetch('/api/admin/blog-delete-media', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mediaType: 'photo',
-          mediaId: photoId,
-        }),
-      });
+      console.log('[BlogManager] Deleting photo (DIRECT VELO CALL):', photoId);
+      
+      // Direct Velo backend call - NO fetch(), NO HTTP
+      const result = await deleteBlogMedia('photo', photoId);
 
-      // Read response body ONCE as text, then parse
-      const rawText = await response.text();
-      let data: any;
-      try {
-        data = JSON.parse(rawText);
-      } catch (parseError) {
-        console.error('[BlogManager] Failed to parse JSON response:', parseError);
-        console.error('[BlogManager] Response text:', rawText.substring(0, 200));
-        throw new Error(`Invalid JSON response from server: ${rawText.substring(0, 100)}`);
-      }
+      console.log('[BlogManager] Delete photo result:', result);
 
-      console.log('[BlogManager] Delete photo response:', data);
-
-      if (!response.ok) {
-        throw new Error(data.error || `Server error (${response.status}): Failed to delete photo`);
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Delete operation failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Delete operation failed');
       }
 
       console.log('[BlogManager] Photo deleted successfully, reloading');
@@ -231,35 +184,15 @@ export default function BlogManager() {
 
   const handleDeleteVideo = async (videoId: string) => {
     try {
-      console.log('[BlogManager] Deleting video:', videoId);
-      const response = await fetch('/api/admin/blog-delete-media', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mediaType: 'video',
-          mediaId: videoId,
-        }),
-      });
+      console.log('[BlogManager] Deleting video (DIRECT VELO CALL):', videoId);
+      
+      // Direct Velo backend call - NO fetch(), NO HTTP
+      const result = await deleteBlogMedia('video', videoId);
 
-      // Read response body ONCE as text, then parse
-      const rawText = await response.text();
-      let data: any;
-      try {
-        data = JSON.parse(rawText);
-      } catch (parseError) {
-        console.error('[BlogManager] Failed to parse JSON response:', parseError);
-        console.error('[BlogManager] Response text:', rawText.substring(0, 200));
-        throw new Error(`Invalid JSON response from server: ${rawText.substring(0, 100)}`);
-      }
+      console.log('[BlogManager] Delete video result:', result);
 
-      console.log('[BlogManager] Delete video response:', data);
-
-      if (!response.ok) {
-        throw new Error(data.error || `Server error (${response.status}): Failed to delete video`);
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Delete operation failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Delete operation failed');
       }
 
       console.log('[BlogManager] Video deleted successfully, reloading');
@@ -272,35 +205,15 @@ export default function BlogManager() {
 
   const handleDeleteMusic = async (musicId: string) => {
     try {
-      console.log('[BlogManager] Deleting music:', musicId);
-      const response = await fetch('/api/admin/blog-delete-media', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mediaType: 'music',
-          mediaId: musicId,
-        }),
-      });
+      console.log('[BlogManager] Deleting music (DIRECT VELO CALL):', musicId);
+      
+      // Direct Velo backend call - NO fetch(), NO HTTP
+      const result = await deleteBlogMedia('music', musicId);
 
-      // Read response body ONCE as text, then parse
-      const rawText = await response.text();
-      let data: any;
-      try {
-        data = JSON.parse(rawText);
-      } catch (parseError) {
-        console.error('[BlogManager] Failed to parse JSON response:', parseError);
-        console.error('[BlogManager] Response text:', rawText.substring(0, 200));
-        throw new Error(`Invalid JSON response from server: ${rawText.substring(0, 100)}`);
-      }
+      console.log('[BlogManager] Delete music result:', result);
 
-      console.log('[BlogManager] Delete music response:', data);
-
-      if (!response.ok) {
-        throw new Error(data.error || `Server error (${response.status}): Failed to delete music`);
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Delete operation failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Delete operation failed');
       }
 
       console.log('[BlogManager] Music deleted successfully, reloading');
