@@ -4,6 +4,8 @@
  * This is a direct Velo backend function (not HTTP endpoint).
  * Called directly from frontend without fetch() or HTTP.
  * 
+ * Uses native wixData.remove() to bypass collection-level permission restrictions.
+ * 
  * Functions:
  * - deleteBlogPost(postId: string): Promise<DeleteResult>
  * - deleteBlogMedia(mediaType: string, mediaId: string): Promise<DeleteResult>
@@ -18,6 +20,7 @@
  */
 
 import { BaseCrudService } from '@/integrations';
+import { wixData } from '@wix/data';
 
 export interface DeleteResult {
   success: boolean;
@@ -69,11 +72,11 @@ export async function deleteBlogPost(postId: string): Promise<DeleteResult> {
       };
     }
 
-    // Delete the blog post using suppressAuth: true
+    // Delete the blog post using native wixData.remove with suppressAuth: true
     try {
-      console.log(`[BLOG-OPS:${requestId}] >>> Calling BaseCrudService.delete('blogposts', '${postId}', { suppressAuth: true })`);
+      console.log(`[BLOG-OPS:${requestId}] >>> Calling wixData.remove('blogposts', '${postId}', { suppressAuth: true })`);
       
-      const deleteResult = await BaseCrudService.delete('blogposts', postId, { suppressAuth: true });
+      const deleteResult = await wixData.remove('blogposts', postId, { suppressAuth: true });
       
       console.log(`[BLOG-OPS:${requestId}] ✓ Successfully deleted blog post:`, {
         id: postId,
@@ -183,11 +186,11 @@ export async function deleteBlogMedia(mediaType: string, mediaId: string): Promi
       };
     }
 
-    // Delete the media using suppressAuth: true
+    // Delete the media using native wixData.remove with suppressAuth: true
     try {
-      console.log(`[BLOG-OPS:${requestId}] >>> Calling BaseCrudService.delete('${collectionId}', '${mediaId}', { suppressAuth: true })`);
+      console.log(`[BLOG-OPS:${requestId}] >>> Calling wixData.remove('${collectionId}', '${mediaId}', { suppressAuth: true })`);
       
-      const deleteResult = await BaseCrudService.delete(collectionId, mediaId, { suppressAuth: true });
+      const deleteResult = await wixData.remove(collectionId, mediaId, { suppressAuth: true });
       
       console.log(`[BLOG-OPS:${requestId}] ✓ Successfully deleted ${mediaType}:`, {
         id: mediaId,
