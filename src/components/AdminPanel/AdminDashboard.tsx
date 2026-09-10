@@ -10,7 +10,8 @@ import ServicesManager from './sections/ServicesManager';
 import BookingManager from './sections/BookingManager';
 import ContactManager from './sections/ContactManager';
 import SettingsManager from './sections/SettingsManager';
-import { Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Music, Users, Settings, LogOut } from 'lucide-react';
+import BlogManager from './sections/BlogManager';
+import { Home, FileText, Briefcase, Calendar, Mail, Cog, Image, Music, Users, Settings, LogOut, BookOpen } from 'lucide-react';
 import { useAdminAuth } from '../AdminAuthProvider';
 import { useNavigate } from 'react-router-dom';
 
@@ -37,6 +38,7 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'home', label: 'Home Page', icon: Home, enabled: true },
     { id: 'splashpage', label: 'Splash Page', icon: Image, enabled: true },
+    { id: 'blog', label: 'Blog', icon: BookOpen, enabled: true },
     { id: 'gallery', label: 'Work Gallery', icon: Briefcase, enabled: true },
     { id: 'music', label: 'Music Library', icon: Music, enabled: true },
     { id: 'sponsors', label: 'Sponsors', icon: Users, enabled: true },
@@ -89,6 +91,7 @@ export default function AdminDashboard() {
 
             <TabsContent value="home" className="m-0 p-6"><HomePageTab /></TabsContent>
             <TabsContent value="splashpage" className="m-0 p-6"><SplashpageTab /></TabsContent>
+            <TabsContent value="blog" className="m-0 p-6"><BlogManager /></TabsContent>
             <TabsContent value="gallery" className="m-0 p-6"><WorkGalleryManager /></TabsContent>
             <TabsContent value="music" className="m-0 p-6"><MusicLibraryManager /></TabsContent>
             <TabsContent value="sponsors" className="m-0 p-6"><SponsorsManager /></TabsContent>

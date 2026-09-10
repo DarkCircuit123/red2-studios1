@@ -90,6 +90,52 @@ export interface BehindTheScenes {
 
 
 /**
+ * Collection ID: blogmusic
+ * Interface for BlogMusic
+ */
+export interface BlogMusic {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  title?: string;
+  /** @wixFieldType url */
+  audioFileUrl?: string;
+  /** @wixFieldType text */
+  artist?: string;
+  /** @wixFieldType number */
+  durationSeconds?: number;
+  /** @wixFieldType text */
+  genre?: string;
+  /** @wixFieldType text */
+  blogPostReference?: string;
+}
+
+
+/**
+ * Collection ID: blogphotos
+ * Interface for BlogPhotos
+ */
+export interface BlogPhotos {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  title?: string;
+  /** @wixFieldType text */
+  altText?: string;
+  /** @wixFieldType text */
+  caption?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  imageFile?: string;
+  /** @wixFieldType text */
+  blogPostId?: string;
+  /** @wixFieldType number */
+  displayOrder?: number;
+}
+
+
+/**
  * Collection ID: blogposts
  * Interface for BlogPosts
  */
@@ -97,6 +143,10 @@ export interface BlogPosts {
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;
+  /** @wixFieldType boolean */
+  featured?: boolean;
+  /** @wixFieldType text */
+  status?: string;
   /** @wixFieldType url */
   externalLink?: string;
   /** @wixFieldType text */
@@ -113,6 +163,31 @@ export interface BlogPosts {
   author?: string;
   /** @wixFieldType text */
   excerpt?: string;
+}
+
+
+/**
+ * Collection ID: blogvideos
+ * Interface for BlogVideos
+ */
+export interface BlogVideos {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  title?: string;
+  /** @wixFieldType url */
+  videoUrl?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  thumbnail?: string;
+  /** @wixFieldType number */
+  durationInSeconds?: number;
+  /** @wixFieldType datetime */
+  uploadDate?: Date | string;
+  /** @wixFieldType text */
+  blogPostId?: string;
 }
 
 
