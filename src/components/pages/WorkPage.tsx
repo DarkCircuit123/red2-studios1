@@ -374,20 +374,27 @@ export default function WorkPage() {
                         stiffness: 100,
                         damping: 15,
                       }}
-                      className="relative overflow-hidden group cursor-pointer w-full"
+                      className="relative group cursor-pointer w-full"
                       onClick={() => {
                         playClickSound();
                         setSelectedImage(image.image || '');
                       }}
                       style={{ display: 'block' }}
                     >
-                      {/* Image Container with Hover Effect */}
-                      <div
-                        className="relative w-full overflow-hidden bg-black/30"
+                      {/* Image Container with Cinematic Hover Effect */}
+                      <motion.div
+                        className="relative w-full bg-black/30"
+                        whileHover={{ scale: 1.15, zIndex: 40 }}
+                        transition={{
+                          scale: { duration: 0.5, ease: 'easeOut' },
+                          zIndex: { duration: 0.1 },
+                        }}
                         style={{
                           paddingBottom: image.aspectRatio
                             ? `${(1 / (image.aspectRatio || 1)) * 100}%`
                             : '133.33%', // 3:4 default
+                          transformOrigin: 'center center',
+                          overflow: 'visible',
                         }}
                       >
                         {/* Image */}
@@ -395,7 +402,7 @@ export default function WorkPage() {
                           src={image.image || 'https://static.wixstatic.com/media/e9d727_9c9c4486a82b496ca6c48026f5bbed4d~mv2.png?originWidth=576&originHeight=384'}
                           alt={image.altText || 'Portfolio image'}
                           fittingType="fit"
-                          className="absolute inset-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                          className="absolute inset-0 w-full h-full object-contain"
                           data-field-name="image"
                           data-record-id={image._id}
                           loading="lazy"
@@ -420,7 +427,7 @@ export default function WorkPage() {
                             View
                           </motion.div>
                         </motion.div>
-                      </div>
+                      </motion.div>
                     </motion.div>
                   );
                 })}
