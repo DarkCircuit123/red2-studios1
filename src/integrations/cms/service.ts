@@ -164,9 +164,25 @@ export const cmsService = {
     options?: { suppressAuth?: boolean }
   ) => {
     try {
-      return await WixBaseCrudService.create(collectionId, itemData, multiRefs, options);
+      console.log(`[CMS] Creating item in ${collectionId}:`, {
+        itemDataKeys: Object.keys(itemData || {}),
+        multiRefsKeys: Object.keys(multiRefs || {}),
+        hasOptions: !!options,
+      });
+      const result = await WixBaseCrudService.create(
+        collectionId,
+        itemData,
+        multiRefs || {},
+        options || {}
+      );
+      console.log(`[CMS] Successfully created item in ${collectionId}`);
+      return result;
     } catch (error) {
-      console.error(`[CMS] Error creating in ${collectionId}:`, error);
+      console.error(`[CMS] Error creating in ${collectionId}:`, {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        itemDataKeys: Object.keys(itemData || {}),
+      });
       throw error;
     }
   },
@@ -180,9 +196,21 @@ export const cmsService = {
     options?: { suppressAuth?: boolean }
   ) => {
     try {
-      return await WixBaseCrudService.update(collectionId, itemData, options);
+      console.log(`[CMS] Updating item in ${collectionId}:`, {
+        itemId: itemData._id,
+        updateKeys: Object.keys(itemData || {}),
+        hasOptions: !!options,
+      });
+      const result = await WixBaseCrudService.update(collectionId, itemData, options || {});
+      console.log(`[CMS] Successfully updated item in ${collectionId}`);
+      return result;
     } catch (error) {
-      console.error(`[CMS] Error updating in ${collectionId}:`, error);
+      console.error(`[CMS] Error updating in ${collectionId}:`, {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        itemId: itemData._id,
+        updateKeys: Object.keys(itemData || {}),
+      });
       throw error;
     }
   },
@@ -192,9 +220,19 @@ export const cmsService = {
    */
   delete: async (collectionId: string, itemId: string, options?: { suppressAuth?: boolean }) => {
     try {
-      return await WixBaseCrudService.delete(collectionId, itemId, options);
+      console.log(`[CMS] Deleting item from ${collectionId}:`, {
+        itemId,
+        hasOptions: !!options,
+      });
+      const result = await WixBaseCrudService.delete(collectionId, itemId, options || {});
+      console.log(`[CMS] Successfully deleted item from ${collectionId}`);
+      return result;
     } catch (error) {
-      console.error(`[CMS] Error deleting from ${collectionId}:`, error);
+      console.error(`[CMS] Error deleting from ${collectionId}:`, {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        itemId,
+      });
       throw error;
     }
   },
