@@ -4,9 +4,19 @@ import { BaseCrudService } from '@/integrations';
  * DELETE /api/admin/blog-delete
  * Deletes a blog post and all its associated media (photos, videos, music)
  */
-export async function POST(request: Request) {
+export async function POST({ request }: { request: Request }) {
   try {
-    const { postId, photoIds, videoIds, musicIds } = await request.json();
+    let body: any;
+    
+    // Handle different request body formats
+    if (request.body) {
+      const text = await request.text();
+      body = text ? JSON.parse(text) : {};
+    } else {
+      body = {};
+    }
+
+    const { postId, photoIds, videoIds, musicIds } = body;
 
     // Delete associated photos
     if (photoIds && Array.isArray(photoIds) && photoIds.length > 0) {
