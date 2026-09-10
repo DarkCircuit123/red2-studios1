@@ -242,6 +242,7 @@ export default function PortfolioPage() {
               display: 'flex',
               gap: `${GAP}px`,
               alignItems: 'flex-start',
+              overflow: 'visible',
             }}
           >
             {columns.map((column, colIndex) => (
@@ -252,6 +253,7 @@ export default function PortfolioPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: `${GAP}px`,
+                  overflow: 'visible',
                 }}
               >
                 {column.map((image, imgIndex) => {
@@ -262,33 +264,42 @@ export default function PortfolioPage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: globalIndex * 0.03, duration: 0.4 }}
-                      className="relative overflow-hidden rounded-lg bg-white/5 group cursor-pointer w-full"
-                      style={{ display: 'block' }}
+                      className="relative rounded-lg bg-white/5 cursor-pointer w-full"
+                      style={{ display: 'block', overflow: 'visible', zIndex: 'auto' }}
                     >
-                      <div
-                        className="relative w-full overflow-hidden"
+                      <motion.div
+                        className="relative w-full rounded-lg"
+                        whileHover={{ scale: 1.5, zIndex: 50 }}
+                        transition={{ duration: 0.4, ease: 'easeOut' }}
                         style={{
                           paddingBottom: image.aspectRatio
                             ? `${(1 / (image.aspectRatio || 1)) * 100}%`
                             : '133.33%', // 3:4 default
+                          transformOrigin: 'center center',
+                          overflow: 'visible',
                         }}
                       >
                         <Image
                           src={WixImageResolver.resolve(image.image).url}
                           alt={image.altText || image.caption || 'Portfolio image'}
                           fittingType="fit"
-                          className="absolute inset-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                          className="absolute inset-0 w-full h-full object-contain rounded-lg"
                           loading="lazy"
                         />
                         {/* Overlay on hover */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end p-4">
+                        <motion.div 
+                          initial={{ opacity: 0 }}
+                          whileHover={{ opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="absolute inset-0 bg-black/40 flex items-end p-4 pointer-events-none rounded-lg"
+                        >
                           {image.caption && (
-                            <p className="text-white text-sm font-paragraph opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <p className="text-white text-sm font-paragraph">
                               {image.caption}
                             </p>
                           )}
-                        </div>
-                      </div>
+                        </motion.div>
+                      </motion.div>
                     </motion.div>
                   );
                 })}
