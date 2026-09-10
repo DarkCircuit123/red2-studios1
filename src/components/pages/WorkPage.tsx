@@ -292,7 +292,7 @@ export default function WorkPage() {
         </motion.div>
       )}
 
-      <main ref={containerRef} className="max-w-[120rem] mx-auto px-4 md:px-8 py-24 md:py-32" style={{ overflow: 'visible' }}>
+      <main ref={containerRef} className="max-w-[120rem] mx-auto px-4 md:px-8 py-24 md:py-32" style={{ overflow: 'visible', perspective: '1000px' }}>
         {/* Page Header - Minimal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -312,6 +312,7 @@ export default function WorkPage() {
               display: 'flex',
               gap: `${GAP}px`,
               alignItems: 'flex-start',
+              overflow: 'visible',
             }}
           >
             {Array.from({ length: columnCount }).map((_, colIndex) => (
@@ -322,6 +323,7 @@ export default function WorkPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: `${GAP}px`,
+                  overflow: 'visible',
                 }}
               >
                 {Array(4)
@@ -348,6 +350,7 @@ export default function WorkPage() {
               display: 'flex',
               gap: `${GAP}px`,
               alignItems: 'flex-start',
+              overflow: 'visible',
             }}
           >
             {columns.map((column, colIndex) => (
@@ -359,6 +362,8 @@ export default function WorkPage() {
                   flexDirection: 'column',
                   gap: `${GAP}px`,
                   overflow: 'visible',
+                  position: 'relative',
+                  zIndex: 1,
                 }}
               >
                 {column.map((image, imgIndex) => {
@@ -380,12 +385,12 @@ export default function WorkPage() {
                         playClickSound();
                         setSelectedImage(image.image || '');
                       }}
-                      style={{ display: 'block' }}
+                      style={{ display: 'block', position: 'relative', zIndex: 'auto' }}
                     >
                       {/* Image Container with Cinematic Hover Effect */}
                       <motion.div
                         className="relative w-full bg-black/30"
-                        whileHover={{ scale: 1.15, zIndex: 40 }}
+                        whileHover={{ scale: 1.15, zIndex: 50 }}
                         transition={{
                           scale: { duration: 0.5, ease: 'easeOut' },
                           zIndex: { duration: 0.1 },
@@ -396,6 +401,7 @@ export default function WorkPage() {
                             : '133.33%', // 3:4 default
                           transformOrigin: 'center center',
                           overflow: 'visible',
+                          position: 'relative',
                         }}
                       >
                         {/* Image */}
