@@ -1,8 +1,9 @@
-import { BaseCrudService } from '@/integrations';
+import { cmsService } from '@/integrations/cms/service';
 
 /**
  * DELETE /api/admin/blog-delete
  * Deletes a blog post and all its associated media (photos, videos, music)
+ * Uses suppressAuth to bypass permission checks for admin operations
  */
 export async function POST({ request }: { request: Request }) {
   try {
@@ -17,31 +18,32 @@ export async function POST({ request }: { request: Request }) {
     }
 
     const { postId, photoIds, videoIds, musicIds } = body;
+    const options = { suppressAuth: true };
 
     // Delete associated photos
     if (photoIds && Array.isArray(photoIds) && photoIds.length > 0) {
       for (const photoId of photoIds) {
-        await BaseCrudService.delete('blogphotos', photoId);
+        await cmsService.delete('blogphotos', photoId, options);
       }
     }
 
     // Delete associated videos
     if (videoIds && Array.isArray(videoIds) && videoIds.length > 0) {
       for (const videoId of videoIds) {
-        await BaseCrudService.delete('blogvideos', videoId);
+        await cmsService.delete('blogvideos', videoId, options);
       }
     }
 
     // Delete associated music
     if (musicIds && Array.isArray(musicIds) && musicIds.length > 0) {
       for (const musicId of musicIds) {
-        await BaseCrudService.delete('blogmusic', musicId);
+        await cmsService.delete('blogmusic', musicId, options);
       }
     }
 
     // Delete the post itself (if postId is provided)
     if (postId) {
-      await BaseCrudService.delete('blogposts', postId);
+      await cmsService.delete('blogposts', postId, options);
     }
 
     return new Response(JSON.stringify({ success: true }), {
