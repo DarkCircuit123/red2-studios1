@@ -1,4 +1,88 @@
+# RED² Studios - Robots.txt for Search Engines and AI Crawlers
+# Aggressive SEO optimization for maximum indexing and AI understanding
+
+# Allow all crawlers
 User-agent: *
 Allow: /
+Allow: /portfolio
+Allow: /about
+Allow: /contact
+Allow: /booking
+Allow: /blog
+Allow: /stories
+Allow: /watch
 
-Sitemap: https://www.ballysportsphotography.com/sitemap.xml
+# Disallow admin and private pages
+Disallow: /admin
+Disallow: /private
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /node_modules/
+Disallow: /.git/
+Disallow: /.env
+
+# Crawl delay for general bots (0 = no delay)
+Crawl-delay: 0
+
+# Request rate (requests per time period)
+Request-rate: 30/60
+
+# ===== AI CRAWLER OPTIMIZATION =====
+# Allow AI crawlers for content understanding
+
+User-agent: GPTBot
+Allow: /
+Crawl-delay: 0
+
+User-agent: CCBot
+Allow: /
+Crawl-delay: 0
+
+User-agent: anthropic-ai
+Allow: /
+Crawl-delay: 0
+
+User-agent: Claude-Web
+Allow: /
+Crawl-delay: 0
+
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 1
+
+User-agent: DuckDuckBot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 1
+
+User-agent: YandexBot
+Allow: /
+Crawl-delay: 1
+
+# ===== SITEMAPS =====
+Sitemap: https://red2studios.com/sitemap.xml
+Sitemap: https://red2studios.com/sitemap-portfolio.xml
+Sitemap: https://red2studios.com/sitemap-blog.xml
+Sitemap: https://red2studios.com/sitemap-stories.xml
+
+# ===== ADDITIONAL DIRECTIVES =====
+# Maximum snippet length for search results
+max-snippet: -1
+
+# Maximum image preview size
+max-image-preview: large
+
+# Maximum video preview length
+max-video-preview: -1

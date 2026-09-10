@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { BookingAvailability } from '@/entities/index';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SEOHead from '@/components/SEOHead';
+import SEOHeadAdvanced from '@/components/SEOHeadAdvanced';
 import { formatDateShort, normalizeDateString, formatDateForDisplay, getTodayString } from '@/lib/date-formatter';
 import { getPublicAvailability, submitPublicBooking } from '@/api/booking-availability';
+import { BOOKING_PAGE_SEO } from '@/lib/seo-page-configs';
 
 interface BookingRequest {
   name: string;
@@ -203,24 +204,42 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <SEOHead
-        title="Book a Photography Session | Professional Photographer | RED² Studios"
-        description="Schedule your professional photography session. Available for fashion, editorial, and commercial photography projects. Book your session with RED² Studios today."
-        canonical="https://red2studios.com/booking"
+      <SEOHeadAdvanced
+        title={BOOKING_PAGE_SEO.title}
+        description={BOOKING_PAGE_SEO.description}
+        keywords={BOOKING_PAGE_SEO.keywords}
+        canonical={BOOKING_PAGE_SEO.canonical}
+        ogType={BOOKING_PAGE_SEO.ogType}
+        twitterCard={BOOKING_PAGE_SEO.twitterCard}
+        author={BOOKING_PAGE_SEO.author}
+        breadcrumbs={BOOKING_PAGE_SEO.breadcrumbs}
         schema={{
           '@context': 'https://schema.org',
-          '@type': 'Service',
-          name: 'Photography Session Booking',
-          description: 'Professional photography session booking service',
-          provider: {
-            '@type': 'Organization',
-            name: 'RED² Studios',
-          },
-          offers: {
-            '@type': 'Offer',
-            availability: 'https://schema.org/InStock',
-            priceCurrency: 'USD',
-          },
+          '@graph': [
+            {
+              '@type': 'Service',
+              name: 'Photography Session Booking',
+              description: 'Professional photography session booking service',
+              provider: {
+                '@type': 'Organization',
+                name: 'RED² Studios',
+              },
+              offers: {
+                '@type': 'Offer',
+                availability: 'https://schema.org/InStock',
+                priceCurrency: 'USD',
+              },
+            },
+            {
+              '@type': 'BreadcrumbList',
+              itemListElement: BOOKING_PAGE_SEO.breadcrumbs?.map((crumb, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                name: crumb.name,
+                item: crumb.url,
+              })) || [],
+            },
+          ],
         }}
       />
       <Header />

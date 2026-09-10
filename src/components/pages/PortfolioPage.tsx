@@ -8,7 +8,8 @@ import { ScrollReveal } from '@/components/ScrollReveal';
 import { filterValidImages, generateSanitizationReport } from '@/lib/image-url-sanitizer';
 import WixImageResolver from '@/lib/wix-image-resolver';
 import { Image } from '@/components/ui/image';
-import SEOHead from '@/components/SEOHead';
+import SEOHeadAdvanced from '@/components/SEOHeadAdvanced';
+import { PORTFOLIO_PAGE_SEO } from '@/lib/seo-page-configs';
 
 const GAP = 24; // gap in pixels (matches gap-6 = 1.5rem = 24px)
 
@@ -220,30 +221,50 @@ export default function PortfolioPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <SEOHead
-        title="Photography Portfolio | Fashion & Editorial Work | RED² Studios"
-        description="Explore our extensive portfolio of professional fashion, editorial, and campaign photography. 500+ completed projects showcasing 25 years of creative excellence."
+      <SEOHeadAdvanced
+        title={PORTFOLIO_PAGE_SEO.title}
+        description={PORTFOLIO_PAGE_SEO.description}
+        keywords={PORTFOLIO_PAGE_SEO.keywords}
         image="https://static.wixstatic.com/media/e9d727_67d4b48edcd54fbbba92e44171074803~mv2.png?originWidth=1152&originHeight=896"
-        canonical="https://red2studios.com/portfolio"
+        canonical={PORTFOLIO_PAGE_SEO.canonical}
+        ogType={PORTFOLIO_PAGE_SEO.ogType}
+        twitterCard={PORTFOLIO_PAGE_SEO.twitterCard}
+        author={PORTFOLIO_PAGE_SEO.author}
+        breadcrumbs={PORTFOLIO_PAGE_SEO.breadcrumbs}
         schema={{
           '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          name: 'Photography Portfolio',
-          description: 'Professional photography portfolio featuring fashion, editorial, and campaign work',
-          creator: {
-            '@type': 'Person',
-            name: 'Jordan Michael Zuniga',
-          },
-          mainEntity: {
-            '@type': 'ImageGallery',
-            name: 'Photography Portfolio Gallery',
-            associatedMedia: allImages.map(img => ({
-              '@type': 'ImageObject',
-              url: img.image,
-              name: img.caption || 'Portfolio Image',
-              description: img.altText || img.caption || 'Professional photography work',
-            })),
-          },
+          '@graph': [
+            {
+              '@type': 'CollectionPage',
+              name: 'Photography Portfolio',
+              description: 'Professional photography portfolio featuring fashion, editorial, and campaign work',
+              creator: {
+                '@type': 'Person',
+                name: 'Jordan Michael Zuniga',
+              },
+              mainEntity: {
+                '@type': 'ImageGallery',
+                name: 'Photography Portfolio Gallery',
+                associatedMedia: allImages.map(img => ({
+                  '@type': 'ImageObject',
+                  url: img.image,
+                  name: img.caption || 'Portfolio Image',
+                  description: img.altText || img.caption || 'Professional photography work',
+                  height: img.originHeight,
+                  width: img.originWidth,
+                })),
+              },
+            },
+            {
+              '@type': 'BreadcrumbList',
+              itemListElement: PORTFOLIO_PAGE_SEO.breadcrumbs?.map((crumb, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                name: crumb.name,
+                item: crumb.url,
+              })) || [],
+            },
+          ],
         }}
       />
       <Header />

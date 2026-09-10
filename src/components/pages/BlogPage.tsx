@@ -7,6 +7,8 @@ import { Image } from '@/components/ui/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
+import SEOHeadAdvanced from '@/components/SEOHeadAdvanced';
+import { BLOG_PAGE_SEO } from '@/lib/seo-page-configs';
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPosts[]>([]);
@@ -29,7 +31,50 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Header />
+      <SEOHeadAdvanced
+        title={BLOG_PAGE_SEO.title}
+        description={BLOG_PAGE_SEO.description}
+        keywords={BLOG_PAGE_SEO.keywords}
+        canonical={BLOG_PAGE_SEO.canonical}
+        ogType={BLOG_PAGE_SEO.ogType}
+        twitterCard={BLOG_PAGE_SEO.twitterCard}
+        author={BLOG_PAGE_SEO.author}
+        breadcrumbs={BLOG_PAGE_SEO.breadcrumbs}
+        schema={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'Blog',
+              name: 'Photography Blog',
+              description: 'Photography tips, insights, and behind-the-scenes stories',
+              creator: {
+                '@type': 'Person',
+                name: 'Jordan Michael Zuniga',
+              },
+              blogPosts: posts.map(post => ({
+                '@type': 'BlogPosting',
+                headline: post.title,
+                description: post.excerpt,
+                image: post.thumbnailImage,
+                datePublished: post.publicationDate,
+                author: {
+                  '@type': 'Person',
+                  name: post.author || 'Jordan Michael Zuniga',
+                },
+              })),
+            },
+            {
+              '@type': 'BreadcrumbList',
+              itemListElement: BLOG_PAGE_SEO.breadcrumbs?.map((crumb, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                name: crumb.name,
+                item: crumb.url,
+              })) || [],
+            },
+          ],
+        }}
+      />
 
       <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20">
         <div className="max-w-[100rem] mx-auto px-8 w-full">

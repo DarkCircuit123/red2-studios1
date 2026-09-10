@@ -7,8 +7,9 @@ import RubberBandCarouselSection from '@/components/sections/RubberBandCarouselS
 import BehindTheScenesSection from '@/components/sections/BehindTheScenesSection';
 import SponsorsSection from '@/components/sections/SponsorsSection';
 import ContactSection from '@/components/sections/ContactSection';
-import SEOHead from '@/components/SEOHead';
+import SEOHeadAdvanced from '@/components/SEOHeadAdvanced';
 import { generateOrganizationSchema, generateLocalBusinessSchema, generatePersonSchema } from '@/lib/seo-schema-generator';
+import { HOME_PAGE_SEO } from '@/lib/seo-page-configs';
 
 // Fallback component for sections
 function SectionFallback() {
@@ -41,11 +42,15 @@ export default function HomePage() {
 
   return (
     <>
-      <SEOHead
-        title="Professional Fashion & Editorial Photographer | RED² Studios | Los Angeles"
-        description="Jordan Michael Zuniga - 25 years of experience, 500+ completed projects. Fashion, editorial, and campaign photography. Fully mobile across the US. Book your session today."
+      <SEOHeadAdvanced
+        title={HOME_PAGE_SEO.title}
+        description={HOME_PAGE_SEO.description}
+        keywords={HOME_PAGE_SEO.keywords}
         image="https://static.wixstatic.com/media/e9d727_d729601d70114b37ba248852e3a27734~mv2.png?originWidth=1152&originHeight=768"
-        canonical="https://red2studios.com"
+        canonical={HOME_PAGE_SEO.canonical}
+        ogType={HOME_PAGE_SEO.ogType}
+        twitterCard={HOME_PAGE_SEO.twitterCard}
+        author={HOME_PAGE_SEO.author}
         schema={schema}
       />
       <main
