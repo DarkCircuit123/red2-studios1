@@ -196,6 +196,7 @@ export default function Header() {
           {[
             { href: '#about', label: 'About', isAnchor: true },
             { href: '/portfolio', label: 'Work', isLink: true },
+            { href: '/blog', label: 'Blog', isLink: true },
             { href: '/booking', label: 'Booking', isLink: true, scrollTo: '#booking-form' },
             { href: '/contact', label: 'Contact', isLink: true, isPage: true },
           ].map((item, i) => (
@@ -371,6 +372,7 @@ export default function Header() {
             {[
               { href: '#about', label: 'About', isAnchor: true },
               { href: '/portfolio', label: 'Work', isLink: true },
+              { href: '/blog', label: 'Blog', isLink: true },
               { href: '/booking', label: 'Booking', isLink: true, scrollTo: '#booking-form' },
               { href: '/contact', label: 'Contact', isLink: true },
             ].map((item, i) => (
