@@ -152,15 +152,15 @@ export default function BlogManager() {
           contentType: response.headers.get('content-type'),
         });
 
-        // Parse JSON response
+        // Read response body ONCE as text, then parse
+        const rawText = await response.text();
         let data: any;
         try {
-          data = await response.json();
+          data = JSON.parse(rawText);
         } catch (parseError) {
           console.error('[BlogManager] Failed to parse JSON response:', parseError);
-          const text = await response.text();
-          console.error('[BlogManager] Response text:', text.substring(0, 200));
-          throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
+          console.error('[BlogManager] Response text:', rawText.substring(0, 200));
+          throw new Error(`Invalid JSON response from server: ${rawText.substring(0, 100)}`);
         }
 
         console.log('[BlogManager] Delete response data:', data);
@@ -200,23 +200,15 @@ export default function BlogManager() {
         }),
       });
 
-      // Safely parse response - check content-type first
+      // Read response body ONCE as text, then parse
+      const rawText = await response.text();
       let data: any;
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          data = await response.json();
-        } catch (parseError) {
-          console.error('[BlogManager] Failed to parse JSON response:', parseError);
-          const text = await response.text();
-          console.error('[BlogManager] Response text:', text.substring(0, 200));
-          throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
-        }
-      } else {
-        const text = await response.text();
-        console.error('[BlogManager] Non-JSON response received:', contentType, text.substring(0, 200));
-        throw new Error(`Server returned ${contentType || 'unknown'} instead of JSON: ${text.substring(0, 100)}`);
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseError) {
+        console.error('[BlogManager] Failed to parse JSON response:', parseError);
+        console.error('[BlogManager] Response text:', rawText.substring(0, 200));
+        throw new Error(`Invalid JSON response from server: ${rawText.substring(0, 100)}`);
       }
 
       console.log('[BlogManager] Delete photo response:', data);
@@ -249,23 +241,15 @@ export default function BlogManager() {
         }),
       });
 
-      // Safely parse response - check content-type first
+      // Read response body ONCE as text, then parse
+      const rawText = await response.text();
       let data: any;
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          data = await response.json();
-        } catch (parseError) {
-          console.error('[BlogManager] Failed to parse JSON response:', parseError);
-          const text = await response.text();
-          console.error('[BlogManager] Response text:', text.substring(0, 200));
-          throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
-        }
-      } else {
-        const text = await response.text();
-        console.error('[BlogManager] Non-JSON response received:', contentType, text.substring(0, 200));
-        throw new Error(`Server returned ${contentType || 'unknown'} instead of JSON: ${text.substring(0, 100)}`);
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseError) {
+        console.error('[BlogManager] Failed to parse JSON response:', parseError);
+        console.error('[BlogManager] Response text:', rawText.substring(0, 200));
+        throw new Error(`Invalid JSON response from server: ${rawText.substring(0, 100)}`);
       }
 
       console.log('[BlogManager] Delete video response:', data);
@@ -298,23 +282,15 @@ export default function BlogManager() {
         }),
       });
 
-      // Safely parse response - check content-type first
+      // Read response body ONCE as text, then parse
+      const rawText = await response.text();
       let data: any;
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          data = await response.json();
-        } catch (parseError) {
-          console.error('[BlogManager] Failed to parse JSON response:', parseError);
-          const text = await response.text();
-          console.error('[BlogManager] Response text:', text.substring(0, 200));
-          throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
-        }
-      } else {
-        const text = await response.text();
-        console.error('[BlogManager] Non-JSON response received:', contentType, text.substring(0, 200));
-        throw new Error(`Server returned ${contentType || 'unknown'} instead of JSON: ${text.substring(0, 100)}`);
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseError) {
+        console.error('[BlogManager] Failed to parse JSON response:', parseError);
+        console.error('[BlogManager] Response text:', rawText.substring(0, 200));
+        throw new Error(`Invalid JSON response from server: ${rawText.substring(0, 100)}`);
       }
 
       console.log('[BlogManager] Delete music response:', data);
