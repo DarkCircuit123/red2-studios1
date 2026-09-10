@@ -7,11 +7,12 @@
  * 1. Validates the caller is an admin
  * 2. Accepts a single blog post ID
  * 3. Verifies the item exists in the 'blogposts' collection
- * 4. Deletes the item using BaseCrudService.delete with suppressAuth: true
+ * 4. Deletes the item using auth.elevate() to bypass collection-level permissions
  * 5. Returns a clean JSON response with success/failure status
  * 
  * SECURITY:
  * - Only accepts admin requests (verified via admin session)
+ * - Uses auth.elevate() for elevated backend permissions
  * - Does not expose deletion to public visitors
  * - Returns specific error messages for debugging
  * 
@@ -37,6 +38,7 @@
  */
 
 import { BaseCrudService } from '@/integrations';
+import { auth } from '@wix/essentials';
 
 // Simple admin check - verify the request has admin session
 async function verifyAdminAccess(request: Request): Promise<boolean> {
@@ -126,10 +128,12 @@ export async function POST({ request }: { request: Request }) {
 
     console.log(`[BLOG-DELETE-SECURE:${requestId}] Deleting blog post: ${postId}`);
 
-    // Verify the item exists before deletion
+    // Verify the item exists before deletion using elevated permissions
     let existingPost: any = null;
     try {
-      existingPost = await BaseCrudService.getById('blogposts', postId);
+      console.log(`[BLOG-DELETE-SECURE:${requestId}] >>> Calling elevated getById to verify blog post exists`);
+      const elevatedGetById = auth.elevate(BaseCrudService.getById);
+      existingPost = await elevatedGetById('blogposts', postId);
       console.log(`[BLOG-DELETE-SECURE:${requestId}] ✓ Blog post exists:`, {
         id: existingPost?._id,
         title: existingPost?.title,
@@ -151,11 +155,14 @@ export async function POST({ request }: { request: Request }) {
       );
     }
 
-    // Delete the blog post
+    // Delete the blog post using elevated permissions
     try {
-      console.log(`[BLOG-DELETE-SECURE:${requestId}] >>> Calling BaseCrudService.delete('blogposts', '${postId}')`);
+      console.log(`[BLOG-DELETE-SECURE:${requestId}] >>> Calling elevated delete on 'blogposts' collection`);
       
-      const deleteResult = await BaseCrudService.delete('blogposts', postId, { suppressAuth: true });
+      // Use auth.elevate() to get elevated permissions for the delete operation
+      // This bypasses collection-level permission restrictions (WDE0027)
+      const elevatedDelete = auth.elevate(BaseCrudService.delete);
+      const deleteResult = await elevatedDelete('blogposts', postId);
       
       console.log(`[BLOG-DELETE-SECURE:${requestId}] ✓ Successfully deleted blog post:`, {
         id: postId,
