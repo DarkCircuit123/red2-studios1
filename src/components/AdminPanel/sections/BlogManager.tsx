@@ -142,6 +142,13 @@ export default function BlogManager() {
         const postVideos = videos[postId] || [];
         const postMusic = music[postId] || [];
 
+        console.log('[BlogManager] Deleting post:', {
+          postId,
+          photoCount: postPhotos.length,
+          videoCount: postVideos.length,
+          musicCount: postMusic.length,
+        });
+
         const response = await fetch('/api/admin/blog-delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -153,12 +160,19 @@ export default function BlogManager() {
           }),
         });
 
+        const data = await response.json();
+        console.log('[BlogManager] Delete response:', data);
+
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to delete post');
+          throw new Error(data.error || 'Failed to delete post');
         }
 
-        loadBlogContent();
+        if (!data.success) {
+          throw new Error(data.error || 'Delete operation failed');
+        }
+
+        console.log('[BlogManager] Delete successful, reloading content');
+        await loadBlogContent();
       } catch (error) {
         console.error('Error deleting post:', error);
         alert(error instanceof Error ? error.message : 'Failed to delete post');
@@ -168,6 +182,7 @@ export default function BlogManager() {
 
   const handleDeletePhoto = async (photoId: string) => {
     try {
+      console.log('[BlogManager] Deleting photo:', photoId);
       const response = await fetch('/api/admin/blog-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -179,12 +194,19 @@ export default function BlogManager() {
         }),
       });
 
+      const data = await response.json();
+      console.log('[BlogManager] Delete photo response:', data);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete photo');
+        throw new Error(data.error || 'Failed to delete photo');
       }
 
-      loadBlogContent();
+      if (!data.success) {
+        throw new Error(data.error || 'Delete operation failed');
+      }
+
+      console.log('[BlogManager] Photo deleted successfully, reloading');
+      await loadBlogContent();
     } catch (error) {
       console.error('Error deleting photo:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete photo');
@@ -193,6 +215,7 @@ export default function BlogManager() {
 
   const handleDeleteVideo = async (videoId: string) => {
     try {
+      console.log('[BlogManager] Deleting video:', videoId);
       const response = await fetch('/api/admin/blog-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -204,12 +227,19 @@ export default function BlogManager() {
         }),
       });
 
+      const data = await response.json();
+      console.log('[BlogManager] Delete video response:', data);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete video');
+        throw new Error(data.error || 'Failed to delete video');
       }
 
-      loadBlogContent();
+      if (!data.success) {
+        throw new Error(data.error || 'Delete operation failed');
+      }
+
+      console.log('[BlogManager] Video deleted successfully, reloading');
+      await loadBlogContent();
     } catch (error) {
       console.error('Error deleting video:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete video');
@@ -218,6 +248,7 @@ export default function BlogManager() {
 
   const handleDeleteMusic = async (musicId: string) => {
     try {
+      console.log('[BlogManager] Deleting music:', musicId);
       const response = await fetch('/api/admin/blog-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -229,12 +260,19 @@ export default function BlogManager() {
         }),
       });
 
+      const data = await response.json();
+      console.log('[BlogManager] Delete music response:', data);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete music');
+        throw new Error(data.error || 'Failed to delete music');
       }
 
-      loadBlogContent();
+      if (!data.success) {
+        throw new Error(data.error || 'Delete operation failed');
+      }
+
+      console.log('[BlogManager] Music deleted successfully, reloading');
+      await loadBlogContent();
     } catch (error) {
       console.error('Error deleting music:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete music');
