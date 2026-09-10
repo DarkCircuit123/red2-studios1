@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
+import ScreenshotProtectionProvider from './ScreenshotProtectionProvider';
 import { lazy, Suspense, useEffect, useState } from 'react';
 
 // Lazy load all pages to prevent circular dependencies
@@ -323,6 +324,8 @@ const router = createBrowserRouter([
 
 export default function AppRouter() {
   return (
-    <RouterProvider router={router} />
+    <ScreenshotProtectionProvider>
+      <RouterProvider router={router} />
+    </ScreenshotProtectionProvider>
   );
 }
