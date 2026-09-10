@@ -1,10 +1,8 @@
-import { BaseCrudService } from '@wix/codegen-framework-packages';
-import { auth } from 'wix-api';
+import { BaseCrudService } from '@/integrations';
 
 /**
  * DELETE /api/admin/blog-delete
  * Deletes a blog post and all its associated media (photos, videos, music)
- * Uses auth.elevate() to bypass permission checks for admin operations
  */
 export async function POST({ request }: { request: Request }) {
   try {
@@ -20,41 +18,46 @@ export async function POST({ request }: { request: Request }) {
 
     const { postId, photoIds, videoIds, musicIds } = body;
 
-    // Use auth.elevate() to bypass permission restrictions
-    const elevatedAuth = auth.elevate();
-
     // Delete associated photos
     if (photoIds && Array.isArray(photoIds) && photoIds.length > 0) {
       for (const photoId of photoIds) {
-        await elevatedAuth(async () => {
-          return await BaseCrudService.delete('blogphotos', photoId);
-        })();
+        try {
+          await BaseCrudService.delete('blogphotos', photoId);
+        } catch (err) {
+          console.warn(`Failed to delete photo ${photoId}:`, err);
+        }
       }
     }
 
     // Delete associated videos
     if (videoIds && Array.isArray(videoIds) && videoIds.length > 0) {
       for (const videoId of videoIds) {
-        await elevatedAuth(async () => {
-          return await BaseCrudService.delete('blogvideos', videoId);
-        })();
+        try {
+          await BaseCrudService.delete('blogvideos', videoId);
+        } catch (err) {
+          console.warn(`Failed to delete video ${videoId}:`, err);
+        }
       }
     }
 
     // Delete associated music
     if (musicIds && Array.isArray(musicIds) && musicIds.length > 0) {
       for (const musicId of musicIds) {
-        await elevatedAuth(async () => {
-          return await BaseCrudService.delete('blogmusic', musicId);
-        })();
+        try {
+          await BaseCrudService.delete('blogmusic', musicId);
+        } catch (err) {
+          console.warn(`Failed to delete music ${musicId}:`, err);
+        }
       }
     }
 
     // Delete the post itself (if postId is provided)
     if (postId) {
-      await elevatedAuth(async () => {
-        return await BaseCrudService.delete('blogposts', postId);
-      })();
+      try {
+        await BaseCrudService.delete('blogposts', postId);
+      } catch (err) {
+        console.warn(`Failed to delete post ${postId}:`, err);
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
