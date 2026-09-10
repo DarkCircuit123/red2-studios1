@@ -38,7 +38,10 @@
 
 import { BaseCrudService } from '@/integrations';
 
-// Simple admin check - verify the request has admin session
+/**
+ * Simple admin check - verify the request has admin session
+ * This is a basic check that relies on the admin panel being the only caller.
+ */
 async function verifyAdminAccess(request: Request): Promise<boolean> {
   try {
     // Check for admin session cookie or header
@@ -151,9 +154,9 @@ export async function POST({ request }: { request: Request }) {
       );
     }
 
-    // Delete the blog post
+    // Delete the blog post using suppressAuth: true
     try {
-      console.log(`[BLOG-DELETE-SECURE:${requestId}] >>> Calling BaseCrudService.delete('blogposts', '${postId}')`);
+      console.log(`[BLOG-DELETE-SECURE:${requestId}] >>> Calling BaseCrudService.delete('blogposts', '${postId}', { suppressAuth: true })`);
       
       const deleteResult = await BaseCrudService.delete('blogposts', postId, { suppressAuth: true });
       

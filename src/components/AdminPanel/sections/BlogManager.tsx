@@ -191,14 +191,12 @@ export default function BlogManager() {
   const handleDeletePhoto = async (photoId: string) => {
     try {
       console.log('[BlogManager] Deleting photo:', photoId);
-      const response = await fetch('/api/admin/blog-delete', {
+      const response = await fetch('/api/admin/blog-delete-media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          postId: null,
-          photoIds: [photoId],
-          videoIds: [],
-          musicIds: [],
+          mediaType: 'photo',
+          mediaId: photoId,
         }),
       });
 
@@ -242,14 +240,12 @@ export default function BlogManager() {
   const handleDeleteVideo = async (videoId: string) => {
     try {
       console.log('[BlogManager] Deleting video:', videoId);
-      const response = await fetch('/api/admin/blog-delete', {
+      const response = await fetch('/api/admin/blog-delete-media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          postId: null,
-          photoIds: [],
-          videoIds: [videoId],
-          musicIds: [],
+          mediaType: 'video',
+          mediaId: videoId,
         }),
       });
 
@@ -293,14 +289,12 @@ export default function BlogManager() {
   const handleDeleteMusic = async (musicId: string) => {
     try {
       console.log('[BlogManager] Deleting music:', musicId);
-      const response = await fetch('/api/admin/blog-delete', {
+      const response = await fetch('/api/admin/blog-delete-media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          postId: null,
-          photoIds: [],
-          videoIds: [],
-          musicIds: [musicId],
+          mediaType: 'music',
+          mediaId: musicId,
         }),
       });
 
