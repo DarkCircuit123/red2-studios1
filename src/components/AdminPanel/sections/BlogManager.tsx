@@ -138,33 +138,13 @@ export default function BlogManager() {
   const handleDeletePost = async (postId: string) => {
     if (confirm('Are you sure you want to delete this post and all its media?')) {
       try {
-        const postPhotos = photos[postId] || [];
-        const postVideos = videos[postId] || [];
-        const postMusic = music[postId] || [];
-
         console.log('[BlogManager] ===== DELETE POST REQUEST =====');
         console.log('[BlogManager] Post ID:', postId);
-        console.log('[BlogManager] Associated media:', {
-          photoCount: postPhotos.length,
-          photoIds: postPhotos.map(p => p._id),
-          videoCount: postVideos.length,
-          videoIds: postVideos.map(v => v._id),
-          musicCount: postMusic.length,
-          musicIds: postMusic.map(m => m._id),
-        });
 
-        const requestBody = {
-          postId,
-          photoIds: postPhotos.map(p => p._id),
-          videoIds: postVideos.map(v => v._id),
-          musicIds: postMusic.map(m => m._id),
-        };
-        console.log('[BlogManager] Request body:', requestBody);
-
-        const response = await fetch('/api/admin/blog-delete', {
+        const response = await fetch('/api/admin/blog-delete-secure', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify({ postId }),
         });
 
         console.log('[BlogManager] Response status:', response.status);
@@ -172,23 +152,15 @@ export default function BlogManager() {
           contentType: response.headers.get('content-type'),
         });
 
-        // Safely parse response - check content-type first
+        // Parse JSON response
         let data: any;
-        const contentType = response.headers.get('content-type');
-        
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            data = await response.json();
-          } catch (parseError) {
-            console.error('[BlogManager] Failed to parse JSON response:', parseError);
-            const text = await response.text();
-            console.error('[BlogManager] Response text:', text.substring(0, 200));
-            throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
-          }
-        } else {
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          console.error('[BlogManager] Failed to parse JSON response:', parseError);
           const text = await response.text();
-          console.error('[BlogManager] Non-JSON response received:', contentType, text.substring(0, 200));
-          throw new Error(`Server returned ${contentType || 'unknown'} instead of JSON: ${text.substring(0, 100)}`);
+          console.error('[BlogManager] Response text:', text.substring(0, 200));
+          throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`);
         }
 
         console.log('[BlogManager] Delete response data:', data);
@@ -197,7 +169,7 @@ export default function BlogManager() {
           console.error('[BlogManager] Response not OK:', {
             status: response.status,
             error: data.error,
-            details: data.details,
+            id: data.id,
           });
           throw new Error(data.error || `Server error (${response.status}): Failed to delete post`);
         }

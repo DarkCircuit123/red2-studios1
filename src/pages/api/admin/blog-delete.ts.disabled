@@ -1,0 +1,19 @@
+/**
+ * DEPRECATED: This endpoint has been replaced by /api/admin/blog-delete-secure
+ * 
+ * This file is disabled to prevent duplicate deletion handlers.
+ * All blog deletion should now go through blog-delete-secure.ts
+ */
+
+export async function POST() {
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error: 'This endpoint has been deprecated. Use /api/admin/blog-delete-secure instead.',
+    }),
+    {
+      status: 410, // Gone
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+}
