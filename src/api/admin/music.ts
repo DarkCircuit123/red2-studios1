@@ -50,8 +50,12 @@ export const POST: APIRoute = async (context) => {
         return json({ success: false, error: `Music library is limited to ${MAX_TRACKS} tracks.` }, 400);
       }
       
+      // Use client-provided _id if valid, otherwise generate one
+      const clientId = body.track._id;
+      const trackId = validId(clientId) ? clientId : crypto.randomUUID();
+      
       const track: MusicSettings = {
-        _id: crypto.randomUUID(),
+        _id: trackId,
         musicTitle: typeof body.track.musicTitle === 'string' ? body.track.musicTitle.slice(0, 200) : 'Untitled Track',
         musicUrl: typeof body.track.musicUrl === 'string' ? body.track.musicUrl.slice(0, 4096) : '',
         artist: typeof body.track.artist === 'string' ? body.track.artist.slice(0, 200) : '',
@@ -153,13 +157,35 @@ export const POST: APIRoute = async (context) => {
       console.log('[ADMIN_MUSIC] POST set-active: Setting active track', { trackId: body.trackId });
       
       try {
-        const elevatedQuery = auth.elevate(items.query);
-        const result = await elevatedQuery('musicsettings').find();
-        if (!result.items?.some((track) => track._id === body.trackId)) {
+        // First, verify the track exists by trying to get it directly
+        const elevatedGet = auth.elevate(items.get);
+        let targetTrack: MusicSettings | null = null;
+        
+        try {
+          targetTrack = await elevatedGet('musicsettings', body.trackId);
+        } catch (getError) {
+          console.error('[ADMIN_MUSIC] POST set-active: Direct get failed, trying query', { trackId: body.trackId });
+        }
+        
+        // If direct get failed, query all and find by ID
+        if (!targetTrack) {
+          const elevatedQuery = auth.elevate(items.query);
+          const result = await elevatedQuery('musicsettings').find();
+          targetTrack = (result.items || []).find((track) => track._id === body.trackId) || null;
+        }
+        
+        if (!targetTrack) {
+          console.error('[ADMIN_MUSIC] POST set-active: Track not found', { trackId: body.trackId });
           return json({ success: false, error: 'Track not found.' }, 404);
         }
         
+        console.log('[ADMIN_MUSIC] POST set-active: Found target track', { _id: targetTrack._id, title: targetTrack.musicTitle });
+        
+        // Now update all tracks
+        const elevatedQuery = auth.elevate(items.query);
+        const result = await elevatedQuery('musicsettings').find();
         const elevatedUpdate = auth.elevate(items.update);
+        
         for (const track of result.items || []) {
           const active = track._id === body.trackId;
           if (track.isEnabled !== active || track.isDefaultHomepageTrack !== active) {
@@ -175,6 +201,7 @@ export const POST: APIRoute = async (context) => {
         console.error('[ADMIN_MUSIC] POST set-active: Error:', {
           message: errorMessage,
           trackId: body.trackId,
+          stack: setActiveError instanceof Error ? setActiveError.stack : undefined,
         });
         throw setActiveError;
       }
