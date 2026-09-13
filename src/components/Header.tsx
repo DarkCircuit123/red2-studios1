@@ -217,7 +217,7 @@ export default function Header() {
                   }}
                   onMouseLeave={() => {}}
                 >
-                  <span style={{ color: 'inherit' }} className="hover:text-[#A31621] transition-colors duration-300">
+                  <span style={{ color: 'inherit' }} className="hover:text-oxblood transition-colors duration-300">
                     {item.label}
                   </span>
                 </a>
@@ -245,7 +245,7 @@ export default function Header() {
                   className="px-4 py-3 text-xs font-mono text-white/60 hover:scale-[1.08] transition-all duration-300 uppercase rounded-lg hover:bg-white/5 block"
                   style={{ letterSpacing: '0.18em', fontWeight: 500 }}
                 >
-                  <span style={{ color: 'inherit' }} className="hover:text-[#A31621] transition-colors duration-300">
+                  <span style={{ color: 'inherit' }} className="hover:text-oxblood transition-colors duration-300">
                     {item.label}
                   </span>
                 </Link>
@@ -298,7 +298,7 @@ export default function Header() {
                 aria-label="Sign out"
                 title="Sign out"
               >
-                <LogOut className="w-5 h-5 text-white transition-colors hover:text-primary" />
+                <LogOut className="w-5 h-5 text-white transition-colors hover:text-oxblood" />
               </motion.button>
             </>
           )}
@@ -361,7 +361,7 @@ export default function Header() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.05 }}
                   onClick={handleLogoutClick}
-                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-primary transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit"
+                  className="px-4 py-3 text-xs font-mono text-white/60 hover:text-oxblood transition-colors uppercase tracking-widest rounded-lg hover:bg-white/5 flex items-center gap-2 w-fit"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign Out
@@ -392,7 +392,7 @@ export default function Header() {
                       setIsOpen(false);
                     }}
                   >
-                    <span style={{ color: 'inherit' }} className="hover:text-[#A31621] transition-colors duration-300">
+                    <span style={{ color: 'inherit' }} className="hover:text-oxblood transition-colors duration-300">
                       {item.label}
                     </span>
                   </a>
@@ -420,7 +420,7 @@ export default function Header() {
                       }
                     }}
                   >
-                    <span style={{ color: 'inherit' }} className="hover:text-[#A31621] transition-colors duration-300">
+                    <span style={{ color: 'inherit' }} className="hover:text-oxblood transition-colors duration-300">
                       {item.label}
                     </span>
                   </Link>
