@@ -47,7 +47,7 @@ interface UpsertResponse {
 }
 
 interface ErrorResponse {
-  success: false;
+  success: boolean;
   error: string;
 }
 
