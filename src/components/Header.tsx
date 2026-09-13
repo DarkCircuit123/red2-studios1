@@ -142,14 +142,14 @@ export default function Header() {
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 60%, transparent 100%)'
         }} />
         <nav className="max-w-[120rem] mx-auto px-6 md:px-8 flex items-center justify-center w-full relative z-50">
-        {/* Logo - Text-based RED² with unified hover behavior - Positioned absolutely on left */}
+        {/* Logo - Text-based RED² with hover behavior - ONLY the "2" changes on hover */}
         <style>{`
           .logo-red {
             color: #ffffff;
             transition: color 300ms ease;
           }
           .logo-wrap:hover .logo-red {
-            color: #A31621;
+            color: #ffffff;
           }
           .logo-2-card {
             display: inline-block;
